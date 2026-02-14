@@ -15,6 +15,12 @@ from .curriculum import (
     CurriculumSubStrand,
     IndicatorErrorPattern,
 )
+from .diagnostics import DiagnosticQuestion, DiagnosticSession, GapProfile
+from .engagement import ParentActivity, ParentInteraction
+from .prompts import PromptCategory, PromptTestCase, PromptVersion
+from .schools import District, Region, School
+from .students import Student
+from .users import Parent, Teacher
 
 __all__ = [
     # Base
@@ -31,4 +37,24 @@ __all__ = [
     "IndicatorErrorPattern",
     "CurriculumMisconception",
     "CascadePath",
+    # Schools
+    "Region",
+    "District",
+    "School",
+    # Users
+    "Teacher",
+    "Parent",
+    # Students
+    "Student",
+    # Diagnostics
+    "DiagnosticSession",
+    "DiagnosticQuestion",
+    "GapProfile",
+    # Engagement
+    "ParentInteraction",
+    "ParentActivity",
+    # Prompts
+    "PromptCategory",
+    "PromptVersion",
+    "PromptTestCase",
 ]

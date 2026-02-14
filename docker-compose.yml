@@ -6,13 +6,13 @@
 services:
   # --- PostgreSQL ---
   db:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     environment:
       POSTGRES_DB: gapsense
       POSTGRES_USER: gapsense
       POSTGRES_PASSWORD: localdev
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
