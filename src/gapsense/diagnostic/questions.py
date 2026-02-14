@@ -150,10 +150,79 @@ class QuestionGenerator:
         Returns:
             Question dict
         """
-        # TODO: Implement AI question generation
-        # Will use DIAG-001 prompt from prompt library
-        # For now, fallback to templates
-        return self._generate_from_template(node, question_number)
+        try:
+            from anthropic import Anthropic
+
+            from gapsense.ai import get_prompt_library
+            from gapsense.config import settings
+
+            # Get DIAG-001 prompt
+            lib = get_prompt_library()
+            prompt = lib.get_prompt("DIAG-001")
+
+            # Build context for AI
+            context = {
+                "student_name": "Student",  # Placeholder
+                "current_grade": node.grade,
+                "age": "",
+                "home_language": "English",
+                "school_language": "English",
+                "prerequisite_graph_json": "[]",  # Simplified
+                "questions_asked": question_number,
+                "nodes_tested": [node.code],
+                "nodes_mastered": [],
+                "nodes_gap": [],
+                "current_trace_path": [node.code],
+                "last_question": None,
+                "last_answer": None,
+                "expected_answer": None,
+            }
+
+            # Format user message from template
+            user_message = prompt["user_template"]
+            for key, value in context.items():
+                user_message = user_message.replace(f"{{{{{key}}}}}", str(value))
+
+            # Add explicit instruction to generate question for this specific node
+            user_message += f"\n\n## EXPLICIT INSTRUCTION\nGenerate a diagnostic question specifically for node {node.code} ({node.title}).\nThis is question #{question_number} for this node."
+
+            # Call Claude API
+            client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+            response = client.messages.create(
+                model=prompt["model"],
+                max_tokens=prompt["max_tokens"],
+                temperature=prompt["temperature"],
+                system=prompt["system_prompt"],
+                messages=[{"role": "user", "content": user_message}],
+            )
+
+            # Parse response
+            import json
+
+            # Get text from response (handle TextBlock type)
+            content_block = response.content[0]
+            if not hasattr(content_block, "text"):
+                # Not a TextBlock, fallback to templates
+                return self._generate_from_template(node, question_number)
+
+            response_data = json.loads(content_block.text)
+
+            if response_data.get("action") == "next_question" and "next_question" in response_data:
+                next_q = response_data["next_question"]
+                return {
+                    "question_text": next_q.get("question_text", ""),
+                    "expected_answer": next_q.get("expected_answer"),
+                    "question_type": next_q.get("question_type", "free_response"),
+                    "question_media_url": None,
+                }
+
+            # Fallback if AI response doesn't contain question
+            return self._generate_from_template(node, question_number)
+
+        except Exception:
+            # Fallback to templates on any error
+            return self._generate_from_template(node, question_number)
 
     def check_answer(
         self, expected_answer: str | None, student_response: str
