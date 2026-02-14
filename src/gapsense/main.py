@@ -159,9 +159,13 @@ def create_app() -> FastAPI:
         """
         return {"status": "alive"}
 
-    # TODO: Register API routers here
-    # from gapsense.api.v1 import curriculum, diagnostics, parents, teachers
-    # app.include_router(curriculum.router, prefix="/api/v1/curriculum")
+    # Register API routers
+    from gapsense.api.v1 import curriculum
+
+    app.include_router(curriculum.router, prefix="/api/v1/curriculum", tags=["Curriculum"])
+
+    # TODO: Register remaining routers
+    # from gapsense.api.v1 import diagnostics, parents, teachers
     # app.include_router(diagnostics.router, prefix="/api/v1/diagnostics")
     # app.include_router(parents.router, prefix="/api/v1/parents")
     # app.include_router(teachers.router, prefix="/api/v1/teachers")

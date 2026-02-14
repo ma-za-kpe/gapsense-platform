@@ -8,6 +8,7 @@ Based on docs/specs/gapsense_data_model.sql
 
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import (
@@ -43,8 +44,8 @@ class CurriculumStrand(Base):
         String(7), nullable=True, comment="UI color code (#RRGGBB)"
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=text("NOW()"), comment="Creation timestamp"
+    created_at: Mapped[datetime] = mapped_column(
+        nullable=False, server_default=text("NOW()"), comment="Creation timestamp"
     )
 
     # Relationships

@@ -53,7 +53,10 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         String(5), nullable=False, comment="Enrolled grade (B1-B9)"
     )
     grade_as_of: Mapped[date] = mapped_column(
-        Date, nullable=False, server_default=text("CURRENT_DATE"), comment="When this grade was recorded"
+        Date,
+        nullable=False,
+        server_default=text("CURRENT_DATE"),
+        comment="When this grade was recorded",
     )
     teacher_id: Mapped[UUID | None] = mapped_column(ForeignKey("teachers.id"), nullable=True)
 
@@ -73,7 +76,9 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Diagnostic state
     latest_gap_profile_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("gap_profiles.id"), nullable=True, comment="FK to current gap profile"
+        ForeignKey("gap_profiles.id", name="fk_students_latest_gap_profile"),
+        nullable=True,
+        comment="FK to current gap profile",
     )
     diagnosis_count: Mapped[int] = mapped_column(Integer, default=0)
     first_diagnosed_at: Mapped[datetime | None] = mapped_column(nullable=True)

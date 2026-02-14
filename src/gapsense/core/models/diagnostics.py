@@ -63,7 +63,9 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
     )
 
     student_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("students.id"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("students.id", name="fk_diagnostic_sessions_student"),
+        nullable=False,
     )
 
     # Session context
@@ -225,10 +227,14 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
     )
 
     student_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("students.id"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("students.id", name="fk_gap_profiles_student"),
+        nullable=False,
     )
     session_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("diagnostic_sessions.id"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("diagnostic_sessions.id", name="fk_gap_profiles_session"),
+        nullable=False,
     )
 
     # Gap summary

@@ -5,29 +5,41 @@ Shared test fixtures for unit and integration tests.
 """
 
 import pytest
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import configure_mappers, sessionmaker
 
-from gapsense.core.models.base import Base
+from gapsense.core.models import (  # noqa: F401 - imported for SQLAlchemy registration
+    Base,
+    CurriculumNode,
+    CurriculumStrand,
+    CurriculumSubStrand,
+    Parent,
+    Student,
+    Teacher,
+)
+
+# Ensure all mappers are configured
+configure_mappers()
 
 
 @pytest.fixture
 async def async_engine():
     """Create async engine for testing."""
     engine = create_async_engine(
-        "postgresql+asyncpg://gapsense:localdev@localhost:5432/gapsense_test",
+        "postgresql+asyncpg://gapsense:localdev@localhost:5433/gapsense_test",
         echo=False,
     )
 
-    # Create all tables
+    # Drop and recreate all tables
     async with engine.begin() as conn:
+        # Drop all tables using CASCADE to ignore circular dependencies
+        await conn.execute(text("DROP SCHEMA public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
+        # Now create all tables with new schema
         await conn.run_sync(Base.metadata.create_all)
 
     yield engine
-
-    # Drop all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
 
     await engine.dispose()
 
@@ -35,10 +47,17 @@ async def async_engine():
 @pytest.fixture
 async def db_session(async_engine) -> AsyncSession:
     """Create database session for testing."""
-    async_session = sessionmaker(
-        async_engine, class_=AsyncSession, expire_on_commit=False
-    )
+    # Truncate all tables before each test (faster than drop/create)
+    async_session = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
+        # Truncate all tables (ignore circular dependencies)
+        try:
+            for table in reversed(Base.metadata.sorted_tables):
+                await session.execute(text(f"TRUNCATE TABLE {table.name} CASCADE"))
+            await session.commit()
+        except Exception:
+            # If truncate fails, just continue (tables may not exist yet)
+            await session.rollback()
+
         yield session
-        await session.rollback()
