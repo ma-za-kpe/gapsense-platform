@@ -95,7 +95,9 @@ class CurriculumLoader:
             await self._load_strands(session, data.get("strands", []))
 
             # Step 2: Load sub-strands
-            await self._load_sub_strands(session, data.get("sub_strands", []))
+            await self._load_sub_strands(
+                session, data.get("sub_strands_by_phase", data.get("sub_strands", []))
+            )
 
             # Step 3: Load nodes
             await self._load_nodes(session, data.get("nodes", []))
@@ -143,10 +145,33 @@ class CurriculumLoader:
         print(f"  ✅ Loaded {len(strands_list)} strands")
 
     async def _load_sub_strands(
-        self, session: AsyncSession, sub_strands: list[dict[str, Any]]
+        self, session: AsyncSession, sub_strands: list[dict[str, Any]] | dict[str, Any]
     ) -> None:
         """Load curriculum sub-strands."""
-        for sub_strand_data in sub_strands:
+        # Handle both list and dict formats
+        if isinstance(sub_strands, dict):
+            # New format: sub_strands_by_phase
+            sub_strands_list = []
+            for phase, phase_sub_strands in sub_strands.items():
+                if not isinstance(phase_sub_strands, dict):
+                    continue
+                for sub_strand_code, name in phase_sub_strands.items():
+                    # Parse "1.1" -> strand_number = 1, sub_strand_number = 1
+                    parts = sub_strand_code.split(".")
+                    strand_number = int(parts[0])
+                    sub_strand_number = int(parts[1])
+                    sub_strands_list.append(
+                        {
+                            "strand_number": strand_number,
+                            "sub_strand_number": sub_strand_number,
+                            "phase": phase,
+                            "name": name,
+                        }
+                    )
+        else:
+            sub_strands_list = sub_strands
+
+        for sub_strand_data in sub_strands_list:
             # Look up strand_id from strand_number
             result = await session.execute(
                 select(CurriculumStrand.id).where(
@@ -164,7 +189,7 @@ class CurriculumLoader:
             )
             session.add(sub_strand)
         await session.flush()
-        print(f"  ✅ Loaded {len(sub_strands)} sub-strands")
+        print(f"  ✅ Loaded {len(sub_strands_list)} sub-strands")
 
     async def _load_nodes(
         self, session: AsyncSession, nodes: list[dict[str, Any]] | dict[str, Any]
@@ -202,7 +227,13 @@ class CurriculumLoader:
                     CurriculumSubStrand.phase == phase,
                 )
             )
-            sub_strand_id = result.scalar_one()
+            sub_strand_id = result.scalar_one_or_none()
+            if sub_strand_id is None:
+                print(
+                    f"⚠️  Skipping node {node_data['code']}: "
+                    f"sub_strand not found (strand={strand_num}, sub={sub_strand_num}, phase={phase})"
+                )
+                continue
 
             # Generate UUID for this node
             node_id = uuid4()
