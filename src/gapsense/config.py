@@ -17,10 +17,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
 
     # ========================================================================
@@ -37,17 +34,14 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = Field(
         default="postgresql+asyncpg://gapsense:localdev@localhost:5432/gapsense",
-        description="PostgreSQL connection string (async)"
+        description="PostgreSQL connection string (async)",
     )
 
     # ========================================================================
     # ANTHROPIC AI
     # ========================================================================
 
-    ANTHROPIC_API_KEY: str = Field(
-        default="",
-        description="Anthropic API key for Claude"
-    )
+    ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
 
     ANTHROPIC_MAX_REQUESTS_PER_MINUTE: int = 50
     ANTHROPIC_MAX_CONCURRENT_REQUESTS: int = 10
@@ -56,19 +50,12 @@ class Settings(BaseSettings):
     # WHATSAPP CLOUD API
     # ========================================================================
 
-    WHATSAPP_API_TOKEN: str = Field(
-        default="",
-        description="WhatsApp Cloud API token"
-    )
+    WHATSAPP_API_TOKEN: str = Field(default="", description="WhatsApp Cloud API token")
 
-    WHATSAPP_PHONE_NUMBER_ID: str = Field(
-        default="",
-        description="WhatsApp phone number ID"
-    )
+    WHATSAPP_PHONE_NUMBER_ID: str = Field(default="", description="WhatsApp phone number ID")
 
     WHATSAPP_VERIFY_TOKEN: str = Field(
-        default="local_verify_token",
-        description="WhatsApp webhook verification token"
+        default="local_verify_token", description="WhatsApp webhook verification token"
     )
 
     # ========================================================================
@@ -81,7 +68,7 @@ class Settings(BaseSettings):
 
     SQS_QUEUE_URL: str = Field(
         default="http://localstack:4566/000000000000/gapsense-messages",
-        description="SQS FIFO queue URL"
+        description="SQS FIFO queue URL",
     )
 
     S3_MEDIA_BUCKET: str = "gapsense-media-local"
@@ -99,7 +86,7 @@ class Settings(BaseSettings):
 
     GAPSENSE_DATA_PATH: Path = Field(
         default=Path("../gapsense-data"),
-        description="Path to gapsense-data repo with proprietary IP"
+        description="Path to gapsense-data repo with proprietary IP",
     )
 
     @field_validator("GAPSENSE_DATA_PATH", mode="before")
