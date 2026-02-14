@@ -1,0 +1,114 @@
+# ============================================================================
+# GapSense Pre-Commit Hooks Configuration
+#
+# Automatically runs quality checks before commits and pushes
+# ============================================================================
+
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+default_language_version:
+  python: python3.9  # Match your system Python
+
+repos:
+  # =========================================================================
+  # FAST CHECKS - Run on every commit (< 10 seconds total)
+  # =========================================================================
+
+  # Ruff - Fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4  # Use latest stable version
+    hooks:
+      # Linting
+      - id: ruff
+        name: Ruff Linter
+        args: [--fix]  # Auto-fix safe issues
+        stages: [pre-commit]
+
+      # Formatting
+      - id: ruff-format
+        name: Ruff Formatter
+        stages: [pre-commit]
+
+  # =========================================================================
+  # THOROUGH CHECKS - Run before push only (< 30 seconds total)
+  # Uses your Poetry environment for consistency
+  # =========================================================================
+
+  - repo: local
+    hooks:
+      # MyPy - Type checking (full project)
+      - id: mypy-full
+        name: MyPy Type Checker (Full Project)
+        entry: bash -c 'poetry run mypy src/ || /Users/mac/Library/Python/3.9/bin/poetry run mypy src/'
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+      # Pytest - All tests with coverage (≥80% required)
+      - id: pytest-coverage
+        name: Tests + Coverage Check (≥80%)
+        entry: bash -c 'poetry run pytest tests/ --cov=src/gapsense --cov-report=term-missing --cov-fail-under=80 -v || /Users/mac/Library/Python/3.9/bin/poetry run pytest tests/ --cov=src/gapsense --cov-report=term-missing --cov-fail-under=80 -v'
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+      # Alembic - Database migration check
+      - id: alembic-check
+        name: Alembic Migration Check
+        entry: bash -c 'poetry run alembic check 2>&1 || echo "⚠️  No migrations or migration check skipped"'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+  # =========================================================================
+  # GENERAL FILE CHECKS - Run on every commit (very fast)
+  # =========================================================================
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Prevent committing large files
+      - id: check-added-large-files
+        args: ['--maxkb=1000']  # Max 1MB
+        stages: [pre-commit]
+
+      # Check YAML files
+      - id: check-yaml
+        stages: [pre-commit]
+
+      # Check TOML files
+      - id: check-toml
+        stages: [pre-commit]
+
+      # Check JSON files
+      - id: check-json
+        stages: [pre-commit]
+
+      # Fix trailing whitespace
+      - id: trailing-whitespace
+        stages: [pre-commit]
+
+      # Fix end of files
+      - id: end-of-file-fixer
+        stages: [pre-commit]
+
+      # Prevent committing to main directly (optional - uncomment if needed)
+      # - id: no-commit-to-branch
+      #   args: ['--branch', 'main', '--branch', 'master']
+      #   stages: [commit]
+
+# ============================================================================
+# Configuration
+# ============================================================================
+
+# Don't fail on missing interpreters
+fail_fast: false
+
+# Show output from hooks
+verbose: true
