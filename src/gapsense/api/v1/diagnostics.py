@@ -5,6 +5,7 @@ Adaptive diagnostic sessions, answer submission, and gap profiles.
 """
 # ruff: noqa: B008 - FastAPI Depends in function defaults is standard pattern
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -12,13 +13,18 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from gapsense.core.database import get_db
-from gapsense.core.models import DiagnosticSession, GapProfile, Student
+from gapsense.core.models import DiagnosticQuestion, DiagnosticSession, GapProfile, Student
 from gapsense.core.schemas.diagnostics import (
     DiagnosticAnswerResponse,
     DiagnosticAnswerSubmit,
     DiagnosticSessionCreate,
     DiagnosticSessionSchema,
     GapProfileSchema,
+)
+from gapsense.diagnostic import (
+    AdaptiveDiagnosticEngine,
+    GapProfileAnalyzer,
+    QuestionGenerator,
 )
 
 router = APIRouter()
@@ -94,7 +100,7 @@ async def list_student_sessions(
 )
 async def submit_answer(
     session_id: UUID, answer_data: DiagnosticAnswerSubmit, db: AsyncSession = Depends(get_db)
-) -> dict[str, str | bool | None]:
+) -> dict[str, str | bool | dict[str, str | int | None] | None]:
     """Submit an answer to a diagnostic question."""
     # Get session
     result = await db.execute(select(DiagnosticSession).where(DiagnosticSession.id == session_id))
@@ -113,18 +119,110 @@ async def submit_answer(
             detail=f"Cannot submit answers to {session.status} session",
         )
 
-    # TODO: Create DiagnosticQuestion record and update session statistics
-    # TODO: Implement adaptive question selection algorithm
-    # TODO: Determine if session should complete
+    # Create diagnostic question record
+    question = DiagnosticQuestion(
+        session_id=session.id,
+        question_order=session.total_questions + 1,
+        node_id=answer_data.node_id,
+        question_text="[Question recorded]",  # Will be populated properly in future
+        question_type="free_response",
+        student_response=answer_data.student_response,
+        is_correct=answer_data.is_correct,
+        response_time_seconds=answer_data.response_time_seconds,
+        response_media_url=answer_data.response_media_url,
+        answered_at=datetime.utcnow(),
+    )
+    db.add(question)
 
-    # For now, return a simple response
+    # Update session statistics
+    session.total_questions += 1
+    if answer_data.is_correct:
+        session.correct_answers += 1
+
+    # Initialize adaptive engine
+    engine = AdaptiveDiagnosticEngine(session, db)
+
+    # Update session state based on answer
+    await engine.update_session_state(answer_data.node_id, answer_data.is_correct)
+
+    # Check if session should complete
+    should_complete = await engine.should_complete_session()
+
+    if should_complete:
+        # Complete session and generate gap profile
+        session.status = "completed"
+        session.completed_at = datetime.utcnow()
+
+        # Generate gap profile
+        analyzer = GapProfileAnalyzer(session, db)
+        gap_profile = await analyzer.generate_gap_profile()
+        db.add(gap_profile)
+
+        await db.commit()
+        await db.refresh(question)
+
+        return {
+            "question_id": str(question.id),
+            "is_correct": answer_data.is_correct,
+            "student_response": answer_data.student_response,
+            "next_question": None,
+            "session_completed": True,
+            "message": "Diagnostic complete. Gap profile generated.",
+        }
+
+    # Get next node to test
+    next_node = await engine.get_next_node()
+
+    if not next_node:
+        # No more nodes to test - complete session
+        session.status = "completed"
+        session.completed_at = datetime.utcnow()
+
+        analyzer = GapProfileAnalyzer(session, db)
+        gap_profile = await analyzer.generate_gap_profile()
+        db.add(gap_profile)
+
+        await db.commit()
+        await db.refresh(question)
+
+        return {
+            "question_id": str(question.id),
+            "is_correct": answer_data.is_correct,
+            "student_response": answer_data.student_response,
+            "next_question": None,
+            "session_completed": True,
+            "message": "Diagnostic complete. No more nodes to test.",
+        }
+
+    # Generate next question
+    question_gen = QuestionGenerator()
+    next_question_data = question_gen.generate_question(next_node, session.total_questions)
+
+    # Commit current progress
+    await db.commit()
+    await db.refresh(question)
+
+    # Build next question response
     return {
-        "question_id": "00000000-0000-0000-0000-000000000000",  # Placeholder
+        "question_id": str(question.id),
         "is_correct": answer_data.is_correct,
         "student_response": answer_data.student_response,
-        "next_question": None,
+        "next_question": {
+            "id": "00000000-0000-0000-0000-000000000000",  # Placeholder - will be created on next submit
+            "session_id": str(session.id),
+            "question_order": session.total_questions + 1,
+            "node_id": str(next_node.id),
+            "question_text": next_question_data["question_text"],
+            "question_type": next_question_data["question_type"],
+            "question_media_url": next_question_data["question_media_url"],
+            "student_response": None,
+            "is_correct": None,
+            "response_time_seconds": None,
+            "asked_at": datetime.utcnow().isoformat(),
+            "answered_at": None,
+        },
         "session_completed": False,
-        "message": "Answer recorded. Adaptive algorithm not yet implemented.",
+        "message": f"Question {session.total_questions} recorded. Continue diagnostic.",
     }
 
 
