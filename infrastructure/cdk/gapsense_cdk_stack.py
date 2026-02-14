@@ -6,20 +6,36 @@ Region: af-south-1 (Cape Town)
 
 import aws_cdk as cdk
 from aws_cdk import (
-    Stack,
     Duration,
     RemovalPolicy,
-    aws_ec2 as ec2,
-    aws_ecs as ecs,
-    aws_ecs_patterns as ecs_patterns,
-    aws_rds as rds,
-    aws_sqs as sqs,
-    aws_s3 as s3,
+    Stack,
+)
+from aws_cdk import (
     aws_cognito as cognito,
-    aws_secretsmanager as sm,
+)
+from aws_cdk import (
+    aws_ec2 as ec2,
+)
+from aws_cdk import (
+    aws_ecs as ecs,
+)
+from aws_cdk import (
+    aws_ecs_patterns as ecs_patterns,
+)
+from aws_cdk import (
     aws_logs as logs,
-    aws_iam as iam,
-    aws_elasticloadbalancingv2 as elbv2,
+)
+from aws_cdk import (
+    aws_rds as rds,
+)
+from aws_cdk import (
+    aws_s3 as s3,
+)
+from aws_cdk import (
+    aws_secretsmanager as sm,
+)
+from aws_cdk import (
+    aws_sqs as sqs,
 )
 from constructs import Construct
 
@@ -34,13 +50,20 @@ class GapSenseStack(Stack):
         # VPC
         # ==============================
         vpc = ec2.Vpc(
-            self, "GapSenseVPC",
+            self,
+            "GapSenseVPC",
             max_azs=2,
             nat_gateways=1 if not is_prod else 2,
             subnet_configuration=[
-                ec2.SubnetConfiguration(name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24),
-                ec2.SubnetConfiguration(name="Private", subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS, cidr_mask=24),
-                ec2.SubnetConfiguration(name="Isolated", subnet_type=ec2.SubnetType.PRIVATE_ISOLATED, cidr_mask=24),
+                ec2.SubnetConfiguration(
+                    name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24
+                ),
+                ec2.SubnetConfiguration(
+                    name="Private", subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS, cidr_mask=24
+                ),
+                ec2.SubnetConfiguration(
+                    name="Isolated", subnet_type=ec2.SubnetType.PRIVATE_ISOLATED, cidr_mask=24
+                ),
             ],
         )
 
@@ -50,7 +73,8 @@ class GapSenseStack(Stack):
         db_credentials = rds.DatabaseSecret(self, "DBCredentials", username="gapsense")
 
         database = rds.DatabaseInstance(
-            self, "GapSenseDB",
+            self,
+            "GapSenseDB",
             engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_16_4),
             instance_type=ec2.InstanceType.of(
                 ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM if is_prod else ec2.InstanceSize.SMALL
@@ -72,14 +96,16 @@ class GapSenseStack(Stack):
         # SQS Queues
         # ==============================
         dlq = sqs.Queue(
-            self, "MessagesDLQ",
+            self,
+            "MessagesDLQ",
             queue_name=f"gapsense-messages-dlq-{env_name}.fifo",
             fifo=True,
             retention_period=Duration.days(14),
         )
 
         message_queue = sqs.Queue(
-            self, "MessagesQueue",
+            self,
+            "MessagesQueue",
             queue_name=f"gapsense-messages-{env_name}.fifo",
             fifo=True,
             content_based_deduplication=True,
@@ -91,7 +117,8 @@ class GapSenseStack(Stack):
         # S3 — Media Storage
         # ==============================
         media_bucket = s3.Bucket(
-            self, "MediaBucket",
+            self,
+            "MediaBucket",
             bucket_name=f"gapsense-media-{env_name}",
             encryption=s3.BucketEncryption.S3_MANAGED,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
@@ -106,12 +133,15 @@ class GapSenseStack(Stack):
         # Cognito — Authentication
         # ==============================
         user_pool = cognito.UserPool(
-            self, "GapSenseUserPool",
+            self,
+            "GapSenseUserPool",
             user_pool_name=f"gapsense-{env_name}",
             self_sign_up_enabled=False,  # Teachers added by admin
             sign_in_aliases=cognito.SignInAliases(phone=True, email=True),
             password_policy=cognito.PasswordPolicy(
-                min_length=8, require_digits=True, require_lowercase=True,
+                min_length=8,
+                require_digits=True,
+                require_lowercase=True,
             ),
             removal_policy=RemovalPolicy.RETAIN if is_prod else RemovalPolicy.DESTROY,
         )
@@ -126,13 +156,15 @@ class GapSenseStack(Stack):
         # Secrets Manager — API Keys
         # ==============================
         anthropic_secret = sm.Secret(
-            self, "AnthropicAPIKey",
+            self,
+            "AnthropicAPIKey",
             secret_name=f"gapsense/{env_name}/anthropic-api-key",
             description="Anthropic Claude API key for GapSense AI inference",
         )
 
         whatsapp_secret = sm.Secret(
-            self, "WhatsAppSecrets",
+            self,
+            "WhatsAppSecrets",
             secret_name=f"gapsense/{env_name}/whatsapp",
             description="WhatsApp Cloud API token and phone number ID",
         )
@@ -141,7 +173,8 @@ class GapSenseStack(Stack):
         # ECS Cluster
         # ==============================
         cluster = ecs.Cluster(
-            self, "GapSenseCluster",
+            self,
+            "GapSenseCluster",
             vpc=vpc,
             cluster_name=f"gapsense-{env_name}",
             container_insights=is_prod,
@@ -151,7 +184,8 @@ class GapSenseStack(Stack):
         # Task Definition (shared between web & worker)
         # ==============================
         task_def = ecs.FargateTaskDefinition(
-            self, "GapSenseTask",
+            self,
+            "GapSenseTask",
             cpu=512 if is_prod else 256,
             memory_limit_mib=1024 if is_prod else 512,
         )
@@ -171,8 +205,12 @@ class GapSenseStack(Stack):
             "DATABASE_URL": ecs.Secret.from_secrets_manager(db_credentials, "connectionString"),
             "ANTHROPIC_API_KEY": ecs.Secret.from_secrets_manager(anthropic_secret),
             "WHATSAPP_API_TOKEN": ecs.Secret.from_secrets_manager(whatsapp_secret, "api_token"),
-            "WHATSAPP_PHONE_NUMBER_ID": ecs.Secret.from_secrets_manager(whatsapp_secret, "phone_number_id"),
-            "WHATSAPP_VERIFY_TOKEN": ecs.Secret.from_secrets_manager(whatsapp_secret, "verify_token"),
+            "WHATSAPP_PHONE_NUMBER_ID": ecs.Secret.from_secrets_manager(
+                whatsapp_secret, "phone_number_id"
+            ),
+            "WHATSAPP_VERIFY_TOKEN": ecs.Secret.from_secrets_manager(
+                whatsapp_secret, "verify_token"
+            ),
         }
 
         # Web container
@@ -198,7 +236,8 @@ class GapSenseStack(Stack):
         # Fargate Service — Web (ALB)
         # ==============================
         web_service = ecs_patterns.ApplicationLoadBalancedFargateService(
-            self, "GapSenseWebService",
+            self,
+            "GapSenseWebService",
             cluster=cluster,
             task_definition=task_def,
             desired_count=1 if not is_prod else 2,
@@ -222,12 +261,13 @@ class GapSenseStack(Stack):
         # Fargate Service — Worker
         # ==============================
         worker_task_def = ecs.FargateTaskDefinition(
-            self, "GapSenseWorkerTask",
+            self,
+            "GapSenseWorkerTask",
             cpu=512 if is_prod else 256,
             memory_limit_mib=1024 if is_prod else 512,
         )
 
-        worker_container = worker_task_def.add_container(
+        _ = worker_task_def.add_container(
             "worker",
             image=ecs.ContainerImage.from_asset(".", file="Dockerfile", target="production"),
             command=["python", "-m", "gapsense.worker.main"],
@@ -240,7 +280,8 @@ class GapSenseStack(Stack):
         )
 
         worker_service = ecs.FargateService(
-            self, "GapSenseWorkerService",
+            self,
+            "GapSenseWorkerService",
             cluster=cluster,
             task_definition=worker_task_def,
             desired_count=1,
@@ -275,7 +316,8 @@ app = cdk.App()
 env_name = app.node.try_get_context("env") or "staging"
 
 GapSenseStack(
-    app, f"GapSense-{env_name.capitalize()}",
+    app,
+    f"GapSense-{env_name.capitalize()}",
     env_name=env_name,
     env=cdk.Environment(
         account=app.node.try_get_context("account"),
