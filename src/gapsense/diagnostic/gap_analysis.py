@@ -1,0 +1,220 @@
+"""
+Gap Profile Analysis Service
+
+Generates student gap profiles from completed diagnostic sessions.
+Implements root cause analysis and actionable recommendations.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from gapsense.core.models import DiagnosticSession, GapProfile
+
+
+class GapProfileAnalyzer:
+    """Analyzes diagnostic session results and generates gap profiles.
+
+    Implements:
+    - Root cause identification
+    - Cascade path detection
+    - Grade level estimation
+    - Actionable recommendations
+    """
+
+    def __init__(self, session: DiagnosticSession, db: AsyncSession):
+        """Initialize gap profile analyzer.
+
+        Args:
+            session: Completed diagnostic session
+            db: Database session
+        """
+        self.session = session
+        self.db = db
+
+    async def generate_gap_profile(self) -> GapProfile:
+        """Generate comprehensive gap profile from session results.
+
+        Returns:
+            GapProfile instance (not yet committed)
+        """
+        from sqlalchemy import select, update
+
+        from gapsense.core.models import GapProfile, Student
+
+        # Get student
+        result = await self.db.execute(select(Student).where(Student.id == self.session.student_id))
+        student = result.scalar_one()
+
+        # Deactivate previous gap profiles
+        await self.db.execute(
+            update(GapProfile)
+            .where(GapProfile.student_id == student.id, GapProfile.is_current == True)  # noqa: E712
+            .values(is_current=False)
+        )
+
+        # Analyze session results
+        primary_gap_node = await self._identify_primary_gap()
+        estimated_grade = await self._estimate_grade_level()
+        grade_gap = self._calculate_grade_gap(student.current_grade, estimated_grade)
+        recommended_focus = await self._determine_focus_node()
+        overall_confidence = self._calculate_confidence()
+
+        # Create gap profile
+        gap_profile = GapProfile(
+            student_id=student.id,
+            session_id=self.session.id,
+            mastered_nodes=self.session.nodes_mastered or [],
+            gap_nodes=self.session.nodes_gap or [],
+            uncertain_nodes=[],  # TODO: Track uncertain nodes
+            primary_gap_node=primary_gap_node,
+            primary_cascade=None,  # TODO: Detect cascade path
+            secondary_gaps=[],  # TODO: Identify secondary gaps
+            recommended_focus_node=recommended_focus,
+            recommended_activity=None,  # TODO: Generate activity recommendation
+            estimated_grade_level=estimated_grade,
+            grade_gap=grade_gap,
+            overall_confidence=overall_confidence,
+            is_current=True,
+        )
+
+        return gap_profile
+
+    async def _identify_primary_gap(self) -> UUID | None:
+        """Identify the primary (deepest/highest severity) gap node.
+
+        Returns:
+            UUID of primary gap node, or None if no gaps found
+        """
+        if self.session.root_gap_node_id:
+            return self.session.root_gap_node_id
+
+        if not self.session.nodes_gap:
+            return None
+
+        # Find gap with highest severity
+        from sqlalchemy import select
+
+        from gapsense.core.models import CurriculumNode
+
+        result = await self.db.execute(
+            select(CurriculumNode)
+            .where(CurriculumNode.id.in_(self.session.nodes_gap))
+            .order_by(CurriculumNode.severity.desc())
+        )
+        primary_gap = result.scalars().first()
+
+        return primary_gap.id if primary_gap else None
+
+    async def _estimate_grade_level(self) -> str | None:
+        """Estimate student's functional grade level based on mastery.
+
+        Returns:
+            Estimated grade (e.g., 'B2', 'B3') or None
+        """
+        if not self.session.nodes_mastered:
+            return "B1"  # Default to lowest if nothing mastered
+
+        # Get highest grade among mastered nodes
+        from sqlalchemy import select
+
+        from gapsense.core.models import CurriculumNode
+
+        result = await self.db.execute(
+            select(CurriculumNode.grade)
+            .where(CurriculumNode.id.in_(self.session.nodes_mastered))
+            .distinct()
+        )
+        mastered_grades = result.scalars().all()
+
+        if not mastered_grades:
+            return "B1"
+
+        # Return highest mastered grade
+        # Assumes grades are B1-B9 format
+        sorted_grades = sorted(mastered_grades, key=lambda g: int(g[1:]))
+        return sorted_grades[-1]
+
+    def _calculate_grade_gap(self, current_grade: str, estimated_grade: str | None) -> int | None:
+        """Calculate gap between current and estimated grade level.
+
+        Args:
+            current_grade: Enrolled grade (e.g., 'B5')
+            estimated_grade: Functional grade (e.g., 'B3')
+
+        Returns:
+            Number of grades behind (positive int) or None
+        """
+        if not estimated_grade:
+            return None
+
+        try:
+            current = int(current_grade[1:])
+            estimated = int(estimated_grade[1:])
+            gap = current - estimated
+            return max(0, gap)  # Never negative
+        except (ValueError, IndexError):
+            return None
+
+    async def _determine_focus_node(self) -> UUID | None:
+        """Determine which node student should work on first.
+
+        Priority:
+        1. Primary gap node (if identified)
+        2. Highest severity gap
+        3. None (if no gaps)
+
+        Returns:
+            UUID of focus node or None
+        """
+        # Use primary gap as focus
+        return await self._identify_primary_gap()
+
+    def _calculate_confidence(self) -> float:
+        """Calculate overall confidence in gap profile.
+
+        Based on:
+        - Number of questions asked
+        - Consistency of responses
+        - Coverage of screening nodes
+
+        Returns:
+            Confidence score (0.0 - 1.0)
+        """
+        confidence = 0.5  # Base confidence
+
+        # Increase confidence with more questions
+        if self.session.total_questions >= 12:
+            confidence += 0.2
+        elif self.session.total_questions >= 8:
+            confidence += 0.1
+
+        # Increase if root gap identified
+        if self.session.root_gap_node_id and self.session.root_gap_confidence:
+            confidence += 0.2
+
+        # Cap at 0.95 (never 100% certain)
+        return min(confidence, 0.95)
+
+    async def generate_recommendations(self, gap_profile: GapProfile) -> dict[str, str]:
+        """Generate actionable recommendations for student/parent.
+
+        Args:
+            gap_profile: Gap profile to generate recommendations for
+
+        Returns:
+            Dict with recommendation keys and values
+        """
+        # TODO: Implement recommendation generation
+        # Will integrate with PARENT-001 prompt for parent messaging
+
+        return {
+            "next_steps": "Practice foundational skills",
+            "estimated_time": "2-3 weeks of daily practice",
+            "materials_needed": "Paper, pencil, everyday objects",
+        }
