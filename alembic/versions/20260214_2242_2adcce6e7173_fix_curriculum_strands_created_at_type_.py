@@ -45,14 +45,9 @@ def upgrade() -> None:
         unique=False,
         postgresql_ops={"severity": "DESC"},
     )
-    op.alter_column(
-        "curriculum_strands",
-        "created_at",
-        existing_type=sa.VARCHAR(),
-        type_=sa.DateTime(),
-        existing_comment="Creation timestamp",
-        existing_nullable=False,
-        existing_server_default=sa.text("now()"),
+    # Convert VARCHAR to TIMESTAMP using PostgreSQL CAST
+    op.execute(
+        "ALTER TABLE curriculum_strands ALTER COLUMN created_at TYPE TIMESTAMP USING created_at::TIMESTAMP"
     )
     op.alter_column(
         "districts",
