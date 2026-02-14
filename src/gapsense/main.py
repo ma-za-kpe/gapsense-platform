@@ -92,7 +92,7 @@ def create_app() -> FastAPI:
             "environment": settings.ENVIRONMENT,
         }
 
-    @app.get("/health", tags=["Health"])
+    @app.get("/health", tags=["Health"], response_model=None)
     async def health_check() -> JSONResponse:
         """Health check endpoint for load balancers.
 
@@ -134,7 +134,7 @@ def create_app() -> FastAPI:
             },
         )
 
-    @app.get("/health/ready", tags=["Health"])
+    @app.get("/health/ready", tags=["Health"], response_model=None)
     async def readiness_check() -> dict[str, str] | JSONResponse:
         """Readiness check for Kubernetes.
 

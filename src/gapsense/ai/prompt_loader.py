@@ -54,16 +54,25 @@ class PromptLibrary:
             data = json.load(f)
 
         # Extract metadata
-        self.metadata = {
-            "version": data.get("version", "unknown"),
-            "last_updated": data.get("last_updated"),
-            "total_prompts": len(data.get("prompts", [])),
-        }
+        prompts_data = data.get("prompts", {})
+        self.metadata = data.get("metadata", {})
+        if not self.metadata.get("version"):
+            # Fallback for older format
+            self.metadata = {
+                "version": data.get("version", "unknown"),
+                "last_updated": data.get("last_updated"),
+                "total_prompts": len(prompts_data),
+            }
 
         # Build prompt lookup dict: prompt_id → prompt_data
-        for prompt in data.get("prompts", []):
-            prompt_id = prompt["prompt_id"]
-            self.prompts[prompt_id] = prompt
+        if isinstance(prompts_data, dict):
+            # New format: prompts is a dict with prompt_id as keys
+            self.prompts = prompts_data
+        else:
+            # Old format: prompts is a list
+            for prompt in prompts_data:
+                prompt_id = prompt["prompt_id"]
+                self.prompts[prompt_id] = prompt
 
     def get_prompt(self, prompt_id: str) -> dict[str, Any]:
         """Get prompt by ID.
