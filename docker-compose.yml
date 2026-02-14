@@ -1,0 +1,96 @@
+# ============================================================================
+# GapSense Docker Compose — Local Development
+# Usage: docker compose up -d
+# ============================================================================
+
+services:
+  # --- PostgreSQL ---
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: gapsense
+      POSTGRES_USER: gapsense
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gapsense"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # --- GapSense Web API ---
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    command: uvicorn gapsense.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://gapsense:localdev@db:5432/gapsense
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WHATSAPP_VERIFY_TOKEN=local_verify_token
+      - WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN:-}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
+      - AWS_REGION=af-south-1
+      - ENVIRONMENT=local
+      - LOG_LEVEL=DEBUG
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/gapsense-messages
+      - GAPSENSE_DATA_PATH=/app/data
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+
+  # --- GapSense Worker ---
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    command: python -m gapsense.worker.main
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://gapsense:localdev@db:5432/gapsense
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN:-}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
+      - AWS_REGION=af-south-1
+      - ENVIRONMENT=local
+      - LOG_LEVEL=DEBUG
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/gapsense-messages
+      - GAPSENSE_DATA_PATH=/app/data
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+
+  # --- LocalStack (SQS + S3 for local dev) ---
+  localstack:
+    image: localstack/localstack:3.0
+    environment:
+      - SERVICES=sqs,s3
+      - DEFAULT_REGION=af-south-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./infrastructure/localstack-init.sh:/etc/localstack/init/ready.d/init.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

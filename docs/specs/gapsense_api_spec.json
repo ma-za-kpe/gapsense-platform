@@ -1,0 +1,901 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GapSense API",
+    "version": "1.0.0",
+    "description": "AI-Powered Foundational Learning Diagnostic Platform API. Built on FastAPI with PostgreSQL, deployed on AWS Fargate.",
+    "contact": {
+      "name": "Maku Mazakpe",
+      "email": "maku@gapsense.app"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {"url": "https://api.gapsense.app/v1", "description": "Production"},
+    {"url": "https://staging-api.gapsense.app/v1", "description": "Staging"},
+    {"url": "http://localhost:8000/v1", "description": "Local development"}
+  ],
+
+  "tags": [
+    {"name": "auth", "description": "Authentication and authorization"},
+    {"name": "students", "description": "Student management"},
+    {"name": "diagnostics", "description": "Diagnostic sessions and gap profiles"},
+    {"name": "parents", "description": "Parent engagement and WhatsApp interactions"},
+    {"name": "teachers", "description": "Teacher dashboard and reporting"},
+    {"name": "schools", "description": "School administration"},
+    {"name": "curriculum", "description": "NaCCA prerequisite graph (read-only API)"},
+    {"name": "webhooks", "description": "WhatsApp Cloud API webhooks"},
+    {"name": "analytics", "description": "Reporting and analytics"},
+    {"name": "admin", "description": "System administration"}
+  ],
+
+  "paths": {
+
+    "/auth/login": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Login with phone number + OTP",
+        "description": "Sends OTP to phone number. Returns JWT token pair after OTP verification.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone"],
+                "properties": {
+                  "phone": {"type": "string", "example": "+233241234567"},
+                  "role": {"type": "string", "enum": ["parent", "teacher", "admin"]}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "OTP sent successfully"},
+          "429": {"description": "Rate limited — too many OTP requests"}
+        }
+      }
+    },
+
+    "/auth/verify": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Verify OTP and receive tokens",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phone", "otp"],
+                "properties": {
+                  "phone": {"type": "string"},
+                  "otp": {"type": "string", "minLength": 6, "maxLength": 6}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {"type": "string"},
+                    "refresh_token": {"type": "string"},
+                    "token_type": {"type": "string", "example": "bearer"},
+                    "expires_in": {"type": "integer", "example": 3600},
+                    "user": {"$ref": "#/components/schemas/UserProfile"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Invalid OTP"}
+        }
+      }
+    },
+
+    "/auth/refresh": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Refresh access token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refresh_token"],
+                "properties": {
+                  "refresh_token": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "New token pair"},
+          "401": {"description": "Invalid refresh token"}
+        }
+      }
+    },
+
+    "/students": {
+      "post": {
+        "tags": ["students"],
+        "summary": "Register a new student",
+        "description": "Creates student record linked to parent. Minimal data collection — dignity-first.",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/StudentCreate"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Student created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Student"}
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["students"],
+        "summary": "List students (scoped to authenticated user)",
+        "description": "Parents see their children. Teachers see their class. Admins see their school.",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "grade", "in": "query", "schema": {"type": "string"}},
+          {"name": "school_id", "in": "query", "schema": {"type": "string", "format": "uuid"}},
+          {"name": "has_gap_profile", "in": "query", "schema": {"type": "boolean"}},
+          {"name": "page", "in": "query", "schema": {"type": "integer", "default": 1}},
+          {"name": "per_page", "in": "query", "schema": {"type": "integer", "default": 20, "maximum": 100}}
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated student list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"type": "array", "items": {"$ref": "#/components/schemas/Student"}},
+                    "total": {"type": "integer"},
+                    "page": {"type": "integer"},
+                    "per_page": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/students/{student_id}": {
+      "get": {
+        "tags": ["students"],
+        "summary": "Get student details with current gap profile",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "student_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/StudentDetail"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/students/{student_id}/gap-profile": {
+      "get": {
+        "tags": ["diagnostics"],
+        "summary": "Get student's current gap profile",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "student_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/GapProfile"}
+              }
+            }
+          },
+          "404": {"description": "No gap profile yet — student not diagnosed"}
+        }
+      }
+    },
+
+    "/diagnostics/sessions": {
+      "post": {
+        "tags": ["diagnostics"],
+        "summary": "Start a new diagnostic session",
+        "description": "Initiates adaptive diagnostic. Uses DIAG-001 prompt to determine entry point. Returns first 2 questions.",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["student_id", "channel"],
+                "properties": {
+                  "student_id": {"type": "string", "format": "uuid"},
+                  "channel": {"type": "string", "enum": ["whatsapp", "web", "app"]},
+                  "initiated_by": {"type": "string", "enum": ["parent", "teacher", "system"]}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session started, first questions ready",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/DiagnosticSessionStart"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/diagnostics/sessions/{session_id}/respond": {
+      "post": {
+        "tags": ["diagnostics"],
+        "summary": "Submit student response to diagnostic question",
+        "description": "Processes response via DIAG-002 prompt. Returns analysis and next question (or session conclusion).",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["question_id", "response"],
+                "properties": {
+                  "question_id": {"type": "string", "format": "uuid"},
+                  "response": {"type": "string"},
+                  "response_type": {"type": "string", "enum": ["text", "image", "voice", "button"]},
+                  "response_media_url": {"type": "string", "format": "uri"},
+                  "response_time_seconds": {"type": "integer"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response analyzed. Contains next question OR session conclusion.",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/DiagnosticResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/diagnostics/sessions/{session_id}": {
+      "get": {
+        "tags": ["diagnostics"],
+        "summary": "Get diagnostic session details",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/DiagnosticSession"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/diagnostics/analyze-image": {
+      "post": {
+        "tags": ["diagnostics"],
+        "summary": "Analyze exercise book photo",
+        "description": "Accepts photo of student work. Uses ANALYSIS-001 prompt. Returns extracted problems, errors, and recommended diagnostic path.",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image", "student_id"],
+                "properties": {
+                  "image": {"type": "string", "format": "binary"},
+                  "student_id": {"type": "string", "format": "uuid"},
+                  "subject": {"type": "string", "default": "mathematics"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ImageAnalysisResult"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/parents/{parent_id}/activities": {
+      "get": {
+        "tags": ["parents"],
+        "summary": "List activities sent to parent",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "parent_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "status", "in": "query", "schema": {"type": "string", "enum": ["sent", "started", "completed"]}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"type": "array", "items": {"$ref": "#/components/schemas/ParentActivity"}}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/parents/{parent_id}/preferences": {
+      "patch": {
+        "tags": ["parents"],
+        "summary": "Update parent preferences",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "parent_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preferred_language": {"type": "string"},
+                  "preferred_name": {"type": "string"},
+                  "opted_out": {"type": "boolean"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Preferences updated"}
+        }
+      }
+    },
+
+    "/teachers/{teacher_id}/class-report": {
+      "get": {
+        "tags": ["teachers"],
+        "summary": "Get class-level gap distribution report",
+        "description": "Uses TEACHER-001 prompt. Returns gap distribution, student groupings, and recommendations.",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "teacher_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "grade", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ClassReport"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/teachers/{teacher_id}/student-brief/{student_id}": {
+      "get": {
+        "tags": ["teachers"],
+        "summary": "Get individual student diagnostic brief",
+        "description": "Uses TEACHER-002 prompt. Professional NaCCA-coded analysis.",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "teacher_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "student_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/StudentBrief"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/curriculum/nodes": {
+      "get": {
+        "tags": ["curriculum"],
+        "summary": "List curriculum nodes (prerequisite graph)",
+        "description": "Read-only access to the NaCCA prerequisite graph. Supports filtering by grade, strand, severity.",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "grade", "in": "query", "schema": {"type": "string"}},
+          {"name": "strand", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 4}},
+          {"name": "min_severity", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 5}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"type": "array", "items": {"$ref": "#/components/schemas/CurriculumNode"}}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/curriculum/nodes/{code}": {
+      "get": {
+        "tags": ["curriculum"],
+        "summary": "Get single curriculum node with prerequisites and misconceptions",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "code", "in": "path", "required": true, "schema": {"type": "string", "example": "B2.1.1.1"}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CurriculumNodeDetail"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/curriculum/cascade-paths": {
+      "get": {
+        "tags": ["curriculum"],
+        "summary": "List critical cascade paths",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/CascadePath"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/webhooks/whatsapp": {
+      "get": {
+        "tags": ["webhooks"],
+        "summary": "WhatsApp webhook verification",
+        "description": "Handles Meta's webhook verification challenge.",
+        "parameters": [
+          {"name": "hub.mode", "in": "query", "schema": {"type": "string"}},
+          {"name": "hub.verify_token", "in": "query", "schema": {"type": "string"}},
+          {"name": "hub.challenge", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "Challenge echoed back"}
+        }
+      },
+      "post": {
+        "tags": ["webhooks"],
+        "summary": "Receive WhatsApp messages",
+        "description": "Handles inbound messages, delivery statuses, and read receipts from WhatsApp Cloud API. Dispatches to appropriate handler (text, image, voice, button response).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "WhatsApp Cloud API webhook payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Webhook processed"}
+        }
+      }
+    },
+
+    "/analytics/school/{school_id}": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "School-level analytics",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "school_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "period", "in": "query", "schema": {"type": "string", "format": "date"}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/SchoolAnalytics"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/analytics/district/{district_id}": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "District-level analytics",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "district_id", "in": "path", "required": true, "schema": {"type": "integer"}},
+          {"name": "period", "in": "query", "schema": {"type": "string", "format": "date"}}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/DistrictAnalytics"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/admin/prompts": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "List prompt versions",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "category", "in": "query", "schema": {"type": "string"}},
+          {"name": "status", "in": "query", "schema": {"type": "string", "enum": ["draft", "testing", "active", "deprecated"]}}
+        ],
+        "responses": {
+          "200": {"description": "Prompt versions list"}
+        }
+      }
+    },
+
+    "/admin/prompts/{prompt_id}/test": {
+      "post": {
+        "tags": ["admin"],
+        "summary": "Run test cases against a prompt version",
+        "security": [{"BearerAuth": []}],
+        "parameters": [
+          {"name": "prompt_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {"description": "Test results"}
+        }
+      }
+    },
+
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {"type": "string", "example": "healthy"},
+                    "version": {"type": "string"},
+                    "db": {"type": "string", "example": "connected"},
+                    "ai": {"type": "string", "example": "connected"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "UserProfile": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "phone": {"type": "string"},
+          "role": {"type": "string", "enum": ["parent", "teacher", "admin"]},
+          "preferred_name": {"type": "string"},
+          "preferred_language": {"type": "string"}
+        }
+      },
+      "StudentCreate": {
+        "type": "object",
+        "required": ["first_name", "current_grade"],
+        "properties": {
+          "first_name": {"type": "string"},
+          "age": {"type": "integer"},
+          "gender": {"type": "string", "enum": ["male", "female", "other"]},
+          "current_grade": {"type": "string", "pattern": "^B[1-9]$"},
+          "home_language": {"type": "string"},
+          "school_id": {"type": "string", "format": "uuid"},
+          "teacher_id": {"type": "string", "format": "uuid"}
+        }
+      },
+      "Student": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "first_name": {"type": "string"},
+          "current_grade": {"type": "string"},
+          "age": {"type": "integer"},
+          "home_language": {"type": "string"},
+          "diagnosis_count": {"type": "integer"},
+          "has_gap_profile": {"type": "boolean"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "StudentDetail": {
+        "allOf": [
+          {"$ref": "#/components/schemas/Student"},
+          {
+            "type": "object",
+            "properties": {
+              "gap_profile": {"$ref": "#/components/schemas/GapProfile"},
+              "recent_sessions": {"type": "array", "items": {"$ref": "#/components/schemas/DiagnosticSessionSummary"}}
+            }
+          }
+        ]
+      },
+      "GapProfile": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "mastered_nodes": {"type": "array", "items": {"type": "string"}},
+          "gap_nodes": {"type": "array", "items": {"type": "string"}},
+          "uncertain_nodes": {"type": "array", "items": {"type": "string"}},
+          "primary_gap_node": {"type": "string"},
+          "primary_cascade": {"type": "string"},
+          "recommended_focus_node": {"type": "string"},
+          "recommended_activity": {"type": "string"},
+          "estimated_grade_level": {"type": "string"},
+          "grade_gap": {"type": "integer"},
+          "overall_confidence": {"type": "number"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "DiagnosticSessionStart": {
+        "type": "object",
+        "properties": {
+          "session_id": {"type": "string", "format": "uuid"},
+          "entry_node": {"type": "string"},
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "question_id": {"type": "string", "format": "uuid"},
+                "question_text": {"type": "string"},
+                "question_type": {"type": "string"},
+                "target_node": {"type": "string"}
+              }
+            }
+          }
+        }
+      },
+      "DiagnosticResponse": {
+        "type": "object",
+        "properties": {
+          "session_status": {"type": "string", "enum": ["in_progress", "completed"]},
+          "analysis": {
+            "type": "object",
+            "properties": {
+              "is_correct": {"type": "boolean"},
+              "error_pattern": {"type": "string"},
+              "misconception_id": {"type": "string"},
+              "confidence": {"type": "number"}
+            }
+          },
+          "next_question": {
+            "type": "object",
+            "description": "Present if session in_progress",
+            "properties": {
+              "question_id": {"type": "string", "format": "uuid"},
+              "question_text": {"type": "string"},
+              "question_type": {"type": "string"},
+              "target_node": {"type": "string"}
+            }
+          },
+          "conclusion": {
+            "type": "object",
+            "description": "Present if session completed",
+            "properties": {
+              "gap_profile": {"$ref": "#/components/schemas/GapProfile"},
+              "parent_message": {"type": "string"},
+              "teacher_summary": {"type": "string"}
+            }
+          }
+        }
+      },
+      "DiagnosticSession": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "student_id": {"type": "string", "format": "uuid"},
+          "status": {"type": "string"},
+          "entry_node": {"type": "string"},
+          "total_questions": {"type": "integer"},
+          "correct_answers": {"type": "integer"},
+          "root_gap_node": {"type": "string"},
+          "root_gap_confidence": {"type": "number"},
+          "cascade_path": {"type": "string"},
+          "started_at": {"type": "string", "format": "date-time"},
+          "completed_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "DiagnosticSessionSummary": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "status": {"type": "string"},
+          "total_questions": {"type": "integer"},
+          "root_gap_node": {"type": "string"},
+          "completed_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "ImageAnalysisResult": {
+        "type": "object",
+        "properties": {
+          "image_quality": {"type": "string"},
+          "problems_found": {"type": "integer"},
+          "errors_found": {"type": "integer"},
+          "suspected_gaps": {"type": "array", "items": {"type": "string"}},
+          "recommended_session": {"type": "boolean"},
+          "details": {"type": "array", "items": {"type": "object"}}
+        }
+      },
+      "ParentActivity": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "activity_title": {"type": "string"},
+          "focus_node": {"type": "string"},
+          "language": {"type": "string"},
+          "sent_at": {"type": "string", "format": "date-time"},
+          "completed_at": {"type": "string", "format": "date-time"},
+          "skill_improved": {"type": "boolean"}
+        }
+      },
+      "ClassReport": {
+        "type": "object",
+        "properties": {
+          "overview": {"type": "string"},
+          "top_gaps": {"type": "array", "items": {"type": "object"}},
+          "student_groups": {"type": "array", "items": {"type": "object"}},
+          "urgent_flags": {"type": "array", "items": {"type": "object"}}
+        }
+      },
+      "StudentBrief": {
+        "type": "object",
+        "properties": {
+          "student_summary": {"type": "string"},
+          "root_cause_chain": {"type": "string"},
+          "cascade_path": {"type": "string"},
+          "expected_mastery": {"type": "string"},
+          "actual_level": {"type": "string"},
+          "classroom_recommendations": {"type": "array", "items": {"type": "object"}}
+        }
+      },
+      "CurriculumNode": {
+        "type": "object",
+        "properties": {
+          "code": {"type": "string"},
+          "grade": {"type": "string"},
+          "strand": {"type": "integer"},
+          "title": {"type": "string"},
+          "severity": {"type": "integer"},
+          "prerequisites": {"type": "array", "items": {"type": "string"}}
+        }
+      },
+      "CurriculumNodeDetail": {
+        "allOf": [
+          {"$ref": "#/components/schemas/CurriculumNode"},
+          {
+            "type": "object",
+            "properties": {
+              "description": {"type": "string"},
+              "indicators": {"type": "object"},
+              "misconceptions": {"type": "array", "items": {"type": "object"}},
+              "ghana_evidence": {"type": "string"}
+            }
+          }
+        ]
+      },
+      "CascadePath": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "frequency": {"type": "string"},
+          "node_sequence": {"type": "array", "items": {"type": "string"}}
+        }
+      },
+      "SchoolAnalytics": {
+        "type": "object",
+        "properties": {
+          "school_id": {"type": "string", "format": "uuid"},
+          "period": {"type": "string", "format": "date"},
+          "total_students_diagnosed": {"type": "integer"},
+          "avg_grade_gap": {"type": "number"},
+          "top_gaps": {"type": "array", "items": {"type": "object"}},
+          "cascade_distribution": {"type": "object"},
+          "parent_engagement": {"type": "object"}
+        }
+      },
+      "DistrictAnalytics": {
+        "type": "object",
+        "properties": {
+          "district_id": {"type": "integer"},
+          "period": {"type": "string", "format": "date"},
+          "total_schools_active": {"type": "integer"},
+          "total_students_diagnosed": {"type": "integer"},
+          "avg_grade_gap": {"type": "number"},
+          "top_gaps": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

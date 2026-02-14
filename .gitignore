@@ -7,13 +7,16 @@
 # PROPRIETARY DATA (MUST NEVER COMMIT - BELONGS IN gapsense-data REPO)
 # ============================================================================
 
-# Prerequisite graph - CORE IP
-data/curriculum/prerequisite_graph*.json
-data/curriculum/cascade_paths.json
-data/curriculum/misconceptions_database.json
+# Prerequisite graph - CORE IP (block anywhere in repo)
+**/prerequisite_graph*.json
+**/cascade_paths.json
+**/misconceptions_database.json
+gapsense_prerequisite_graph*.json
+gapsense_prerequisite_graph*.mermaid
 
-# Prompt library - CORE IP
-data/prompts/prompt_library*.json
+# Prompt library - CORE IP (block anywhere in repo)
+**/prompt_library*.json
+gapsense_prompt_library*.json
 data/prompts/test_cases/*.json
 
 # Business documents - CONFIDENTIAL

@@ -1,0 +1,417 @@
+{
+  "metadata": {
+    "title": "GapSense WhatsApp Conversation Flows",
+    "version": "1.0.0",
+    "author": "Maku Mazakpe",
+    "created": "2026-02-13",
+    "license": "Proprietary IP",
+    "description": "Complete WhatsApp conversation flows for parent onboarding, 3-question diagnostic, activity delivery, check-ins, and teacher interactions. Includes exact message templates (require Meta pre-approval), button labels, and list options.",
+    "whatsapp_constraints": {
+      "template_messages": "Must be pre-approved by Meta. Used for initiating conversations.",
+      "interactive_buttons": "Max 3 buttons, max 20 chars per label",
+      "interactive_lists": "Max 10 items, max 24 chars per title, max 72 chars per description",
+      "text_messages": "Max 4096 chars. No markdown rendering.",
+      "session_window": "24 hours from last user message. After 24h, must use template message.",
+      "media": "Images max 5MB. Voice notes max 16MB."
+    }
+  },
+
+  "templates": {
+    "description": "WhatsApp message templates requiring Meta pre-approval. These initiate conversations or re-engage after 24h window.",
+    
+    "TMPL-ONBOARD-001": {
+      "name": "gapsense_welcome",
+      "language": "en",
+      "category": "UTILITY",
+      "header": {"type": "text", "text": "Welcome to GapSense! 📚"},
+      "body": "Hello! Your child's teacher at {{1}} has invited you to GapSense — a free tool that helps you support {{2}}'s learning with fun 3-minute activities.\n\nWould you like to get started?",
+      "footer": "Reply STOP to opt out anytime",
+      "buttons": [
+        {"type": "QUICK_REPLY", "text": "Yes, let's start! ✅"},
+        {"type": "QUICK_REPLY", "text": "Tell me more"},
+        {"type": "QUICK_REPLY", "text": "Not now"}
+      ],
+      "variables": ["{{1}} = school_name", "{{2}} = child_first_name"]
+    },
+
+    "TMPL-ONBOARD-001-TW": {
+      "name": "gapsense_welcome_twi",
+      "language": "tw",
+      "category": "UTILITY",
+      "body": "Akwaaba! {{2}} kyerɛkyerɛni wɔ {{1}} afrɛ wo GapSense ho — tool a ɛyɛ kwa a ɛboa wo sɛ wobɛboa {{2}} adesua mu wɔ simma 3 agorɔ mu.\n\nWopɛ sɛ yɛhyɛ ase?",
+      "buttons": [
+        {"type": "QUICK_REPLY", "text": "Aane, ma yɛnhyɛ ase!"},
+        {"type": "QUICK_REPLY", "text": "Ka bi kyerɛ me"},
+        {"type": "QUICK_REPLY", "text": "Ɛnyɛ seisei"}
+      ]
+    },
+
+    "TMPL-ACTIVITY-001": {
+      "name": "gapsense_activity",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}! 🌟\n\n{{2}} is doing great at {{3}}!\n\nHere's a fun 3-minute activity to help with the next step:\n\n{{4}}\n\nYou'll need: {{5}}\n\nTry it today and we'll check in on {{6}}!",
+      "variables": ["{{1}} = parent_name", "{{2}} = child_name", "{{3}} = strength", "{{4}} = activity_steps", "{{5}} = materials", "{{6}} = check_back_date"]
+    },
+
+    "TMPL-CHECKIN-001": {
+      "name": "gapsense_checkin",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}! How did the activity go with {{2}}? 😊",
+      "buttons": [
+        {"type": "QUICK_REPLY", "text": "We did it! ✅"},
+        {"type": "QUICK_REPLY", "text": "Not yet"},
+        {"type": "QUICK_REPLY", "text": "Need help"}
+      ],
+      "variables": ["{{1}} = parent_name", "{{2}} = child_name"]
+    },
+
+    "TMPL-REENGAGEMENT-001": {
+      "name": "gapsense_reengagement",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}! We have a new activity for {{2}} when you're ready. No pressure — reply anytime! 😊",
+      "buttons": [
+        {"type": "QUICK_REPLY", "text": "Send it!"},
+        {"type": "QUICK_REPLY", "text": "Maybe later"},
+        {"type": "QUICK_REPLY", "text": "Stop messages"}
+      ]
+    }
+  },
+
+  "flows": {
+
+    "FLOW-ONBOARD": {
+      "name": "Parent Onboarding",
+      "trigger": "Teacher registers parent phone number OR parent texts 'Hi' to GapSense number",
+      "estimated_messages": "4-6 messages over 2-5 minutes",
+      "steps": [
+        {
+          "step": 1,
+          "direction": "outbound",
+          "type": "template",
+          "template": "TMPL-ONBOARD-001",
+          "notes": "Uses template because this initiates the conversation. If parent's language is known, use L1 template variant."
+        },
+        {
+          "step": 2,
+          "direction": "inbound",
+          "type": "button_response",
+          "expected_responses": {
+            "yes_start": {
+              "next_step": 3,
+              "action": "Set parent.opted_in = true, opted_in_at = now()"
+            },
+            "tell_me_more": {
+              "next_step": "2b",
+              "action": "Send explanation message"
+            },
+            "not_now": {
+              "next_step": null,
+              "action": "Log interaction. Do NOT re-engage for 7 days."
+            }
+          }
+        },
+        {
+          "step": "2b",
+          "direction": "outbound",
+          "type": "text",
+          "message": "GapSense finds the exact building block your child needs next in maths — then gives you a simple 3-minute activity to help at home.\n\n✅ Free\n✅ No app needed\n✅ Just WhatsApp\n✅ Activities use things you have at home\n✅ Stop anytime\n\nWant to try it?",
+          "buttons": [
+            {"label": "Yes, let's go!", "value": "yes_start"},
+            {"label": "Not now", "value": "not_now"}
+          ]
+        },
+        {
+          "step": 3,
+          "direction": "outbound",
+          "type": "text",
+          "message": "Great! 🎉 Just a few quick questions.\n\nWhat is your child's first name?",
+          "notes": "Free-text response expected. No buttons."
+        },
+        {
+          "step": 4,
+          "direction": "inbound",
+          "type": "text",
+          "action": "Store as student.first_name",
+          "next_message": "Thanks! How old is {{child_name}}?",
+          "buttons": [
+            {"label": "5-6 years", "value": "5"},
+            {"label": "7-8 years", "value": "7"},
+            {"label": "9-10 years", "value": "9"},
+            {"label": "11+ years", "value": "11"}
+          ]
+        },
+        {
+          "step": 5,
+          "direction": "inbound",
+          "type": "button_response",
+          "action": "Store approximate age",
+          "next_message": "What class is {{child_name}} in?",
+          "list": {
+            "button_text": "Select class",
+            "sections": [
+              {
+                "title": "Primary",
+                "items": [
+                  {"title": "Class 1 (B1)", "value": "B1"},
+                  {"title": "Class 2 (B2)", "value": "B2"},
+                  {"title": "Class 3 (B3)", "value": "B3"},
+                  {"title": "Class 4 (B4)", "value": "B4"},
+                  {"title": "Class 5 (B5)", "value": "B5"},
+                  {"title": "Class 6 (B6)", "value": "B6"}
+                ]
+              },
+              {
+                "title": "JHS",
+                "items": [
+                  {"title": "JHS 1 (B7)", "value": "B7"},
+                  {"title": "JHS 2 (B8)", "value": "B8"},
+                  {"title": "JHS 3 (B9)", "value": "B9"}
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "step": 6,
+          "direction": "outbound",
+          "type": "text",
+          "message": "Last question — what language do you prefer?",
+          "buttons": [
+            {"label": "English", "value": "en"},
+            {"label": "Twi", "value": "tw"},
+            {"label": "Ewe", "value": "ee"},
+            {"label": "Other", "value": "other"}
+          ],
+          "notes": "If 'Other', ask for language name in free text. If Ga detected from Accra location, add Ga button."
+        },
+        {
+          "step": 7,
+          "direction": "outbound",
+          "type": "text",
+          "message": "All set! 🌟\n\n{{child_name}} is registered. We'll send a quick learning check soon to find the perfect activity for them.\n\nWe only use {{child_name}}'s first name and class to help them learn. Your info is private.\n\nThank you, {{parent_name}}!",
+          "action": "Create student record. Queue diagnostic session initiation."
+        }
+      ]
+    },
+
+    "FLOW-DIAGNOSTIC-WHATSAPP": {
+      "name": "WhatsApp Diagnostic Session (3-Question Quick Check)",
+      "trigger": "After onboarding OR teacher initiates OR scheduled re-assessment",
+      "estimated_messages": "8-12 messages over 5-10 minutes",
+      "notes": "WhatsApp diagnostic uses a simplified 3-question flow. The full 12-18 question diagnostic runs via web/app. The 3-question flow tests the 3 highest-priority nodes for the student's grade and produces a preliminary gap profile.",
+      "steps": [
+        {
+          "step": 1,
+          "direction": "outbound",
+          "type": "text",
+          "message": "Hi {{parent_name}}! Time for a quick learning check for {{child_name}}. 📝\n\nI'll ask 3 simple maths questions. You can help {{child_name}} answer, or let them try alone.\n\nReady?",
+          "buttons": [
+            {"label": "Ready! ✅", "value": "start"},
+            {"label": "Not now", "value": "later"}
+          ],
+          "notes": "If 'later', schedule reminder in 4 hours. Max 2 reminders then stop."
+        },
+        {
+          "step": 2,
+          "direction": "outbound",
+          "type": "text",
+          "message": "Question 1:\n\n{{question_1_text}}",
+          "notes": "Question generated by DIAG-001. For WhatsApp, questions are oral/text only. Image questions require photo response.",
+          "ai_prompt": "DIAG-001",
+          "response_handling": {
+            "text": "Process through DIAG-002",
+            "image": "Process through ANALYSIS-001 first, then DIAG-002",
+            "voice": "Transcribe via Whisper API, then process through ANALYSIS-002 + DIAG-002",
+            "timeout_5min": "Send gentle reminder: 'Take your time! When {{child_name}} is ready, just send the answer.'"
+          }
+        },
+        {
+          "step": 3,
+          "direction": "outbound",
+          "type": "text",
+          "message": "{{encouragement}} Question 2:\n\n{{question_2_text}}",
+          "notes": "Encouragement is ALWAYS positive regardless of Q1 result. 'Nice try!' or 'Great job!' — never 'That was wrong.'"
+        },
+        {
+          "step": 4,
+          "direction": "outbound",
+          "type": "text",
+          "message": "{{encouragement}} Last one! Question 3:\n\n{{question_3_text}}"
+        },
+        {
+          "step": 5,
+          "direction": "outbound",
+          "type": "text",
+          "ai_prompt": "DIAG-003",
+          "message": "{{parent_message_from_diag003}}",
+          "notes": "This is the dignity-first summary generated by DIAG-003. Includes strength statement, ONE building block, ONE activity, check-back timing. NEVER mentions scores, percentages, or 'behind'."
+        }
+      ]
+    },
+
+    "FLOW-ACTIVITY-DELIVERY": {
+      "name": "Activity Delivery & Follow-Up Cycle",
+      "trigger": "After diagnostic session completes OR after previous activity cycle completes",
+      "steps": [
+        {
+          "step": 1,
+          "direction": "outbound",
+          "type": "template",
+          "template": "TMPL-ACTIVITY-001",
+          "ai_prompt": "PARENT-001",
+          "notes": "Activity generated by PARENT-001 prompt. Uses template if outside 24h window."
+        },
+        {
+          "step": 2,
+          "wait": "3-5 days (configured in system_config.engagement.reminder_interval_days)",
+          "direction": "outbound",
+          "type": "template",
+          "template": "TMPL-CHECKIN-001",
+          "ai_prompt": "PARENT-002"
+        },
+        {
+          "step": 3,
+          "direction": "inbound",
+          "type": "button_response",
+          "expected_responses": {
+            "did_it": {
+              "response": "That's wonderful, {{parent_name}}! 🎉 {{child_name}} is building great skills. We'll send the next activity soon!",
+              "action": "Mark activity completed. Log positive engagement. Queue next activity in 2-3 days.",
+              "next_step": 1
+            },
+            "not_yet": {
+              "response": "No problem at all! Life gets busy. The activity is still here when you're ready. Would you like me to send it again?",
+              "buttons": [
+                {"label": "Yes, send again", "value": "resend"},
+                {"label": "Maybe next week", "value": "delay"}
+              ],
+              "action": "If resend: re-send activity. If delay: schedule reminder in 7 days."
+            },
+            "need_help": {
+              "response": "Of course! What part do you need help with?",
+              "action": "Route to free-text handler. AI processes the concern and provides clarification.",
+              "ai_prompt": "ANALYSIS-002 (if voice) or direct text processing"
+            }
+          }
+        }
+      ],
+      "cycle_rules": [
+        "Maximum 1 activity per student at a time",
+        "Maximum 3 outbound messages per parent per day",
+        "If parent doesn't respond to 2 consecutive check-ins, pause for 14 days",
+        "If parent says 'stop' or 'unsubscribe' at ANY point, immediately opt out",
+        "After 3 completed activities, trigger new diagnostic session to measure progress"
+      ]
+    },
+
+    "FLOW-EXERCISE-BOOK": {
+      "name": "Exercise Book Photo Analysis",
+      "trigger": "Parent sends unsolicited photo during conversation",
+      "steps": [
+        {
+          "step": 1,
+          "direction": "inbound",
+          "type": "image",
+          "action": "Download image from WhatsApp CDN → S3. Detect if it's an exercise book page."
+        },
+        {
+          "step": 2,
+          "direction": "outbound",
+          "type": "text",
+          "message": "Thanks for sharing {{child_name}}'s work! 📸 Let me take a look...",
+          "notes": "Immediate acknowledgment. AI processing happens async."
+        },
+        {
+          "step": 3,
+          "ai_prompt": "ANALYSIS-001",
+          "action": "Analyze image. Extract problems, identify errors, map to graph."
+        },
+        {
+          "step": 4,
+          "direction": "outbound",
+          "type": "text",
+          "message": "I can see {{child_name}}'s work! {{strength_from_analysis}}\n\n{{one_specific_observation}}\n\nWould you like an activity to help with this?",
+          "buttons": [
+            {"label": "Yes please!", "value": "activity"},
+            {"label": "Just looking", "value": "ok"}
+          ],
+          "notes": "Observation is specific: 'I noticed the carrying in addition is tricky' not 'There are errors.'"
+        }
+      ]
+    },
+
+    "FLOW-TEACHER-ONBOARD": {
+      "name": "Teacher Onboarding",
+      "trigger": "School admin registers teacher OR teacher texts GapSense number with code",
+      "steps": [
+        {
+          "step": 1,
+          "direction": "outbound",
+          "type": "text",
+          "message": "Welcome to GapSense, {{teacher_name}}! 📚\n\nI'm here to help you understand where each student's foundational skills are and give you actionable classroom activities.\n\nTo get started, I'll need your class list. You can:\n\n1️⃣ Share parent phone numbers (we'll invite them)\n2️⃣ Add students manually\n3️⃣ Upload a class list photo",
+          "buttons": [
+            {"label": "Share phones", "value": "phones"},
+            {"label": "Add manually", "value": "manual"},
+            {"label": "Photo of list", "value": "photo"}
+          ]
+        },
+        {
+          "step": 2,
+          "notes": "Branch based on teacher's choice. 'Share phones' is the fastest path — bulk invite parents."
+        }
+      ]
+    },
+
+    "FLOW-OPT-OUT": {
+      "name": "Opt-Out (immediate, no friction)",
+      "trigger": "Parent sends 'stop', 'unsubscribe', 'cancel', or presses Stop button at ANY point",
+      "steps": [
+        {
+          "step": 1,
+          "direction": "outbound",
+          "type": "text",
+          "message": "We've stopped all messages. Your data will be removed.\n\nIf you ever want to restart, just send us 'Hi'. Thank you, {{parent_name}}. 🙏",
+          "action": "Set parent.opted_out = true, opted_out_at = now(). Cancel all scheduled messages. Begin data deletion process."
+        }
+      ],
+      "rules": [
+        "Opt-out is INSTANT. No confirmation required. No 'Are you sure?'",
+        "All scheduled messages cancelled immediately",
+        "Data deletion begins within 24 hours",
+        "Cool-off period: 30 days before any re-engagement attempt",
+        "If parent texts 'Hi' after opt-out, treat as re-onboarding"
+      ]
+    }
+  },
+
+  "message_guidelines": {
+    "encouragement_phrases": {
+      "after_correct": [
+        "Well done! 🌟",
+        "Great job! ⭐",
+        "Excellent! 💪",
+        "That's right! 🎉"
+      ],
+      "after_incorrect": [
+        "Nice try! Let's keep going.",
+        "Good effort! Here's the next one.",
+        "Thanks for trying! Moving on."
+      ],
+      "never_say": [
+        "Wrong", "Incorrect", "No", "That's not right",
+        "Your child got X out of Y", "Score:", "Failed",
+        "Behind", "Below grade level", "Struggling"
+      ]
+    },
+    "timing_rules": {
+      "no_messages_before": "7:00 AM local time",
+      "no_messages_after": "8:00 PM local time",
+      "preferred_window": "4:00 PM - 7:00 PM (after school, before dinner)",
+      "weekend_ok": true,
+      "holiday_pause": "Pause during school holidays unless parent initiates"
+    }
+  }
+}

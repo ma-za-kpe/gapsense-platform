@@ -1,0 +1,397 @@
+{
+  "$schema": "GapSense Test Scenario Matrix v1.0",
+  "metadata": {
+    "description": "Acceptance test scenarios for GapSense. Each scenario defines inputs, expected outputs, and pass criteria.",
+    "version": "1.0.0",
+    "author": "Maku Mazakpe",
+    "last_updated": "2026-02-13"
+  },
+
+  "diagnostic_scenarios": [
+    {
+      "id": "TS-DIAG-001",
+      "name": "B5 student with Place Value Collapse (single cascade)",
+      "description": "A B5 student who counts fluently but has unitary place value thinking from B2. Should trace backward to B2.1.1.1 and identify Place Value Collapse.",
+      "student": {
+        "name": "Kwame",
+        "current_grade": "B5",
+        "age": 11,
+        "home_language": "tw"
+      },
+      "simulated_responses": [
+        { "question_node": "B4.1.1.1", "question": "Write 14,031 in expanded form", "response": "1+4+0+3+1", "correct": false },
+        { "question_node": "B2.1.1.1", "question": "In 347, what does the 4 mean?", "response": "4", "correct": false },
+        { "question_node": "B2.1.1.1", "question": "Which is bigger: 35 or 53?", "response": "53", "correct": true, "note": "Can compare but by rote, not place value" },
+        { "question_node": "B1.1.1.1", "question": "Count from 1 to 30", "response": "Counts correctly", "correct": true },
+        { "question_node": "B1.1.2.2", "question": "13 - 5 = ?", "response": "8", "correct": true },
+        { "question_node": "B2.1.2.2", "question": "3 × 4 = ?", "response": "12", "correct": true }
+      ],
+      "expected_outcome": {
+        "primary_root_gap": "B2.1.1.1",
+        "cascade_path": "Place Value Collapse",
+        "mastered_nodes": ["B1.1.1.1", "B1.1.2.2", "B2.1.2.2"],
+        "gap_nodes": ["B2.1.1.1", "B4.1.1.1"],
+        "estimated_functional_grade": "B1-B2",
+        "grade_gap_min": 3,
+        "recommended_focus": "B2.1.1.1",
+        "total_questions_max": 12,
+        "strengths_must_mention": ["counting", "subtraction", "multiplication"]
+      },
+      "pass_criteria": [
+        "Engine traces backward from B4 to B2.1.1.1",
+        "Engine does NOT continue testing B4-B5 content after B4 failure",
+        "Engine cross-checks at least one other cascade path",
+        "Root gap is B2.1.1.1 with confidence >= 0.80",
+        "Strengths summary mentions counting and basic operations",
+        "Total questions <= 12"
+      ]
+    },
+    {
+      "id": "TS-DIAG-002",
+      "name": "B4 student with Fraction-as-Two-Numbers (single cascade)",
+      "description": "B4 student with solid number sense and operations but treats fractions as two separate numbers.",
+      "student": {
+        "name": "Ama",
+        "current_grade": "B4",
+        "age": 10,
+        "home_language": "en"
+      },
+      "simulated_responses": [
+        { "question_node": "B2.1.1.1", "question": "In 347, what does the 4 mean?", "response": "40", "correct": true },
+        { "question_node": "B1.1.2.2", "question": "52 - 37 = ?", "response": "15", "correct": true },
+        { "question_node": "B2.1.2.2", "question": "6 × 7 = ?", "response": "42", "correct": true },
+        { "question_node": "B2.1.3.1", "question": "Is 3/4 more or less than 1/2?", "response": "Less, because 3 is less than... I'm not sure", "correct": false },
+        { "question_node": "B2.1.3.1", "question": "If you cut a cake into 4 equal pieces and eat 1 piece, what fraction did you eat?", "response": "1/4", "correct": true, "note": "Basic fraction concept OK" },
+        { "question_node": "B2.1.3.1", "question": "Which is bigger: 1/8 or 1/4?", "response": "1/8 because 8 is bigger than 4", "correct": false }
+      ],
+      "expected_outcome": {
+        "primary_root_gap": "B2.1.3.1",
+        "cascade_path": "Fraction-as-Two-Numbers Collapse",
+        "mastered_nodes": ["B2.1.1.1", "B1.1.2.2", "B2.1.2.2"],
+        "gap_nodes": ["B2.1.3.1"],
+        "misconception_detected": "MC-B2.1.3.1-02",
+        "estimated_functional_grade": "B2",
+        "recommended_focus": "B2.1.3.1",
+        "strengths_must_mention": ["place value", "operations", "basic fraction naming"]
+      },
+      "pass_criteria": [
+        "Engine identifies partial understanding (can name fractions but can't compare)",
+        "Engine detects MC-B2.1.3.1-02 (larger denominator = larger fraction)",
+        "Engine does NOT flag place value or operations cascades",
+        "Strengths summary acknowledges correct basic fraction naming"
+      ]
+    },
+    {
+      "id": "TS-DIAG-003",
+      "name": "B3 student with MULTIPLE concurrent cascades",
+      "description": "Severe case: B3 student with both place value AND subtraction gaps.",
+      "student": {
+        "name": "Kofi",
+        "current_grade": "B3",
+        "age": 9,
+        "home_language": "dag"
+      },
+      "simulated_responses": [
+        { "question_node": "B2.1.1.1", "question": "In 47, what does the 4 mean?", "response": "4", "correct": false },
+        { "question_node": "B2.1.1.1", "question": "Is 35 or 53 bigger? Why?", "response": "53... because it's just bigger", "correct": true, "note": "Correct but no place value reasoning" },
+        { "question_node": "B1.1.2.2", "question": "What is 15 - 8?", "response": "Counts on fingers... 7", "correct": true, "note": "Correct but very slow, finger-counting" },
+        { "question_node": "B2.1.2.1", "question": "What is 52 - 37?", "response": "25", "correct": false, "note": "Column reversal: 5-3=2, 7-2=5" },
+        { "question_node": "B2.1.2.2", "question": "3 × 4 = ?", "response": "Counts 4, 8, 12... 12!", "correct": true, "note": "Correct via skip counting, not memorised" },
+        { "question_node": "B2.1.3.1", "question": "Cut paper in half, how much is coloured?", "response": "Half", "correct": true }
+      ],
+      "expected_outcome": {
+        "primary_root_gap": "B2.1.1.1",
+        "cascade_path": "Place Value Collapse",
+        "secondary_gaps": ["B2.1.2.1"],
+        "mastered_nodes_includes": ["B1.1.2.2", "B2.1.2.2", "B2.1.3.1"],
+        "estimated_functional_grade": "B1-B2",
+        "recommended_focus": "B2.1.1.1",
+        "note": "Place value must be fixed FIRST because B2.1.2.1 regrouping requires place value understanding"
+      },
+      "pass_criteria": [
+        "Engine identifies B2.1.1.1 as primary and B2.1.2.1 as secondary",
+        "Engine recognises subtraction reversal in 52-37=25 as conceptual not careless",
+        "Engine notes that multiplication is conceptual (skip counting) not memorised",
+        "Recommended focus is B2.1.1.1 (not B2.1.2.1) because it's prerequisite",
+        "Engine detects TWO concurrent cascade paths"
+      ]
+    },
+    {
+      "id": "TS-DIAG-004",
+      "name": "B6 student who is ON GRADE LEVEL (no significant gaps)",
+      "description": "Important edge case: a student who is actually performing well. System should confirm and not create phantom gaps.",
+      "student": {
+        "name": "Adjoa",
+        "current_grade": "B6",
+        "age": 12,
+        "home_language": "en"
+      },
+      "simulated_responses": [
+        { "question_node": "B2.1.1.1", "question": "In 4,207, what does the 2 mean?", "response": "200", "correct": true },
+        { "question_node": "B2.1.2.2", "question": "8 × 7 = ?", "response": "56", "correct": true },
+        { "question_node": "B2.1.3.1", "question": "Which is bigger: 3/4 or 2/3?", "response": "3/4... because if you make them same bottom, 9/12 and 8/12", "correct": true },
+        { "question_node": "B4.1.3.1", "question": "1/3 + 1/4 = ?", "response": "7/12", "correct": true },
+        { "question_node": "B5.1.3.1", "question": "2/3 of 45 = ?", "response": "30", "correct": true },
+        { "question_node": "B5.1.2.1", "question": "What is the LCM of 12 and 18?", "response": "36", "correct": true }
+      ],
+      "expected_outcome": {
+        "primary_root_gap": null,
+        "cascade_path": null,
+        "estimated_functional_grade": "B5-B6",
+        "grade_gap": 0,
+        "recommended_action": "Test B6-level content to confirm, then suggest enrichment"
+      },
+      "pass_criteria": [
+        "Engine does NOT fabricate a gap where none exists",
+        "Engine confirms mastery across all screened nodes",
+        "Engine suggests testing grade-level content (not backward tracing)",
+        "Strengths summary is comprehensive and encouraging"
+      ]
+    },
+    {
+      "id": "TS-DIAG-005",
+      "name": "B7 JHS student with Additive-to-Multiplicative Failure",
+      "description": "JHS student who can do arithmetic but fails at ratios and proportion because multiplication was never conceptually understood.",
+      "student": {
+        "name": "Mensah",
+        "current_grade": "B7",
+        "age": 13,
+        "home_language": "ga"
+      },
+      "simulated_responses": [
+        { "question_node": "B2.1.1.1", "question": "Place value check", "response": "Correct", "correct": true },
+        { "question_node": "B2.1.2.2", "question": "What does 4 × 6 mean?", "response": "24... it means... just 24", "correct": true, "note": "Knows product but cannot explain as repeated addition or groups" },
+        { "question_node": "B3.1.2.1", "question": "If one box has 8 pencils, how many in 5 boxes?", "response": "Counts: 8, 16, 24, 32, 40", "correct": true, "note": "Still using repeated addition, not multiplicative reasoning" },
+        { "question_node": "B7.1.4.1", "question": "If 3 workers paint a room in 6 hours, how long for 6 workers?", "response": "12 hours", "correct": false, "note": "Applied direct proportion when should be inverse" },
+        { "question_node": "B5.1.2.1", "question": "What are all the factors of 24?", "response": "1, 2, 3, 4, 6, 8, 24", "correct": true }
+      ],
+      "expected_outcome": {
+        "primary_root_gap": "B2.1.2.2 (conceptual understanding)",
+        "cascade_path": "Additive-to-Multiplicative Transition Failure",
+        "note": "Tricky case: student gets multiplication ANSWERS correct but doesn't understand multiplication conceptually. Engine must distinguish procedural from conceptual mastery."
+      },
+      "pass_criteria": [
+        "Engine probes CONCEPTUAL understanding of multiplication, not just procedural",
+        "Engine recognises that correct products don't mean conceptual mastery",
+        "Engine identifies additive-to-multiplicative cascade",
+        "Engine notes the inverse proportion error as evidence of additive thinking"
+      ]
+    }
+  ],
+
+  "parent_engagement_scenarios": [
+    {
+      "id": "TS-PARENT-001",
+      "name": "First report to semi-literate Twi-speaking parent",
+      "input": {
+        "parent": { "name": "Maame Ama", "language": "tw", "literacy": "semi_literate" },
+        "child": { "name": "Kofi", "grade": "B4", "age": 10 },
+        "gap_profile": {
+          "strengths": "Counts confidently to 100, adds and subtracts single-digit numbers correctly",
+          "primary_gap": "B2.1.1.1 — Place value decomposition",
+          "activity": "Bundle 10 sticks, ask how many sticks in 3 bundles and 4 loose"
+        }
+      },
+      "pass_criteria": [
+        "Message is in Twi (natural spoken, not formal)",
+        "Leads with what Kofi CAN do (counting, addition)",
+        "Does NOT say 'behind', 'struggling', 'gap', 'deficit'",
+        "Exactly ONE activity described",
+        "Activity uses locally available materials (sticks, rubber bands)",
+        "Under 200 words (semi-literate adjustment)",
+        "Includes specific timing suggestion ('after dinner tonight')",
+        "Mentions 3-day check-in",
+        "Voice note recommended as alternative",
+        "GUARD-001 approves the message"
+      ]
+    },
+    {
+      "id": "TS-PARENT-002",
+      "name": "Check-in when parent DID the activity",
+      "input": {
+        "parent": { "name": "Mrs. Mensah", "language": "en", "literacy": "literate" },
+        "child": { "name": "Ama", "grade": "B5" },
+        "activity_sent": "Paper folding for fraction equivalence",
+        "parent_response": "We did it! She understood half = 2 quarters"
+      },
+      "pass_criteria": [
+        "Brief celebration (not overblown)",
+        "Acknowledges specific progress mentioned by parent",
+        "Offers next-level activity OR schedules follow-up diagnostic",
+        "Under 100 words",
+        "Warm, casual tone"
+      ]
+    },
+    {
+      "id": "TS-PARENT-003",
+      "name": "Check-in when parent DID NOT do the activity",
+      "input": {
+        "parent": { "name": "Auntie Efua", "language": "ee", "literacy": "semi_literate" },
+        "child": { "name": "Edem", "grade": "B3" },
+        "activity_sent": "Counting bottle caps in groups",
+        "parent_response": "Not yet"
+      },
+      "pass_criteria": [
+        "NO guilt-tripping ('we understand', 'life is busy')",
+        "Offers to remind tomorrow",
+        "Suggests specific time ('after dinner', 'before bed')",
+        "Does NOT repeat the full activity",
+        "In Ewe language",
+        "Under 80 words"
+      ]
+    },
+    {
+      "id": "TS-PARENT-004",
+      "name": "Compliance guard REJECTS bad message",
+      "input": {
+        "message": "Hello Maame Ama. We tested Kofi and he is performing below grade level. He is struggling with basic mathematics and needs immediate remediation. His assessment score was 35%. Please do these 3 activities: (1) counting, (2) addition drills, (3) place value worksheets."
+      },
+      "pass_criteria": [
+        "GUARD-001 rejects with MULTIPLE issues",
+        "Flags: 'below grade level' (deficit language)",
+        "Flags: 'struggling' (deficit language)",
+        "Flags: 'remediation' (jargon)",
+        "Flags: '35%' (score disclosure)",
+        "Flags: 3 activities (violates single-activity rule)",
+        "Flags: 'worksheets' (requires materials family may not have)",
+        "Flags: no strength-first framing"
+      ]
+    }
+  ],
+
+  "conversation_flow_scenarios": [
+    {
+      "id": "TS-FLOW-001",
+      "name": "Complete onboarding → 3-question screen → first activity",
+      "description": "End-to-end happy path from new parent's first message to receiving their first activity.",
+      "steps": [
+        { "parent_says": "Hi", "system_does": "Sends welcome message with buttons: Yes let's go / Tell me more" },
+        { "parent_says": "[clicks: Yes let's go]", "system_does": "Sends consent message with opt-in buttons" },
+        { "parent_says": "[clicks: Yes I agree]", "system_does": "Records opt-in, asks child's name" },
+        { "parent_says": "Kofi", "system_does": "Records name, shows grade selection list" },
+        { "parent_says": "[selects: B4]", "system_does": "Records grade, shows language selection" },
+        { "parent_says": "[selects: Twi]", "system_does": "Switches to Twi, asks if ready for game" },
+        { "parent_says": "[clicks: Let's play]", "system_does": "Sends first screening question (B2.1.1.1 place value)" },
+        { "parent_says": "4", "system_does": "Flags place value gap, sends second question (subtraction)" },
+        { "parent_says": "8", "system_does": "Subtraction OK, sends third question (fractions)" },
+        { "parent_says": "Half", "system_does": "Fractions OK, sends completion message" },
+        { "system_does": "Triggers deeper diagnostic on place value cascade" },
+        { "system_does": "Generates parent report (Twi, semi_literate assumed until confirmed)" },
+        { "system_does": "Runs GUARD-001 compliance check" },
+        { "system_does": "Sends activity via WhatsApp" }
+      ],
+      "pass_criteria": [
+        "Entire flow completes in under 10 messages",
+        "Consent is collected before any data",
+        "Language switches after selection",
+        "3-question screen correctly identifies place value cascade",
+        "Deeper diagnostic triggered automatically",
+        "First activity arrives within 5 minutes of screening completion"
+      ]
+    },
+    {
+      "id": "TS-FLOW-002",
+      "name": "Parent types STOP mid-diagnostic",
+      "description": "Parent opts out during a diagnostic session.",
+      "steps": [
+        { "parent_says": "STOP", "during": "diagnostic_session" },
+        { "system_does": "Immediately stops messaging" },
+        { "system_does": "Marks parent as opted_out" },
+        { "system_does": "Marks diagnostic session as abandoned" },
+        { "system_does": "Sends single confirmation: 'We've stopped messages. You can rejoin anytime by messaging us.'" },
+        { "system_does": "Sets 30-day cool-off period" }
+      ],
+      "pass_criteria": [
+        "No further messages sent after STOP",
+        "Diagnostic session properly cleaned up",
+        "Parent record updated with opt-out timestamp",
+        "No re-engagement attempts for 30 days"
+      ]
+    },
+    {
+      "id": "TS-FLOW-003",
+      "name": "Parent sends irrelevant message during diagnostic",
+      "description": "Parent sends off-topic text while diagnostic is in progress.",
+      "steps": [
+        { "context": "Diagnostic in progress, waiting for answer to 'What is 47-29?'" },
+        { "parent_says": "Please when is school reopening?", "system_does": "Acknowledges, gently redirects to diagnostic question" },
+        { "parent_says": "ok sorry. 18", "system_does": "Processes answer normally, continues diagnostic" }
+      ],
+      "pass_criteria": [
+        "System does not crash on unexpected input",
+        "System acknowledges the off-topic message politely",
+        "System re-presents the diagnostic question",
+        "Session state is maintained correctly",
+        "Subsequent valid answer is processed normally"
+      ]
+    }
+  ],
+
+  "api_endpoint_scenarios": [
+    {
+      "id": "TS-API-001",
+      "name": "Create student → start diagnostic → complete diagnostic → get gap profile",
+      "description": "Full API integration test for the diagnostic lifecycle",
+      "steps": [
+        { "method": "POST", "endpoint": "/v1/parents", "body": { "phone": "+233201234567" }, "expect": 201 },
+        { "method": "POST", "endpoint": "/v1/students", "body": { "first_name": "Kwame", "current_grade": "B5", "primary_parent_id": "{{parent_id}}" }, "expect": 201 },
+        { "method": "POST", "endpoint": "/v1/diagnostic/sessions", "body": { "student_id": "{{student_id}}", "initiated_by": "teacher", "channel": "web" }, "expect": 201, "response_contains": ["session", "first_question"] },
+        { "method": "POST", "endpoint": "/v1/diagnostic/sessions/{{session_id}}/respond", "body": { "student_response": "4" }, "expect": 200, "response_contains": ["action", "analysis"] },
+        { "note": "Continue responding until action=final_profile" },
+        { "method": "GET", "endpoint": "/v1/students/{{student_id}}/gap-profiles", "expect": 200, "response_contains": ["primary_gap_node", "strengths_summary"] }
+      ]
+    },
+    {
+      "id": "TS-API-002",
+      "name": "WhatsApp webhook verification handshake",
+      "steps": [
+        { "method": "GET", "endpoint": "/v1/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=correct_token&hub.challenge=test123", "expect": 200, "response_body": "test123" },
+        { "method": "GET", "endpoint": "/v1/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=wrong_token&hub.challenge=test123", "expect": 403 }
+      ]
+    },
+    {
+      "id": "TS-API-003",
+      "name": "Curriculum graph traversal",
+      "steps": [
+        { "method": "GET", "endpoint": "/v1/curriculum/nodes/B2.1.1.1", "expect": 200, "response_contains": ["severity", "prerequisites", "common_misconceptions"] },
+        { "method": "GET", "endpoint": "/v1/curriculum/nodes/B4.1.3.1/prerequisites?max_depth=4", "expect": 200, "note": "Should return chain: B4.1.3.1 → B3.1.3.1 → B2.1.3.1 → B1.1.3.1" },
+        { "method": "GET", "endpoint": "/v1/curriculum/nodes/B2.1.1.1/dependents", "expect": 200, "note": "Should return all downstream nodes blocked by place value gap" }
+      ]
+    }
+  ],
+
+  "data_integrity_scenarios": [
+    {
+      "id": "TS-DATA-001",
+      "name": "Only one current gap profile per student",
+      "description": "When a new diagnostic completes, the old profile's is_current should flip to false",
+      "steps": [
+        "Complete diagnostic for student → creates gap_profile with is_current=true",
+        "Complete SECOND diagnostic for same student → creates new gap_profile with is_current=true",
+        "Verify: first profile now has is_current=false",
+        "Verify: student.latest_gap_profile_id points to second profile"
+      ]
+    },
+    {
+      "id": "TS-DATA-002",
+      "name": "Prerequisite graph has no cycles",
+      "description": "The DAG must remain acyclic. A cycle would cause infinite backward tracing.",
+      "steps": [
+        "Run cycle detection algorithm on all curriculum_prerequisites edges",
+        "Verify: no cycles found",
+        "Verify: all edges go from higher grade to lower grade OR same grade"
+      ]
+    },
+    {
+      "id": "TS-DATA-003",
+      "name": "Wolf/Aurino system config enforced",
+      "description": "System config values that govern parent communication must never be changed to unsafe values",
+      "checks": [
+        "wolf_aurino.never_generic_messages must equal 'true'",
+        "wolf_aurino.strength_first_framing must equal 'true'",
+        "wolf_aurino.single_focus_activity must equal 'true'",
+        "engagement.max_messages_per_day must be <= 3"
+      ]
+    }
+  ]
+}
