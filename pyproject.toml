@@ -157,6 +157,7 @@ severity = "medium"
 min_confidence = 80
 paths = ["src"]
 exclude = ["tests/", "migrations/"]
+ignore_names = ["cls"]  # Required by Pydantic validators
 
 # ============================================================================
 # DEPTRY - Dependency Management
@@ -164,15 +165,6 @@ exclude = ["tests/", "migrations/"]
 
 [tool.deptry]
 extend_exclude = ["tests", "migrations", "infrastructure"]
-# Dependencies used in future modules (API routes, workers) not yet implemented
-ignore_unused = [
-    "asyncpg",          # Used by SQLAlchemy async driver (indirect)
-    "alembic",          # Used for migrations via CLI
-    "anthropic",        # Used in future AI diagnostic modules
-    "httpx",            # Used in future API client modules
-    "aiobotocore",      # Used in future S3 media upload modules
-    "python-jose",      # Used in future auth modules
-    "structlog",        # Used in future logging modules
-    "python-multipart", # Used by FastAPI file uploads (indirect)
-    "aiofiles",         # Used in future file handling modules
-]
+known_first_party = ["gapsense"]
+# Per-rule ignores for dependencies used in future modules or indirectly
+per_rule_ignores = { DEP002 = ["asyncpg", "alembic", "anthropic", "httpx", "aiobotocore", "python-jose", "structlog", "python-multipart", "aiofiles"] }
