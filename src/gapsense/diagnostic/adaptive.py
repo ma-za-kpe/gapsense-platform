@@ -164,8 +164,44 @@ class AdaptiveDiagnosticEngine:
         Returns:
             Cross-check node, or None if not needed
         """
-        # TODO: Implement cascade path detection and cross-checking
-        # For now, return None (cross-checking disabled)
+        from sqlalchemy import select
+
+        from gapsense.core.models import CascadePath, CurriculumNode
+
+        if not self.session.root_gap_node_id:
+            return None
+
+        # Get the cascade path containing the root gap
+        cascade_result = await self.db.execute(select(CascadePath))
+        all_cascades = cascade_result.scalars().all()
+
+        root_gap_cascade = None
+        for cascade in all_cascades:
+            if self.session.root_gap_node_id in cascade.node_sequence:
+                root_gap_cascade = cascade
+                break
+
+        if not root_gap_cascade:
+            return None
+
+        # Find a different cascade to cross-check
+        for cascade in all_cascades:
+            if cascade.id == root_gap_cascade.id:
+                continue  # Skip same cascade
+
+            # Get entry point node from different cascade
+            if cascade.diagnostic_entry_point:
+                node_result = await self.db.execute(
+                    select(CurriculumNode).where(
+                        CurriculumNode.id == cascade.diagnostic_entry_point
+                    )
+                )
+                entry_node = node_result.scalar_one_or_none()
+
+                # Only use if not already tested
+                if entry_node and entry_node.id not in self.session.nodes_tested:
+                    return entry_node
+
         return None
 
     async def _should_cross_check(self) -> bool:
@@ -184,7 +220,7 @@ class AdaptiveDiagnosticEngine:
 
         from sqlalchemy import select
 
-        from gapsense.core.models import CurriculumNode
+        from gapsense.core.models import CascadePath, CurriculumNode
 
         result = await self.db.execute(
             select(CurriculumNode).where(CurriculumNode.id == self.session.root_gap_node_id)
@@ -197,9 +233,16 @@ class AdaptiveDiagnosticEngine:
         if self.session.total_questions < 8:
             return False
 
-        # Check if already cross-checked (simplified - check if tested nodes from multiple strands)
-        # TODO: Proper cascade path tracking
-        return False
+        # Check if already cross-checked by seeing if cascade_path_id is set
+        if self.session.cascade_path_id is not None:
+            return False  # Already identified primary cascade
+
+        # Check if there are other cascades available to cross-check
+        result = await self.db.execute(select(CascadePath))
+        all_cascades = result.scalars().all()
+
+        # Need at least 2 cascades for cross-checking
+        return len(all_cascades) >= 2
 
     def _count_questions_for_node(self, node_id: UUID) -> int:
         """Count questions asked for a specific node.
@@ -211,6 +254,28 @@ class AdaptiveDiagnosticEngine:
             Number of questions asked for this node
         """
         return self.session.nodes_tested.count(node_id) if self.session.nodes_tested else 0
+
+    async def identify_cascade_path(self, node_id: UUID) -> int | None:
+        """Identify which cascade path a node belongs to.
+
+        Args:
+            node_id: Node to check
+
+        Returns:
+            Cascade path ID if found, None otherwise
+        """
+        from sqlalchemy import select
+
+        from gapsense.core.models import CascadePath
+
+        result = await self.db.execute(select(CascadePath))
+        all_cascades = result.scalars().all()
+
+        for cascade in all_cascades:
+            if node_id in cascade.node_sequence:
+                return cascade.id
+
+        return None
 
     async def update_session_state(self, node_id: UUID, is_correct: bool) -> dict[str, str | float]:
         """Update session state after answer submission.

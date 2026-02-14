@@ -64,6 +64,7 @@ class GapProfileAnalyzer:
         grade_gap = self._calculate_grade_gap(student.current_grade, estimated_grade)
         recommended_focus = await self._determine_focus_node()
         overall_confidence = self._calculate_confidence()
+        primary_cascade = await self._identify_primary_cascade()
 
         # Create gap profile
         gap_profile = GapProfile(
@@ -73,7 +74,7 @@ class GapProfileAnalyzer:
             gap_nodes=self.session.nodes_gap or [],
             uncertain_nodes=[],  # TODO: Track uncertain nodes
             primary_gap_node=primary_gap_node,
-            primary_cascade=None,  # TODO: Detect cascade path
+            primary_cascade=primary_cascade,
             secondary_gaps=[],  # TODO: Identify secondary gaps
             recommended_focus_node=recommended_focus,
             recommended_activity=None,  # TODO: Generate activity recommendation
@@ -160,6 +161,30 @@ class GapProfileAnalyzer:
             return max(0, gap)  # Never negative
         except (ValueError, IndexError):
             return None
+
+    async def _identify_primary_cascade(self) -> str | None:
+        """Identify the primary cascade path containing the root gap.
+
+        Returns:
+            Cascade path name if identified, None otherwise
+        """
+        if not self.session.root_gap_node_id:
+            return None
+
+        from sqlalchemy import select
+
+        from gapsense.core.models import CascadePath
+
+        # Get all cascade paths
+        result = await self.db.execute(select(CascadePath))
+        all_cascades = result.scalars().all()
+
+        # Find cascade containing the root gap node
+        for cascade in all_cascades:
+            if self.session.root_gap_node_id in cascade.node_sequence:
+                return cascade.name
+
+        return None
 
     async def _determine_focus_node(self) -> UUID | None:
         """Determine which node student should work on first.
