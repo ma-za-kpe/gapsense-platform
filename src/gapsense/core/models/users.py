@@ -127,7 +127,7 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
 # Event listener to ensure opted_out defaults to False for in-memory objects
 @event.listens_for(Parent, "init", propagate=True)
-def receive_init_parent(target, args, kwargs):  # type: ignore[no-untyped-def]
+def receive_init_parent(target, _args, kwargs):  # type: ignore[no-untyped-def]
     """Ensure opted_out defaults to False if not provided."""
     if "opted_out" not in kwargs:
         target.opted_out = False

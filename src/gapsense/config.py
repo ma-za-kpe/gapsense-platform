@@ -91,7 +91,7 @@ class Settings(BaseSettings):
 
     @field_validator("GAPSENSE_DATA_PATH", mode="before")
     @classmethod
-    def validate_data_path(cls, v: str | Path) -> Path:
+    def validate_data_path(cls: type[Settings], v: str | Path) -> Path:  # noqa: ARG003
         """Convert string to Path and validate existence."""
         path = Path(v) if isinstance(v, str) else v
 

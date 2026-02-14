@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "gapsense.main:app",
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec B104 - Intentional for containerized deployment
         port=8000,
         reload=settings.DEBUG,
         log_level=settings.LOG_LEVEL.lower(),

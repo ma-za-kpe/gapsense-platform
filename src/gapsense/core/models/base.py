@@ -58,14 +58,14 @@ class TimestampMixin:
 
 # Event listeners to auto-generate UUIDs and timestamps for in-memory objects
 @event.listens_for(UUIDPrimaryKeyMixin, "init", propagate=True)
-def receive_init_uuid(target, args, kwargs):  # type: ignore[no-untyped-def]
+def receive_init_uuid(target, _args, kwargs):  # type: ignore[no-untyped-def]
     """Auto-generate UUID on instance creation if not provided."""
     if "id" not in kwargs:
         target.id = uuid4()
 
 
 @event.listens_for(TimestampMixin, "init", propagate=True)
-def receive_init_timestamps(target, args, kwargs):  # type: ignore[no-untyped-def]
+def receive_init_timestamps(target, _args, kwargs):  # type: ignore[no-untyped-def]
     """Auto-generate timestamps on instance creation if not provided."""
     now = datetime.now(UTC)
     if "created_at" not in kwargs:
