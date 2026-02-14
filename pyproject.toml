@@ -32,6 +32,11 @@ factory-boy = "^3.3"
 mypy = "^1.14"
 ruff = "^0.9"
 pre-commit = "^4.0"
+bandit = "^1.7"
+safety = "^3.0"
+detect-secrets = "^1.4"
+vulture = "^2.11"
+deptry = "^0.19"
 
 [build-system]
 requires = ["poetry-core"]
@@ -65,6 +70,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]  # Allow assert in tests
+"src/gapsense/core/models/*" = ["TC003"]  # datetime/UUID used at runtime in SQLAlchemy
+"src/gapsense/ai/prompt_loader.py" = ["TC003"]  # Path used at runtime
 
 [tool.ruff.lint.isort]
 known-first-party = ["gapsense"]
@@ -132,3 +139,28 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "@abstractmethod",
 ]
+
+# ============================================================================
+# BANDIT - Security Linter
+# ============================================================================
+
+[tool.bandit]
+exclude_dirs = ["tests", "migrations"]
+skips = ["B101"]  # Allow assert in tests (redundant with exclude_dirs)
+severity = "medium"
+
+# ============================================================================
+# VULTURE - Dead Code Detection
+# ============================================================================
+
+[tool.vulture]
+min_confidence = 80
+paths = ["src"]
+exclude = ["tests/", "migrations/"]
+
+# ============================================================================
+# DEPTRY - Dependency Management
+# ============================================================================
+
+[tool.deptry]
+extend_exclude = ["tests", "migrations", "infrastructure"]

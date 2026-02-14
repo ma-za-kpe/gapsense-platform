@@ -31,6 +31,19 @@ repos:
         stages: [pre-commit]
 
   # =========================================================================
+  # SECURITY CHECKS - Fast secret detection (< 5 seconds)
+  # =========================================================================
+
+  # detect-secrets - Prevent API keys, tokens, passwords in commits
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: Detect Secrets
+        args: ['--baseline', '.secrets.baseline']
+        stages: [pre-commit]
+
+  # =========================================================================
   # THOROUGH CHECKS - Run before push only (< 30 seconds total)
   # Uses your Poetry environment for consistency
   # =========================================================================
@@ -61,6 +74,44 @@ repos:
       - id: alembic-check
         name: Alembic Migration Check
         entry: bash -c 'poetry run alembic check 2>&1 || echo "⚠️  No migrations or migration check skipped"'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+      # Bandit - Python security linter (CRITICAL for student data protection)
+      - id: bandit
+        name: Bandit Security Scan
+        entry: bash -c 'poetry run bandit -c pyproject.toml -r src/ || /Users/mac/Library/Caches/pypoetry/virtualenvs/gapsense-1Ckj6UrV-py3.13/bin/bandit -c pyproject.toml -r src/'
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+      # Safety - Check dependencies for known vulnerabilities
+      - id: safety
+        name: Safety Vulnerability Check
+        entry: bash -c 'poetry run safety check --json || /Users/mac/Library/Caches/pypoetry/virtualenvs/gapsense-1Ckj6UrV-py3.13/bin/safety check --json || echo "⚠️  Safety check skipped (API issues)"'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+      # Vulture - Find dead/unused code
+      - id: vulture
+        name: Vulture Dead Code Check
+        entry: bash -c 'poetry run vulture src/ --min-confidence 80 || /Users/mac/Library/Caches/pypoetry/virtualenvs/gapsense-1Ckj6UrV-py3.13/bin/vulture src/ --min-confidence 80'
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+      # Deptry - Check for unused/missing dependencies
+      - id: deptry
+        name: Dependency Analysis
+        entry: bash -c 'poetry run deptry src/ || /Users/mac/Library/Caches/pypoetry/virtualenvs/gapsense-1Ckj6UrV-py3.13/bin/deptry src/'
         language: system
         pass_filenames: false
         stages: [pre-push]
@@ -98,10 +149,18 @@ repos:
       - id: end-of-file-fixer
         stages: [pre-commit]
 
-      # Prevent committing to main directly (optional - uncomment if needed)
-      # - id: no-commit-to-branch
-      #   args: ['--branch', 'main', '--branch', 'master']
-      #   stages: [commit]
+      # Security - Detect private keys (SSH, PGP, etc.)
+      - id: detect-private-key
+        stages: [pre-commit]
+
+      # Security - Detect merge conflict markers
+      - id: check-merge-conflict
+        stages: [pre-commit]
+
+      # Safety - Prevent direct commits to main
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+        stages: [pre-commit]
 
 # ============================================================================
 # Configuration

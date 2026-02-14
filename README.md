@@ -86,34 +86,45 @@ gapsense-platform/
 ### Local Development
 
 ```bash
-# 1. Clone repo
+# 1. Clone repos (platform + data)
 git clone https://github.com/ma-za-kpe/gapsense-platform.git
 cd gapsense-platform
 
-# 2. Set up environment
-cp .env.example .env
-# Edit .env with your API keys
+# Clone data repo (sibling directory)
+cd ..
+git clone https://github.com/ma-za-kpe/gapsense-data.git  # Private repo
+cd gapsense-platform
 
-# 3. Set data path
-export GAPSENSE_DATA_PATH=/path/to/gapsense-data
+# 2. Run setup script
+./scripts/setup.sh
+# This will:
+# - Install Poetry if needed
+# - Install dependencies
+# - Create .env file
+# - Verify gapsense-data repo exists
 
-# 4. Install dependencies
-poetry install
+# 3. Edit .env with your API keys
+nano .env
 
-# 5. Start services
-docker compose up -d
+# 4. Start services
+docker-compose up -d postgres
 
-# 6. Run migrations
-poetry run alembic upgrade head
+# 5. Run migrations
+./scripts/migrate.sh up
 
-# 7. Load prerequisite graph
+# 6. Load curriculum data
 poetry run python scripts/load_curriculum.py
 
-# 8. Run tests
-poetry run pytest
+# 7. Verify everything works (linting, tests, type checking)
+./scripts/verify.sh
 
-# API will be available at http://localhost:8000
-# Docs at http://localhost:8000/docs
+# 8. Start development server
+./scripts/run_dev.sh
+
+# API will be available at:
+# - API: http://localhost:8000
+# - Docs: http://localhost:8000/docs
+# - Health: http://localhost:8000/health
 ```
 
 ---
@@ -152,18 +163,115 @@ poetry run mypy src/gapsense --strict
 poetry run pre-commit run --all-files
 ```
 
+### Git Hooks
+
+**Automated quality checks run on every commit and push.**
+
+#### Setup (Automatic)
+
+Git hooks are installed automatically when you run `./scripts/setup.sh`.
+
+#### Manual Installation
+
+```bash
+# Install pre-commit hooks
+poetry run pre-commit install
+
+# Install pre-push hooks
+poetry run pre-commit install --hook-type pre-push
+```
+
+#### What Hooks Do
+
+**On Every Commit** (fast checks ~10 seconds):
+- ✅ Ruff linting (auto-fixes safe issues)
+- ✅ Ruff formatting
+- ✅ Trailing whitespace fix
+- ✅ YAML/JSON/TOML validation
+- ✅ **Detect secrets** (API keys, tokens, passwords)
+- ✅ **Private key detection** (SSH, PGP keys)
+- ✅ **Merge conflict markers**
+- ✅ **No direct commits to main branch**
+
+**Before Every Push** (thorough checks ~45 seconds):
+- ✅ MyPy type checking (full project)
+- ✅ Pytest all tests with coverage (≥80% required)
+- ✅ Alembic migration check
+- ✅ **Bandit security scan** (CRITICAL for student data protection)
+- ✅ **Safety vulnerability check** (dependency vulnerabilities)
+- ✅ **Vulture dead code detection** (unused code)
+- ✅ **Deptry dependency analysis** (unused/missing dependencies)
+
+#### Testing Hooks Manually
+
+```bash
+# Test all hooks without committing
+./scripts/test_hooks.sh
+
+# Test specific hooks
+poetry run pre-commit run ruff --all-files                # Linting
+poetry run pre-commit run detect-secrets --all-files      # Secret detection
+poetry run pre-commit run mypy-full --all-files           # Type checking
+poetry run pre-commit run pytest-coverage --all-files     # Tests + coverage
+poetry run pre-commit run bandit --all-files              # Security scan
+poetry run pre-commit run safety --all-files              # Vulnerability check
+poetry run pre-commit run vulture --all-files             # Dead code detection
+poetry run pre-commit run deptry --all-files              # Dependency analysis
+```
+
+#### Bypassing Hooks (Use Sparingly)
+
+```bash
+# Skip pre-commit hooks (emergency only)
+git commit --no-verify -m "WIP: broken, will fix"
+
+# Skip specific hook
+SKIP=mypy git commit -m "Skip type checking"
+
+# Skip pre-push hooks (DANGEROUS)
+git push --no-verify
+```
+
+**When to use `--no-verify`:**
+- ✅ Emergency hotfix (production down)
+- ✅ Saving WIP at end of day
+- ❌ **NEVER** because "tests are annoying"
+- ❌ **NEVER** as regular practice
+
 ### Database Migrations
 
 ```bash
-# Create migration
+# Helper script (recommended)
+./scripts/migrate.sh create "description"  # Create migration
+./scripts/migrate.sh up                    # Apply migrations
+./scripts/migrate.sh down                  # Rollback one
+./scripts/migrate.sh status                # Check status
+./scripts/migrate.sh history               # View history
+./scripts/migrate.sh reset                 # DANGER: Reset all
+
+# Direct Alembic commands (if needed)
 poetry run alembic revision --autogenerate -m "description"
-
-# Apply migrations
 poetry run alembic upgrade head
-
-# Rollback
 poetry run alembic downgrade -1
 ```
+
+### Verification & Quality Checks
+
+**Run all checks before committing:**
+
+```bash
+./scripts/verify.sh
+```
+
+This comprehensive script runs:
+- ✅ **Ruff Linter** - Code quality checks
+- ✅ **Ruff Formatter** - Code formatting verification
+- ✅ **MyPy Type Checker** - Static type checking
+- ✅ **Pytest Unit Tests** - Full test suite with coverage
+- ✅ **Alembic Migration Check** - Database migration verification
+- ✅ **Import Check** - Verifies all modules import correctly
+
+**All checks must pass (green) before pushing code.**
 
 ---
 
