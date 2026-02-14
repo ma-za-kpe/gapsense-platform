@@ -1,0 +1,283 @@
+# ============================================================================
+# GapSense Platform .gitignore
+# CRITICAL: This blocks proprietary IP and credentials from being committed
+# ============================================================================
+
+# ============================================================================
+# PROPRIETARY DATA (MUST NEVER COMMIT - BELONGS IN gapsense-data REPO)
+# ============================================================================
+
+# Prerequisite graph - CORE IP
+data/curriculum/prerequisite_graph*.json
+data/curriculum/cascade_paths.json
+data/curriculum/misconceptions_database.json
+
+# Prompt library - CORE IP
+data/prompts/prompt_library*.json
+data/prompts/test_cases/*.json
+
+# Business documents - CONFIDENTIAL
+*.docx
+*.pdf
+business/
+term_sheets/
+
+# Any JSON files in data/ (unless explicitly whitelisted below)
+data/**/*.json
+
+# Whitelist: Non-proprietary data files (re-include after blocking above)
+!data/seed/regions.json
+!data/seed/districts.json
+!data/seed/strands.json
+
+# ============================================================================
+# CREDENTIALS & SECRETS (SECURITY CRITICAL)
+# ============================================================================
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# API keys
+secrets/
+credentials/
+*.key
+*.pem
+*.p12
+*.pfx
+
+# AWS credentials
+.aws/
+aws-credentials.json
+
+# Service account keys
+service-account*.json
+gcp-*.json
+
+# ============================================================================
+# PYTHON
+# ============================================================================
+
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Poetry
+poetry.lock  # Keep this for now, can commit later if we want deterministic deps
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Ruff
+.ruff_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# ============================================================================
+# DATABASE
+# ============================================================================
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Database dumps (may contain real data)
+*.sql.gz
+*.sql.bz2
+dumps/
+
+# Alembic temporary files
+alembic/versions/*.pyc
+
+# ============================================================================
+# IDE / EDITOR
+# ============================================================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================================================
+# OS
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ============================================================================
+# LOGS
+# ============================================================================
+
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+
+# Don't ignore Dockerfile and docker-compose.yml (we want those)
+# But ignore local overrides
+docker-compose.override.yml
+.dockerignore
+
+# ============================================================================
+# CLOUD / INFRASTRUCTURE
+# ============================================================================
+
+# CDK
+cdk.out/
+cdk.context.json
+.cdk.staging/
+
+# Terraform (if we add it later)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# ============================================================================
+# TEMPORARY FILES
+# ============================================================================
+
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+.cache/
+tmp/
+temp/
+
+# Media files (exercise book photos, voice notes - in S3, not git)
+*.jpg
+*.jpeg
+*.png
+*.mp3
+*.wav
+*.m4a
+*.ogg
+
+# ============================================================================
+# NODE (if we add frontend later)
+# ============================================================================
+
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+.eslintcache
+
+# ============================================================================
+# PROJECT-SPECIFIC
+# ============================================================================
+
+# Local data directory (should use $GAPSENSE_DATA_PATH instead)
+local_data/
+
+# Test output
+test_output/
+test_results/
+
+# Performance profiling
+*.prof
+.prof/
+
+# ============================================================================
+# NOTES
+# ============================================================================
+# Personal notes, scratchpads (keep your notes private)
+NOTES.md
+TODO.md
+SCRATCH.md
+notes/
