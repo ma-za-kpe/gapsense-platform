@@ -28,15 +28,15 @@ router = APIRouter()
 
 
 @router.get("/strands", response_model=list[CurriculumStrandSchema])
-async def list_strands(db: AsyncSession = Depends(get_db)):
+async def list_strands(db: AsyncSession = Depends(get_db)) -> list[CurriculumStrand]:
     """List all curriculum strands."""
     result = await db.execute(select(CurriculumStrand).order_by(CurriculumStrand.strand_number))
     strands = result.scalars().all()
-    return strands
+    return list(strands)
 
 
 @router.get("/strands/{strand_id}", response_model=CurriculumStrandDetailSchema)
-async def get_strand(strand_id: int, db: AsyncSession = Depends(get_db)):
+async def get_strand(strand_id: int, db: AsyncSession = Depends(get_db)) -> CurriculumStrand:
     """Get a specific curriculum strand with sub-strands."""
     result = await db.execute(
         select(CurriculumStrand)
@@ -56,7 +56,7 @@ async def list_nodes(
     grade: str | None = Query(None, description="Filter by grade (e.g., B1, B2)"),
     min_severity: int | None = Query(None, ge=1, le=5, description="Minimum severity level"),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[CurriculumNode]:
     """List curriculum nodes with optional filtering."""
     query = select(CurriculumNode)
 
@@ -70,11 +70,11 @@ async def list_nodes(
 
     result = await db.execute(query)
     nodes = result.scalars().all()
-    return nodes
+    return list(nodes)
 
 
 @router.get("/nodes/{code}", response_model=CurriculumNodeDetailSchema)
-async def get_node(code: str, db: AsyncSession = Depends(get_db)):
+async def get_node(code: str, db: AsyncSession = Depends(get_db)) -> CurriculumNode:
     """Get a specific curriculum node by code."""
     result = await db.execute(
         select(CurriculumNode)
@@ -90,7 +90,9 @@ async def get_node(code: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/nodes/{code}/prerequisites", response_model=PrerequisiteGraphSchema)
-async def get_node_prerequisites(code: str, db: AsyncSession = Depends(get_db)):
+async def get_node_prerequisites(
+    code: str, db: AsyncSession = Depends(get_db)
+) -> dict[str, CurriculumNode | list[CurriculumNode]]:
     """Get prerequisite tree for a curriculum node."""
     # Get the node
     result = await db.execute(select(CurriculumNode).where(CurriculumNode.code == code))
@@ -110,4 +112,4 @@ async def get_node_prerequisites(code: str, db: AsyncSession = Depends(get_db)):
     )
     prerequisites = result.scalars().all()
 
-    return {"node": node, "prerequisites": prerequisites}
+    return {"node": node, "prerequisites": list(prerequisites)}
