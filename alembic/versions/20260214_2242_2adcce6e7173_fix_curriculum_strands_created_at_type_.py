@@ -37,14 +37,6 @@ def upgrade() -> None:
         existing_comment="Last update timestamp (UTC)",
         existing_nullable=False,
     )
-    op.drop_index(op.f("idx_curriculum_nodes_severity"), table_name="curriculum_nodes")
-    op.create_index(
-        "idx_curriculum_nodes_severity",
-        "curriculum_nodes",
-        ["severity"],
-        unique=False,
-        postgresql_ops={"severity": "DESC"},
-    )
     # Convert VARCHAR to TIMESTAMP using PostgreSQL CAST
     op.execute(
         "ALTER TABLE curriculum_strands ALTER COLUMN created_at TYPE TIMESTAMP USING created_at::TIMESTAMP"

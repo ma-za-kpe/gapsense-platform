@@ -37,6 +37,14 @@ target_metadata = Base.metadata
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 
+def include_object(object, name, type_, reflected, compare_to):
+    """Filter objects to include in autogenerate comparisons.
+
+    Exclude idx_curriculum_nodes_severity due to Alembic bug with postgresql_ops.
+    """
+    return not (type_ == "index" and name == "idx_curriculum_nodes_severity")
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -56,6 +64,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -69,6 +78,7 @@ def do_run_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
