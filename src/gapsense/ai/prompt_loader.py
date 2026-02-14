@@ -104,7 +104,10 @@ class PromptLibrary:
         Returns:
             System prompt string
         """
-        return self.get_prompt(prompt_id)["system_prompt"]
+        prompt = self.get_prompt(prompt_id)
+        result = prompt["system_prompt"]
+        assert isinstance(result, str)
+        return result
 
     def get_user_template(self, prompt_id: str) -> str | None:
         """Get user message template.

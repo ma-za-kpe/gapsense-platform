@@ -4,12 +4,14 @@ GapSense Platform FastAPI Application
 AI-powered foundational learning diagnostic platform for Ghana.
 """
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from gapsense.ai import get_prompt_library
 from gapsense.config import settings
@@ -17,7 +19,7 @@ from gapsense.core.database import close_db, engine
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan events.
 
     Startup:
@@ -39,7 +41,7 @@ async def lifespan(app: FastAPI):
     # Verify database connection
     try:
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(text("SELECT 1"))
         print("✅ Database connection verified")
     except Exception as e:
         print(f"❌ Database connection failed: {e}")
@@ -91,19 +93,19 @@ def create_app() -> FastAPI:
         }
 
     @app.get("/health", tags=["Health"])
-    async def health_check() -> dict[str, Any]:
+    async def health_check() -> JSONResponse:
         """Health check endpoint for load balancers.
 
         Returns:
             - status: healthy/unhealthy
             - checks: Individual health checks
         """
-        checks = {}
+        checks: dict[str, dict[str, Any]] = {}
 
         # Database health
         try:
             async with engine.connect() as conn:
-                await conn.execute("SELECT 1")
+                await conn.execute(text("SELECT 1"))
             checks["database"] = {"status": "healthy"}
         except Exception as e:
             checks["database"] = {"status": "unhealthy", "error": str(e)}
@@ -133,7 +135,7 @@ def create_app() -> FastAPI:
         )
 
     @app.get("/health/ready", tags=["Health"])
-    async def readiness_check() -> dict[str, str]:
+    async def readiness_check() -> dict[str, str] | JSONResponse:
         """Readiness check for Kubernetes.
 
         Returns 200 when app is ready to serve traffic.
@@ -141,7 +143,7 @@ def create_app() -> FastAPI:
         # Check critical dependencies
         try:
             async with engine.connect() as conn:
-                await conn.execute("SELECT 1")
+                await conn.execute(text("SELECT 1"))
             return {"status": "ready"}
         except Exception:
             return JSONResponse(
