@@ -113,9 +113,25 @@ class CurriculumLoader:
 
         print("✅ Curriculum loaded successfully!")
 
-    async def _load_strands(self, session: AsyncSession, strands: list[dict[str, Any]]) -> None:
+    async def _load_strands(
+        self, session: AsyncSession, strands: list[dict[str, Any]] | dict[str, Any]
+    ) -> None:
         """Load curriculum strands."""
-        for strand_data in strands:
+        # Handle both list and dict formats
+        if isinstance(strands, dict):
+            strands_list = [
+                {
+                    "strand_number": int(k),
+                    "name": v["name"],
+                    "color_hex": v.get("color"),
+                    "description": v.get("description"),
+                }
+                for k, v in strands.items()
+            ]
+        else:
+            strands_list = strands
+
+        for strand_data in strands_list:
             strand = CurriculumStrand(
                 strand_number=strand_data["strand_number"],
                 name=strand_data["name"],
@@ -124,7 +140,7 @@ class CurriculumLoader:
             )
             session.add(strand)
         await session.flush()
-        print(f"  ✅ Loaded {len(strands)} strands")
+        print(f"  ✅ Loaded {len(strands_list)} strands")
 
     async def _load_sub_strands(
         self, session: AsyncSession, sub_strands: list[dict[str, Any]]
@@ -150,9 +166,18 @@ class CurriculumLoader:
         await session.flush()
         print(f"  ✅ Loaded {len(sub_strands)} sub-strands")
 
-    async def _load_nodes(self, session: AsyncSession, nodes: list[dict[str, Any]]) -> None:
+    async def _load_nodes(
+        self, session: AsyncSession, nodes: list[dict[str, Any]] | dict[str, Any]
+    ) -> None:
         """Load curriculum nodes."""
-        for node_data in nodes:
+        # Handle both list and dict formats
+        if isinstance(nodes, dict):
+            # Filter out non-dict values (section headers, etc.)
+            nodes_list = [v for v in nodes.values() if isinstance(v, dict)]
+        else:
+            nodes_list = nodes
+
+        for node_data in nodes_list:
             # Parse code to extract strand and sub-strand numbers
             # Format: B2.1.1.1 = grade.strand.substrand.content
             code_parts = node_data["code"].split(".")
@@ -202,7 +227,7 @@ class CurriculumLoader:
             session.add(node)
 
         await session.flush()
-        print(f"  ✅ Loaded {len(nodes)} nodes")
+        print(f"  ✅ Loaded {len(nodes_list)} nodes")
 
     async def _load_prerequisites(
         self, session: AsyncSession, prerequisites: list[dict[str, Any]]
