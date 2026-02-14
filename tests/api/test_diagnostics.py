@@ -40,8 +40,7 @@ async def sample_student_data(db_session):
     # Create parent
     parent = Parent(
         phone="+233244123456",
-        first_name="Kwame",
-        last_name="Mensah",
+        preferred_name="Kwame Mensah",
         preferred_language="en",
     )
     db_session.add(parent)
@@ -50,7 +49,6 @@ async def sample_student_data(db_session):
     # Create student
     student = Student(
         first_name="Ama",
-        last_name="Mensah",
         current_grade="B3",
         primary_parent_id=parent.id,
     )
