@@ -53,7 +53,7 @@ repos:
       # MyPy - Type checking (full project)
       - id: mypy-full
         name: MyPy Type Checker (Full Project)
-        entry: bash -c 'poetry run mypy src/ || /Users/mac/Library/Python/3.9/bin/poetry run mypy src/'
+        entry: bash -c '/Users/mac/Library/Caches/pypoetry/virtualenvs/gapsense-1Ckj6UrV-py3.13/bin/mypy src/'
         language: system
         types: [python]
         pass_filenames: false
@@ -63,7 +63,7 @@ repos:
       # Pytest - All tests with coverage (≥80% required)
       - id: pytest-coverage
         name: Tests + Coverage Check (≥80%)
-        entry: bash -c 'poetry run pytest tests/ --cov=src/gapsense --cov-report=term-missing --cov-fail-under=80 -v || /Users/mac/Library/Python/3.9/bin/poetry run pytest tests/ --cov=src/gapsense --cov-report=term-missing --cov-fail-under=80 -v'
+        entry: bash -c '/Users/mac/Library/Caches/pypoetry/virtualenvs/gapsense-1Ckj6UrV-py3.13/bin/pytest tests/ --cov=src/gapsense --cov-report=term-missing --cov-fail-under=80 -v'
         language: system
         types: [python]
         pass_filenames: false
@@ -73,7 +73,7 @@ repos:
       # Alembic - Database migration check
       - id: alembic-check
         name: Alembic Migration Check
-        entry: bash -c 'poetry run alembic check 2>&1 || echo "⚠️  No migrations or migration check skipped"'
+        entry: bash -c '/Users/mac/Library/Caches/pypoetry/virtualenvs/gapsense-1Ckj6UrV-py3.13/bin/alembic check 2>&1 || echo "⚠️  No migrations or migration check skipped"'
         language: system
         pass_filenames: false
         stages: [pre-push]
