@@ -26,10 +26,13 @@ configure_mappers()
 @pytest.fixture
 async def async_engine():
     """Create async engine for testing."""
-    engine = create_async_engine(
-        "postgresql+asyncpg://gapsense:localdev@localhost:5433/gapsense_test",
-        echo=False,
+    import os
+
+    # Use DATABASE_URL from environment (set in CI) or default to local
+    database_url = os.getenv(
+        "DATABASE_URL", "postgresql+asyncpg://gapsense:localdev@localhost:5433/gapsense_test"
     )
+    engine = create_async_engine(database_url, echo=False)
 
     # Drop and recreate all tables
     async with engine.begin() as conn:
