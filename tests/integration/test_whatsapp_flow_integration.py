@@ -147,7 +147,7 @@ class TestWebhookFlowIntegration:
         with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.from_settings.return_value = mock_client
-            mock_client.send_text_message.return_value = "wamid.response456"
+            mock_client.send_list_message.return_value = "wamid.response456"
 
             # Send webhook request
             response = await client.post(
@@ -162,11 +162,13 @@ class TestWebhookFlowIntegration:
             assert parent.preferred_name == "Auntie Ama"
             assert parent.conversation_state is not None
             assert parent.conversation_state["data"]["name"] == "Auntie Ama"
+            assert parent.conversation_state["step"] == "AWAITING_LANGUAGE"
 
-            # Verify acknowledgment message was sent
-            mock_client.send_text_message.assert_called_once()
-            call_kwargs = mock_client.send_text_message.call_args.kwargs
-            assert "Auntie Ama" in call_kwargs["text"]
+            # Verify language selection list was sent
+            mock_client.send_list_message.assert_called_once()
+            call_kwargs = mock_client.send_list_message.call_args.kwargs
+            assert "Auntie Ama" in call_kwargs["header"]
+            assert "language" in call_kwargs["body"].lower()
 
     @pytest.mark.asyncio
     async def test_parent_opt_out_flow(self, client: AsyncClient, db_session: AsyncSession) -> None:

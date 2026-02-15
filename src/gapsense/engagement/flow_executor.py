@@ -301,6 +301,12 @@ class FlowExecutor:
     ) -> FlowResult:
         """Continue onboarding flow from current step.
 
+        Onboarding Flow:
+            1. AWAITING_NAME → collect preferred_name
+            2. AWAITING_LANGUAGE → collect preferred_language
+            3. AWAITING_CONSENT → get consent for diagnostic
+            4. Complete → set opted_in=True
+
         Args:
             parent: Parent in onboarding
             message_type: Message type
@@ -314,8 +320,12 @@ class FlowExecutor:
 
         if current_step == "AWAITING_NAME":
             return await self._onboard_collect_name(parent, message_type, message_content)
+        elif current_step == "AWAITING_LANGUAGE":
+            return await self._onboard_collect_language(parent, message_type, message_content)
+        elif current_step == "AWAITING_CONSENT":
+            return await self._onboard_collect_consent(parent, message_type, message_content)
         else:
-            # Unknown step - this will be implemented with full onboarding handler
+            # Unknown step
             logger.warning(f"Unknown onboarding step: {current_step}")
             return FlowResult(
                 flow_name="FLOW-ONBOARD",
@@ -369,37 +379,291 @@ class FlowExecutor:
             parent.conversation_state["data"] = {}
 
         parent.conversation_state["data"]["name"] = name
+        parent.conversation_state["step"] = "AWAITING_LANGUAGE"
         flag_modified(parent, "conversation_state")  # Mark as modified for SQLAlchemy
 
         await self.db.commit()
 
-        # Send acknowledgment (next steps handled by full onboarding handler)
+        # Send language selection prompt
         client = WhatsAppClient.from_settings()
-        ack_message = f"Nice to meet you, {name}! 😊\n\n[Onboarding continues...]"
 
         try:
-            message_id = await client.send_text_message(
+            message_id = await client.send_list_message(
                 to=parent.phone,
-                text=ack_message,
+                header=f"Nice to meet you, {name}! 😊",
+                body="What language would you like me to use for our messages?",
+                button_text="Choose Language",
+                sections=[
+                    {
+                        "title": "Select Your Language",
+                        "rows": [
+                            {"id": "lang_english", "title": "English"},
+                            {"id": "lang_twi", "title": "Twi (Akan)"},
+                            {"id": "lang_ewe", "title": "Ewe"},
+                            {"id": "lang_ga", "title": "Ga"},
+                            {"id": "lang_dagbani", "title": "Dagbani"},
+                        ],
+                    }
+                ],
             )
 
             return FlowResult(
                 flow_name="FLOW-ONBOARD",
                 message_sent=True,
                 message_id=message_id,
-                next_step="AWAITING_LANGUAGE",  # Would continue to language selection
+                next_step="AWAITING_LANGUAGE",
                 completed=False,
                 error=None,
             )
 
         except Exception as e:
-            logger.error(f"Failed to send name acknowledgment to {parent.phone}: {e}")
+            logger.error(f"Failed to send language selection to {parent.phone}: {e}")
             return FlowResult(
                 flow_name="FLOW-ONBOARD",
                 message_sent=False,
                 message_id=None,
                 next_step="AWAITING_LANGUAGE",
                 completed=False,
+                error=str(e),
+            )
+
+    async def _onboard_collect_language(
+        self,
+        parent: Parent,
+        message_type: str,
+        message_content: str | dict[str, Any],
+    ) -> FlowResult:
+        """Collect parent's preferred language.
+
+        Args:
+            parent: Parent instance
+            message_type: Message type
+            message_content: Message content (should be interactive list response)
+
+        Returns:
+            FlowResult for language collection
+        """
+        # Language mapping
+        language_map = {
+            "lang_english": "en",
+            "lang_twi": "tw",
+            "lang_ewe": "ee",
+            "lang_ga": "ga",
+            "lang_dagbani": "dag",
+        }
+
+        language_id = None
+
+        # Handle interactive message (list selection)
+        if (
+            message_type == "interactive"
+            and isinstance(message_content, dict)
+            and message_content.get("type") == "list_reply"
+        ):
+            language_id = message_content.get("list_reply", {}).get("id")
+
+        if language_id not in language_map:
+            # Invalid input - prompt again
+            client = WhatsAppClient.from_settings()
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text="Please select your preferred language from the list above.",
+            )
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="AWAITING_LANGUAGE",
+                completed=False,
+                error=None,
+            )
+
+        # Save language
+        language_code = language_map[language_id]
+        parent.preferred_language = language_code
+
+        # Update conversation state
+        if parent.conversation_state is None:
+            parent.conversation_state = {
+                "flow": "FLOW-ONBOARD",
+                "step": "AWAITING_CONSENT",
+                "data": {},
+            }
+        parent.conversation_state["data"]["language"] = language_code
+        parent.conversation_state["step"] = "AWAITING_CONSENT"
+        flag_modified(parent, "conversation_state")
+
+        await self.db.commit()
+
+        # Send consent request
+        client = WhatsAppClient.from_settings()
+
+        try:
+            message_id = await client.send_button_message(
+                to=parent.phone,
+                body=(
+                    "Thank you! 🙏\n\n"
+                    "To help your child learn better, I would like to:\n"
+                    "• Assess their current knowledge\n"
+                    "• Identify learning gaps\n"
+                    "• Send personalized practice questions\n\n"
+                    "All data will be kept confidential and used only to support your child's education.\n\n"
+                    "Do you consent to this diagnostic assessment?"
+                ),
+                buttons=[
+                    {"id": "consent_yes", "title": "Yes, I consent"},
+                    {"id": "consent_no", "title": "No, thank you"},
+                ],
+            )
+
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="AWAITING_CONSENT",
+                completed=False,
+                error=None,
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to send consent request to {parent.phone}: {e}")
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=False,
+                message_id=None,
+                next_step="AWAITING_CONSENT",
+                completed=False,
+                error=str(e),
+            )
+
+    async def _onboard_collect_consent(
+        self,
+        parent: Parent,
+        message_type: str,
+        message_content: str | dict[str, Any],
+    ) -> FlowResult:
+        """Collect parental consent for diagnostic assessment.
+
+        Args:
+            parent: Parent instance
+            message_type: Message type
+            message_content: Message content (should be interactive button response)
+
+        Returns:
+            FlowResult for consent collection
+        """
+        consent_given = False
+
+        # Handle interactive message (button click)
+        if (
+            message_type == "interactive"
+            and isinstance(message_content, dict)
+            and message_content.get("type") == "button_reply"
+        ):
+            button_id = message_content.get("button_reply", {}).get("id")
+            if button_id == "consent_yes":
+                consent_given = True
+            elif button_id == "consent_no":
+                consent_given = False
+            else:
+                # Invalid button - prompt again
+                client = WhatsAppClient.from_settings()
+                message_id = await client.send_text_message(
+                    to=parent.phone,
+                    text="Please click one of the buttons above to answer.",
+                )
+                return FlowResult(
+                    flow_name="FLOW-ONBOARD",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step="AWAITING_CONSENT",
+                    completed=False,
+                    error=None,
+                )
+        else:
+            # Not an interactive message - prompt again
+            client = WhatsAppClient.from_settings()
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text="Please click one of the buttons above to answer.",
+            )
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="AWAITING_CONSENT",
+                completed=False,
+                error=None,
+            )
+
+        if not consent_given:
+            # Parent declined consent - still complete onboarding but note no consent
+            if parent.conversation_state is None:
+                parent.conversation_state = {"flow": "FLOW-ONBOARD", "step": "COMPLETE", "data": {}}
+            parent.conversation_state["data"]["consent"] = False
+            parent.opted_in = True  # Still opted in, just no diagnostic consent
+            parent.opted_in_at = datetime.now(UTC)
+            parent.conversation_state = None  # Clear state - onboarding complete
+            await self.db.commit()
+
+            client = WhatsAppClient.from_settings()
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text=(
+                    "I understand. I will not send diagnostic assessments.\n\n"
+                    "You can still reach out anytime if you need help! 😊"
+                ),
+            )
+
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=True,
+                error=None,
+            )
+
+        # Consent given - complete onboarding
+        if parent.conversation_state is None:
+            parent.conversation_state = {"flow": "FLOW-ONBOARD", "step": "COMPLETE", "data": {}}
+        parent.conversation_state["data"]["consent"] = True
+        parent.opted_in = True
+        parent.opted_in_at = datetime.now(UTC)
+        parent.conversation_state = None  # Clear state - onboarding complete
+        await self.db.commit()
+
+        client = WhatsAppClient.from_settings()
+
+        try:
+            preferred_name = parent.preferred_name or "there"
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text=(
+                    f"Wonderful, {preferred_name}! 🎉\n\n"
+                    "You're all set! I'll send your child practice questions to help them learn.\n\n"
+                    "Send 'HELP' anytime if you need assistance.\n"
+                    "Send 'STOP' if you want to unsubscribe."
+                ),
+            )
+
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=True,
+                error=None,
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to send onboarding completion to {parent.phone}: {e}")
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=False,
+                message_id=None,
+                next_step=None,
+                completed=True,  # Still complete despite message failure
                 error=str(e),
             )
 

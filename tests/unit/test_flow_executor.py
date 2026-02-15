@@ -204,6 +204,234 @@ class TestOnboardingFlow:
             assert parent.preferred_name == "Auntie Ama"
             assert parent.conversation_state["data"]["name"] == "Auntie Ama"
 
+    @pytest.mark.asyncio
+    async def test_onboarding_collect_language(self, db_session: AsyncSession):
+        """Test collecting parent's language preference."""
+        parent = Parent(
+            phone="+233501234567",
+            preferred_name="Auntie Ama",
+            conversation_state={
+                "flow": "FLOW-ONBOARD",
+                "step": "AWAITING_LANGUAGE",
+                "data": {"name": "Auntie Ama"},
+            },
+        )
+        db_session.add(parent)
+        await db_session.commit()
+
+        executor = FlowExecutor(db=db_session)
+
+        with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client_class.from_settings.return_value = mock_client
+            mock_client.send_button_message.return_value = "wamid.test456"
+
+            result = await executor.process_message(
+                parent=parent,
+                message_type="interactive",
+                message_content={
+                    "type": "list_reply",
+                    "list_reply": {"id": "lang_twi", "title": "Twi"},
+                },
+                message_id="wamid.incoming456",
+            )
+
+            assert result.flow_name == "FLOW-ONBOARD"
+            assert result.completed is False
+            assert result.next_step == "AWAITING_CONSENT"
+
+            # Verify language saved
+            await db_session.refresh(parent)
+            assert parent.preferred_language == "tw"
+            assert parent.conversation_state["data"]["language"] == "tw"
+            assert parent.conversation_state["step"] == "AWAITING_CONSENT"
+
+            # Verify consent request sent
+            mock_client.send_button_message.assert_called_once()
+            call_kwargs = mock_client.send_button_message.call_args.kwargs
+            assert "consent" in call_kwargs["body"].lower()
+            assert len(call_kwargs["buttons"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_onboarding_invalid_language(self, db_session: AsyncSession):
+        """Test invalid language selection prompts re-selection."""
+        parent = Parent(
+            phone="+233501234567",
+            conversation_state={
+                "flow": "FLOW-ONBOARD",
+                "step": "AWAITING_LANGUAGE",
+                "data": {"name": "Auntie Ama"},
+            },
+        )
+        db_session.add(parent)
+        await db_session.commit()
+
+        executor = FlowExecutor(db=db_session)
+
+        with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client_class.from_settings.return_value = mock_client
+            mock_client.send_text_message.return_value = "wamid.test789"
+
+            result = await executor.process_message(
+                parent=parent,
+                message_type="text",
+                message_content="invalid",
+                message_id="wamid.incoming789",
+            )
+
+            assert result.flow_name == "FLOW-ONBOARD"
+            assert result.completed is False
+            assert result.next_step == "AWAITING_LANGUAGE"
+
+            # Verify still in same step
+            await db_session.refresh(parent)
+            assert parent.conversation_state["step"] == "AWAITING_LANGUAGE"
+            # Language not changed from default
+            assert parent.preferred_language == "en"
+
+    @pytest.mark.asyncio
+    async def test_onboarding_consent_given(self, db_session: AsyncSession):
+        """Test parent gives consent and completes onboarding."""
+        parent = Parent(
+            phone="+233501234567",
+            preferred_name="Auntie Ama",
+            preferred_language="tw",
+            conversation_state={
+                "flow": "FLOW-ONBOARD",
+                "step": "AWAITING_CONSENT",
+                "data": {"name": "Auntie Ama", "language": "tw"},
+            },
+        )
+        db_session.add(parent)
+        await db_session.commit()
+
+        executor = FlowExecutor(db=db_session)
+
+        with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client_class.from_settings.return_value = mock_client
+            mock_client.send_text_message.return_value = "wamid.test321"
+
+            result = await executor.process_message(
+                parent=parent,
+                message_type="interactive",
+                message_content={
+                    "type": "button_reply",
+                    "button_reply": {"id": "consent_yes", "title": "Yes, I consent"},
+                },
+                message_id="wamid.incoming321",
+            )
+
+            assert result.flow_name == "FLOW-ONBOARD"
+            assert result.completed is True
+            assert result.next_step is None
+
+            # Verify onboarding completed
+            await db_session.refresh(parent)
+            assert parent.opted_in is True
+            assert parent.opted_in_at is not None
+            assert parent.conversation_state is None  # Cleared after completion
+
+            # Verify confirmation message sent
+            mock_client.send_text_message.assert_called_once()
+            call_kwargs = mock_client.send_text_message.call_args.kwargs
+            assert (
+                "all set" in call_kwargs["text"].lower()
+                or "wonderful" in call_kwargs["text"].lower()
+            )
+
+    @pytest.mark.asyncio
+    async def test_onboarding_consent_declined(self, db_session: AsyncSession):
+        """Test parent declines consent but still completes onboarding."""
+        parent = Parent(
+            phone="+233501234567",
+            preferred_name="Auntie Ama",
+            preferred_language="tw",
+            conversation_state={
+                "flow": "FLOW-ONBOARD",
+                "step": "AWAITING_CONSENT",
+                "data": {"name": "Auntie Ama", "language": "tw"},
+            },
+        )
+        db_session.add(parent)
+        await db_session.commit()
+
+        executor = FlowExecutor(db=db_session)
+
+        with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client_class.from_settings.return_value = mock_client
+            mock_client.send_text_message.return_value = "wamid.test654"
+
+            result = await executor.process_message(
+                parent=parent,
+                message_type="interactive",
+                message_content={
+                    "type": "button_reply",
+                    "button_reply": {"id": "consent_no", "title": "No, thank you"},
+                },
+                message_id="wamid.incoming654",
+            )
+
+            assert result.flow_name == "FLOW-ONBOARD"
+            assert result.completed is True
+            assert result.next_step is None
+
+            # Verify onboarding completed but no diagnostic consent
+            await db_session.refresh(parent)
+            assert parent.opted_in is True  # Still opted in for messages
+            assert parent.opted_in_at is not None
+            assert parent.conversation_state is None
+
+            # Verify message acknowledges no consent
+            mock_client.send_text_message.assert_called_once()
+            call_kwargs = mock_client.send_text_message.call_args.kwargs
+            assert (
+                "understand" in call_kwargs["text"].lower()
+                or "not send" in call_kwargs["text"].lower()
+            )
+
+    @pytest.mark.asyncio
+    async def test_onboarding_invalid_button(self, db_session: AsyncSession):
+        """Test invalid button click prompts re-selection."""
+        parent = Parent(
+            phone="+233501234567",
+            conversation_state={
+                "flow": "FLOW-ONBOARD",
+                "step": "AWAITING_CONSENT",
+                "data": {"name": "Auntie Ama", "language": "tw"},
+            },
+        )
+        db_session.add(parent)
+        await db_session.commit()
+
+        executor = FlowExecutor(db=db_session)
+
+        with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client_class.from_settings.return_value = mock_client
+            mock_client.send_text_message.return_value = "wamid.test987"
+
+            result = await executor.process_message(
+                parent=parent,
+                message_type="interactive",
+                message_content={
+                    "type": "button_reply",
+                    "button_reply": {"id": "invalid_button", "title": "Invalid"},
+                },
+                message_id="wamid.incoming987",
+            )
+
+            assert result.flow_name == "FLOW-ONBOARD"
+            assert result.completed is False
+            assert result.next_step == "AWAITING_CONSENT"
+
+            # Verify still in same step
+            await db_session.refresh(parent)
+            assert parent.conversation_state["step"] == "AWAITING_CONSENT"
+            assert parent.opted_in is False
+
 
 class TestFlowStateManagement:
     """Test conversation state management."""
