@@ -361,3 +361,76 @@ class TestWebhookFlowIntegration:
 
             # Verify messages were sent to both
             assert mock_client.send_text_message.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_diagnostic_consent_persistence(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        """Test that diagnostic consent is persisted to database after complete onboarding."""
+        # Create parent in AWAITING_CONSENT state
+        parent = Parent(
+            phone="+233501234567",
+            preferred_name="Auntie Ama",
+            preferred_language="en",
+            conversation_state={
+                "flow": "FLOW-ONBOARD",
+                "step": "AWAITING_CONSENT",
+                "data": {"name": "Auntie Ama", "language": "en"},
+            },
+        )
+        db_session.add(parent)
+        await db_session.commit()
+
+        # Setup webhook payload with consent given
+        webhook_payload = {
+            "object": "whatsapp_business_account",
+            "entry": [
+                {
+                    "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+                    "changes": [
+                        {
+                            "value": {
+                                "messages": [
+                                    {
+                                        "from": "+233501234567",
+                                        "id": "wamid.consent123",
+                                        "type": "interactive",
+                                        "interactive": {
+                                            "type": "button_reply",
+                                            "button_reply": {
+                                                "id": "consent_yes",
+                                                "title": "Yes, I consent",
+                                            },
+                                        },
+                                    }
+                                ],
+                            },
+                            "field": "messages",
+                        }
+                    ],
+                }
+            ],
+        }
+
+        # Mock WhatsAppClient
+        with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client_class.from_settings.return_value = mock_client
+            mock_client.send_text_message.return_value = "wamid.response_consent"
+
+            # Send webhook request
+            response = await client.post(
+                "/v1/webhooks/whatsapp",
+                json=webhook_payload,
+            )
+
+            assert response.status_code == 200
+
+            # CRITICAL: Verify diagnostic consent was persisted to database
+            await db_session.refresh(parent)
+            assert parent.diagnostic_consent is True
+            assert parent.diagnostic_consent_at is not None
+            assert parent.onboarded_at is not None
+            assert parent.opted_in is True
+            assert parent.opted_in_at is not None
+            assert parent.conversation_state is None  # Flow completed

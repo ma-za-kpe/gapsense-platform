@@ -191,6 +191,7 @@ class FlowExecutor:
         client = WhatsAppClient.from_settings()
 
         parent_name = parent.preferred_name or "friend"
+        # TODO: L1 TRANSLATION - Opt-out message must be in parent's preferred_language
         opt_out_message = (
             f"We've stopped all messages. Your data will be removed.\n\n"
             f"If you ever want to restart, just send us 'Hi'. "
@@ -368,6 +369,7 @@ class FlowExecutor:
         if message_type != "text" or not isinstance(message_content, str):
             # Invalid input - prompt again
             client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION - Error prompt must be in parent's preferred_language
             message_id = await client.send_text_message(
                 to=parent.phone,
                 text="Please send me your name as a text message. For example: 'Auntie Ama'",
@@ -479,6 +481,7 @@ class FlowExecutor:
         if language_id not in language_map:
             # Invalid input - prompt again
             client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION - Error prompt must be in parent's preferred_language
             message_id = await client.send_text_message(
                 to=parent.phone,
                 text="Please select your preferred language from the list above.",
@@ -583,6 +586,7 @@ class FlowExecutor:
             else:
                 # Invalid button - prompt again
                 client = WhatsAppClient.from_settings()
+                # TODO: L1 TRANSLATION - Error prompt must be in parent's preferred_language
                 message_id = await client.send_text_message(
                     to=parent.phone,
                     text="Please click one of the buttons above to answer.",
@@ -598,6 +602,7 @@ class FlowExecutor:
         else:
             # Not an interactive message - prompt again
             client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION - Error prompt must be in parent's preferred_language
             message_id = await client.send_text_message(
                 to=parent.phone,
                 text="Please click one of the buttons above to answer.",
@@ -623,6 +628,7 @@ class FlowExecutor:
             await self.db.commit()
 
             client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION - Consent declined message must be in parent's preferred_language
             message_id = await client.send_text_message(
                 to=parent.phone,
                 text=(
@@ -654,6 +660,7 @@ class FlowExecutor:
 
         try:
             preferred_name = parent.preferred_name or "there"
+            # TODO: L1 TRANSLATION - Consent granted message must be in parent's preferred_language
             message_id = await client.send_text_message(
                 to=parent.phone,
                 text=(
@@ -696,6 +703,7 @@ class FlowExecutor:
         client = WhatsAppClient.from_settings()
 
         parent_name = parent.preferred_name or "friend"
+        # TODO: L1 TRANSLATION - Help message must be in parent's preferred_language
         help_message = (
             f"Hi {parent_name}! 👋\n\n"
             "Here's what I can help with:\n\n"
