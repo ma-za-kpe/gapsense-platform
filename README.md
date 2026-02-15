@@ -187,6 +187,7 @@ poetry run pre-commit install --hook-type pre-push
 #### What Hooks Do
 
 **On Every Commit** (fast checks ~10 seconds):
+- ✅ **Poetry lock file check** (ensures poetry.lock matches pyproject.toml) - CRITICAL for CI/CD
 - ✅ Ruff linting (auto-fixes safe issues)
 - ✅ Ruff formatting
 - ✅ Trailing whitespace fix
@@ -224,6 +225,23 @@ poetry run pre-commit run safety --all-files              # Vulnerability check
 poetry run pre-commit run vulture --all-files             # Dead code detection
 poetry run pre-commit run deptry --all-files              # Dependency analysis
 ```
+
+#### Troubleshooting Common Hook Failures
+
+**Poetry lock file out of sync:**
+```bash
+# Error: "pyproject.toml changed significantly since poetry.lock was last generated"
+# Fix: Regenerate lock file
+poetry lock --no-update
+
+# Or if you want to update dependencies:
+poetry lock
+
+# Then stage the updated lock file:
+git add poetry.lock
+```
+
+**Why this matters:** An outdated `poetry.lock` breaks CI/CD. The pre-commit hook catches this before you push.
 
 #### Bypassing Hooks (Use Sparingly)
 

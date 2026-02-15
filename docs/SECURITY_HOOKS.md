@@ -27,16 +27,22 @@ GapSense handles sensitive student data under Ghana Data Protection Act complian
 
 **Duration:** ~10 seconds
 
+### Dependency Integrity Checks
+1. **Poetry Lock File Check** - CRITICAL for CI/CD stability
+   - Verifies `poetry.lock` matches `pyproject.toml`
+   - Prevents CI/CD failures from outdated lock files
+   - Fix: Run `poetry lock --no-update` if check fails
+
 ### Security Checks
-1. **Detect Secrets** - Scans for API keys, tokens, passwords before commit
+2. **Detect Secrets** - Scans for API keys, tokens, passwords before commit
    - Uses baseline: `.secrets.baseline`
    - Detects: AWS keys, GitHub tokens, JWT, Basic Auth, etc.
 
-2. **Private Key Detection** - Prevents committing SSH/PGP private keys
+3. **Private Key Detection** - Prevents committing SSH/PGP private keys
 
-3. **Merge Conflict Detection** - Catches unresolved merge markers
+4. **Merge Conflict Detection** - Catches unresolved merge markers
 
-4. **Branch Protection** - Blocks direct commits to `main` branch
+5. **Branch Protection** - Blocks direct commits to `main` branch
 
 ### Code Quality Checks
 - Ruff linting (auto-fixes safe issues)
@@ -46,6 +52,7 @@ GapSense handles sensitive student data under Ghana Data Protection Act complian
 - End-of-file fixing
 - **Block code smells** (FIXME, HACK, XXX, TEMP, WIP)
 - **Warn on TODOs** (encourages fixing, allows commit)
+- **Coding standards checklist** (reminds of error handling, PII, type safety, etc.)
 
 ---
 

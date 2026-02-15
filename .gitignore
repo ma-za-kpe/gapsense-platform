@@ -93,7 +93,8 @@ ENV/
 .venv
 
 # Poetry
-poetry.lock  # Keep this for now, can commit later if we want deterministic deps
+# poetry.lock is COMMITTED for deterministic builds and CI/CD stability
+# See: https://python-poetry.org/docs/basic-usage/#committing-your-poetrylock-file-to-version-control
 
 # PyInstaller
 *.manifest
