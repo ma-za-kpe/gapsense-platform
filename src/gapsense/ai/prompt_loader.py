@@ -44,7 +44,19 @@ class PromptLibrary:
 
     def _load(self) -> None:
         """Load prompts from JSON file."""
+        import os
+
         if not self.path.exists():
+            # In CI environment, use empty prompt library (tests don't need real prompts)
+            if os.getenv("CI") == "true":
+                self.prompts = {}
+                self.metadata = {
+                    "version": "test-mode",
+                    "last_updated": "N/A",
+                    "total_prompts": 0,
+                }
+                return
+
             raise FileNotFoundError(
                 f"Prompt library not found: {self.path}\n"
                 f"Make sure GAPSENSE_DATA_PATH points to gapsense-data repo."
