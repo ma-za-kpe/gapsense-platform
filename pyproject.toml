@@ -123,6 +123,7 @@ markers = [
 
 [tool.coverage.run]
 source = ["src/gapsense"]
+concurrency = ["greenlet"]
 omit = [
     "*/tests/*",
     "*/__pycache__/*",
