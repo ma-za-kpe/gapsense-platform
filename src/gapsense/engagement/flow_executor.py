@@ -55,8 +55,28 @@ class FlowExecutor:
     - Send responses via WhatsAppClient
     """
 
-    # Opt-out keywords (case-insensitive)
-    OPT_OUT_KEYWORDS = frozenset(["stop", "unsubscribe", "cancel", "quit", "opt out", "optout"])
+    # Opt-out keywords (case-insensitive, L1-first for Wolf/Aurino compliance)
+    OPT_OUT_KEYWORDS = frozenset(
+        [
+            # English
+            "stop",
+            "unsubscribe",
+            "cancel",
+            "quit",
+            "opt out",
+            "optout",
+            # Twi (Akan)
+            "gyae",
+            "gyina",
+            # Ewe
+            "tɔtɔ",
+            "tɔe",
+            # Ga
+            "tsia",
+            # Dagbani
+            "nyɛli",
+        ]
+    )
 
     def __init__(self, *, db: AsyncSession):
         """Initialize flow executor.

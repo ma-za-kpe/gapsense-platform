@@ -74,7 +74,7 @@ class TestOptOutFlow:
 
     @pytest.mark.asyncio
     async def test_opt_out_variations(self, db_session: AsyncSession):
-        """Test opt-out triggers on various keywords."""
+        """Test opt-out triggers on various keywords including L1 languages."""
         parent = Parent(
             phone="+233501234567",
             opted_in=True,
@@ -85,7 +85,24 @@ class TestOptOutFlow:
 
         executor = FlowExecutor(db=db_session)
 
-        opt_out_keywords = ["stop", "STOP", "unsubscribe", "cancel", "quit", "Stop"]
+        # Test English, Twi, Ewe, Ga, Dagbani (L1-first compliance)
+        opt_out_keywords = [
+            "stop",
+            "STOP",
+            "unsubscribe",
+            "cancel",
+            "quit",
+            "Stop",  # English
+            "gyae",
+            "GYAE",
+            "Gyina",  # Twi
+            "tɔtɔ",
+            "TƆE",  # Ewe
+            "tsia",
+            "TSIA",  # Ga
+            "nyɛli",
+            "NYƐLI",  # Dagbani
+        ]
 
         for keyword in opt_out_keywords:
             # Reset parent state

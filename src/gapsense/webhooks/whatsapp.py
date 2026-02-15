@@ -202,6 +202,46 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
         )
 
 
+def _validate_phone(phone: str) -> str:
+    """Validate and sanitize WhatsApp phone number.
+
+    Args:
+        phone: Raw phone number from webhook
+
+    Returns:
+        Sanitized phone number
+
+    Raises:
+        ValueError: If phone number is invalid
+
+    Validation rules:
+        - Must start with + (E.164 format)
+        - Must be between 8 and 20 characters
+        - Must contain only digits after +
+        - No whitespace allowed
+    """
+    # Strip whitespace
+    phone = phone.strip()
+
+    # Check empty
+    if not phone:
+        raise ValueError("Phone number cannot be empty")
+
+    # Check format (E.164 international format)
+    if not phone.startswith("+"):
+        raise ValueError(f"Phone number must start with + (E.164 format): {phone}")
+
+    # Check length
+    if len(phone) < 8 or len(phone) > 20:
+        raise ValueError(f"Phone number length invalid (must be 8-20 chars): {phone}")
+
+    # Check contains only digits after +
+    if not phone[1:].isdigit():
+        raise ValueError(f"Phone number must contain only digits after +: {phone}")
+
+    return phone
+
+
 async def _get_or_create_parent(db: AsyncSession, phone: str) -> Parent:
     """Get or create Parent by phone number.
 
@@ -211,7 +251,17 @@ async def _get_or_create_parent(db: AsyncSession, phone: str) -> Parent:
 
     Returns:
         Parent instance (existing or newly created)
+
+    Raises:
+        ValueError: If phone validation fails
     """
+    # Validate phone number
+    try:
+        phone = _validate_phone(phone)
+    except ValueError as e:
+        logger.warning(f"Invalid phone number: {e}")
+        raise
+
     # Try to find existing parent
     stmt = select(Parent).where(Parent.phone == phone)
     result = await db.execute(stmt)
@@ -221,14 +271,18 @@ async def _get_or_create_parent(db: AsyncSession, phone: str) -> Parent:
         logger.debug(f"Found existing parent: {phone}")
         return parent
 
-    # Create new parent
-    logger.info(f"Creating new parent: {phone}")
-    parent = Parent(phone=phone)
-    db.add(parent)
-    await db.commit()
-    await db.refresh(parent)
-
-    return parent
+    # Create new parent with transaction rollback on error
+    try:
+        logger.info(f"Creating new parent: {phone}")
+        parent = Parent(phone=phone)
+        db.add(parent)
+        await db.commit()
+        await db.refresh(parent)
+        return parent
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Failed to create parent {phone}: {e}", exc_info=True)
+        raise
 
 
 async def _handle_status_update(status: dict[str, Any]) -> None:
