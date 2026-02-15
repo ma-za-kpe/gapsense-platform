@@ -331,6 +331,9 @@ class TestOnboardingFlow:
             await db_session.refresh(parent)
             assert parent.opted_in is True
             assert parent.opted_in_at is not None
+            assert parent.onboarded_at is not None
+            assert parent.diagnostic_consent is True
+            assert parent.diagnostic_consent_at is not None
             assert parent.conversation_state is None  # Cleared after completion
 
             # Verify confirmation message sent
@@ -382,6 +385,9 @@ class TestOnboardingFlow:
             await db_session.refresh(parent)
             assert parent.opted_in is True  # Still opted in for messages
             assert parent.opted_in_at is not None
+            assert parent.onboarded_at is not None
+            assert parent.diagnostic_consent is False
+            assert parent.diagnostic_consent_at is not None
             assert parent.conversation_state is None
 
             # Verify message acknowledges no consent

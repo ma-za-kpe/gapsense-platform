@@ -3,6 +3,17 @@ WhatsApp Conversation Flow Executor
 
 Orchestrates multi-step WhatsApp conversations with parents.
 Manages conversation state transitions and routes messages to flow handlers.
+
+TODO: L1-FIRST TRANSLATIONS NEEDED (Wolf/Aurino Compliance VIOLATION)
+    ⚠️ CRITICAL: All messages in this file are currently hardcoded in English.
+    This violates L1-first principle. Must add translations for:
+    - Twi (tw)
+    - Ewe (ee)
+    - Ga (ga)
+    - Dagbani (dag)
+
+    User's language choice is in parent.preferred_language.
+    Implement translation lookup function or message catalog system.
 """
 
 from __future__ import annotations
@@ -260,6 +271,8 @@ class FlowExecutor:
         # Send welcome message with name prompt
         client = WhatsAppClient.from_settings()
 
+        # TODO: L1 TRANSLATION - This message must be translated based on parent.preferred_language
+        # Currently hardcoded in English - violates Wolf/Aurino L1-first principle
         welcome_message = (
             "Welcome to GapSense! 📚\n\n"
             "I'm here to help you support your child's learning with fun "
@@ -388,6 +401,7 @@ class FlowExecutor:
         client = WhatsAppClient.from_settings()
 
         try:
+            # TODO: L1 TRANSLATION - These messages should be in user's preferred language
             message_id = await client.send_list_message(
                 to=parent.phone,
                 header=f"Nice to meet you, {name}! 😊",
@@ -499,6 +513,7 @@ class FlowExecutor:
         client = WhatsAppClient.from_settings()
 
         try:
+            # TODO: L1 TRANSLATION - Consent message must be in parent's language
             message_id = await client.send_button_message(
                 to=parent.phone,
                 body=(
@@ -598,11 +613,12 @@ class FlowExecutor:
 
         if not consent_given:
             # Parent declined consent - still complete onboarding but note no consent
-            if parent.conversation_state is None:
-                parent.conversation_state = {"flow": "FLOW-ONBOARD", "step": "COMPLETE", "data": {}}
-            parent.conversation_state["data"]["consent"] = False
-            parent.opted_in = True  # Still opted in, just no diagnostic consent
-            parent.opted_in_at = datetime.now(UTC)
+            now = datetime.now(UTC)
+            parent.diagnostic_consent = False
+            parent.diagnostic_consent_at = now
+            parent.opted_in = True  # Still opted in for messaging, just no diagnostic consent
+            parent.opted_in_at = now
+            parent.onboarded_at = now
             parent.conversation_state = None  # Clear state - onboarding complete
             await self.db.commit()
 
@@ -625,11 +641,12 @@ class FlowExecutor:
             )
 
         # Consent given - complete onboarding
-        if parent.conversation_state is None:
-            parent.conversation_state = {"flow": "FLOW-ONBOARD", "step": "COMPLETE", "data": {}}
-        parent.conversation_state["data"]["consent"] = True
+        now = datetime.now(UTC)
+        parent.diagnostic_consent = True
+        parent.diagnostic_consent_at = now
         parent.opted_in = True
-        parent.opted_in_at = datetime.now(UTC)
+        parent.opted_in_at = now
+        parent.onboarded_at = now
         parent.conversation_state = None  # Clear state - onboarding complete
         await self.db.commit()
 

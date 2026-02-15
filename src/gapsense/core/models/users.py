@@ -90,7 +90,9 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     community: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     # Engagement tracking
-    onboarded_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    onboarded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, comment="When parent completed onboarding flow"
+    )
     last_interaction_at: Mapped[datetime | None] = mapped_column(nullable=True)
     total_interactions: Mapped[int] = mapped_column(Integer, default=0)
     engagement_score: Mapped[float | None] = mapped_column(
@@ -119,6 +121,17 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     opted_in_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     opted_out: Mapped[bool] = mapped_column(default=False)
     opted_out_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Diagnostic consent (separate from messaging opt-in)
+    diagnostic_consent: Mapped[bool | None] = mapped_column(
+        nullable=True,
+        comment="Parent consent for diagnostic assessments (True=yes, False=no, None=not asked)",
+    )
+    diagnostic_consent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When diagnostic consent was recorded",
+    )
 
     is_active: Mapped[bool] = mapped_column(default=True)
 
