@@ -8,7 +8,7 @@ Based on docs/specs/gapsense_data_model.sql (Section 2)
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from .students import Student
 
 from sqlalchemy import ForeignKey, Integer, String, event
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
@@ -95,6 +95,19 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     total_interactions: Mapped[int] = mapped_column(Integer, default=0)
     engagement_score: Mapped[float | None] = mapped_column(
         nullable=True, comment="Rolling engagement metric"
+    )
+
+    # Conversation state (WhatsApp flow orchestration)
+    conversation_state: Mapped[dict[str, Any] | None] = mapped_column(
+        type_=JSON,
+        nullable=True,
+        comment="Current flow state: {flow, step, data}. Enables multi-step conversations.",
+    )
+    last_message_at: Mapped[datetime | None] = mapped_column(
+        nullable=True, comment="Last WhatsApp message received from parent"
+    )
+    session_expires_at: Mapped[datetime | None] = mapped_column(
+        nullable=True, comment="24-hour session window expiry (WhatsApp constraint)"
     )
 
     # Wolf/Aurino compliance
