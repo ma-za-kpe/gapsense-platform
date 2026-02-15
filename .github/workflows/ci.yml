@@ -46,7 +46,7 @@ jobs:
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction
 
       - name: Run Ruff Linter
         run: poetry run ruff check src/ scripts/ alembic/
@@ -103,7 +103,7 @@ jobs:
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction
 
       - name: Run Tests with Coverage (≥80%)
         run: poetry run pytest tests/ --cov=src/gapsense --cov-report=xml --cov-report=term-missing --cov-fail-under=80 -v --tb=short
@@ -164,7 +164,7 @@ jobs:
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction
 
       - name: Check Alembic Migrations
         run: poetry run alembic check || echo "No migrations to check"
@@ -201,7 +201,7 @@ jobs:
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction
 
       - name: Detect Secrets
         run: poetry run detect-secrets scan --baseline .secrets.baseline
