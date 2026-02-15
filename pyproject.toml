@@ -37,6 +37,7 @@ safety = "^3.0"
 detect-secrets = "^1.4"
 vulture = "^2.11"
 deptry = "^0.19"
+viztracer = "^0.17"
 
 [build-system]
 requires = ["poetry-core"]
