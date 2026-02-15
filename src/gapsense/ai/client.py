@@ -166,7 +166,7 @@ class AIClient:
             openai_messages.extend(messages)
 
             response = client.chat.completions.create(
-                model="grok-beta",  # Use Grok model regardless of input model
+                model="grok-3",  # Use Grok 3 model regardless of input model
                 messages=openai_messages,  # type: ignore[arg-type]
                 max_tokens=max_tokens,
                 temperature=temperature,
