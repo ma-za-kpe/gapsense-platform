@@ -275,6 +275,8 @@ test_results/
 # Performance profiling
 *.prof
 .prof/
+traces/
+*.json.gz
 
 # ============================================================================
 # NOTES

@@ -752,6 +752,136 @@ async def delete_student(student_id: UUID, current_user: User = Depends(get_curr
 # - Keep gap_profiles (anonymized)
 ```
 
+### Automated Security Scanning (Pre-Commit + CI/CD)
+
+**Enforced by git hooks** - See `.pre-commit-config.yaml` and `docs/SECURITY_HOOKS.md`
+
+#### Secrets Detection (detect-secrets)
+```bash
+# Scans for API keys, tokens, passwords before commit
+# Blocks: AWS keys, Anthropic keys, WhatsApp tokens, JWT, etc.
+
+# Example blocked commit:
+src/gapsense/config.py:42:  ANTHROPIC_API_KEY = "sk-ant-1234..."  # ❌ BLOCKED  # pragma: allowlist secret
+
+# Use environment variables instead:
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")  # ✅ ALLOWED
+```
+
+#### Security Vulnerabilities (Bandit)
+```bash
+# Scans Python code for security issues before push
+# Detects:
+#   - Hardcoded passwords
+#   - SQL injection vulnerabilities
+#   - Shell injection (subprocess with user input)
+#   - Weak crypto (MD5, DES)
+#   - Insecure randomness (random instead of secrets)
+#   - Pickle usage (unsafe deserialization)
+
+# Example blocked push:
+# ❌ BLOCKED
+password = "admin123"  # B105: Hardcoded password  # pragma: allowlist secret
+
+# ❌ BLOCKED
+cursor.execute(f"SELECT * FROM users WHERE name = '{user_input}'")  # B608: SQL injection
+
+# ✅ ALLOWED
+cursor.execute("SELECT * FROM users WHERE name = %s", (user_input,))
+```
+
+#### Dependency Vulnerabilities (Safety)
+```bash
+# Checks dependencies for known CVEs before push
+# Example: python-multipart < 0.0.12 has CVE-2024-XXXX
+
+# Updates pyproject.toml automatically if vulnerabilities found
+```
+
+#### Dead Code Detection (Vulture)
+```bash
+# Finds unused functions, classes, variables (80% confidence)
+# Helps reduce technical debt
+
+# Example warning:
+src/gapsense/utils.py:42: unused function 'old_diagnostic_logic'  # 90% confidence
+```
+
+#### Dependency Analysis (Deptry)
+```bash
+# Detects:
+#   - Unused dependencies in pyproject.toml
+#   - Missing dependencies (imported but not declared)
+#   - Transitive dependencies used directly
+
+# Keeps dependency tree clean
+```
+
+### Code Quality Markers (TODO/FIXME Policy)
+
+**Enforced by pre-commit hooks** - Creates loud warnings/blocks
+
+#### BLOCKED Markers (Commit Fails)
+```python
+# These markers indicate BROKEN or TEMPORARY code
+# Commit will FAIL if found:
+
+# FIXME: This crashes on empty input     # ❌ BLOCKED - Something is broken
+# XXX: Dangerous hack here               # ❌ BLOCKED - Dangerous/hacky code
+# HACK: Temporary workaround             # ❌ BLOCKED - Needs proper solution
+# TEMP: Will remove later                # ❌ BLOCKED - Remove now
+# WIP: Work in progress                  # ❌ BLOCKED - Complete or remove
+```
+
+**Why blocked?** These markers indicate code that shouldn't be committed. Fix the issue or use `TODO` for future work.
+
+#### WARNED Markers (Commit Allowed, Strongly Encouraged to Fix)
+```python
+# TODO: Add rate limiting                      # ⚠️  Basic (acceptable)
+# TODO(maku): Optimize this query              # ✅ Better (has owner)
+# TODO(maku): Add caching [JIRA-456]          # ✅ Best (owner + ticket)
+```
+
+**Warning output** (commit proceeds but creates loud reminder):
+```
+==============================================
+WARNING - Found 3 TODOs in your code
+==============================================
+
+src/gapsense/api.py:67:  # TODO: Add rate limiting
+src/gapsense/diagnostic.py:142:  # TODO(maku): Optimize query
+tests/test_api.py:23:  # TODO: Add test for edge case
+
+REMINDER - Please consider fixing these!
+
+Best practices:
+  Fix simple TODOs now (takes under 5 min)
+  Format - TODO(username): Description [ISSUE-123]
+  Create ticket for complex TODOs
+  Remove stale TODOs
+
+Technical debt accumulates fast - fix early!
+==============================================
+```
+
+**Why warn?** TODOs are acceptable for future work, but loud warnings encourage fixing them before they're forgotten. Technical debt compounds.
+
+### Security Disclosure
+
+**If you discover a security vulnerability:**
+
+1. **DO NOT** open a public GitHub issue
+2. Email: `security@gapsense.app`
+3. Include:
+   - Description of vulnerability
+   - Steps to reproduce
+   - Potential impact
+   - Suggested fix (if any)
+4. Response timeline: 48 hours
+5. Fix timeline: 7 days for critical, 30 days for non-critical
+
+**Bug bounty:** Not currently offered (early stage)
+
 ---
 
 ## 7. Proprietary Code Protection
@@ -1351,6 +1481,168 @@ async def analyze_exercise_book(image_bytes: bytes, student_id: UUID) -> GapProf
         )
 ```
 
+### Error Codes (User-Facing vs Internal)
+
+**Structure**: Errors should have both user-friendly messages and structured error codes for debugging.
+
+```python
+# Error code format: MODULE_ERROR_TYPE
+class ErrorCode(str, Enum):
+    # Diagnostic errors
+    DIAG_SESSION_NOT_FOUND = "DIAG_SESSION_NOT_FOUND"
+    DIAG_INVALID_ANSWER = "DIAG_INVALID_ANSWER"
+    DIAG_SESSION_ALREADY_COMPLETE = "DIAG_SESSION_ALREADY_COMPLETE"
+    DIAG_NODE_NOT_FOUND = "DIAG_NODE_NOT_FOUND"
+
+    # Student errors
+    STUDENT_NOT_FOUND = "STUDENT_NOT_FOUND"
+    STUDENT_ALREADY_EXISTS = "STUDENT_ALREADY_EXISTS"
+
+    # Parent errors
+    PARENT_NOT_FOUND = "PARENT_NOT_FOUND"
+    PARENT_OPTED_OUT = "PARENT_OPTED_OUT"
+
+    # AI service errors
+    AI_SERVICE_UNAVAILABLE = "AI_SERVICE_UNAVAILABLE"
+    AI_RATE_LIMIT_EXCEEDED = "AI_RATE_LIMIT_EXCEEDED"
+    AI_COMPLIANCE_VIOLATION = "AI_COMPLIANCE_VIOLATION"
+
+    # WhatsApp errors
+    WHATSAPP_DELIVERY_FAILED = "WHATSAPP_DELIVERY_FAILED"
+    WHATSAPP_INVALID_PHONE = "WHATSAPP_INVALID_PHONE"
+
+# Enhanced error response
+class APIError(GapSenseError):
+    def __init__(
+        self,
+        code: ErrorCode,
+        message: str,  # User-facing
+        internal_message: str | None = None,  # Logged, not shown to user
+        details: dict | None = None
+    ):
+        super().__init__(message)
+        self.code = code
+        self.internal_message = internal_message or message
+        self.details = details or {}
+
+# Example usage
+raise APIError(
+    code=ErrorCode.DIAG_SESSION_NOT_FOUND,
+    message="Diagnostic session not found",  # User sees this
+    internal_message=f"Session {session_id} not in DB or deleted",  # Logged only
+    details={"session_id": str(session_id)}
+)
+
+# FastAPI handler
+@app.exception_handler(APIError)
+async def api_error_handler(request: Request, exc: APIError):
+    logger.error("api_error",
+        code=exc.code.value,
+        message=exc.internal_message,  # Log internal details
+        details=exc.details,
+        path=request.url.path
+    )
+
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": {
+                "code": exc.code.value,
+                "message": exc.message,  # User-friendly only
+                # NO internal_message or details in response
+            }
+        }
+    )
+```
+
+### PII Masking Policy (CRITICAL for Ghana Data Protection Act)
+
+**Never log PII** - Use UUIDs and masking functions.
+
+```python
+# PII that MUST NEVER be logged:
+# - Student names (first_name, last_name)
+# - Parent phone numbers
+# - Parent names
+# - Student answers (might contain personal info)
+# - Exercise book photos
+# - Home addresses
+# - National IDs
+
+# Logging policy:
+
+# ❌ BAD - Logs PII
+logger.info("diagnostic_answer_submitted",
+    student_name=student.first_name,  # PII!
+    answer=answer_text,  # PII!
+    parent_phone=parent.phone  # PII!
+)
+
+# ✅ GOOD - Uses UUIDs only
+logger.info("diagnostic_answer_submitted",
+    student_id=str(student.id),  # UUID - safe
+    answer_length=len(answer_text),  # Aggregate - safe
+    answer_correct=is_correct,  # Boolean - safe
+    session_id=str(session.id)  # UUID - safe
+)
+
+# Masking functions for debugging (when you MUST see partial data):
+def mask_phone(phone: str) -> str:
+    """Masks phone for debugging: +233241234567 → +233****4567"""
+    if len(phone) < 8:
+        return "****"
+    return phone[:4] + "****" + phone[-4:]
+
+def mask_name(name: str) -> str:
+    """Masks name for debugging: Kwame → K****"""
+    if len(name) < 2:
+        return "****"
+    return name[0] + "****"
+
+# Use only when debugging specific issues:
+logger.debug("parent_lookup_failed",
+    phone_masked=mask_phone(phone),  # +233****4567
+    correlation_id=correlation_id
+)
+```
+
+### Log Level Standards
+
+```python
+# DEBUG - Development only (verbose, includes masked PII for debugging)
+logger.debug("graph_traversal_step",
+    current_node=node.code,
+    visited=visited_nodes,
+    depth=current_depth
+)
+
+# INFO - Normal operations (no PII, structured)
+logger.info("diagnostic_session_created",
+    session_id=str(session.id),
+    student_id=str(student.id),
+    entry_grade=entry_grade
+)
+
+# WARNING - Unexpected but handled (rate limits, retries)
+logger.warning("ai_api_rate_limit",
+    prompt_id="DIAG-001",
+    retry_in_seconds=retry_after,
+    attempt=attempt_number
+)
+
+# ERROR - Failures that need investigation (service down, bugs)
+logger.error("database_connection_failed",
+    error=str(e),
+    retry_attempt=attempt
+)
+
+# CRITICAL - System-wide failures (database down, no recovery)
+logger.critical("database_unreachable",
+    error=str(e),
+    all_retries_exhausted=True
+)
+```
+
 ---
 
 ## 11. Performance Standards
@@ -1421,6 +1713,54 @@ CREATE INDEX idx_parent_activities_delivered ON parent_activities(delivered_at D
 
 ### Prompt Caching (Already Covered in AI Section)
 90% cost reduction is also 90% latency reduction for cached tokens.
+
+### Performance Profiling (Viztracer)
+
+**Interactive execution flow visualization** - See `docs/VIZTRACER_GUIDE.md`
+
+```bash
+# Trace a diagnostic session test
+./scripts/trace.sh test tests/integration/test_diagnostic_flow.py
+
+# Open interactive viewer (browser at http://localhost:9001)
+./scripts/trace.sh view traces/test_trace_*.json
+```
+
+**What Viztracer shows:**
+- Function call timeline (which functions, in what order)
+- Execution timing (find bottlenecks)
+- Async task switching (FastAPI concurrency)
+- Database query timing
+- Claude API call duration
+- Prerequisite graph traversal patterns
+
+**Use cases:**
+1. **Debug slow requests** - Trace a slow endpoint, see where time is spent
+2. **Optimize algorithms** - Trace graph traversal, count recursive calls
+3. **Find N+1 queries** - See database calls in timeline
+4. **Understand async flow** - Visualize task switching
+
+**Example workflow:**
+```bash
+# Baseline trace
+./scripts/trace.sh test tests/integration/test_diagnostic_flow.py
+# Note: Diagnostic session took 950ms (p95)
+
+# Make optimization (add DB index, cache results, etc.)
+
+# Compare trace
+./scripts/trace.sh test tests/integration/test_diagnostic_flow.py
+# Note: Now takes 450ms (53% improvement)
+```
+
+**Performance targets** (from interactive viewer):
+- Diagnostic session: <1000ms total
+  - Claude API: <800ms
+  - Graph traversal: <50ms
+  - DB queries: <30ms each
+  - Question selection: <30ms
+- Parent message generation: <200ms
+- WhatsApp webhook response: <3000ms (Meta requirement)
 
 ---
 
@@ -1642,34 +1982,73 @@ disallow_untyped_defs = false  # Relax for tests
 ```
 
 ### Pre-Commit Framework
+
+**See `.pre-commit-config.yaml` and `docs/SECURITY_HOOKS.md` for complete configuration**
+
+#### Pre-Commit Checks (Fast - Every Commit ~10s)
 ```yaml
-# .pre-commit-config.yaml
-
-repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.0
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.0
-    hooks:
-      - id: mypy
-        additional_dependencies: [pydantic, types-all]
-
-  - repo: local
-    hooks:
-      - id: block-sensitive-files
-        name: Block sensitive files
-        entry: bash -c 'if git diff --cached --name-only | grep -qE "prerequisite_graph|prompt_library|\.env$"; then echo "ERROR: Sensitive file detected!"; exit 1; fi'
-        language: system
-        pass_filenames: false
-
-# Install: pre-commit install
-# Run manually: pre-commit run --all-files
+- Ruff linting (auto-fixes)
+- Ruff formatting
+- YAML/JSON/TOML validation
+- Trailing whitespace
+- Secrets detection (detect-secrets)
+- Private key detection
+- Merge conflict markers
+- Block commits to main branch
+- Block code smells (FIXME, HACK, XXX, TEMP, WIP)
+- Warn on TODOs (loud reminder, allows commit)
 ```
+
+#### Pre-Push Checks (Thorough - Before Push ~45s)
+```yaml
+- MyPy type checking (strict mode)
+- Pytest all tests + coverage (≥80% required)
+- Alembic migration check
+- Bandit security scan (SQL injection, hardcoded passwords, etc.)
+- Safety vulnerability check (dependency CVEs)
+- Vulture dead code detection (80% confidence)
+- Deptry dependency analysis (unused/missing deps)
+```
+
+#### Coverage Requirements
+```toml
+# pyproject.toml
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov=src/gapsense",
+    "--cov-fail-under=80",  # Enforced in hooks
+    "--cov-report=term-missing"
+]
+
+[tool.coverage.run]
+source = ["src/gapsense"]
+omit = ["*/tests/*", "*/migrations/*"]
+```
+
+#### Installation
+```bash
+# Auto-installed by setup script
+./scripts/setup.sh
+
+# Manual installation
+poetry run pre-commit install
+poetry run pre-commit install --hook-type pre-push
+
+# Test hooks without committing
+./scripts/test_hooks.sh
+```
+
+#### Bypassing Hooks (Emergency Only)
+```bash
+# Skip pre-commit (WIP save at end of day)
+git commit --no-verify -m "WIP: will fix tomorrow"
+
+# Skip pre-push (DANGEROUS - CI will still run checks)
+git push --no-verify
+```
+
+**⚠️  Note:** CI/CD runs the same checks. Bypassing hooks locally doesn't skip CI validation.
 
 ---
 

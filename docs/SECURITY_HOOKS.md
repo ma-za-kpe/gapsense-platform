@@ -44,6 +44,8 @@ GapSense handles sensitive student data under Ghana Data Protection Act complian
 - YAML/JSON/TOML validation
 - Trailing whitespace removal
 - End-of-file fixing
+- **Block code smells** (FIXME, HACK, XXX, TEMP, WIP)
+- **Warn on TODOs** (encourages fixing, allows commit)
 
 ---
 
@@ -165,6 +167,79 @@ git push --no-verify
 ```
 
 **⚠️  WARNING:** Bypassing hooks is tracked in CI/CD. All checks still run on GitHub.
+
+---
+
+## Code Quality Markers Policy
+
+### BLOCKED Markers (Commit Fails)
+
+These markers indicate **broken or temporary code** that should never be committed:
+
+| Marker | Meaning | Action Required |
+|--------|---------|-----------------|
+| `FIXME` | Something is broken | Fix the bug before commit |
+| `XXX` | Dangerous/hacky code | Refactor or remove |
+| `HACK` | Temporary workaround | Implement proper solution |
+| `TEMP` | Temporary code | Remove or make permanent |
+| `WIP` | Work in progress | Complete or remove |
+
+**Example (commit will FAIL):**
+```python
+# FIXME: This crashes on empty input
+def process(data):
+    return data[0]  # XXX: No validation
+```
+
+**Hook output:**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❌ COMMIT BLOCKED: Found code smells that must be fixed
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+src/gapsense/module.py:42:  # FIXME: This crashes on empty input
+src/gapsense/module.py:44:  return data[0]  # XXX: No validation
+
+Fix the issues above or use TODO(name) for future work
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
+### WARNED Markers (Commit Allowed, Strongly Encouraged to Fix)
+
+TODOs are **allowed** but **loudly warned** to encourage fixing:
+
+**Good TODO formats:**
+```python
+# TODO: Add rate limiting                        ⚠️  Basic
+# TODO(maku): Optimize this query                ✅ Better (has owner)
+# TODO(maku): Add caching [JIRA-456]            ✅ Best (owner + ticket)
+```
+
+**Hook output:**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  WARNING: Found 3 TODO(s) in your code
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+src/gapsense/api.py:67:  # TODO: Add rate limiting
+src/gapsense/diagnostic.py:142:  # TODO(maku): Optimize query
+tests/test_api.py:23:  # TODO: Add test for edge case
+
+🔔 REMINDER: Please consider fixing these before pushing!
+
+Best practices:
+  • Fix simple TODOs now (takes <5 min)
+  • Format: # TODO(username): Description [ISSUE-123]
+  • Create ticket for complex TODOs
+  • Remove stale TODOs
+
+📊 Technical debt accumulates fast - fix early!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Commit proceeds** - developer sees warning but can continue.
 
 ---
 

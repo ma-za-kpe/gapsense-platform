@@ -102,6 +102,7 @@ cd gapsense-platform
 # - Install dependencies
 # - Create .env file
 # - Verify gapsense-data repo exists
+# - Install git hooks (pre-commit + pre-push) - IMPORTANT!
 
 # 3. Edit .env with your API keys
 nano .env
@@ -167,6 +168,8 @@ poetry run pre-commit run --all-files
 
 **Automated quality checks run on every commit and push.**
 
+> **⚠️ IMPORTANT:** Git hooks are installed automatically when you run `./scripts/setup.sh` (Step 2 of Quick Start). If you skip this step, you won't have the security and quality checks that protect the codebase.
+
 #### Setup (Automatic)
 
 Git hooks are installed automatically when you run `./scripts/setup.sh`.
@@ -192,6 +195,9 @@ poetry run pre-commit install --hook-type pre-push
 - ✅ **Private key detection** (SSH, PGP keys)
 - ✅ **Merge conflict markers**
 - ✅ **No direct commits to main branch**
+- ❌ **Block code smells** (FIXME, HACK, XXX, TEMP, WIP)
+- ⚠️  **Warn on TODOs** (encourages fixing, but allows commit)
+- 📋 **Coding standards checklist** (reminds you to check error handling, PII, type safety, etc.)
 
 **Before Every Push** (thorough checks ~45 seconds):
 - ✅ MyPy type checking (full project)
@@ -238,6 +244,29 @@ git push --no-verify
 - ❌ **NEVER** because "tests are annoying"
 - ❌ **NEVER** as regular practice
 
+#### Code Quality Markers (TODO/FIXME Policy)
+
+**BLOCKED** (commit fails):
+```python
+# FIXME: This is broken          ❌ Fix before commit
+# XXX: Dangerous hack            ❌ Remove or refactor
+# HACK: Temporary workaround     ❌ Implement properly
+# TEMP: Will remove later        ❌ Remove now
+# WIP: Work in progress          ❌ Complete or remove
+```
+
+**WARNED** (commit allowed, but strongly encouraged to fix):
+```python
+# TODO: Add rate limiting        ⚠️  Acceptable, but fix soon
+# TODO(maku): Optimize query     ✅ Better - has owner
+# TODO(maku): Add caching [#123] ✅ Best - has owner + ticket
+```
+
+**Why this matters:**
+- FIXME/HACK = broken code that shouldn't be committed
+- TODO = future work (acceptable but accumulates debt)
+- Loud warnings encourage fixing TODOs before they're forgotten
+
 ### Database Migrations
 
 ```bash
@@ -254,6 +283,41 @@ poetry run alembic revision --autogenerate -m "description"
 poetry run alembic upgrade head
 poetry run alembic downgrade -1
 ```
+
+### Performance Tracing & Visualization
+
+**Viztracer** - Interactive execution flow visualization
+
+```bash
+# Trace a specific test (recommended)
+./scripts/trace.sh test tests/integration/test_diagnostic_flow.py
+
+# Trace curriculum loading
+./scripts/trace.sh script scripts/load_curriculum.py
+
+# Trace FastAPI server (make requests while running)
+./scripts/trace.sh server
+
+# View trace in browser
+./scripts/trace.sh view traces/test_trace_20260214_120000.json
+
+# List available traces
+./scripts/trace.sh list
+```
+
+**What you'll see:**
+- Function call timeline (which functions, in what order)
+- Execution timing (find bottlenecks)
+- Async task switching (FastAPI concurrency)
+- Database query timing
+- Claude API call duration
+- Prerequisite graph traversal patterns
+
+**Interactive viewer features:**
+- Zoom into specific time ranges
+- Filter by module/function
+- Flamegraph view (aggregate time spent)
+- Search for specific function calls
 
 ### Verification & Quality Checks
 
