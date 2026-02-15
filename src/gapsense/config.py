@@ -93,7 +93,13 @@ class Settings(BaseSettings):
     @classmethod
     def validate_data_path(cls: type[Settings], v: str | Path) -> Path:  # noqa: ARG003
         """Convert string to Path and validate existence."""
+        import os
+
         path = Path(v) if isinstance(v, str) else v
+
+        # Skip validation in CI environment (gapsense-data repo not available)
+        if os.getenv("CI") == "true":
+            return path
 
         if not path.exists():
             raise ValueError(
