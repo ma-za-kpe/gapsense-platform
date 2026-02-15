@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .schools import District, School
     from .students import Student
 
-from sqlalchemy import ForeignKey, Integer, String, event
+from sqlalchemy import DateTime, ForeignKey, Integer, String, event
 from sqlalchemy.dialects.postgresql import ARRAY, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -104,17 +104,21 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         comment="Current flow state: {flow, step, data}. Enables multi-step conversations.",
     )
     last_message_at: Mapped[datetime | None] = mapped_column(
-        nullable=True, comment="Last WhatsApp message received from parent"
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Last WhatsApp message received from parent",
     )
     session_expires_at: Mapped[datetime | None] = mapped_column(
-        nullable=True, comment="24-hour session window expiry (WhatsApp constraint)"
+        DateTime(timezone=True),
+        nullable=True,
+        comment="24-hour session window expiry (WhatsApp constraint)",
     )
 
     # Wolf/Aurino compliance
     opted_in: Mapped[bool] = mapped_column(default=False, comment="Explicit WhatsApp opt-in")
-    opted_in_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    opted_in_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     opted_out: Mapped[bool] = mapped_column(default=False)
-    opted_out_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    opted_out_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     is_active: Mapped[bool] = mapped_column(default=True)
 
