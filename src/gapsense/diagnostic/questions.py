@@ -75,11 +75,11 @@ class QuestionGenerator:
         ],
     }
 
-    def __init__(self, use_ai: bool = False):
+    def __init__(self, use_ai: bool = True):
         """Initialize question generator.
 
         Args:
-            use_ai: Whether to use AI generation (not yet implemented)
+            use_ai: Whether to use AI generation (default: True for DIAG-001)
         """
         self.use_ai = use_ai
 

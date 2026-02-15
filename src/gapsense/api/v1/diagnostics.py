@@ -13,7 +13,13 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from gapsense.core.database import get_db
-from gapsense.core.models import DiagnosticQuestion, DiagnosticSession, GapProfile, Student
+from gapsense.core.models import (
+    CurriculumNode,
+    DiagnosticQuestion,
+    DiagnosticSession,
+    GapProfile,
+    Student,
+)
 from gapsense.core.schemas.diagnostics import (
     DiagnosticAnswerResponse,
     DiagnosticAnswerSubmit,
@@ -25,6 +31,7 @@ from gapsense.diagnostic import (
     AdaptiveDiagnosticEngine,
     GapProfileAnalyzer,
     QuestionGenerator,
+    ResponseAnalyzer,
 )
 
 router = APIRouter()
@@ -133,6 +140,43 @@ async def submit_answer(
         answered_at=datetime.utcnow(),
     )
     db.add(question)
+
+    # Get student and node for AI analysis
+    student_result = await db.execute(select(Student).where(Student.id == session.student_id))
+    student = student_result.scalar_one()
+
+    node_result = await db.execute(
+        select(CurriculumNode).where(CurriculumNode.id == answer_data.node_id)
+    )
+    node = node_result.scalar_one()
+
+    # AI Response Analysis (DIAG-002)
+    # Analyzes answer for error patterns, misconceptions, and next action
+    response_analyzer = ResponseAnalyzer(use_ai=True)
+    ai_analysis = response_analyzer.analyze_response(
+        student=student,
+        session=session,
+        question=question,
+        node_code=node.code,
+    )
+
+    # Store AI analysis in question record
+    question.ai_analysis = ai_analysis
+
+    # Use AI-determined correctness only if we have a real question (not placeholder)
+    # This ensures we don't override user-provided correctness for placeholder questions
+    if (
+        question.question_text != "[Question recorded]"
+        and ai_analysis.get("is_correct") is not None
+    ):
+        question.is_correct = ai_analysis["is_correct"]
+        answer_data.is_correct = ai_analysis["is_correct"]
+
+    # Store detected error pattern and misconception
+    if ai_analysis.get("error_pattern"):
+        question.error_pattern_detected = ai_analysis["error_pattern"]
+    if ai_analysis.get("misconception"):
+        question.misconception_id = None  # TODO: Link to CurriculumMisconception table
 
     # Update session statistics
     session.total_questions += 1
