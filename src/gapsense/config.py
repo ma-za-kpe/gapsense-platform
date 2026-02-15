@@ -38,13 +38,15 @@ class Settings(BaseSettings):
     )
 
     # ========================================================================
-    # ANTHROPIC AI
+    # AI PROVIDERS
     # ========================================================================
 
     ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
 
     ANTHROPIC_MAX_REQUESTS_PER_MINUTE: int = 50
     ANTHROPIC_MAX_CONCURRENT_REQUESTS: int = 10
+
+    GROK_API_KEY: str = Field(default="", description="xAI Grok API key (fallback provider)")
 
     # ========================================================================
     # WHATSAPP CLOUD API

@@ -243,11 +243,9 @@ class GapProfileAnalyzer:
         try:
             import json
 
-            from anthropic import Anthropic
             from sqlalchemy import select
 
-            from gapsense.ai import get_prompt_library
-            from gapsense.config import settings
+            from gapsense.ai import get_ai_client, get_prompt_library
             from gapsense.core.models import Parent, Student
 
             # Get DIAG-003 prompt
@@ -296,23 +294,23 @@ class GapProfileAnalyzer:
             for key, value in context.items():
                 user_message = user_message.replace(f"{{{{{key}}}}}", str(value))
 
-            # Call Claude API
-            client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+            # Call AI API (tries Anthropic → Grok → None)
+            client = get_ai_client()
 
-            response = client.messages.create(
+            response_text = client.generate_completion(
                 model=prompt["model"],
-                max_tokens=prompt["max_tokens"],
-                temperature=prompt["temperature"],
                 system=prompt["system_prompt"],
                 messages=[{"role": "user", "content": user_message}],
+                max_tokens=prompt["max_tokens"],
+                temperature=prompt["temperature"],
             )
 
-            # Parse response
-            content_block = response.content[0]
-            if not hasattr(content_block, "text"):
+            # If all AI providers failed, return None
+            if response_text is None:
                 return None
 
-            response_data = json.loads(content_block.text)
+            # Parse response
+            response_data = json.loads(response_text)
 
             return {
                 "root_cause_explanation": response_data.get("root_cause_explanation", ""),

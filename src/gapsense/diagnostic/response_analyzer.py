@@ -86,10 +86,7 @@ class ResponseAnalyzer:
             Analysis dict with is_correct, error_pattern, next_action, etc.
         """
         try:
-            from anthropic import Anthropic
-
-            from gapsense.ai import get_prompt_library
-            from gapsense.config import settings
+            from gapsense.ai import get_ai_client, get_prompt_library
 
             # Get DIAG-002 prompt
             lib = get_prompt_library()
@@ -118,24 +115,23 @@ class ResponseAnalyzer:
             for key, value in context.items():
                 user_message = user_message.replace(f"{{{{{key}}}}}", str(value))
 
-            # Call Claude API
-            client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+            # Call AI API (tries Anthropic → Grok → None)
+            client = get_ai_client()
 
-            response = client.messages.create(
+            response_text = client.generate_completion(
                 model=prompt["model"],
-                max_tokens=prompt["max_tokens"],
-                temperature=prompt["temperature"],
                 system=prompt["system_prompt"],
                 messages=[{"role": "user", "content": user_message}],
+                max_tokens=prompt["max_tokens"],
+                temperature=prompt["temperature"],
             )
 
-            # Parse response
-            content_block = response.content[0]
-            if not hasattr(content_block, "text"):
-                # Fallback to rule-based
+            # If all AI providers failed, fallback to rule-based
+            if response_text is None:
                 return self._analyze_rule_based(question)
 
-            response_data = json.loads(content_block.text)
+            # Parse response
+            response_data = json.loads(response_text)
 
             # Extract fields from AI response
             return {

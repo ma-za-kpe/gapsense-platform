@@ -17,6 +17,7 @@ alembic = "^1.14"
 pydantic = "^2.10"
 pydantic-settings = "^2.7"
 anthropic = "^0.43"
+openai = "^1.58"
 httpx = "^0.28"
 aiobotocore = "^2.15"
 python-jose = {extras = ["cryptography"], version = "^3.3"}
