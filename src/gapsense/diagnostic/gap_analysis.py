@@ -226,6 +226,187 @@ class GapProfileAnalyzer:
         # Cap at 0.95 (never 100% certain)
         return min(confidence, 0.95)
 
+    async def generate_ai_root_cause_analysis(self) -> dict[str, str | list[str]] | None:
+        """Use AI (DIAG-003) to generate deep root cause analysis.
+
+        Returns:
+            Dict with:
+                - root_cause_explanation: str
+                - primary_cascade: str
+                - mastered_node_codes: list[str]
+                - gap_node_codes: list[str]
+                - uncertain_node_codes: list[str]
+                - parent_message: str
+                - recommended_activities: list[str]
+            Or None if AI analysis fails
+        """
+        try:
+            import json
+
+            from anthropic import Anthropic
+            from sqlalchemy import select
+
+            from gapsense.ai import get_prompt_library
+            from gapsense.config import settings
+            from gapsense.core.models import Parent, Student
+
+            # Get DIAG-003 prompt
+            lib = get_prompt_library()
+            prompt = lib.get_prompt("DIAG-003")
+
+            # Get student
+            result = await self.db.execute(
+                select(Student).where(Student.id == self.session.student_id)
+            )
+            student = result.scalar_one()
+
+            # Get parent for language preference
+            parent_result = await self.db.execute(
+                select(Parent).where(Parent.id == student.primary_parent_id)
+            )
+            parent = parent_result.scalar_one_or_none()
+
+            # Build session Q&A history
+            session_history = await self._build_session_qa_history()
+
+            # Build relevant graph nodes
+            relevant_nodes = await self._build_relevant_graph_nodes()
+
+            # Calculate session duration
+            session_duration_minutes = 0
+            if self.session.completed_at and self.session.created_at:
+                duration = self.session.completed_at - self.session.created_at
+                session_duration_minutes = int(duration.total_seconds() / 60)
+
+            # Build context for AI
+            context = {
+                "student_first_name": student.first_name or "Student",
+                "current_grade": student.current_grade,
+                "age": str(student.age) if student.age else "unknown",
+                "home_language": student.home_language or "English",
+                "parent_preferred_language": parent.preferred_language if parent else "English",
+                "session_qa_history_json": json.dumps(session_history, indent=2),
+                "relevant_graph_nodes_json": json.dumps(relevant_nodes, indent=2),
+                "total_questions": str(self.session.total_questions),
+                "session_duration_minutes": str(session_duration_minutes),
+            }
+
+            # Format user message from template
+            user_message = prompt["user_template"]
+            for key, value in context.items():
+                user_message = user_message.replace(f"{{{{{key}}}}}", str(value))
+
+            # Call Claude API
+            client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+            response = client.messages.create(
+                model=prompt["model"],
+                max_tokens=prompt["max_tokens"],
+                temperature=prompt["temperature"],
+                system=prompt["system_prompt"],
+                messages=[{"role": "user", "content": user_message}],
+            )
+
+            # Parse response
+            content_block = response.content[0]
+            if not hasattr(content_block, "text"):
+                return None
+
+            response_data = json.loads(content_block.text)
+
+            return {
+                "root_cause_explanation": response_data.get("root_cause_explanation", ""),
+                "primary_cascade": response_data.get("primary_cascade", ""),
+                "mastered_node_codes": response_data.get("mastered_nodes", []),
+                "gap_node_codes": response_data.get("gap_nodes", []),
+                "uncertain_node_codes": response_data.get("uncertain_nodes", []),
+                "parent_message": response_data.get("parent_message", ""),
+                "recommended_activities": response_data.get("recommended_activities", []),
+            }
+
+        except Exception:
+            # Return None on error, caller should fallback to rule-based analysis
+            return None
+
+    async def _build_session_qa_history(self) -> list[dict[str, str | bool]]:
+        """Build complete Q&A history for the session.
+
+        Returns:
+            List of dicts with question, answer, correctness, node_code
+        """
+        from sqlalchemy import select
+
+        from gapsense.core.models import CurriculumNode, DiagnosticQuestion
+
+        # Get all answered questions for this session
+        questions_result = await self.db.execute(
+            select(DiagnosticQuestion)
+            .where(
+                DiagnosticQuestion.session_id == self.session.id,
+                DiagnosticQuestion.student_response.isnot(None),
+            )
+            .order_by(DiagnosticQuestion.question_order)
+        )
+        questions = questions_result.scalars().all()
+
+        history = []
+        for question in questions:
+            # Get node code
+            node_result = await self.db.execute(
+                select(CurriculumNode).where(CurriculumNode.id == question.node_id)
+            )
+            node = node_result.scalar_one_or_none()
+
+            if node:
+                history.append(
+                    {
+                        "node_code": node.code,
+                        "question": question.question_text,
+                        "expected_answer": question.expected_answer or "N/A",
+                        "student_response": question.student_response or "",
+                        "is_correct": question.is_correct or False,
+                    }
+                )
+
+        return history
+
+    async def _build_relevant_graph_nodes(self) -> list[dict[str, str | int]]:
+        """Build prerequisite graph nodes relevant to this session.
+
+        Returns:
+            List of node dicts with code, title, grade, severity
+        """
+        from sqlalchemy import select
+
+        from gapsense.core.models import CurriculumNode
+
+        # Get all nodes that were tested or identified as gaps
+        all_node_ids = set()
+        if self.session.nodes_tested:
+            all_node_ids.update(self.session.nodes_tested)
+        if self.session.nodes_gap:
+            all_node_ids.update(self.session.nodes_gap)
+        if self.session.nodes_mastered:
+            all_node_ids.update(self.session.nodes_mastered)
+
+        if not all_node_ids:
+            return []
+
+        result = await self.db.execute(
+            select(CurriculumNode).where(CurriculumNode.id.in_(all_node_ids))
+        )
+        nodes = result.scalars().all()
+
+        return [
+            {
+                "code": node.code,
+                "title": node.title,
+                "grade": node.grade,
+                "severity": node.severity,
+            }
+            for node in nodes
+        ]
+
     async def generate_recommendations(self, gap_profile: GapProfile) -> dict[str, str]:
         """Generate actionable recommendations for student/parent.
 
@@ -235,9 +416,26 @@ class GapProfileAnalyzer:
         Returns:
             Dict with recommendation keys and values
         """
-        # TODO: Implement recommendation generation
-        # Will integrate with PARENT-001 prompt for parent messaging
+        # Try AI-powered recommendations first
+        ai_analysis = await self.generate_ai_root_cause_analysis()
 
+        if ai_analysis and ai_analysis.get("recommended_activities"):
+            activities = ai_analysis["recommended_activities"]
+            activities_str = (
+                ", ".join(activities) if isinstance(activities, list) else str(activities)
+            )
+            parent_msg = ai_analysis.get("parent_message", "Practice foundational skills")
+            parent_msg_str = str(parent_msg) if parent_msg else "Practice foundational skills"
+            root_cause = ai_analysis.get("root_cause_explanation", "")
+            root_cause_str = str(root_cause) if root_cause else ""
+
+            return {
+                "next_steps": parent_msg_str,
+                "recommended_activities": activities_str,
+                "root_cause": root_cause_str,
+            }
+
+        # Fallback to rule-based recommendations
         return {
             "next_steps": "Practice foundational skills",
             "estimated_time": "2-3 weeks of daily practice",

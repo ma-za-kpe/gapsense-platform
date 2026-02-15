@@ -23,7 +23,6 @@ repos:
         name: Poetry Check (Lock File Sync)
         args: ["--lock"]
         stages: [pre-commit]
-        verbose: true
 
   # Ruff - Fast Python linter and formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -68,7 +67,6 @@ repos:
         types: [python]
         pass_filenames: false
         stages: [pre-push]
-        verbose: true
 
       # Pytest - All tests with coverage (≥80% during active development)
       - id: pytest-coverage
@@ -78,7 +76,6 @@ repos:
         types: [python]
         pass_filenames: false
         stages: [pre-push]
-        verbose: true
 
       # Alembic - Database migration check
       - id: alembic-check
@@ -87,7 +84,6 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
-        verbose: true
 
       # Bandit - Python security linter (CRITICAL for student data protection)
       - id: bandit
@@ -97,7 +93,6 @@ repos:
         types: [python]
         pass_filenames: false
         stages: [pre-push]
-        verbose: true
 
       # Safety - Check dependencies for known vulnerabilities
       - id: safety
@@ -106,7 +101,6 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
-        verbose: true
 
       # Vulture - Find dead/unused code
       - id: vulture
@@ -116,7 +110,6 @@ repos:
         types: [python]
         pass_filenames: false
         stages: [pre-push]
-        verbose: true
 
       # Deptry - Check for unused/missing dependencies
       - id: deptry
@@ -125,7 +118,6 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
-        verbose: true
 
   # =========================================================================
   # GENERAL FILE CHECKS - Run on every commit (very fast)

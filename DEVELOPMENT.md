@@ -620,6 +620,67 @@ kill -9 <PID>
 poetry run uvicorn gapsense.main:app --port 8001
 ```
 
+#### 7. CI Environment Differences
+
+**Important:** GitHub Actions CI runs with limited resources compared to local development:
+
+**What's Different in CI:**
+```bash
+# 1. No gapsense-data repository
+#    - Empty prompt library (tests don't need real prompts)
+#    - No curriculum JSON files
+#    - GAPSENSE_DATA_PATH validation is skipped
+
+# 2. Test database on port 5432 (not 5433)
+#    - Uses DATABASE_URL environment variable
+#    - Configured in .github/workflows/ci.yml
+
+# 3. Prompt library runs in test mode
+#    - Returns empty library: {"prompts": 0, "version": "test-mode"}
+#    - Tests that depend on real prompts are skipped in CI
+
+# 4. Configuration validation relaxed
+#    - When CI=true, path validation is skipped
+#    - See src/gapsense/config.py validate_data_path()
+```
+
+**How Code Detects CI:**
+```python
+import os
+
+if os.getenv("CI") == "true":
+    # Skip validation, use test mode
+    ...
+```
+
+**Why This Design?**
+- ✅ Faster CI runs (no large data files to clone)
+- ✅ Proprietary curriculum data stays private
+- ✅ Tests focus on code logic, not data
+- ✅ Can run CI without gapsense-data access
+
+**Local vs CI Test Differences:**
+```bash
+# Local (full setup):
+- 202 tests pass
+- 88% coverage
+- Real prompt library (13 prompts)
+- Full curriculum data
+- Database port 5433
+
+# CI (minimal setup):
+- 202 tests pass
+- 88% coverage
+- Empty prompt library (0 prompts)
+- Mock test data only
+- Database port 5432
+```
+
+**If CI Fails But Local Passes:**
+1. Check if test assumes gapsense-data exists
+2. Add `CI=true` check to skip in CI
+3. Or mock the required data in test
+
 ---
 
 ## Development Best Practices
