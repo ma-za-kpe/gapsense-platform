@@ -43,7 +43,7 @@ WhatsApp → API → SQS Queue → Worker → Claude AI → PostgreSQL
 **Stack:**
 - **Backend**: FastAPI (Python 3.12), async everywhere
 - **Database**: PostgreSQL 16 (RDS)
-- **AI**: Anthropic Claude Sonnet 4.5 / Haiku 4.5
+- **AI**: Multi-provider (Anthropic Claude → xAI Grok → Rule-based)
 - **Queue**: AWS SQS FIFO
 - **Messaging**: WhatsApp Cloud API (direct)
 - **Infrastructure**: AWS (Cape Town region - 50ms to Ghana)
@@ -62,7 +62,7 @@ gapsense-platform/
 │   ├── webhooks/              # WhatsApp webhook handlers
 │   ├── teachers/              # Teacher reports
 │   ├── analytics/             # Aggregation
-│   └── ai/                    # Anthropic integration
+│   └── ai/                    # Multi-provider AI (Anthropic, Grok, fallbacks)
 ├── tests/                     # Test suite
 ├── infrastructure/            # AWS CDK
 ├── migrations/                # Alembic database migrations
@@ -386,7 +386,18 @@ WhatsApp messaging with Wolf/Aurino compliance.
 - GUARD-001 validation at temp=0.0
 
 ### AI Service (`src/gapsense/ai/`)
-Anthropic Claude integration with prompt caching (90% cost reduction).
+Multi-provider AI integration with automatic fallback for resilience.
+
+**AI Provider Fallback Chain:**
+1. **Anthropic Claude** (Primary) - Sonnet 4.5 / Haiku 4.5 with prompt caching (90% cost reduction)
+2. **xAI Grok** (Fallback) - Grok Beta via OpenAI-compatible API
+3. **Rule-based** (Final Fallback) - Deterministic algorithms when all AI providers fail
+
+**Key Features:**
+- Automatic provider failover (no downtime if primary provider is unavailable)
+- Unified client interface (`AIClient`) - one API for all providers
+- Graceful degradation to rule-based analysis if all AI providers fail
+- Logging to track which provider handled each request
 
 **13 prompts:**
 - DIAG-001/002/003: Diagnostic reasoning
@@ -394,6 +405,15 @@ Anthropic Claude integration with prompt caching (90% cost reduction).
 - GUARD-001: Compliance validation (blocking)
 - ANALYSIS-001/002: Exercise book, voice notes
 - TEACHER-001/002/003: Reports, conversation
+
+**Configuration:**
+Set API keys in `.env`:
+```bash
+ANTHROPIC_API_KEY=sk-ant-your-key-here  # Primary provider
+GROK_API_KEY=xai-your-key-here           # Fallback provider (optional)
+```
+
+If neither API key is set, system automatically uses rule-based fallbacks.
 
 ---
 
