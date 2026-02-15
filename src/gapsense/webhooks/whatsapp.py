@@ -4,15 +4,23 @@ WhatsApp Cloud API Webhook Handlers
 Handles webhook verification (GET) and incoming messages (POST).
 Based on Meta WhatsApp Cloud API v21.0 specification.
 """
+# ruff: noqa: B008 - FastAPI Depends in function defaults is standard pattern
 
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from sqlalchemy import select
 
 from gapsense.config import settings
+from gapsense.core.database import get_db
+from gapsense.core.models import Parent
+from gapsense.engagement.flow_executor import FlowExecutor
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +66,10 @@ async def verify_webhook(
 
 
 @router.post("")
-async def handle_webhook(request: Request) -> dict[str, str]:
+async def handle_webhook(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, str]:
     """Handle incoming WhatsApp messages and status updates.
 
     WhatsApp Cloud API sends POST requests with:
@@ -107,7 +118,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
             # Handle inbound messages
             messages = value.get("messages", [])
             for message in messages:
-                await _handle_message(message, value)
+                await _handle_message(message, value, db)
 
             # Handle status updates (delivered, read, failed)
             statuses = value.get("statuses", [])
@@ -117,24 +128,28 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     return {"status": "received"}
 
 
-async def _handle_message(message: dict[str, Any], value: dict[str, Any]) -> None:
+async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: AsyncSession) -> None:
     """Handle an inbound WhatsApp message.
 
     Args:
         message: Message object from webhook
         value: Parent value object with metadata
+        db: Database session
 
-    Note:
-        For MVP Week 1, this is a placeholder that logs the message.
-        Full implementation will:
-        1. Identify/create parent by phone number
-        2. Update conversation state
-        3. Route to appropriate flow handler
-        4. Send response via WhatsApp client
+    Implementation:
+        1. Get or create Parent by phone number
+        2. Extract message content
+        3. Route to FlowExecutor
+        4. FlowExecutor sends response via WhatsAppClient
     """
     message_type = message.get("type")
     from_number = message.get("from")
     message_id = message.get("id")
+
+    # Validate required fields
+    if not message_type or not from_number or not message_id:
+        logger.warning(f"Incomplete message data: {message}")
+        return
 
     logger.info(f"Received {message_type} message from {from_number} (ID: {message_id})")
 
@@ -143,12 +158,77 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any]) -> Non
 
     logger.debug(f"Message content: {content}")
 
-    # TODO: Week 1 Implementation
-    # 1. Get or create Parent by phone number
-    # 2. Check conversation_state
-    # 3. Route to FlowExecutor
-    # 4. Generate response
-    # 5. Send via WhatsAppClient
+    try:
+        # Get or create Parent by phone number
+        parent = await _get_or_create_parent(db, from_number)
+
+        # Initialize FlowExecutor
+        executor = FlowExecutor(db=db)
+
+        # Process message through flow executor
+        result = await executor.process_message(
+            parent=parent,
+            message_type=message_type,
+            message_content=content,
+            message_id=message_id,
+        )
+
+        # Log result
+        if result.error:
+            logger.error(
+                f"Flow execution error for {from_number}: {result.error}",
+                extra={
+                    "flow": result.flow_name,
+                    "parent_phone": from_number,
+                    "message_id": message_id,
+                },
+            )
+        else:
+            logger.info(
+                f"Flow executed: {result.flow_name} (completed: {result.completed})",
+                extra={
+                    "flow": result.flow_name,
+                    "next_step": result.next_step,
+                    "message_sent": result.message_sent,
+                    "parent_phone": from_number,
+                },
+            )
+
+    except Exception as e:
+        logger.error(
+            f"Failed to handle message from {from_number}: {e}",
+            exc_info=True,
+            extra={"message_id": message_id, "message_type": message_type},
+        )
+
+
+async def _get_or_create_parent(db: AsyncSession, phone: str) -> Parent:
+    """Get or create Parent by phone number.
+
+    Args:
+        db: Database session
+        phone: WhatsApp phone number
+
+    Returns:
+        Parent instance (existing or newly created)
+    """
+    # Try to find existing parent
+    stmt = select(Parent).where(Parent.phone == phone)
+    result = await db.execute(stmt)
+    parent = result.scalar_one_or_none()
+
+    if parent:
+        logger.debug(f"Found existing parent: {phone}")
+        return parent
+
+    # Create new parent
+    logger.info(f"Creating new parent: {phone}")
+    parent = Parent(phone=phone)
+    db.add(parent)
+    await db.commit()
+    await db.refresh(parent)
+
+    return parent
 
 
 async def _handle_status_update(status: dict[str, Any]) -> None:
