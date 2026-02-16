@@ -380,26 +380,50 @@ class TeacherFlowExecutor:
         grade = teacher.grade_taught or "JHS1"
         created_students = []
 
-        for full_name in student_names:
-            # Extract first name (take first word)
-            first_name = full_name.split()[0] if full_name else "Student"
+        try:
+            for full_name in student_names:
+                # Extract first name (take first word)
+                first_name = full_name.split()[0] if full_name else "Student"
 
-            student = Student(
-                first_name=first_name,
-                current_grade=grade,
-                school_id=teacher.school_id,
-                teacher_id=teacher.id,
-                # NOTE: primary_parent_id will be NULL until parent links
-                # This will cause validation error - need to handle
-                is_active=True,
+                student = Student(
+                    full_name=full_name,  # Complete name from register (for parent selection)
+                    first_name=first_name,
+                    current_grade=grade,
+                    school_id=teacher.school_id,
+                    teacher_id=teacher.id,
+                    # NOTE: primary_parent_id will be NULL until parent links
+                    is_active=True,
+                )
+                self.db.add(student)
+                created_students.append(full_name)
+
+            # Mark teacher as onboarded
+            teacher.onboarded_at = datetime.now(UTC)
+            teacher.conversation_state = None  # Clear state - onboarding complete
+            await self.db.commit()
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(
+                f"Failed to create students for teacher {teacher.phone}: {e}",
+                exc_info=True,
+                extra={"teacher_id": teacher.id, "student_count": len(student_names)},
             )
-            self.db.add(student)
-            created_students.append(full_name)
 
-        # Mark teacher as onboarded
-        teacher.onboarded_at = datetime.now(UTC)
-        teacher.conversation_state = None  # Clear state - onboarding complete
-        await self.db.commit()
+            # Send error message to teacher
+            message = (
+                "Sorry, there was an error creating student profiles. "
+                "Please try sending the student list again, or contact support if this continues."
+            )
+            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            return TeacherFlowResult(
+                flow_name="FLOW-TEACHER-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="COLLECT_STUDENT_LIST",
+                completed=False,
+                error=str(e),
+            )
 
         # Send completion message
         student_list_preview = "\n".join(

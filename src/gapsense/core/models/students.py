@@ -39,6 +39,11 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     # Identity (minimal)
+    full_name: Mapped[str | None] = mapped_column(
+        String(200),
+        nullable=True,
+        comment="Full name from teacher's class register (e.g., 'Kwame Mensah')",
+    )
     first_name: Mapped[str] = mapped_column(
         String(100),
         nullable=False,

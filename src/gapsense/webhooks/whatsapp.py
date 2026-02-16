@@ -17,8 +17,8 @@ from sqlalchemy import select
 from gapsense.config import settings
 from gapsense.core.database import get_db
 from gapsense.core.models import Parent, Teacher
-from gapsense.engagement.flow_executor import FlowExecutor
-from gapsense.engagement.teacher_flows import TeacherFlowExecutor
+from gapsense.engagement.flow_executor import FlowExecutor, FlowResult
+from gapsense.engagement.teacher_flows import TeacherFlowExecutor, TeacherFlowResult
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -163,10 +163,11 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
         # Detect user type and route to appropriate executor
         user_type, user = await _detect_user_type(db, from_number)
 
+        result: TeacherFlowResult | FlowResult
         if user_type == "teacher":
             logger.info(f"Routing to TeacherFlowExecutor for {from_number}")
-            executor = TeacherFlowExecutor(db=db)
-            result = await executor.process_teacher_message(
+            teacher_executor = TeacherFlowExecutor(db=db)
+            result = await teacher_executor.process_teacher_message(
                 teacher=user,  # type: ignore[arg-type]
                 message_type=message_type,
                 message_content=content,
@@ -174,8 +175,8 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
             )
         elif user_type == "parent":
             logger.info(f"Routing to ParentFlowExecutor for {from_number}")
-            executor = FlowExecutor(db=db)
-            result = await executor.process_message(
+            parent_executor = FlowExecutor(db=db)
+            result = await parent_executor.process_message(
                 parent=user,  # type: ignore[arg-type]
                 message_type=message_type,
                 message_content=content,
@@ -245,31 +246,40 @@ async def _detect_user_type(
         return None, None
 
     # Check if teacher
-    stmt = select(Teacher).where(Teacher.phone == phone).where(Teacher.is_active == True)  # noqa: E712
-    result = await db.execute(stmt)
+    stmt_teacher = select(Teacher).where(Teacher.phone == phone).where(Teacher.is_active == True)  # noqa: E712
+    result = await db.execute(stmt_teacher)
     teacher = result.scalar_one_or_none()
 
     if teacher:
         logger.debug(f"Found existing teacher: {phone}")
         return "teacher", teacher
 
-    # Check if parent
-    stmt = select(Parent).where(Parent.phone == phone)
-    result = await db.execute(stmt)
-    parent = result.scalar_one_or_none()
+    # Check if parent (exclude opted-out parents)
+    stmt_parent = select(Parent).where(Parent.phone == phone).where(Parent.opted_out == False)  # noqa: E712
+    result_parent = await db.execute(stmt_parent)
+    existing_parent = result_parent.scalar_one_or_none()
 
-    if parent:
+    if existing_parent:
         logger.debug(f"Found existing parent: {phone}")
-        return "parent", parent
+        return "parent", existing_parent
+
+    # Check if parent exists but opted out
+    stmt_opted_out = select(Parent).where(Parent.phone == phone).where(Parent.opted_out == True)  # noqa: E712
+    result_opted_out = await db.execute(stmt_opted_out)
+    opted_out_parent = result_opted_out.scalar_one_or_none()
+
+    if opted_out_parent:
+        logger.info(f"Parent {phone} is opted out, ignoring message")
+        return None, None  # Don't route opted-out parents
 
     # Unknown user - create as parent (default)
     logger.info(f"Unknown user, creating as parent: {phone}")
     try:
-        parent = Parent(phone=phone)
-        db.add(parent)
+        new_parent = Parent(phone=phone)
+        db.add(new_parent)
         await db.commit()
-        await db.refresh(parent)
-        return "parent", parent
+        await db.refresh(new_parent)
+        return "parent", new_parent
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to create parent {phone}: {e}", exc_info=True)
