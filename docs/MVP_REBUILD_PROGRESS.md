@@ -294,7 +294,7 @@ git log --oneline -5
 ## 📝 Key Files Modified
 
 ### New Files Created:
-- `src/gapsense/engagement/teacher_flows.py` (502 lines) - Teacher onboarding flow
+- `src/gapsense/engagement/teacher_flows.py` (543 lines) - Teacher onboarding flow
 - `alembic/versions/20260216_1204_eb4eab32e503_*.py` - Teacher conversation state migration
 - `alembic/versions/20260216_1214_9308455ddbbd_*.py` - Nullable primary_parent_id migration
 - `alembic/versions/20260216_1257_80fda3c19375_*.py` - Seed default region/district
