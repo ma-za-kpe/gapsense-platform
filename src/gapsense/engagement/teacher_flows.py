@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -87,6 +87,12 @@ class TeacherFlowExecutor:
             TeacherFlowResult with processing outcome
         """
         try:
+            # Phase D.5: Check for expired session
+            await self._check_session_expiry(teacher)
+
+            # Update session tracking
+            await self._update_session_tracking(teacher)
+
             # Check for commands (RESTART, CANCEL, HELP, STATUS)
             if (
                 message_type == "text"
@@ -183,8 +189,15 @@ class TeacherFlowExecutor:
         Returns:
             TeacherFlowResult
         """
+        current_step = teacher.conversation_state.get("step")  # type: ignore[union-attr]
+
+        # Handle confirmation step (expects button response)
+        if current_step == "CONFIRM_STUDENT_CREATION":
+            return await self._confirm_student_creation(teacher, message_type, message_content)
+
+        # Other steps expect text input
         if message_type != "text" or not isinstance(message_content, str):
-            # For MVP, only handle text input
+            # For MVP, only handle text input for non-confirmation steps
             message_id = await self.whatsapp.send_text_message(
                 to=teacher.phone, text="Please send a text message."
             )
@@ -192,11 +205,10 @@ class TeacherFlowExecutor:
                 flow_name="FLOW-TEACHER-ONBOARD",
                 message_sent=True,
                 message_id=message_id,
-                next_step=teacher.conversation_state.get("step"),  # type: ignore[union-attr]
+                next_step=current_step,
                 completed=False,
             )
 
-        current_step = teacher.conversation_state.get("step")  # type: ignore[union-attr]
         user_input = message_content.strip()
 
         # Route to step handler
@@ -443,38 +455,73 @@ class TeacherFlowExecutor:
                 completed=False,
             )
 
-        # Create student profiles
-        grade = teacher.grade_taught or "JHS1"
-        created_students = []
+        # Save parsed names to conversation state for confirmation
+        teacher.conversation_state["data"]["parsed_names"] = student_names  # type: ignore[index]
+        teacher.conversation_state["step"] = "CONFIRM_STUDENT_CREATION"  # type: ignore[index]
+        flag_modified(teacher, "conversation_state")
+        await self.db.commit()
 
+        # Show preview and ask for confirmation
         try:
-            for full_name in student_names:
-                # Extract first name (take first word)
-                first_name = full_name.split()[0] if full_name else "Student"
+            student_list_preview = "\n".join(
+                [f"{idx}. {name}" for idx, name in enumerate(student_names, start=1)]
+            )
 
-                student = Student(
-                    full_name=full_name,  # Complete name from register (for parent selection)
-                    first_name=first_name,
-                    current_grade=grade,
-                    school_id=teacher.school_id,
-                    teacher_id=teacher.id,
-                    # NOTE: primary_parent_id will be NULL until parent links
-                    is_active=True,
+            # Phase D.1: Check for count mismatch
+            expected_count = teacher.conversation_state["data"].get("student_count")  # type: ignore[index]
+            count_warning = ""
+            if expected_count and len(student_names) != expected_count:
+                count_warning = (
+                    f"\n⚠️ Note: You said {expected_count} students, "
+                    f"but I found {len(student_names)} names.\n"
                 )
-                self.db.add(student)
-                created_students.append(full_name)
 
-            # Mark teacher as onboarded
-            teacher.onboarded_at = datetime.now(UTC)
-            teacher.conversation_state = None  # Clear state - onboarding complete
-            await self.db.commit()
+            # Phase D.2: Check for duplicate names
+            duplicate_warning = ""
+            name_counts: dict[str, int] = {}
+            for name in student_names:
+                name_lower = name.lower()
+                name_counts[name_lower] = name_counts.get(name_lower, 0) + 1
+
+            duplicates = [name for name, count in name_counts.items() if count > 1]
+            if duplicates:
+                duplicate_list = ", ".join(
+                    [f"'{name.title()}' ({name_counts[name]}x)" for name in duplicates]
+                )
+                duplicate_warning = (
+                    f"\n⚠️ Warning: Duplicate names found: {duplicate_list}\n"
+                    "Multiple students with the same name is okay, but please confirm.\n"
+                )
+
+            message_body = (
+                f"I found {len(student_names)} students:\n\n"
+                f"{student_list_preview}"
+                f"{count_warning}"
+                f"{duplicate_warning}\n"
+                f"Is this correct?"
+            )
+
+            message_id = await self.whatsapp.send_button_message(
+                to=teacher.phone,
+                body=message_body,
+                buttons=[
+                    {"id": "confirm_yes", "title": "Yes, create profiles"},
+                    {"id": "confirm_no", "title": "No, let me resend"},
+                ],
+            )
+
+            return TeacherFlowResult(
+                flow_name="FLOW-TEACHER-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="CONFIRM_STUDENT_CREATION",
+                completed=False,
+            )
 
         except Exception as e:
-            await self.db.rollback()
             logger.error(
-                f"Failed to create students for teacher {teacher.phone}: {e}",
+                f"Failed to send confirmation to teacher {teacher.phone}: {e}",
                 exc_info=True,
-                extra={"teacher_id": teacher.id, "student_count": len(student_names)},
             )
 
             # Send error message to teacher
@@ -492,35 +539,178 @@ class TeacherFlowExecutor:
                 error=str(e),
             )
 
-        # Send completion message
-        student_list_preview = "\n".join(
-            f"  {i+1}. {name}" for i, name in enumerate(created_students[:5])
-        )
-        if len(created_students) > 5:
-            student_list_preview += f"\n  ... and {len(created_students) - 5} more"
+    async def _confirm_student_creation(
+        self,
+        teacher: Teacher,
+        message_type: str,
+        message_content: str | dict[str, Any],
+    ) -> TeacherFlowResult:
+        """Handle student creation confirmation (Phase C - confirmation before creating).
 
-        message = (
-            f"Perfect! ✅ I've created profiles for all {len(created_students)} students:\n\n"
-            f"{student_list_preview}\n\n"
-            "Now share this WhatsApp number with parents at your next PTA meeting "
-            "or in your class WhatsApp group.\n\n"
-            "When parents message START, I'll ask them to select their child from your class list.\n\n"
-            "🎓 You're ready to start using GapSense!\n\n"
-            "Next steps:\n"
-            "• Share this number with parents\n"
-            "• Scan student exercise books (coming soon)\n"
-            "• Ask me questions about your class"
-        )
+        Teacher has provided student list and now must confirm before we create profiles.
 
-        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+        Args:
+            teacher: Teacher confirming student creation
+            message_type: Message type
+            message_content: Message content (should be button response)
 
-        return TeacherFlowResult(
-            flow_name="FLOW-TEACHER-ONBOARD",
-            message_sent=True,
-            message_id=message_id,
-            next_step=None,
-            completed=True,
-        )
+        Returns:
+            TeacherFlowResult
+        """
+        # Check for button response
+        if message_type != "interactive" or not isinstance(message_content, dict):
+            # Invalid input - they need to click a button
+            message_id = await self.whatsapp.send_text_message(
+                to=teacher.phone,
+                text="Please click one of the buttons above to continue.",
+            )
+            return TeacherFlowResult(
+                flow_name="FLOW-TEACHER-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="CONFIRM_STUDENT_CREATION",
+                completed=False,
+            )
+
+        # Extract button ID
+        if "button_reply" in message_content:
+            button_reply = message_content.get("button_reply", {})
+            button_id = button_reply.get("id")
+        else:
+            button_id = message_content.get("id")
+
+        # Handle confirmation response
+        if button_id == "confirm_no":
+            # Teacher declined - go back to student list collection
+            teacher.conversation_state["step"] = "COLLECT_STUDENT_LIST"  # type: ignore[index]
+            flag_modified(teacher, "conversation_state")
+            await self.db.commit()
+
+            message = (
+                "No problem! Let's try again.\n\n" "Please send the list of student names again."
+            )
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+            return TeacherFlowResult(
+                flow_name="FLOW-TEACHER-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="COLLECT_STUDENT_LIST",
+                completed=False,
+            )
+
+        elif button_id == "confirm_yes":
+            # Teacher confirmed - create students
+            conversation_data = teacher.conversation_state.get("data", {})  # type: ignore[union-attr]
+            student_names = conversation_data.get("parsed_names", [])
+
+            if not student_names:
+                # Missing student names (shouldn't happen)
+                message = "Sorry, something went wrong. Please try sending the student list again."
+                message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+                teacher.conversation_state = None
+                await self.db.commit()
+                return TeacherFlowResult(
+                    flow_name="FLOW-TEACHER-ONBOARD",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step=None,
+                    completed=False,
+                    error="Missing parsed_names",
+                )
+
+            # Create student profiles
+            grade = teacher.grade_taught or "JHS1"
+            created_students = []
+
+            try:
+                for full_name in student_names:
+                    # Extract first name (take first word)
+                    first_name = full_name.split()[0] if full_name else "Student"
+
+                    student = Student(
+                        full_name=full_name,
+                        first_name=first_name,
+                        current_grade=grade,
+                        school_id=teacher.school_id,
+                        teacher_id=teacher.id,
+                        # NOTE: primary_parent_id will be NULL until parent links
+                        is_active=True,
+                    )
+                    self.db.add(student)
+                    created_students.append(full_name)
+
+                # Mark teacher as onboarded
+                # NOTE: Teacher.onboarded_at doesn't have DateTime(timezone=True) in model
+                # so we use naive datetime for now (TODO: fix in migration)
+                teacher.onboarded_at = datetime.now(UTC).replace(tzinfo=None)
+                teacher.conversation_state = None  # Clear state - onboarding complete
+                await self.db.commit()
+
+            except Exception as e:
+                await self.db.rollback()
+                logger.error(
+                    f"Failed to create students for teacher {teacher.phone}: {e}",
+                    exc_info=True,
+                    extra={"teacher_id": teacher.id, "student_count": len(student_names)},
+                )
+                message = (
+                    "Sorry, there was an error creating student profiles. "
+                    "Please try again or contact support if this continues."
+                )
+                message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+                return TeacherFlowResult(
+                    flow_name="FLOW-TEACHER-ONBOARD",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step="COLLECT_STUDENT_LIST",
+                    completed=False,
+                    error=str(e),
+                )
+
+            # Send completion message
+            student_list_preview = "\n".join(
+                f"  {i+1}. {name}" for i, name in enumerate(created_students[:5])
+            )
+            if len(created_students) > 5:
+                student_list_preview += f"\n  ... and {len(created_students) - 5} more"
+
+            message = (
+                f"Perfect! ✅ I've created profiles for all {len(created_students)} students:\n\n"
+                f"{student_list_preview}\n\n"
+                "Now share this WhatsApp number with parents at your next PTA meeting "
+                "or in your class WhatsApp group.\n\n"
+                "When parents message START, I'll ask them to select their child from your class list.\n\n"
+                "🎓 You're ready to start using GapSense!\n\n"
+                "Next steps:\n"
+                "• Share this number with parents\n"
+                "• Scan student exercise books (coming soon)\n"
+                "• Ask me questions about your class"
+            )
+
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+            return TeacherFlowResult(
+                flow_name="FLOW-TEACHER-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=True,
+            )
+
+        else:
+            # Unknown button
+            message_id = await self.whatsapp.send_text_message(
+                to=teacher.phone,
+                text="Please select one of the options above.",
+            )
+            return TeacherFlowResult(
+                flow_name="FLOW-TEACHER-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="CONFIRM_STUDENT_CREATION",
+                completed=False,
+            )
 
     def _extract_grade(self, class_name: str) -> str:
         """Extract grade from class name.
@@ -691,3 +881,43 @@ class TeacherFlowExecutor:
             completed=True,
             error=None,
         )
+
+    async def _check_session_expiry(self, teacher: Teacher) -> None:
+        """Check if conversation session has expired (Phase D.5).
+
+        If session expired (> 24 hours since last activity), clear conversation state.
+
+        Args:
+            teacher: Teacher instance
+        """
+        if not teacher.conversation_state:
+            # No active conversation, nothing to expire
+            return
+
+        if not teacher.last_active_at:
+            # No timestamp, can't check expiry
+            return
+
+        # Convert both to UTC for comparison
+        now_utc = datetime.now(UTC).replace(tzinfo=None)  # Make naive for comparison
+        time_since_last_activity = now_utc - teacher.last_active_at
+
+        # Session expires after 24 hours
+        if time_since_last_activity > timedelta(hours=24):
+            logger.info(
+                f"Session expired for teacher {teacher.phone} "
+                f"(last active {time_since_last_activity.total_seconds() / 3600:.1f}h ago)"
+            )
+            teacher.conversation_state = None
+            await self.db.commit()
+
+    async def _update_session_tracking(self, teacher: Teacher) -> None:
+        """Update session tracking.
+
+        Args:
+            teacher: Teacher instance
+        """
+        # NOTE: Teacher.last_active_at expects timezone-naive datetime
+        now_naive = datetime.now(UTC).replace(tzinfo=None)
+        teacher.last_active_at = now_naive
+        await self.db.commit()

@@ -182,12 +182,12 @@ class TestTeacherInitiatedOnboarding:
                 message_id="wamid.selection1",
             )
 
-            # Should move to diagnostic consent and save selected student ID
+            # Should move to confirmation step (Phase C) and save selected student ID
             await db_session.refresh(parent)
-            assert parent.conversation_state["step"] == "AWAITING_DIAGNOSTIC_CONSENT"
+            assert parent.conversation_state["step"] == "CONFIRM_STUDENT_SELECTION"
             assert parent.conversation_state["data"]["selected_student_id"] == str(student_id)
 
-            # Should ask for diagnostic consent
+            # Should ask for confirmation
             assert result.message_sent is True
             assert mock_client.send_button_message.called
 

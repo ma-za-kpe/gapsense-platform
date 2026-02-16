@@ -119,6 +119,9 @@ class FlowExecutor:
             FlowResult with processing outcome
         """
         try:
+            # Phase D.5: Check for expired session (before updating tracking)
+            await self._check_session_expiry(parent)
+
             # Update session tracking
             await self._update_session_tracking(parent)
 
@@ -419,6 +422,10 @@ class FlowExecutor:
             return await self._onboard_opt_in(parent, message_type, message_content)
         elif current_step == "AWAITING_STUDENT_SELECTION":
             return await self._onboard_select_student(parent, message_type, message_content)
+        elif current_step == "CONFIRM_STUDENT_SELECTION":
+            return await self._onboard_confirm_student_selection(
+                parent, message_type, message_content
+            )
         elif current_step == "AWAITING_DIAGNOSTIC_CONSENT":
             return await self._onboard_collect_consent(parent, message_type, message_content)
         elif current_step == "AWAITING_LANGUAGE":
@@ -744,15 +751,15 @@ class FlowExecutor:
                 error="Student already linked to another parent",
             )
 
-        # Save student selection to conversation state (will link after consent)
+        # Save student selection to conversation state (NOT linked yet - needs confirmation)
         if parent.conversation_state is None:
             parent.conversation_state = {"flow": "FLOW-ONBOARD", "data": {}}
         parent.conversation_state["data"]["selected_student_id"] = str(student_id)
-        parent.conversation_state["step"] = "AWAITING_DIAGNOSTIC_CONSENT"
+        parent.conversation_state["step"] = "CONFIRM_STUDENT_SELECTION"
         flag_modified(parent, "conversation_state")
         await self.db.commit()
 
-        # Ask for diagnostic consent
+        # Ask for confirmation before linking
         client = WhatsAppClient.from_settings()
         # TODO: L1 TRANSLATION
         student_display_name = selected_student.full_name or selected_student.first_name
@@ -760,15 +767,13 @@ class FlowExecutor:
             message_id = await client.send_button_message(
                 to=parent.phone,
                 body=(
-                    f"Perfect! You selected {student_display_name}.\n\n"
-                    f"To help {selected_student.first_name} learn, we'll send a quick diagnostic quiz "
-                    f"to find where they need support.\n\n"
-                    f"This quiz is private - only you and the teacher will see results.\n\n"
-                    f"Do you consent to this diagnostic assessment?"
+                    f"You selected: {student_display_name}\n"
+                    f"Grade: {selected_student.current_grade}\n\n"
+                    f"Is this your child?"
                 ),
                 buttons=[
-                    {"id": "consent_yes", "title": "Yes, proceed"},
-                    {"id": "consent_no", "title": "No, skip for now"},
+                    {"id": "confirm_yes", "title": "Yes, that's correct"},
+                    {"id": "confirm_no", "title": "No, go back"},
                 ],
             )
 
@@ -776,20 +781,269 @@ class FlowExecutor:
                 flow_name="FLOW-ONBOARD",
                 message_sent=True,
                 message_id=message_id,
-                next_step="AWAITING_DIAGNOSTIC_CONSENT",
+                next_step="CONFIRM_STUDENT_SELECTION",
                 completed=False,
                 error=None,
             )
 
         except Exception as e:
-            logger.error(f"Failed to send diagnostic consent to {parent.phone}: {e}")
+            logger.error(f"Failed to send confirmation to {parent.phone}: {e}")
             return FlowResult(
                 flow_name="FLOW-ONBOARD",
                 message_sent=False,
                 message_id=None,
-                next_step="AWAITING_DIAGNOSTIC_CONSENT",
+                next_step="CONFIRM_STUDENT_SELECTION",
                 completed=False,
                 error=str(e),
+            )
+
+    async def _onboard_confirm_student_selection(
+        self,
+        parent: Parent,
+        message_type: str,
+        message_content: str | dict[str, Any],
+    ) -> FlowResult:
+        """Handle student selection confirmation (Phase C - confirmation before linking).
+
+        Parent has selected a student and now must confirm before we link them.
+
+        Args:
+            parent: Parent confirming selection
+            message_type: Message type
+            message_content: Message content (should be button response)
+
+        Returns:
+            FlowResult for confirmation handling
+        """
+        # Check for button response
+        if message_type != "interactive" or not isinstance(message_content, dict):
+            # Invalid input - they need to click a button
+            client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text="Please click one of the buttons above to continue.",
+            )
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="CONFIRM_STUDENT_SELECTION",
+                completed=False,
+                error=None,
+            )
+
+        # Extract button ID
+        if "button_reply" in message_content:
+            button_reply = message_content.get("button_reply", {})
+            button_id = button_reply.get("id")
+        else:
+            button_id = message_content.get("id")
+
+        # Handle confirmation response
+        if button_id == "confirm_no":
+            # Parent declined - go back to student selection
+            # Re-fetch student list to show again
+            from sqlalchemy import select
+
+            stmt = (
+                select(Student)
+                .where(Student.primary_parent_id.is_(None))
+                .where(Student.is_active.is_(True))
+                .order_by(Student.full_name)
+            )
+            result = await self.db.execute(stmt)
+            available_students = result.scalars().all()
+
+            if not available_students:
+                # No students available (edge case)
+                client = WhatsAppClient.from_settings()
+                message_id = await client.send_text_message(
+                    to=parent.phone,
+                    text="Sorry, no students are currently available. Please contact your child's teacher.",
+                )
+                parent.conversation_state = None
+                await self.db.commit()
+                return FlowResult(
+                    flow_name="FLOW-ONBOARD",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step=None,
+                    completed=False,
+                    error="No available students",
+                )
+
+            # Build student list message
+            student_ids_map = {}
+            student_list = []
+            for idx, student in enumerate(available_students, start=1):
+                student_ids_map[str(idx)] = str(student.id)
+                display_name = student.full_name or student.first_name
+                student_list.append(f"{idx}. {display_name} ({student.current_grade})")
+
+            # Update conversation state
+            if parent.conversation_state is None:
+                parent.conversation_state = {"flow": "FLOW-ONBOARD", "data": {}}
+            parent.conversation_state["data"]["student_ids_map"] = student_ids_map
+            parent.conversation_state["step"] = "AWAITING_STUDENT_SELECTION"
+            flag_modified(parent, "conversation_state")
+            await self.db.commit()
+
+            # Send student list again
+            client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION
+            message_text = (
+                "No problem! Let's try again.\n\n"
+                "Please select your child from the list:\n\n" + "\n".join(student_list)
+            )
+            message_id = await client.send_text_message(to=parent.phone, text=message_text)
+
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="AWAITING_STUDENT_SELECTION",
+                completed=False,
+                error=None,
+            )
+
+        elif button_id == "confirm_yes":
+            # Parent confirmed - proceed to diagnostic consent
+            # Get selected student
+            from uuid import UUID
+
+            conversation_data = (
+                parent.conversation_state.get("data", {}) if parent.conversation_state else {}
+            )
+            student_id_str = conversation_data.get("selected_student_id")
+
+            if not student_id_str:
+                # Missing student ID (shouldn't happen)
+                client = WhatsAppClient.from_settings()
+                message_id = await client.send_text_message(
+                    to=parent.phone,
+                    text="Sorry, something went wrong. Please try again by sending 'START'.",
+                )
+                parent.conversation_state = None
+                await self.db.commit()
+                return FlowResult(
+                    flow_name="FLOW-ONBOARD",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step=None,
+                    completed=False,
+                    error="Missing selected_student_id",
+                )
+
+            student_id = UUID(student_id_str)
+
+            from sqlalchemy import select
+
+            stmt = select(Student).where(Student.id == student_id)
+            result = await self.db.execute(stmt)
+            selected_student = result.scalar_one_or_none()
+
+            if not selected_student:
+                # Student not found (edge case)
+                client = WhatsAppClient.from_settings()
+                message_id = await client.send_text_message(
+                    to=parent.phone,
+                    text="Sorry, that student is no longer available. Please try again by sending 'START'.",
+                )
+                parent.conversation_state = None
+                await self.db.commit()
+                return FlowResult(
+                    flow_name="FLOW-ONBOARD",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step=None,
+                    completed=False,
+                    error="Selected student not found",
+                )
+
+            # Check if student already has a parent (race condition double-check)
+            if selected_student.primary_parent_id is not None:
+                client = WhatsAppClient.from_settings()
+                message_id = await client.send_text_message(
+                    to=parent.phone,
+                    text=(
+                        f"Sorry, {selected_student.first_name} already has a parent linked. "
+                        "If this is an error, please contact your child's teacher."
+                    ),
+                )
+                parent.conversation_state = None
+                await self.db.commit()
+                return FlowResult(
+                    flow_name="FLOW-ONBOARD",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step=None,
+                    completed=False,
+                    error="Student already linked to another parent",
+                )
+
+            # Move to diagnostic consent step
+            if parent.conversation_state is None:
+                parent.conversation_state = {"flow": "FLOW-ONBOARD", "data": {}}
+            parent.conversation_state["step"] = "AWAITING_DIAGNOSTIC_CONSENT"
+            flag_modified(parent, "conversation_state")
+            await self.db.commit()
+
+            # Ask for diagnostic consent
+            client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION
+            student_display_name = selected_student.full_name or selected_student.first_name
+            try:
+                message_id = await client.send_button_message(
+                    to=parent.phone,
+                    body=(
+                        f"Perfect! You selected {student_display_name}.\n\n"
+                        f"To help {selected_student.first_name} learn, we'll send a quick diagnostic quiz "
+                        f"to find where they need support.\n\n"
+                        f"This quiz is private - only you and the teacher will see results.\n\n"
+                        f"Do you consent to this diagnostic assessment?"
+                    ),
+                    buttons=[
+                        {"id": "consent_yes", "title": "Yes, proceed"},
+                        {"id": "consent_no", "title": "No, skip for now"},
+                    ],
+                )
+
+                return FlowResult(
+                    flow_name="FLOW-ONBOARD",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step="AWAITING_DIAGNOSTIC_CONSENT",
+                    completed=False,
+                    error=None,
+                )
+
+            except Exception as e:
+                logger.error(f"Failed to send diagnostic consent to {parent.phone}: {e}")
+                return FlowResult(
+                    flow_name="FLOW-ONBOARD",
+                    message_sent=False,
+                    message_id=None,
+                    next_step="AWAITING_DIAGNOSTIC_CONSENT",
+                    completed=False,
+                    error=str(e),
+                )
+
+        else:
+            # Unknown button
+            client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text="Please select one of the options above.",
+            )
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="CONFIRM_STUDENT_SELECTION",
+                completed=False,
+                error=None,
             )
 
     async def _onboard_collect_consent(
@@ -1145,6 +1399,34 @@ class FlowExecutor:
                 completed=False,
                 error=str(e),
             )
+
+    async def _check_session_expiry(self, parent: Parent) -> None:
+        """Check if conversation session has expired (Phase D.5).
+
+        If session expired (> 24 hours since last message), clear conversation state.
+
+        Args:
+            parent: Parent instance
+        """
+        if not parent.conversation_state:
+            # No active conversation, nothing to expire
+            return
+
+        if not parent.last_message_at:
+            # No timestamp, can't check expiry
+            return
+
+        now = datetime.now(UTC)
+        time_since_last_message = now - parent.last_message_at
+
+        # Session expires after 24 hours
+        if time_since_last_message > timedelta(hours=24):
+            logger.info(
+                f"Session expired for parent {parent.phone} "
+                f"(last message {time_since_last_message.total_seconds() / 3600:.1f}h ago)"
+            )
+            parent.conversation_state = None
+            await self.db.commit()
 
     async def _update_session_tracking(self, parent: Parent) -> None:
         """Update 24-hour session window tracking.
