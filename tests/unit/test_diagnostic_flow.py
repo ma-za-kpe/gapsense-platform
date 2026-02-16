@@ -9,6 +9,8 @@ Tests the diagnostic flow:
 5. Send results to parent
 """
 
+from datetime import UTC, datetime
+
 import pytest
 from sqlalchemy import select
 
@@ -41,7 +43,7 @@ class TestDiagnosticFlowInitiation:
             phone="+233244123456",
             preferred_language="en",
             diagnostic_consent=True,
-            onboarded_at="2026-02-16T20:00:00+00:00",
+            onboarded_at=datetime.now(UTC),
             conversation_state=None,  # No active conversation
             district_id=district.id,
         )
@@ -146,7 +148,7 @@ class TestDiagnosticQuestionDelivery:
         parent = Parent(
             phone="+233244999999",
             preferred_language="en",
-            onboarded_at="2026-02-16T20:00:00+00:00",
+            onboarded_at=datetime.now(UTC),
             district_id=district.id,
         )
         db_session.add(parent)
@@ -243,7 +245,7 @@ class TestDiagnosticAnswerCollection:
         parent = Parent(
             phone="+233244888888",
             preferred_language="en",
-            onboarded_at="2026-02-16T20:00:00+00:00",
+            onboarded_at=datetime.now(UTC),
             conversation_state={
                 "flow": "FLOW-DIAGNOSTIC",
                 "step": "AWAITING_ANSWER",

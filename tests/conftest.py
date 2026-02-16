@@ -63,28 +63,23 @@ async def db_session(async_engine) -> AsyncSession:
             # If truncate fails, just continue (tables may not exist yet)
             await session.rollback()
 
-        # Seed default region and district (required for teacher/student creation)
+        # Reset all sequences to ensure clean state
         try:
-            await session.execute(
-                text(
-                    """
-                    INSERT INTO regions (id, name, code)
-                    VALUES (1, 'Greater Accra', 'GAR')
-                    ON CONFLICT (id) DO NOTHING
-                    """
-                )
-            )
-            await session.execute(
-                text(
-                    """
-                    INSERT INTO districts (id, region_id, name, ges_district_code)
-                    VALUES (1, 1, 'Accra Metropolitan', 'GAR-AM-001')
-                    ON CONFLICT (id) DO NOTHING
-                    """
-                )
-            )
+            # Get all sequences and reset them
+            sequences_query = text("""
+                SELECT sequence_name
+                FROM information_schema.sequences
+                WHERE sequence_schema = 'public'
+            """)
+            result = await session.execute(sequences_query)
+            sequences = result.fetchall()
+
+            for (seq_name,) in sequences:
+                await session.execute(text(f"ALTER SEQUENCE {seq_name} RESTART WITH 1"))
+
             await session.commit()
         except Exception:
+            # If sequence reset fails, just continue
             await session.rollback()
 
         yield session

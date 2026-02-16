@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
 from sqlalchemy import (
     CheckConstraint,
+    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -54,7 +55,7 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
             "channel IN ('whatsapp', 'web', 'app', 'sms', 'paper')", name="check_channel"
         ),
         CheckConstraint(
-            "status IN ('in_progress', 'completed', 'abandoned', 'timed_out')",
+            "status IN ('pending', 'in_progress', 'completed', 'abandoned', 'timed_out')",
             name="check_session_status",
         ),
         Index("idx_sessions_student", "student_id"),
@@ -81,9 +82,14 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
         String(20), default="in_progress", comment="in_progress, completed, abandoned, timed_out"
     )
     started_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("NOW()"), comment="Session start time"
+        nullable=False,
+        server_default=text("NOW()"),
+        comment="Session start time",
+        type_=DateTime(timezone=True),
     )
-    completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(
+        nullable=True, type_=DateTime(timezone=True)
+    )
 
     # Entry point
     entry_grade: Mapped[str] = mapped_column(
@@ -204,8 +210,12 @@ class DiagnosticQuestion(Base, UUIDPrimaryKeyMixin):
         JSONB, nullable=True, comment="Detailed AI reasoning about the response"
     )
 
-    asked_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("NOW()"))
-    answered_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    asked_at: Mapped[datetime] = mapped_column(
+        nullable=False, server_default=text("NOW()"), type_=DateTime(timezone=True)
+    )
+    answered_at: Mapped[datetime | None] = mapped_column(
+        nullable=True, type_=DateTime(timezone=True)
+    )
 
     # Relationships
     session: Mapped[DiagnosticSession] = relationship(back_populates="questions")

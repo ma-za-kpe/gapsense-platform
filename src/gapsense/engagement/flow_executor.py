@@ -1493,7 +1493,7 @@ class FlowExecutor:
         """
         # Update session status
         session.status = "in_progress"
-        session.started_at = datetime.now(UTC).isoformat()
+        session.started_at = datetime.now(UTC)
 
         # Initialize conversation state
         parent.conversation_state = {
@@ -1655,7 +1655,7 @@ class FlowExecutor:
 
         # Save answer
         question.student_response = answer_text
-        question.answered_at = datetime.now(UTC).isoformat()
+        question.answered_at = datetime.now(UTC)
 
         # Analyze answer
         from gapsense.diagnostic import QuestionGenerator
@@ -1695,7 +1695,7 @@ class FlowExecutor:
 
         # Update session status
         session.status = "completed"
-        session.completed_at = datetime.now(UTC).isoformat()
+        session.completed_at = datetime.now(UTC)
 
         # Clear conversation state
         parent.conversation_state = None
@@ -1716,15 +1716,22 @@ class FlowExecutor:
         client = WhatsAppClient.from_settings()
 
         # Format results message
-        correct_pct = int((session.correct_answers / session.total_questions) * 100)
-        message_text = (
-            f"Diagnostic complete for {student.first_name}! 🎉\n\n"
-            f"Questions answered: {session.total_questions}\n"
-            f"Correct answers: {session.correct_answers} ({correct_pct}%)\n\n"
-            f"We've identified where {student.first_name} needs support. "
-            f"We'll send personalized lessons soon to help them catch up!\n\n"
-            f"Thank you for helping {student.first_name} learn! 📚"
-        )
+        if session.total_questions > 0:
+            correct_pct = int((session.correct_answers / session.total_questions) * 100)
+            message_text = (
+                f"Diagnostic complete for {student.first_name}! 🎉\n\n"
+                f"Questions answered: {session.total_questions}\n"
+                f"Correct answers: {session.correct_answers} ({correct_pct}%)\n\n"
+                f"We've identified where {student.first_name} needs support. "
+                f"We'll send personalized lessons soon to help them catch up!\n\n"
+                f"Thank you for helping {student.first_name} learn! 📚"
+            )
+        else:
+            # No questions were answered (e.g., no curriculum data loaded)
+            message_text = (
+                f"Thank you for starting the diagnostic for {student.first_name}! 📚\n\n"
+                f"We're preparing personalized questions. Please try again soon!"
+            )
 
         message_id = await client.send_text_message(to=parent.phone, text=message_text)
 

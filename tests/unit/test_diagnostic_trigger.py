@@ -5,6 +5,8 @@ Tests that diagnostic sessions are automatically created after parent onboarding
 when diagnostic consent is given.
 """
 
+from datetime import UTC, datetime
+
 import pytest
 from sqlalchemy import select
 
@@ -36,7 +38,7 @@ class TestDiagnosticSessionTrigger:
         parent = Parent(
             phone="+233244123456",
             diagnostic_consent=True,  # KEY: Parent consented
-            diagnostic_consent_at="2026-02-16T20:00:00+00:00",
+            diagnostic_consent_at=datetime.now(UTC),
             preferred_language="en",
             onboarded_at=None,  # Not yet onboarded
             district_id=district.id,
@@ -56,7 +58,7 @@ class TestDiagnosticSessionTrigger:
 
         # Simulate onboarding completion with diagnostic consent
         student.primary_parent_id = parent.id
-        parent.onboarded_at = "2026-02-16T20:00:00+00:00"
+        parent.onboarded_at = datetime.now(UTC)
         await db_session.commit()
 
         # Act: Trigger diagnostic session creation (via FlowExecutor or dedicated function)
