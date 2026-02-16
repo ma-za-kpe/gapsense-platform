@@ -387,20 +387,20 @@ class FlowExecutor:
         }
         await self.db.commit()
 
-        # Send template welcome message
+        # Send welcome message
         client = WhatsAppClient.from_settings()
 
-        # TODO: L1 TRANSLATION - Use language-specific template variant (TMPL-ONBOARD-001-TW, etc.)
-        # when parent's language is known from previous interaction
+        # ❌ FIX GAP #3: Use text message instead of template (parent already messaged us = 24hr window open)
+        # TODO: L1 TRANSLATION - Use parent.preferred_language when set
+        welcome_text = (
+            "Welcome to GapSense! 📚\n\n"
+            "I'm here to help you support your child's learning in math. "
+            "Let's start by getting to know you better.\n\n"
+            "Are you ready to begin? Reply YES to continue."
+        )
+
         try:
-            message_id = await client.send_template_message(
-                to=parent.phone,
-                template_name="gapsense_welcome",  # TMPL-ONBOARD-001
-                language_code="en",
-                # Note: Template parameters would include school_name and child_name
-                # For initial onboarding, we don't have these yet
-                # This template should have a no-parameter variant
-            )
+            message_id = await client.send_text_message(to=parent.phone, text=welcome_text)
 
             logger.info(f"Started onboarding for {parent.phone} with template message")
 
@@ -1676,6 +1676,12 @@ class FlowExecutor:
         if is_correct:
             session.correct_answers += 1
 
+        # ❌ FIX GAP #2: Update session tracking arrays for adaptive algorithm
+        from gapsense.diagnostic import AdaptiveDiagnosticEngine
+
+        engine = AdaptiveDiagnosticEngine(session, self.db)
+        await engine.mark_node_tested(question.node_id, is_correct)
+
         await self.db.commit()
 
         # Send next question
@@ -1699,11 +1705,6 @@ class FlowExecutor:
 
         # Clear conversation state
         parent.conversation_state = None
-        await self.db.commit()
-
-        # Generate gap profile
-        analyzer = GapProfileAnalyzer(session, self.db)
-        gap_profile = await analyzer.generate_gap_profile()
 
         # Get student for message
         from sqlalchemy import select
@@ -1711,6 +1712,14 @@ class FlowExecutor:
         stmt = select(Student).where(Student.primary_parent_id == parent.id)
         result = await self.db.execute(stmt)
         student = result.scalar_one()
+
+        # Generate gap profile
+        analyzer = GapProfileAnalyzer(session, self.db)
+        gap_profile = await analyzer.generate_gap_profile()
+
+        # ❌ FIX GAP #1: Save gap profile to database
+        self.db.add(gap_profile)
+        await self.db.commit()
 
         # Send completion message with results
         client = WhatsAppClient.from_settings()
@@ -1728,6 +1737,7 @@ class FlowExecutor:
             )
         else:
             # No questions were answered (e.g., no curriculum data loaded)
+            correct_pct = 0
             message_text = (
                 f"Thank you for starting the diagnostic for {student.first_name}! 📚\n\n"
                 f"We're preparing personalized questions. Please try again soon!"
