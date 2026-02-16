@@ -1297,6 +1297,10 @@ class FlowExecutor:
                 f"Onboarding complete for {parent.phone}: Linked to student {student.first_name} "
                 f"(ID {student.id}, grade {student.current_grade})"
             )
+
+            # Trigger diagnostic session if parent consented
+            await self._create_diagnostic_session_if_consented(parent, student)
+
         except Exception as e:
             logger.error(f"Failed to link parent {parent.phone} to student: {e}")
             await self.db.rollback()
@@ -1351,6 +1355,68 @@ class FlowExecutor:
                 completed=True,  # Still complete - Student was created
                 error=str(e),
             )
+
+    async def _create_diagnostic_session_if_consented(
+        self, parent: Parent, student: Student
+    ) -> None:
+        """Create diagnostic session if parent gave consent.
+
+        Called after onboarding completion to trigger diagnostic assessment.
+
+        Args:
+            parent: Parent who completed onboarding
+            student: Student linked to parent
+
+        Side Effects:
+            Creates DiagnosticSession record if:
+            - parent.diagnostic_consent is True
+            - No pending/in_progress session exists for student
+        """
+        # Only create session if parent consented
+        if not parent.diagnostic_consent:
+            logger.info(
+                f"Skipping diagnostic session for {student.first_name} "
+                f"- parent {parent.phone} declined consent"
+            )
+            return
+
+        # Check if session already exists (avoid duplicates)
+        from sqlalchemy import select
+
+        from gapsense.core.models import DiagnosticSession
+
+        stmt = (
+            select(DiagnosticSession)
+            .where(DiagnosticSession.student_id == student.id)
+            .where(DiagnosticSession.status.in_(["pending", "in_progress"]))
+        )
+        result = await self.db.execute(stmt)
+        existing_session = result.scalar_one_or_none()
+
+        if existing_session:
+            logger.info(
+                f"Diagnostic session already exists for {student.first_name} "
+                f"(session_id={existing_session.id}, status={existing_session.status})"
+            )
+            return
+
+        # Create new diagnostic session
+        session = DiagnosticSession(
+            student_id=student.id,
+            entry_grade=student.current_grade,
+            initiated_by="parent",
+            channel="whatsapp",
+            status="pending",  # Will be started when first question is sent
+            total_questions=0,
+            correct_answers=0,
+        )
+        self.db.add(session)
+        await self.db.commit()
+
+        logger.info(
+            f"Created diagnostic session for {student.first_name} "
+            f"(session_id={session.id}, grade={student.current_grade})"
+        )
 
     async def _send_help_message(self, parent: Parent) -> FlowResult:
         """Send help message to onboarded parent.
