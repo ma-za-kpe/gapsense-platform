@@ -281,27 +281,50 @@ class TestCompleteHappyPath:
         await db_session.commit()
 
         # Skip to diagnostic consent
-        parent.conversation_state["step"] = "COLLECT_DIAGNOSTIC_CONSENT"
-        parent.conversation_state["data"]["student_id"] = str(student.id)
+        parent.conversation_state["step"] = "AWAITING_DIAGNOSTIC_CONSENT"  # ✅ Fixed step name
+        parent.conversation_state["data"]["selected_student_id"] = str(
+            student.id
+        )  # ✅ Fixed key name
         flag_modified(parent, "conversation_state")
         await db_session.commit()
 
         # ===== STEP 5: Parent Consents to Diagnostic =====
         with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client:
             mock_instance = AsyncMock()
-            mock_instance.send_text_message = AsyncMock(return_value="msg_parent_4")
+            mock_instance.send_button_message = AsyncMock(
+                return_value="msg_parent_4"
+            )  # ✅ Button response
             mock_client.from_settings.return_value = mock_instance
 
             result = await flow_executor.process_message(
                 parent=parent,
-                message_type="text",
-                message_content="YES",
+                message_type="interactive",  # ✅ Must be interactive for button
+                message_content={"button_reply": {"id": "consent_yes"}},  # ✅ Button ID
                 message_id="msg_in_parent_4",
             )
 
         await db_session.refresh(parent)
         assert parent.diagnostic_consent is True
-        assert parent.onboarded_at is not None
+        # Onboarding not complete yet - still need language selection
+        assert parent.onboarded_at is None
+        assert parent.conversation_state["step"] == "AWAITING_LANGUAGE"
+
+        # ===== STEP 5b: Parent Selects Language =====
+        with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client:
+            mock_instance = AsyncMock()
+            mock_instance.send_text_message = AsyncMock(return_value="msg_parent_5")
+            mock_client.from_settings.return_value = mock_instance
+
+            result = await flow_executor.process_message(
+                parent=parent,
+                message_type="interactive",  # Button response
+                message_content={"button_reply": {"id": "lang_en"}},  # Select English
+                message_id="msg_in_parent_5",
+            )
+
+        await db_session.refresh(parent)
+        assert parent.preferred_language == "en"
+        assert parent.onboarded_at is not None  # ✅ NOW onboarding complete!
 
         # Verify diagnostic session was created
         stmt = select(DiagnosticSession).where(DiagnosticSession.student_id == student.id)
@@ -508,7 +531,7 @@ class TestErrorPaths:
             result = await executor.process_teacher_message(
                 teacher=teacher,
                 message_type="text",
-                message_content="INVALID-CODE123",  # Not in database
+                message_content="INVALID-ABC123",  # ✅ Fixed: 6 chars after dash (was CODE123=7)
                 message_id="msg_in_123",
             )
 
@@ -537,11 +560,11 @@ class TestErrorPaths:
         expired_date = datetime.now(UTC) - timedelta(days=1)
         invitation = SchoolInvitation(
             school_id=school.id,
-            invitation_code="EXPIRED-CODE123",
+            invitation_code="EXPIRED-ABC123",  # ✅ Fixed: 6 chars after dash (was CODE123=7)
             max_teachers=10,
             teachers_joined=0,
             is_active=True,
-            expires_at=expired_date.isoformat(),  # ✅ Convert to string (model expects str)
+            expires_at=expired_date.isoformat(),
         )
         db_session.add(invitation)
         await db_session.commit()
@@ -561,13 +584,15 @@ class TestErrorPaths:
         with patch("gapsense.engagement.teacher_flows.WhatsAppClient") as mock_client:
             mock_instance = AsyncMock()
             mock_instance.send_text_message = AsyncMock(return_value="msg_123")
-            mock_client.from_settings.return_value = mock_client
+            mock_client.from_settings.return_value = (
+                mock_instance  # ✅ Fixed: was mock_client (wrong!)
+            )
 
             executor = TeacherFlowExecutor(db=db_session)
             result = await executor.process_teacher_message(
                 teacher=teacher,
                 message_type="text",
-                message_content="EXPIRED-CODE123",
+                message_content="EXPIRED-ABC123",  # ✅ Matches invitation code created above
                 message_id="msg_in_123",
             )
 
