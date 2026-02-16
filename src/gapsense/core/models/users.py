@@ -37,6 +37,9 @@ class Teacher(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     phone_verified: Mapped[bool] = mapped_column(default=False)
 
     # Teaching context
+    class_name: Mapped[str | None] = mapped_column(
+        String(100), nullable=True, comment="Class name (e.g., 'JHS 1A')"
+    )
     grade_taught: Mapped[str | None] = mapped_column(
         String(5), nullable=True, comment="Current grade (B1-B9)"
     )
@@ -48,6 +51,18 @@ class Teacher(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     onboarded_at: Mapped[datetime | None] = mapped_column(nullable=True)
     last_active_at: Mapped[datetime | None] = mapped_column(nullable=True)
     total_students_diagnosed: Mapped[int] = mapped_column(Integer, default=0)
+
+    # WhatsApp conversation state (for teacher onboarding)
+    conversation_state: Mapped[dict[str, Any] | None] = mapped_column(
+        type_=JSON,
+        nullable=True,
+        comment="Current flow state for teacher onboarding: {flow, step, data}",
+    )
+    conversation_history: Mapped[list[dict[str, Any]] | None] = mapped_column(
+        type_=JSON,
+        nullable=True,
+        comment="Teacher conversation history for TEACHER-CONVERSATION-PARTNER",
+    )
 
     is_active: Mapped[bool] = mapped_column(default=True)
 

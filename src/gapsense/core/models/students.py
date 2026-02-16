@@ -60,8 +60,10 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     teacher_id: Mapped[UUID | None] = mapped_column(ForeignKey("teachers.id"), nullable=True)
 
-    # Parent linkage
-    primary_parent_id: Mapped[UUID] = mapped_column(ForeignKey("parents.id"), nullable=False)
+    # Parent linkage (nullable until parent onboards and links)
+    primary_parent_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("parents.id"), nullable=True, comment="Linked when parent onboards"
+    )
     secondary_parent_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("parents.id"), nullable=True
     )
@@ -87,12 +89,12 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(default=True)
 
     # Relationships
-    school: Mapped[School] = relationship(back_populates="students")
-    teacher: Mapped[Teacher] = relationship(back_populates="students")
-    primary_parent: Mapped[Parent] = relationship(
+    school: Mapped[School | None] = relationship(back_populates="students")
+    teacher: Mapped[Teacher | None] = relationship(back_populates="students")
+    primary_parent: Mapped[Parent | None] = relationship(
         foreign_keys=[primary_parent_id], back_populates="primary_students"
     )
-    secondary_parent: Mapped[Parent] = relationship(
+    secondary_parent: Mapped[Parent | None] = relationship(
         foreign_keys=[secondary_parent_id], back_populates="secondary_students"
     )
     latest_gap_profile: Mapped[GapProfile] = relationship(

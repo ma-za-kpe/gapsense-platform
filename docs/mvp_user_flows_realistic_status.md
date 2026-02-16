@@ -1,1249 +1,1210 @@
 # GapSense MVP User Flows — REALISTIC Status
 **Evidence-Based Assessment of Current Implementation**
 
-**Last Updated:** February 16, 2026 (Commit: 8d8858f)
-**Purpose:** Track progress toward complete MVP user journey
+**Last Updated:** February 16, 2026 (Post-Specification Audit)
+**Status:** 🚨 **FUNDAMENTAL ARCHITECTURE MISMATCH IDENTIFIED**
+**Purpose:** Track progress toward actual MVP specification
 **Audience:** Development team, UNICEF pitch preparation
 
 ---
 
-## 🎯 MVP Goal: Complete User Journey
+## 🚨 CRITICAL FINDING: We Built The Wrong Flow
 
-**Definition of "MVP Complete":**
-A parent can onboard, receive a diagnostic, get an activity, complete it, and receive the next activity — all through WhatsApp, with minimal manual intervention.
+After analyzing the three source specification documents, we discovered that **we built a different product architecture** than what the MVP Blueprint specifies.
 
-**Current Status:** **35% Complete**
-- ✅ Onboarding: 100% working
-- ✅ Opt-out: 100% working
-- ⚠️ Diagnostic: 70% (API exists, WhatsApp trigger missing)
-- ❌ Activity Delivery: 0% (prompts exist, flow missing)
-- ❌ Check-in Cycle: 0%
-- ❌ Teacher Dashboard: 0%
+### What We Built:
+```
+Parent → Sends "Hi" → Creates student record on the fly → Gets onboarded
+```
+
+### What MVP Blueprint Specifies:
+```
+1. Teacher → Sends "START" → Uploads class roster → Students created
+2. Teacher → Shares number with parents (PTA meeting)
+3. Parent → Sends "START" → Links to existing student → Gets onboarded
+4. Teacher → Scans exercise books → AI diagnoses gaps
+5. Parent → Receives voice notes targeting child's specific gaps
+```
+
+**Impact:** We built parent-initiated flow. Spec requires **teacher-initiated platform**.
 
 ---
 
-## 📊 Status Legend
+## 📋 THE ACTUAL MVP SPECIFICATION
 
-| Symbol | Meaning | Evidence Required |
-|--------|---------|-------------------|
-| ✅ **WORKING** | Can demo end-to-end today | Test passing, code deployed |
-| ⚠️ **PARTIAL** | Code exists but not integrated | API/prompt exists, no WhatsApp trigger |
-| 🔨 **IN PROGRESS** | Actively being built | Partial implementation, tests failing |
-| ❌ **MISSING** | Not started | No code exists |
-| 📝 **SPECIFIED** | Designed but not coded | Prompt/ADR exists, no implementation |
+### Core Architecture (from MVP Blueprint):
 
----
+**NOT a questionnaire-based diagnostic**
+**NOT parent-creates-student flow**
+**NOT text messages**
 
-## THE THREE USER TYPES
+**ACTUALLY:**
+1. **Exercise Book Scanner** - Teacher photographs student work, AI analyzes handwriting
+2. **Teacher Conversation Partner** - Conversational AI on WhatsApp
+3. **Parent Voice Notes in Twi** - Daily 6:30 PM voice notes with 3-min activities
+4. **Weekly Gap Map** - WhatsApp summary to teacher (not web dashboard)
 
-```
-┌─────────────────────────────────────────────────┐
-│  1. PARENT (Home-Side)                          │
-│     Primary user in Phase 1a MVP                │
-│     Uses: WhatsApp only                         │
-│     Status: Onboarding ✅, Diagnostic ❌        │
-└─────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────┐
-│  2. STUDENT (The Child)                         │
-│     Indirect user — does activities with parent │
-│     Uses: Nothing directly (age 5-14)           │
-│     Status: Record creation ✅, activities ❌   │
-└─────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────┐
-│  3. TEACHER (School-Side)                       │
-│     Secondary user in Phase 1a MVP              │
-│     Uses: Web dashboard (not built yet)         │
-│     Status: API endpoints ✅, dashboard ❌      │
-└─────────────────────────────────────────────────┘
-```
+**Scale:** 10 teachers, 100 parents, 400-500 students, 12-week pilot
+**Budget:** Under $2,000
+**Timeline:** 8 weeks build + 12 weeks measurement
 
 ---
 
-# 🔄 THE SEVEN FLOWS
+## 🔄 THE FIVE ACTUAL FLOWS (Real World)
 
-## FLOW 1: Parent Onboarding ✅ **100% WORKING**
+## FLOW 0: School/Headmaster Approval ❌ **0% IMPLEMENTED**
 
-### User Journey:
+### Real-World Deployment:
 ```
-1. Parent gets WhatsApp number: +[GAPSENSE_NUMBER]
-   (From teacher, poster, SMS, community champion)
-
-2. Parent sends: "Hi" (or any message)
-
-3. System responds with TMPL-ONBOARD-001:
-   ┌──────────────────────────────────────────┐
-   │ Welcome to GapSense! 📚                  │
-   │                                          │
-   │ Help your child learn with fun 3-minute │
-   │ activities at home.                      │
-   │                                          │
-   │ [Yes, let's start!] [Not now]           │
-   └──────────────────────────────────────────┘
-
-4. Parent taps "Yes, let's start!"
-
-5. System asks: "What is your child's first name?"
-   Parent: "Kwame"
-
-6. System asks: "How old is Kwame?"
-   [5-6 years] [7-8 years] [9-10 years] [11-12 years]
-   Parent selects: "7-8 years"
-
-7. System asks: "What class is Kwame in?"
-   Shows list: B1, B2, B3, B4, B5, B6, B7, B8, B9
-   Parent selects: "B2"
-
-8. System asks: "What language do you prefer?"
-   [English] [Twi] [Ewe] [Ga] [Dagbani]
-   Parent selects: "Twi"
-
-9. System responds:
-   ┌──────────────────────────────────────────┐
-   │ All set! 🌟                              │
-   │                                          │
-   │ Kwame is registered for Class 2.        │
-   │ We'll send you fun activities to help   │
-   │ them learn.                              │
-   │                                          │
-   │ Thank you! 🙏                            │
-   └──────────────────────────────────────────┘
+Week 1-2: Recruit pilot schools
+↓
+Headmaster approves GapSense pilot for their school
+↓
+Identifies 1-2 JHS 1 math teachers to participate
+↓
+30-minute onboarding session with teachers
 ```
 
-### What Happens Behind the Scenes:
+### What's Missing:
+- ❌ School entity in database
+- ❌ Headmaster approval workflow
+- ❌ Teacher recruitment process
+- ❌ Onboarding session materials
+
+**This is a PEOPLE process, not a technical flow, but we need:**
+- School registration (manual or simple form)
+- Teacher assignment to schools
+- Pilot cohort tracking
+
+---
+
+## FLOW 1: Teacher Onboarding & Class Roster ❌ **0% IMPLEMENTED**
+
+### Specified Flow (MVP Blueprint, Section 3.1):
+
+```
+TEACHER SETUP (once, 5 minutes):
+
+1. Teacher saves GapSense WhatsApp number
+   (Provided during onboarding session)
+
+2. Teacher sends: "START"
+
+3. GapSense asks: "What is your school name?"
+   Teacher: "St. Mary's JHS, Accra"
+
+4. GapSense asks: "What class do you teach?"
+   Teacher: "JHS 1A"
+
+5. GapSense asks: "How many students in your class?"
+   Teacher: "42"
+
+6. GapSense asks: "Please send a photo of your class register,
+   or type the list of student names"
+
+   Teacher: [Sends photo of class register]
+   OR
+   Teacher types:
+   "1. Kwame Mensah
+    2. Akosua Boateng
+    3. Kofi Asante
+    ..."
+
+7. System creates student profiles for all 42 students
+
+8. GapSense responds:
+   "Perfect! ✅ I've created profiles for all 42 students in JHS 1A.
+
+   Now share this number with parents at your next PTA meeting
+   or in your class WhatsApp group.
+
+   When parents message START, I'll ask them to select their
+   child from your class list.
+
+   Ready to start scanning exercise books?"
+```
+
+### Behind the Scenes:
 ```python
-# 1. Parent record created or updated
-parent = Parent(
+# 1. School record created or linked
+school = School(
+    name="St. Mary's JHS, Accra",
+    region="Greater Accra",
+    school_type="JHS"
+)
+
+# 2. Teacher profile created
+teacher = Teacher(
     phone="+233501234567",
-    preferred_language="tw",
-    opted_in=True,
-    opted_in_at=datetime.now(UTC)
+    school_id=school.id,
+    class_name="JHS 1A",
+    subject="Mathematics",
+    onboarded_at=datetime.now(UTC)
 )
 
-# 2. Student record created
-student = Student(
-    first_name="Kwame",
-    age=7,
-    current_grade="B2",
-    primary_parent_id=parent.id,
-    home_language="tw",
-    school_language="English",
-    is_active=True
-)
+# 3. Student profiles created from class register
+# Option A: OCR from class register photo
+# Option B: Manual list parsing
 
-# 3. Parent marked as onboarded
-parent.onboarded_at = datetime.now(UTC)
-parent.conversation_state = None  # Cleared
+for student_name in class_register:
+    student = Student(
+        full_name=student_name,  # "Kwame Mensah"
+        first_name=extract_first_name(student_name),  # "Kwame"
+        teacher_id=teacher.id,
+        school_id=school.id,
+        current_grade="JHS1",
+        is_active=True,
+        has_parent_linked=False  # Updated when parent joins
+    )
+    db.add(student)
 
-# FLOW STOPS HERE ❌
-# Should trigger FLOW 2 (Diagnostic) but doesn't
+# 4. Teacher conversation state ready
+teacher.conversation_state = {
+    "flow": "READY_FOR_SCANS",
+    "students_count": 42
+}
 ```
 
-### Evidence of Working Status:
-- **File:** `src/gapsense/engagement/flow_executor.py` (lines 230-900)
-- **Tests:** 25/25 passing (`tests/unit/test_flow_executor.py`, `tests/unit/test_onboard_spec_compliant.py`)
-- **Coverage:** 72% on flow_executor.py
-- **Commit:** 8d8858f (Feb 16, 2026)
-- **WhatsApp:** Connected via webhook `/v1/webhooks/whatsapp`
+### What We Actually Have:
+- ❌ No teacher onboarding flow
+- ❌ No school entity in database
+- ❌ No class roster upload
+- ❌ No student pre-creation from teacher's list
+- ❌ No OCR or name parsing
+- ✅ Teacher model exists in database (but unused)
 
-### What's Missing:
-- ❌ **Automatic diagnostic trigger** after onboarding completes
-- ❌ **L1 messages** (all messages currently English, even if parent selected Twi)
+### Time to Build: **5-7 days**
+1. Add School model + migration (4 hours)
+2. Create FLOW-TEACHER-ONBOARD in flow_executor (2 days)
+3. Add class register photo upload (1 day)
+4. Build OCR/name parsing (2 days) OR manual entry fallback (1 day)
+5. Create bulk student profile creation (1 day)
+6. Test with real class registers (1 day)
 
 ---
 
-## FLOW 2: Diagnostic Assessment ⚠️ **70% WORKING**
+## FLOW 2: Parent Enrollment & Linking ❌ **20% IMPLEMENTED**
 
-### Designed User Journey:
+### Specified Flow (MVP Blueprint, Section 3.2):
+
 ```
-[Immediately after FLOW 1 completes]
+PARENT ENROLLMENT (once, 2 minutes):
 
-1. System sends (2 minutes after onboarding):
-   Hi [Parent]! 👋
+[Context: Teacher shared GapSense number at PTA meeting or
+class WhatsApp group]
 
-   Time for a quick learning check for Kwame.
-   I'll ask 3 simple questions. You can help Kwame answer.
+1. Parent sends: "START" (or "Hi")
 
-   Ready? [Ready! ✅] [Later]
+2. GapSense asks: "What is your name?"
+   Parent: "Ama Mensah"
 
-2. Parent taps "Ready!"
+3. GapSense asks: "Which child is yours? Select from the list:"
+   [Shows list of students in teacher's class who don't have parents yet]
 
-3. System asks Question 1 (starts at grade-1 level):
-   [For B2 student, starts at B1 level]
+   1️⃣ Kwame Mensah
+   2️⃣ Akosua Boateng
+   3️⃣ Kofi Asante
+   4️⃣ Ama Darko
+   ...
 
-   Kwame has 5 mangoes. Ama gives him 3 more.
-   How many mangoes does Kwame have now?
+   Parent taps: 1️⃣ Kwame Mensah
 
-   Parent/child responds: "8"
+4. GapSense asks: "What language do you prefer?"
+   [English 🇬🇧] [Twi 🗣️]
 
-4. System analyzes (using DIAG-002):
-   - ✅ Correct answer
-   - ✅ Mastered B1.1.2.1 (Addition concept)
-   - → Ask harder question (B2 level)
+   Parent selects: Twi
 
-5. System asks Question 2:
-   What is 23 + 15?
+5. GapSense responds:
+   [Voice note in Twi]
+   "Welcome, Ama! I'm GapSense, working with Kwame's teacher
+   to help him learn.
 
-   Parent/child responds: "38"
+   Every evening at 6:30 PM, I'll send you one fun 3-minute
+   activity to do with Kwame at home.
 
-6. System analyzes:
-   - ✅ Correct
-   - ✅ Mastered B2.1.2.1 (Multi-digit addition)
-   - → Ask B2 prerequisite check
+   Kwame's teacher will scan his exercise books to see what
+   he's working on, and I'll send activities to help.
 
-7. System asks Question 3:
-   In the number 47, what does the 4 mean?
-
-   Parent/child responds: "four"
-
-8. System analyzes:
-   - ❌ Incorrect (expected "40" or "4 tens")
-   - ❌ Gap detected: B2.1.1.1 (Place value)
-   - → Root cause found, stop diagnostic
-
-9. System sends:
-   Great job, Kwame! 🌟
-
-   You're doing really well with addition!
-
-   The next building block we're working on is understanding
-   that in "47", the 4 means "40" (or 4 groups of 10).
-
-   I'll send a fun activity to practice this tomorrow!
+   Thank you for supporting Kwame! 🌟"
 ```
 
-### What Actually Works:
-
-#### ✅ **Diagnostic API (6 endpoints working):**
-```bash
-# Can be called directly via API (not from WhatsApp)
-
-POST /v1/diagnostics/sessions
-{
-  "student_id": "uuid",
-  "channel": "whatsapp"
-}
-→ Creates diagnostic session
-
-POST /v1/diagnostics/sessions/{session_id}/answers
-{
-  "node_id": "B2.1.1.1",
-  "response": "four",
-  "response_type": "text"
-}
-→ Submits answer, gets next question
-
-GET /v1/diagnostics/sessions/{session_id}/results
-→ Returns gap profile when session complete
+### What We Actually Built:
+```
+Parent sends: "Hi"
+→ System asks for CHILD'S name (creating new student)
+→ Asks child's age
+→ Asks child's grade
+→ Creates student record on the fly
+→ No link to teacher
+→ No link to school
+→ No existing class roster
 ```
 
-#### ✅ **AI Prompts Exist:**
-- **DIAG-001:** Diagnostic Session Orchestrator (system prompt, 76 lines)
-- **DIAG-002:** Next Question Generator (adaptive algorithm)
-- **DIAG-003:** Gap Profile Synthesizer (dignity-first summary)
+**This is fundamentally different:**
+- ✅ We have parent onboarding conversation
+- ❌ But it creates students instead of linking to existing ones
+- ❌ No teacher association
+- ❌ No school association
+- ❌ No voice note welcome message
+- ❌ Not in Twi
 
-#### ✅ **Diagnostic Engine Code:**
-- **File:** `src/gapsense/diagnostic/adaptive.py` (140 lines)
-- **File:** `src/gapsense/diagnostic/questions.py` (53 lines)
-- **Logic:** Backward-tracing through prerequisite graph ✅
-- **Algorithm:** Screen 6 priority nodes → trace to root ✅
-
-#### ⚠️ **What's Partially Working:**
+### Database Changes Needed:
 ```python
-# diagnostic/adaptive.py exists but not called from WhatsApp
+# Current (WRONG):
+Parent creates Student on the fly
 
-class AdaptiveEngine:
-    async def select_next_question(self, session_id):
-        # ✅ This works when called via API
-        # ❌ Never called from flow_executor.py
-        pass
+# Should be:
+Student already exists (from teacher's class roster)
+Parent links to existing Student
 
-    async def analyze_response(self, answer):
-        # ✅ Uses DIAG-002 prompt
-        # ❌ No WhatsApp trigger
-        pass
+# New fields needed:
+class Student(Base):
+    # Add:
+    teacher_id: UUID  # Who uploaded this student
+    school_id: UUID   # Which school
+    full_name: str    # "Kwame Mensah" (from register)
+    parent_id: UUID   # NULL until parent joins
+    has_parent_linked: bool  # Track enrollment status
+
+class Parent(Base):
+    # Modify:
+    # Remove ability to create students
+    # Add ability to link to existing student
+    linked_student_id: UUID  # One parent, one student for MVP
 ```
 
-### What's Missing:
+### Time to Fix: **3-4 days**
+1. Modify database schema (1 day)
+2. Rewrite parent onboarding flow (2 days)
+3. Add student selection list (1 day)
+4. Add Twi voice welcome (4 hours)
+5. Test parent-student linking (1 day)
 
-#### ❌ **FLOW-DIAGNOSTIC (WhatsApp Integration):**
+---
+
+## FLOW 3: Teacher Scans Exercise Book ❌ **0% IMPLEMENTED**
+
+### Specified Flow (MVP Blueprint, Section 3.1):
+
+```
+DAILY TEACHER FLOW — EXERCISE BOOK SCAN
+
+1. Teacher marks Kwame's math homework (long division problems)
+
+2. Teacher opens WhatsApp, photographs one page, sends to GapSense
+
+3. GapSense receives image, analyzes with multimodal AI:
+
+   GapSense: "Analyzing Kwame's work... ⏳"
+
+4. 10-15 seconds later:
+
+   GapSense: "Kwame's Work — Long Division (6 problems)
+
+   STRENGTH:
+   Kwame understands the division algorithm and applies it
+   consistently. Steps are in the right order. ✅
+
+   GAP FOUND:
+   He errors when borrowing across place values (problems 3, 5, 7).
+   This is a place-value decomposition gap, not a division gap.
+   Approximately P4 level.
+
+   ROOT CAUSE:
+   When he encounters 300 - 178, he struggles to decompose
+   hundreds into tens. He's treating each digit independently
+   rather than understanding place value relationships.
+
+   MICRO-INTERVENTION:
+   Before tomorrow's lesson, try this 3-minute warm-up:
+   'If I have GH₵4.35 and spend GH₵1.78, what's left?'
+
+   This targets the exact regrouping skill he's missing in a
+   real-world context he understands.
+
+   📊 Gap profile updated for Kwame.
+   💬 Want me to scan another student?
+   💡 Ask me: 'What gaps should I watch for in tomorrow's lesson?'"
+```
+
+### Technical Requirements:
+
+**Multimodal AI Integration:**
 ```python
-# flow_executor.py SHOULD have this but doesn't:
+async def analyze_exercise_book(image_url: str, student: Student, teacher: Teacher):
+    """
+    Send exercise book photo to multimodal AI for analysis.
+    """
+    # Prepare image
+    image_data = await download_image(image_url)
 
-async def _start_diagnostic(self, parent: Parent, student: Student):
-    """Trigger diagnostic after onboarding."""
-    # Create diagnostic session
-    session = DiagnosticSession(
+    # Call Claude Sonnet 4.5 with vision OR Gemini Pro Vision
+    response = await ai_client.analyze_image(
+        model="claude-sonnet-4-5" ,  # OR "gemini-pro-vision"
+        image=image_data,
+        system_prompt=EXERCISE_BOOK_ANALYZER_PROMPT,
+        context={
+            "student_name": student.first_name,
+            "grade_level": student.current_grade,
+            "nacca_prerequisites": load_prerequisite_graph("JHS1_MATH"),
+            "previous_gaps": student.gap_profile.root_gaps if student.gap_profile else []
+        }
+    )
+
+    # Parse AI response
+    analysis = {
+        "strengths": response.strengths,
+        "error_patterns": response.error_patterns,
+        "root_gap": response.identified_gap,
+        "confidence": response.confidence,
+        "micro_intervention": response.suggested_intervention,
+        "ai_reasoning": response.reasoning_log
+    }
+
+    # Update student gap profile
+    gap_profile = GapProfile(
         student_id=student.id,
-        channel="whatsapp",
-        status="in_progress"
+        root_gaps=[analysis["root_gap"]],
+        mastered_nodes=analysis["strengths"],
+        confidence=analysis["confidence"],
+        ai_reasoning_log=analysis["ai_reasoning"],
+        diagnosed_at=datetime.now(UTC),
+        diagnosed_by="exercise_book_scan"
     )
+    db.add(gap_profile)
 
-    # Send first question via WhatsApp
-    question = await self.adaptive_engine.get_first_question(student.current_grade)
-    await self.whatsapp_client.send_text(parent.phone, question)
+    # Format response for WhatsApp
+    message = format_scan_result_for_whatsapp(analysis, student.first_name)
 
-    # Update conversation state
-    parent.conversation_state = {
-        "flow": "FLOW-DIAGNOSTIC",
-        "step": "AWAITING_ANSWER",
-        "data": {"session_id": session.id, "question_number": 1}
-    }
+    # Send to teacher
+    await whatsapp_client.send_text(teacher.phone, message)
 
-# THIS CODE DOES NOT EXIST ❌
+    # If parent linked, trigger evening activity
+    if student.parent_id:
+        await schedule_parent_evening_activity(student.parent, gap_profile)
+
+    return analysis
 ```
 
-#### ❌ **No Trigger from FLOW-ONBOARD:**
-```python
-# In flow_executor.py, line ~900, SHOULD have:
+**AI Prompt Required:**
+```
+EXERCISE-BOOK-ANALYZER
 
-# After onboarding completes:
-if parent.onboarded_at:
-    # Trigger diagnostic
-    await self._start_diagnostic(parent, student)  # ❌ Missing
+Role: Expert diagnostic AI analyzing handwritten student work
 
-# Currently just sends "All set!" and stops ❌
+Input:
+- Image of exercise book page
+- Student name and grade level
+- NaCCA prerequisite graph for reference
+- Student's previous gap history (if any)
+
+Output:
+1. STRENGTHS: What the student can do well (be specific, cite evidence)
+2. ERROR PATTERNS: Not just wrong answers, but systematic mistakes
+3. ROOT GAP: Trace to foundational skill (with NaCCA code)
+4. CONFIDENCE: 0.0-1.0 (how certain are you?)
+5. MICRO-INTERVENTION: One specific 3-minute classroom activity
+6. REASONING LOG: Your diagnostic logic (for debugging)
+
+Constraints:
+- Distinguish careless errors from systematic misconceptions
+- Always lead with strength (dignity-first)
+- Cite specific problems ("problems 3, 5, 7" not "some problems")
+- Interventions must use locally available materials
+- Frame gaps as "next building block" not deficits
+
+Model: Claude Sonnet 4.5 with vision OR Gemini Pro Vision
+Cost: $0.01-0.10 per image analysis
 ```
 
-### Evidence:
-- **Diagnostic API:** `src/gapsense/api/v1/diagnostics.py` (336 lines) ✅
-- **Adaptive Engine:** `src/gapsense/diagnostic/adaptive.py` (140 lines) ✅
-- **WhatsApp Trigger:** NOT FOUND in `flow_executor.py` ❌
-- **Tests:** API tests passing ✅, WhatsApp integration tests missing ❌
+### What We Have:
+- ❌ No image message handling in flow_executor
+- ❌ No multimodal AI integration
+- ❌ No exercise book analyzer prompt
+- ❌ No NaCCA prerequisite knowledge base
+- ❌ No gap profile creation from scans
+- ✅ GapProfile model exists in database (but unused for this)
+- ✅ AI client infrastructure exists (but only for text)
 
-### Time to Complete: **3-5 days**
-1. Add FLOW-DIAGNOSTIC to flow_executor.py (1 day)
-2. Add trigger from onboarding completion (2 hours)
-3. Add conversation state handling for answers (1 day)
-4. Test end-to-end WhatsApp diagnostic (1 day)
-5. Handle edge cases (timeout, invalid answers) (1 day)
+### Time to Build: **7-10 days**
+1. Build NaCCA JHS 1 Math prerequisite knowledge base (3 days)
+2. Collect 50+ sample exercise book photos from teachers (2 days)
+3. Engineer EXERCISE-BOOK-ANALYZER prompt (2 days)
+4. Test multimodal AI with Claude Sonnet vision (1 day)
+5. Add image message handling to flow_executor (1 day)
+6. Integrate end-to-end (2 days)
+7. Validate AI accuracy with expert teachers (2 days - target 75%+ concordance)
+
+**Cost:** $60-120 for 1,200 scans over 12-week pilot
 
 ---
 
-## FLOW 3: Gap Profile Generation ⚠️ **80% WORKING**
+## FLOW 4: Teacher Conversation Partner ❌ **0% IMPLEMENTED**
 
-### Designed User Journey:
+### Specified Flow (MVP Blueprint, Section 3.1):
+
 ```
-[After FLOW 2 diagnostic completes]
+TEACHER CONVERSATION — LESSON PLANNING
 
-System generates gap profile using DIAG-003:
+[After teacher has scanned 10-15 students' work over a week]
 
-Hi [Parent]! 🌟
+Teacher: "I'm introducing fractions tomorrow. Based on what
+you've seen from my class, what should I worry about?"
 
-Here's what we learned about Kwame:
+GapSense: "Based on the exercise books you've scanned this week,
+here's what I see:
 
-DOING GREAT:
-✅ Addition and subtraction (counting, combining, taking away)
-✅ Understanding equal sharing
+📊 CLASS PATTERN ANALYSIS:
+• 8 students have multiplication gaps (JHS 1 fractions require
+  multiplication fluency at P5+ level)
+• 5 students have place-value gaps (will affect understanding
+  of denominators as "parts of a whole")
+• 3 students seem strong across the board
 
-NEXT BUILDING BLOCK:
-🔨 Place value — understanding that in "47", the 4 means "40"
+💡 RECOMMENDATION:
+I'd suggest starting with a concrete fraction introduction using
+folding paper or cutting kenkey into pieces. This bypasses the
+multiplication gap entirely and builds conceptual understanding first.
 
-This is the foundation for multi-digit math. Once Kwame
-masters this, everything else (bigger numbers, multiplication)
-will be much easier!
+For the 8 with multiplication gaps, here's a parallel warm-up
+activity they can do while the rest move ahead:
+[Generates specific activity]
 
-I'll send a fun 3-minute activity tomorrow to help with this.
-```
+Want me to generate the full warm-up activity script?"
 
-### What Works:
+Teacher: "I don't have time for groups. The circuit inspector
+is coming tomorrow."
 
-#### ✅ **Gap Profile API:**
-```bash
-GET /v1/diagnostics/sessions/{session_id}/results
-→ Returns GapProfile object with:
-  - root_gaps: [B2.1.1.1]
-  - cascade_path: "Place Value Collapse"
-  - mastered_nodes: [B1.1.1.1, B1.1.2.1, B1.1.2.2]
-  - confidence: 0.85
-```
+GapSense: "Understood. Here's a single whole-class starter that
+addresses the multiplication gap without splitting the class:
 
-#### ✅ **DIAG-003 Prompt Exists:**
-```json
-{
-  "id": "DIAG-003",
-  "name": "Gap Profile Synthesizer",
-  "system_prompt": "Generate dignity-first gap summary...",
-  "wolf_aurino_rules": [
-    "NEVER use deficit language",
-    "ALWAYS lead with what child CAN do",
-    "Frame gaps as 'building blocks'"
-  ]
-}
+'Before we start fractions, quick warm-up: If 4 friends share
+20 pieces of coconut equally, how many does each get?'
+
+This introduces division (inverse of multiplication) AND the
+equal-sharing concept needed for fractions. It doubles as a good
+demonstration for the inspector — shows you're building on
+foundations before introducing new concepts.
+
+Shall I suggest 2-3 more similar questions for the warm-up?"
 ```
 
-#### ✅ **Database Schema:**
+### Technical Requirements:
+
 ```python
-class GapProfile(Base):
-    id: UUID
-    student_id: UUID
-    diagnostic_session_id: UUID
-    root_gaps: JSONB  # ["B2.1.1.1"]
-    cascade_paths: JSONB  # ["Place Value Collapse"]
-    mastered_nodes: JSONB  # ["B1.1.1.1", "B1.1.2.1"]
-    confidence: Float  # 0.85
-    ai_reasoning_log: JSONB
-    created_at: DateTime
+async def handle_teacher_conversation(teacher: Teacher, message: str):
+    """
+    Conversational AI that reasons across all diagnosed students.
+    """
+    # Load teacher's class context
+    students = await db.get_students(teacher_id=teacher.id)
+    gap_profiles = await db.get_gap_profiles(student_ids=[s.id for s in students])
+
+    # Build conversation context
+    context = {
+        "teacher_name": teacher.name,
+        "class_size": len(students),
+        "recent_scans": await get_recent_scans(teacher.id, days=7),
+        "gap_summary": aggregate_gap_patterns(gap_profiles),
+        "conversation_history": teacher.conversation_history or []
+    }
+
+    # Call AI with TEACHER-CONVERSATION-PARTNER prompt
+    response = await ai_client.chat(
+        model="claude-sonnet-4-5",
+        system_prompt=TEACHER_CONVERSATION_PARTNER_PROMPT,
+        context=context,
+        user_message=message
+    )
+
+    # Update conversation history
+    teacher.conversation_history.append({
+        "role": "teacher",
+        "message": message,
+        "timestamp": datetime.now(UTC).isoformat()
+    })
+    teacher.conversation_history.append({
+        "role": "gapsense",
+        "message": response.text,
+        "timestamp": datetime.now(UTC).isoformat()
+    })
+
+    # Send response
+    await whatsapp_client.send_text(teacher.phone, response.text)
+
+    return response
 ```
 
-### What's Missing:
+**AI Prompt Required:**
+```
+TEACHER-CONVERSATION-PARTNER
 
-#### ❌ **WhatsApp Message Delivery:**
+Role: Diagnostic reasoning partner for classroom teachers
+
+Context Provided:
+- All diagnosed students in teacher's class
+- Recent exercise book scan results
+- Aggregated gap patterns
+- Previous conversation history
+
+Behavior:
+- Reason across student profiles when advising
+- Suggest practical interventions (local materials, time constraints)
+- Never prescriptive — offer options, adapt to pushback
+- Respect teacher constraints (inspectors, curriculum pressure)
+- Answer: "What gaps should I watch for?" type questions
+- Generate specific activities on request
+
+Response Format:
+- Conversational, not report-like
+- Cite specific evidence ("8 students" not "many students")
+- Offer follow-up options
+- Keep responses under 200 words (WhatsApp readability)
+
+Model: Claude Sonnet 4.5
+Cost: $0.001-0.01 per conversation turn
+```
+
+### What We Have:
+- ✅ TEACHER-003 prompt exists (just added to library)
+- ❌ No endpoint to call it
+- ❌ No conversation state management for teachers
+- ❌ No context loading (class gap profiles)
+- ❌ No WhatsApp conversation detection
+
+### Time to Build: **4-5 days**
+1. Add teacher conversation detection (1 day)
+2. Build context loading (class gap summary) (1 day)
+3. Integrate TEACHER-003 prompt (1 day)
+4. Add conversation history persistence (1 day)
+5. Test with real teacher queries (1 day)
+
+---
+
+## FLOW 5: Parent Evening Voice Notes ❌ **0% IMPLEMENTED**
+
+### Specified Flow (MVP Blueprint, Section 3.2):
+
+```
+PARENT EVENING FLOW — FIRST WEEK
+
+[After Kwame's teacher scanned his exercise book and identified
+a multiplication gap at P4 level]
+
+6:30 PM Daily:
+
+GapSense → Ama (Kwame's mother):
+[Voice note in Twi, approximately 30 seconds]
+
+"Akwaaba, Ama! Me ne GapSense. Tonight, play this game with Kwame:
+
+Ask him to help you figure out how much 3 sachets of pure water
+cost at 50 pesewas each.
+
+Let him work it out his own way. Don't worry if he's right or
+wrong — just let him try!
+
+Send me a thumbs-up when you've done it. 👍
+
+Medaase!" [Thank you in Twi]
+
+---
+
+[2 hours later]
+
+Ama: 👍
+
+GapSense → Ama:
+[Voice note in Twi, approximately 20 seconds]
+
+"Medaase, Ama! You're helping Kwame build his multiplication skills.
+
+He's already showing good number sense at school — these evening
+activities will make him even stronger.
+
+I'll send another fun one tomorrow. Da yie!" [Good night]
+```
+
+### Week 3 — Voice Micro-Coaching:
+
+```
+GapSense → Ama:
+[Voice note in Twi]
+
+"Tonight's activity: Ask Kwame what 7 groups of 8 is.
+
+If he's not sure, don't just tell him the answer. Instead, ask
+him to make 7 small piles of 8 stones or bottle caps, then count
+them all together.
+
+This helps him SEE what multiplication means.
+
+Try it and send me a voice note telling me how it went!"
+
+---
+
+Ama → GapSense:
+[Voice note in Twi]
+
+"He counted all the stones and got 56, but it took him a long
+time. Is that okay?"
+
+---
+
+GapSense → Ama:
+[Voice note in Twi, with pedagogical coaching]
+
+"Ama, that's actually perfect! 🌟
+
+The fact that he got the right answer by counting means he
+understands the concept. Speed comes later — understanding
+comes first, and Kwame has that.
+
+Keep doing this with different numbers. He's on the right track.
+
+Medaase for helping him learn!"
+```
+
+### Technical Requirements:
+
+**1. Text-to-Speech (Twi):**
 ```python
-# SHOULD exist in flow_executor.py but doesn't:
+async def generate_twi_voice_note(text: str) -> str:
+    """
+    Convert Twi text to voice note.
+    """
+    # Option 1: Google Cloud TTS (Twi voice available?)
+    audio = await tts_client.synthesize(
+        text=text,
+        language="tw-GH",  # Twi (Ghana)
+        voice_gender="FEMALE",  # Test with parents
+        audio_encoding="OGG_OPUS"  # WhatsApp compatible
+    )
 
-async def _send_gap_profile_summary(self, parent: Parent, gap_profile: GapProfile):
-    """Send dignity-first gap summary to parent."""
+    # Option 2: ElevenLabs (better quality, higher cost?)
+    # Option 3: Human-recorded templates + AI personalization
 
-    # Generate message using DIAG-003
-    summary = await self.ai_client.generate(
-        prompt="DIAG-003",
+    # Upload to storage
+    audio_url = await upload_to_s3(audio, "voice_notes/")
+
+    return audio_url
+```
+
+**2. Speech-to-Text (Twi):**
+```python
+async def transcribe_parent_voice_note(audio_url: str) -> str:
+    """
+    Transcribe parent's Twi voice note.
+    """
+    audio_data = await download_audio(audio_url)
+
+    # Use Whisper API (supports Twi)
+    transcription = await stt_client.transcribe(
+        audio=audio_data,
+        language="tw",  # Twi
+        model="whisper-1"
+    )
+
+    return transcription.text
+```
+
+**3. Activity Generation:**
+```python
+async def generate_parent_evening_activity(
+    student: Student,
+    gap_profile: GapProfile,
+    parent: Parent
+) -> dict:
+    """
+    Generate personalized 3-minute activity.
+    """
+    # Get gap details
+    root_gap = gap_profile.root_gaps[0]  # e.g., "B2.1.2.1" (multiplication)
+
+    # Generate activity using PARENT-ACTIVITY-GENERATOR prompt
+    activity = await ai_client.generate(
+        prompt="PARENT-ACTIVITY-GENERATOR",
+        model="claude-sonnet-4-5",
         context={
-            "child_name": gap_profile.student.first_name,
-            "mastered_nodes": gap_profile.mastered_nodes,
-            "root_gaps": gap_profile.root_gaps,
-            "cascade_path": gap_profile.cascade_paths[0]
+            "child_name": student.first_name,
+            "root_gap": root_gap,
+            "parent_language": parent.preferred_language,
+            "previous_activities": await get_previous_activities(student.id),
+            "cultural_context": "Ghana",
+            "materials": "household items only (stones, bottle caps, Cedi coins)"
         }
     )
 
-    # Validate with GUARD-001
-    validated = await self.ai_client.validate(
+    # Validate with GUARD-001 (Wolf/Aurino compliance)
+    validated = await ai_client.validate(
         prompt="GUARD-001",
-        message=summary
+        message=activity.text
     )
 
-    # Send via WhatsApp
-    await self.whatsapp_client.send_text(parent.phone, validated)
-
-    # Trigger activity delivery
-    await self._trigger_activity_delivery(parent, gap_profile)
-
-# THIS DOES NOT EXIST ❌
-```
-
-### Evidence:
-- **API Endpoint:** `GET /v1/diagnostics/sessions/{id}/results` ✅
-- **Database Table:** `gap_profiles` ✅
-- **DIAG-003 Prompt:** Specified in prompt library ✅
-- **WhatsApp Delivery:** NOT IMPLEMENTED ❌
-
-### Time to Complete: **2 days**
-1. Add gap profile message generation (4 hours)
-2. Add GUARD-001 validation (2 hours)
-3. Add WhatsApp delivery (2 hours)
-4. Test end-to-end (1 day)
-
----
-
-## FLOW 4: Activity Generation ⚠️ **60% WORKING**
-
-### Designed User Journey:
-```
-[After gap profile sent]
-
-1 day later, system sends:
-
-Good morning, [Parent]! ☀️
-
-Here's today's 3-minute activity for Kwame:
-
-🎯 STICK BUNDLING GAME
-
-What you need:
-- 30 sticks (or straws, pencils, chopsticks)
-- String or rubber bands (2)
-
-How to play:
-1. Count out 10 sticks together
-2. Tie them in a bundle — this is "1 ten"
-3. Make another bundle of 10 sticks
-4. Ask: "How many sticks in 2 bundles?" (20!)
-5. Add 7 loose sticks
-6. Ask: "How many total?" (27 = 2 bundles + 7 loose)
-
-If Kwame gets it easily:
-Try 3 bundles + 4 loose (34)
-
-What to watch for:
-If Kwame counts all 27 sticks one-by-one instead of saying
-"20 and 7 more", they're not seeing the bundles as groups
-of 10 yet. That's okay — do this again tomorrow!
-
-I'll check back in 3 days. Have fun! 🌟
-```
-
-### What Works:
-
-#### ✅ **ACT-001 Prompt (Activity Generator):**
-```json
-{
-  "id": "ACT-001",
-  "name": "Remediation Activity Generator",
-  "temperature": 0.5,
-  "system_prompt": "Create 3-minute activities using household materials...",
-  "constraints": [
-    "MAX 3 MINUTES",
-    "Only items in ANY Ghanaian home (bottle caps, sticks, stones)",
-    "Maximum 5 steps",
-    "Game-like, not homework",
-    "Progression: 'if easy, try this'"
-  ],
-  "cultural_sensitivity": [
-    "Ghanaian contexts: market shopping, sharing food",
-    "Works in urban Accra AND rural Northern Region",
-    "Must work in daylight (some homes lack electricity)"
-  ]
-}
-```
-
-#### ✅ **PARENT-001 Prompt (Message Formatter):**
-```json
-{
-  "id": "PARENT-001",
-  "name": "Parent Message Formatter",
-  "system_prompt": "Format activity for WhatsApp delivery...",
-  "output": "Friendly, encouraging, L1-aware message"
-}
-```
-
-#### ✅ **GUARD-001 Prompt (Wolf/Aurino Validator):**
-```json
-{
-  "id": "GUARD-001",
-  "name": "Wolf/Aurino Compliance Validator",
-  "temperature": 0.0,
-  "system_prompt": "Validate message for deficit language...",
-  "rejects": ["behind", "struggling", "failing", "weak", "slow", "catching up"]
-}
-```
-
-#### ⚠️ **Can Generate Activities via API:**
-```python
-# Can call directly (not from WhatsApp):
-
-activity = await ai_client.generate(
-    prompt="ACT-001",
-    context={
-        "child_name": "Kwame",
-        "node_code": "B2.1.1.1",
-        "misconception": "Sees 47 as concatenated digits",
-        "materials": "household items only"
-    }
-)
-
-# Returns valid activity JSON ✅
-```
-
-### What's Missing:
-
-#### ❌ **FLOW-ACTIVITY-DELIVERY:**
-```python
-# flow_executor.py SHOULD have:
-
-async def _trigger_activity_delivery(self, parent: Parent, gap_profile: GapProfile):
-    """Schedule activity delivery for 1 day after gap profile."""
-
-    # Get root gap
-    root_gap = gap_profile.root_gaps[0]  # e.g., "B2.1.1.1"
-
-    # Generate activity
-    activity = await self.ai_client.generate(
-        prompt="ACT-001",
-        context={
-            "child_name": parent.students[0].first_name,
-            "node_code": root_gap,
-            "misconception": gap_profile.misconceptions[root_gap],
-            "previous_activities": parent.completed_activities
-        }
-    )
-
-    # Format for parent
-    message = await self.ai_client.format(
-        prompt="PARENT-001",
-        activity=activity,
-        parent_name=parent.preferred_name,
-        language=parent.preferred_language
-    )
-
-    # Validate compliance
-    validated = await self.ai_client.validate(
-        prompt="GUARD-001",
-        message=message
-    )
-
-    # Schedule for tomorrow (not instant)
-    await self.scheduler.schedule_message(
-        recipient=parent.phone,
-        message=validated,
-        send_at=datetime.now(UTC) + timedelta(days=1)
-    )
-
-    # Update conversation state
-    parent.conversation_state = {
-        "flow": "FLOW-ACTIVITY",
-        "step": "AWAITING_COMPLETION",
-        "data": {
-            "activity_id": activity.id,
-            "gap_profile_id": gap_profile.id,
-            "check_in_date": (datetime.now(UTC) + timedelta(days=4)).isoformat()
-        }
-    }
-
-# NONE OF THIS EXISTS ❌
-```
-
-#### ❌ **Message Scheduler:**
-```python
-# No scheduler exists for delayed message delivery
-# All current messages are instant-reply only
-
-# Would need:
-# - Celery/RQ for task queue
-# - Redis for job storage
-# - Background worker process
-```
-
-### Evidence:
-- **ACT-001 Prompt:** Specified ✅
-- **PARENT-001 Prompt:** Specified ✅
-- **GUARD-001 Prompt:** Specified ✅
-- **Activity API Endpoint:** NOT IMPLEMENTED ❌
-- **WhatsApp Delivery:** NOT IMPLEMENTED ❌
-- **Message Scheduler:** NOT IMPLEMENTED ❌
-
-### Time to Complete: **4-6 days**
-1. Add activity generation endpoint (1 day)
-2. Implement message scheduler (Celery/Redis) (2 days)
-3. Add FLOW-ACTIVITY-DELIVERY to flow_executor (1 day)
-4. Add scheduled message delivery (1 day)
-5. Test end-to-end (1 day)
-
----
-
-## FLOW 5: Check-In Cycle ❌ **0% WORKING**
-
-### Designed User Journey:
-```
-[3 days after activity sent]
-
-System sends:
-
-Hi [Parent]! 😊
-
-How did the Stick Bundling Game go with Kwame?
-
-[We did it! ✅] [Not yet] [Need help]
-
---- IF "We did it!" ---
-That's wonderful! 🎉
-
-Kwame is building great skills. I'll send another
-fun activity soon!
-
-→ Mark activity complete
-→ Increment completion counter
-→ If 3 activities complete → Trigger new diagnostic
-
---- IF "Not yet" ---
-No problem at all! Life gets busy.
-
-Would you like me to send it again?
-
-[Yes, send again] [Maybe next week]
-
---- IF "Need help" ---
-Of course! What part do you need help with?
-
-→ Parent sends text/voice
-→ AI provides clarification
-```
-
-### What's Missing (Everything):
-
-#### ❌ **No Scheduled Check-Ins:**
-```python
-# Would need in flow_executor.py:
-
-async def _schedule_check_in(self, parent: Parent, activity_id: str):
-    """Schedule check-in message 3 days after activity."""
-
-    check_in_date = datetime.now(UTC) + timedelta(days=3)
-
-    await self.scheduler.schedule_message(
-        recipient=parent.phone,
-        message=f"Hi {parent.preferred_name}! How did the activity go?",
-        send_at=check_in_date,
-        buttons=[
-            {"id": "done", "title": "We did it! ✅"},
-            {"id": "not_yet", "title": "Not yet"},
-            {"id": "help", "title": "Need help"}
-        ]
-    )
-
-# DOES NOT EXIST ❌
-```
-
-#### ❌ **No Completion Tracking:**
-```python
-# Database table needed:
-
-class ActivityCompletion(Base):
-    id: UUID
-    student_id: UUID
-    activity_id: UUID
-    gap_profile_id: UUID
-    completed_at: DateTime
-    parent_feedback: String  # "done", "not_yet", "help"
-    completion_count: Integer  # For triggering next diagnostic
-
-# TABLE DOES NOT EXIST ❌
-```
-
-#### ❌ **No Cycle Logic:**
-```python
-# Would need:
-
-async def _handle_activity_completion(self, parent: Parent):
-    """Handle parent completing activity."""
-
-    # Get completion count
-    count = await self.db.count_completions(parent.id)
-
-    # If 3 completions → trigger new diagnostic
-    if count % 3 == 0:
-        await self._start_diagnostic(parent, parent.students[0])
+    if not validated.compliant:
+        # Regenerate if fails dignity-first check
+        activity = await ai_client.generate(...)  # Try again
+
+    # Convert to voice note (Twi)
+    if parent.preferred_language == "tw":
+        voice_note_url = await generate_twi_voice_note(validated.text)
     else:
-        # Send next activity
-        await self._trigger_activity_delivery(parent, gap_profile)
+        voice_note_url = None  # Text only for English
 
-# DOES NOT EXIST ❌
+    return {
+        "text": validated.text,
+        "voice_note_url": voice_note_url,
+        "targets_gap": root_gap,
+        "materials_needed": activity.materials
+    }
 ```
 
-### Evidence:
-- **Check-in Logic:** NOT FOUND ❌
-- **Activity Completion Table:** DOES NOT EXIST ❌
-- **Scheduler:** NOT IMPLEMENTED ❌
-- **Cycle Trigger:** NOT IMPLEMENTED ❌
+**4. Scheduled Delivery (Daily 6:30 PM):**
+```python
+# Celery task (runs daily)
+@celery.task
+async def send_evening_activities():
+    """
+    Send evening activities to all active parents at 6:30 PM local time.
+    """
+    # Get all active parents (opted in, has linked student)
+    parents = await db.get_active_parents()
 
-### Time to Complete: **3-5 days**
-1. Create ActivityCompletion table (4 hours)
-2. Add completion tracking (1 day)
-3. Add check-in scheduling (1 day)
-4. Add cycle logic (3 completions → new diagnostic) (1 day)
-5. Test full cycle (1 day)
+    for parent in parents:
+        # Get student's current gap profile
+        student = await db.get_student(parent.linked_student_id)
+        gap_profile = await db.get_current_gap_profile(student.id)
+
+        if not gap_profile:
+            continue  # No diagnostic yet
+
+        # Generate activity
+        activity = await generate_parent_evening_activity(
+            student, gap_profile, parent
+        )
+
+        # Send via WhatsApp
+        if activity["voice_note_url"]:
+            await whatsapp_client.send_audio(
+                to=parent.phone,
+                audio_url=activity["voice_note_url"]
+            )
+        else:
+            await whatsapp_client.send_text(
+                to=parent.phone,
+                text=activity["text"]
+            )
+
+        # Track delivery
+        await db.create_activity_delivery(
+            parent_id=parent.id,
+            student_id=student.id,
+            activity_text=activity["text"],
+            voice_note_url=activity["voice_note_url"],
+            targets_gap=activity["targets_gap"],
+            sent_at=datetime.now(UTC)
+        )
+
+# Schedule for 6:30 PM Ghana time daily
+celery.conf.beat_schedule = {
+    'send-evening-activities': {
+        'task': 'send_evening_activities',
+        'schedule': crontab(hour=18, minute=30, timezone='Africa/Accra'),
+    },
+}
+```
+
+### What We Have:
+- ❌ No TTS integration
+- ❌ No STT integration
+- ❌ No activity generation for parents
+- ❌ No scheduled delivery (no Celery/scheduler)
+- ❌ No voice note sending
+- ❌ No Twi support
+- ✅ ACT-001 prompt exists (activity generator)
+- ✅ PARENT-001 prompt exists (message formatter)
+- ✅ GUARD-001 prompt exists (Wolf/Aurino validator)
+- ❌ None of these prompts are integrated
+
+### Time to Build: **8-10 days**
+1. Test Twi TTS quality (Google Cloud vs ElevenLabs) (2 days)
+2. Integrate TTS/STT (2 days)
+3. Build PARENT-ACTIVITY-GENERATOR integration (2 days)
+4. Add GUARD-001 validation layer (1 day)
+5. Set up Celery + Redis for scheduled tasks (2 days)
+6. Build daily 6:30 PM job (1 day)
+7. Test with Twi-speaking parents (2 days)
+
+**Cost:**
+- TTS: $24-50 for 2,400 voice notes (100 parents × 12 weeks × 2 notes/week)
+- STT: $9-18 for parent voice replies
 
 ---
 
-## FLOW 6: Opt-Out ✅ **100% WORKING**
+## FLOW 6: Weekly Gap Map to Teacher ❌ **0% IMPLEMENTED**
 
-### User Journey:
+### Specified Flow (MVP Blueprint, Section 3.1):
+
 ```
-[Anytime]
+WEEKLY GAP MAP
 
-Parent sends: "STOP"
-(or "gyae" in Twi, "tɔtɔ" in Ewe, "dakpa" in Ga, etc.)
+[Every Sunday evening, after week of exercise book scanning]
 
-System responds instantly:
+GapSense → Teacher (WhatsApp):
 
-We've stopped all messages. 🙏
+"📊 WEEKLY GAP MAP — JHS 1A (42 students)
+Week ending Feb 16, 2026
 
-Your data will be removed from our system.
-
-If you ever want to restart, just send "Hi".
-
-Thank you, [Parent Name].
-```
-
-### What Works:
-
-#### ✅ **11+ Opt-Out Keywords in 5 Languages:**
-```python
-# flow_executor.py, lines 175-210
-
-OPT_OUT_KEYWORDS = [
-    # English
-    "stop", "unsubscribe", "cancel", "opt out", "opt-out",
-    # Twi
-    "gyae", "fa me fi",
-    # Ewe
-    "tɔtɔ", "ðe nye ŋkɔ ɖa",
-    # Ga
-    "dakpa", "yigbe",
-    # Dagbani
-    "dakli", "ti n-yua"
-]
-
-if message_text.lower() in OPT_OUT_KEYWORDS:
-    await self._handle_opt_out(parent)
-```
-
-#### ✅ **Database Updates:**
-```python
-parent.opted_out = True
-parent.opted_out_at = datetime.now(UTC)
-parent.opted_in = False
-parent.conversation_state = None
-await self.db.commit()
-```
-
-#### ✅ **Compliance:**
-- Response sent within 1 second ✅
-- Data deletion process begins (currently just flag, full deletion would be manual) ⚠️
-- Re-opt-in possible (send "Hi" again) ✅
-
-### Evidence:
-- **File:** `src/gapsense/engagement/flow_executor.py` (lines 175-225)
-- **Tests:** 2/2 opt-out tests passing
-- **Keywords:** 11 tested ✅
-- **Database:** opted_out field working ✅
-
-### What Could Be Improved:
-- ⚠️ **Automated data deletion:** Currently just sets flag, doesn't actually delete records
-- ⚠️ **More L1 keywords:** Could add more dialect variations
-
-### Time to Improve: **1 day** (automated deletion)
-
----
-
-## FLOW 7: Teacher Dashboard ❌ **0% WORKING**
-
-### Designed User Journey:
-```
-Teacher logs into: app.gapsense.com/teachers
-
-Dashboard shows:
-
-┌────────────────────────────────────────────────┐
-│  Mrs. Ama Mensah - Class B4 (35 students)     │
-│  St. Mary's Primary School, Accra              │
-└────────────────────────────────────────────────┘
-
-ONBOARDING STATUS:
-✅ 28/35 parents onboarded (80%)
-⏳ 7 parents not yet reached
+SCANNED THIS WEEK: 28 students (67%)
 
 GAP PATTERNS:
 🔴 Place Value (B2.1.1.1): 15 students
-🟡 Fraction Concept (B2.1.3.1): 8 students
-🟢 Addition/Subtraction: 5 students ready for B5
+   - Kwame Mensah, Akosua Boateng, Kofi Asante, [+12 more]
 
-RECENT ACTIVITY:
-- 22 students completed activities this week
-- 12 parents need re-engagement
-- 3 students ready for new diagnostic
+🟡 Multiplication Fluency (B2.1.2.1): 8 students
+   - Ama Darko, Yaw Osei, [+6 more]
 
-┌────────────────────────────────────────────────┐
-│  💬 Ask GapSense (TEACHER-003)                 │
-│                                                │
-│  "I'm teaching fractions next week.            │
-│   Which students should I watch?"              │
-│                                                │
-│  [Ask Question]                                │
-└────────────────────────────────────────────────┘
+🟢 On Track: 5 students ready for B3+ material
+   - Abena Owusu, Kojo Nkrumah, [+3 more]
 
-STUDENT LIST:
-┌──────────────────────────────────────────────┐
-│ Kwame Mensah    B4    ⏸️ Fraction Concept    │
-│ Akosua Boateng  B4    ✅ Ready for B5        │
-│ Kofi Asante     B4    🔴 Place Value Gap     │
-│ ...                                          │
-└──────────────────────────────────────────────┘
+PARENT ENGAGEMENT:
+✅ 22 parents active this week (79%)
+⏸️ 6 parents need re-engagement
+
+NEXT WEEK FOCUS:
+When introducing fractions, watch the 15 with place-value gaps.
+They'll struggle with denominators. Suggest concrete intro
+(folding paper) before abstract notation.
+
+💬 Have questions? Just ask me!"
 ```
 
-### What's Missing (Everything):
+### Technical Requirements:
 
-#### ❌ **No Web Application:**
-```
-No frontend exists at all:
-- No React/Vue/Next.js app
-- No teacher login
-- No dashboard UI
-- No student list views
-- No TEACHER-003 chat interface
-```
-
-#### ❌ **But Backend APIs Exist:**
-```bash
-# These work via API but no UI calls them:
-
-GET /v1/teachers/{teacher_id}/students
-→ Returns list of students
-
-GET /v1/diagnostics/students/{student_id}/profile/current
-→ Returns current gap profile
-
-GET /v1/students/{student_id}
-→ Returns student details
-```
-
-#### ❌ **TEACHER-003 Not Integrated:**
 ```python
-# TEACHER-003 prompt exists but no endpoint to call it
+# Celery task (runs weekly)
+@celery.task
+async def send_weekly_gap_map_to_teachers():
+    """
+    Send weekly summary to all active teachers.
+    """
+    teachers = await db.get_active_teachers()
 
-# Would need:
-POST /v1/teachers/{teacher_id}/chat
-{
-  "question": "I'm teaching fractions next week. Which students should I watch?"
+    for teacher in teachers:
+        # Get week's data
+        week_start = datetime.now(UTC) - timedelta(days=7)
+        scans = await db.get_scans(teacher_id=teacher.id, since=week_start)
+        students = await db.get_students(teacher_id=teacher.id)
+        gap_profiles = await db.get_gap_profiles(
+            student_ids=[s.id for s in students]
+        )
+
+        # Aggregate gap patterns
+        gap_summary = aggregate_gaps_by_node(gap_profiles)
+
+        # Parent engagement stats
+        parent_stats = await get_parent_engagement_stats(teacher.id, week_start)
+
+        # Generate summary
+        summary = format_weekly_gap_map(
+            teacher=teacher,
+            scans_count=len(scans),
+            total_students=len(students),
+            gap_summary=gap_summary,
+            parent_stats=parent_stats
+        )
+
+        # Send via WhatsApp (text message, not image for MVP)
+        await whatsapp_client.send_text(teacher.phone, summary)
+
+# Schedule for Sunday 8 PM
+celery.conf.beat_schedule['weekly-gap-map'] = {
+    'task': 'send_weekly_gap_map_to_teachers',
+    'schedule': crontab(day_of_week=0, hour=20, minute=0),
 }
-→ Uses TEACHER-003 to generate answer
 ```
 
-### Evidence:
-- **Backend APIs:** 5 teacher-related endpoints ✅
-- **TEACHER-003 Prompt:** Specified ✅
-- **Frontend Application:** DOES NOT EXIST ❌
-- **Teacher Login:** DOES NOT EXIST ❌
-- **Dashboard UI:** DOES NOT EXIST ❌
+### What We Have:
+- ❌ No weekly summary generation
+- ❌ No gap aggregation logic
+- ❌ No parent engagement tracking
+- ❌ No scheduled weekly task
+- ✅ Database has gap_profiles (data source exists)
 
-### Time to Complete: **10-15 days**
-1. Set up Next.js frontend (2 days)
-2. Add teacher authentication (2 days)
-3. Build dashboard UI (3 days)
-4. Build student list view (2 days)
-5. Integrate TEACHER-003 chat (2 days)
-6. Build class overview analytics (2 days)
-7. Test and deploy (2 days)
+### Time to Build: **2-3 days**
+1. Build gap aggregation function (1 day)
+2. Build parent engagement stats (1 day)
+3. Format Gap Map message (4 hours)
+4. Add weekly scheduled task (2 hours)
+5. Test with real data (4 hours)
 
 ---
 
-# 📈 COMPLETION STATUS SUMMARY
+## FLOW 7: Opt-Out ✅ **100% WORKING** (But needs updates)
 
-## By User Type:
+### Current Status:
+- ✅ Parent can opt-out
+- ✅ 11+ keywords in 5 languages
+- ✅ Database updates correctly
 
-### PARENT Experience:
+### Missing:
+- ❌ Teacher cannot opt-out (need separate flow)
+- ❌ No "pause" option (only full opt-out)
+- ❌ Data deletion not automated
+
+### Time to Improve: **1 day**
+
+---
+
+## 📊 REALISTIC COMPLETION STATUS
+
+### Current Implementation:
 ```
-✅ Can onboard                          100%
-✅ Can opt-out anytime                  100%
-❌ Cannot receive diagnostic             0%
-❌ Cannot receive activities             0%
-❌ Cannot complete check-ins             0%
-❌ Messages not in L1                    0%
+What Actually Works:
+✅ Parent onboarding (but wrong flow — creates students)
+✅ Opt-out
+✅ Database models (partially correct)
+✅ WhatsApp webhook
+✅ API infrastructure
 
-OVERALL PARENT EXPERIENCE: 33%
+What Doesn't Exist:
+❌ School/Teacher onboarding (0%)
+❌ Class roster upload (0%)
+❌ Exercise book scanner (0%)
+❌ Multimodal AI (0%)
+❌ Teacher conversation (0%)
+❌ Parent voice notes (0%)
+❌ TTS/STT (0%)
+❌ Scheduled messaging (0%)
+❌ Weekly Gap Map (0%)
+
+ACTUAL MVP COMPLETION: 15%
 ```
 
-### STUDENT Experience:
+### By Flow:
 ```
-✅ Record created in database          100%
-❌ Never receives diagnostic             0%
-❌ Never does activities                 0%
-❌ No progress tracking                  0%
+FLOW 0: School Approval              0% ░░░░░░░░░░░░░░░░░░░░
+FLOW 1: Teacher Onboarding           0% ░░░░░░░░░░░░░░░░░░░░
+FLOW 2: Parent Linking              20% ████░░░░░░░░░░░░░░░░
+FLOW 3: Exercise Book Scanner        0% ░░░░░░░░░░░░░░░░░░░░
+FLOW 4: Teacher Conversation         0% ░░░░░░░░░░░░░░░░░░░░
+FLOW 5: Parent Evening Voice         0% ░░░░░░░░░░░░░░░░░░░░
+FLOW 6: Weekly Gap Map               0% ░░░░░░░░░░░░░░░░░░░░
+FLOW 7: Opt-Out                    100% ████████████████████
 
-OVERALL STUDENT EXPERIENCE: 25%
-```
-
-### TEACHER Experience:
-```
-✅ Can register students via API        100%
-⚠️ Can view gap profiles via API        70% (API yes, UI no)
-❌ Cannot see dashboard                  0%
-❌ Cannot ask TEACHER-003 questions      0%
-
-OVERALL TEACHER EXPERIENCE: 15%
-```
-
-## By Flow:
-```
-✅ FLOW 1: Onboarding              100% ████████████████████
-✅ FLOW 6: Opt-Out                 100% ████████████████████
-⚠️ FLOW 2: Diagnostic               70% ██████████████░░░░░░
-⚠️ FLOW 3: Gap Profile              80% ████████████████░░░░
-⚠️ FLOW 4: Activity Generation      60% ████████████░░░░░░░░
-❌ FLOW 5: Check-In Cycle            0% ░░░░░░░░░░░░░░░░░░░░
-❌ FLOW 7: Teacher Dashboard         0% ░░░░░░░░░░░░░░░░░░░░
-
-OVERALL MVP COMPLETION: 35%
+OVERALL: 15%
 ```
 
 ---
 
-# 🎯 PRIORITY IMPLEMENTATION ORDER
+## 🎯 CORRECTED IMPLEMENTATION PRIORITY
 
-## PHASE 1: Core User Journey (7-10 days)
+### REALISTIC MVP (Teacher-Initiated Platform):
 
-**Goal:** Parent can complete one full cycle: Onboard → Diagnose → Activity → Check-in
+**Phase 1: Foundation (Week 1-2) — 10-12 days**
+1. ✅ Add School model + migration
+2. ✅ Build FLOW-TEACHER-ONBOARD (WhatsApp)
+3. ✅ Class roster upload (photo OCR or manual entry)
+4. ✅ Bulk student creation
+5. ✅ Rewrite FLOW-PARENT-LINK (select from existing students)
+6. ✅ Test teacher→student→parent flow
 
-### Priority 1: Diagnostic WhatsApp Integration (3-5 days)
-**Why First:** Blocks everything else. Without diagnostic, no gap profiles, no activities.
+**Phase 2: Core Diagnostic (Week 3-4) — 10-14 days**
+7. ✅ Build NaCCA JHS 1 Math prerequisite knowledge base
+8. ✅ Collect 50+ exercise book photos
+9. ✅ Engineer EXERCISE-BOOK-ANALYZER prompt
+10. ✅ Integrate multimodal AI (Claude Sonnet vision)
+11. ✅ Add image message handling
+12. ✅ Create gap profiles from scans
+13. ✅ Validate with teachers (75%+ accuracy target)
 
-**Tasks:**
-1. ✅ Add FLOW-DIAGNOSTIC to flow_executor.py
-2. ✅ Trigger diagnostic after onboarding
-3. ✅ Handle answer submissions via WhatsApp
-4. ✅ Generate gap profile after diagnostic
-5. ✅ Send gap profile message to parent
+**Phase 3: Parent Engagement (Week 5-6) — 10-12 days**
+14. ✅ Test Twi TTS quality
+15. ✅ Integrate TTS/STT
+16. ✅ Build PARENT-ACTIVITY-GENERATOR
+17. ✅ Add GUARD-001 validation
+18. ✅ Set up Celery/Redis scheduler
+19. ✅ Build daily 6:30 PM voice note delivery
+20. ✅ Test with Twi-speaking parents
 
-**Acceptance Criteria:**
-- Parent completes onboarding → automatically gets diagnostic within 2 minutes
-- Parent answers 6-12 questions via WhatsApp
-- Parent receives dignity-first gap summary
+**Phase 4: Teacher Intelligence (Week 7-8) — 6-8 days**
+21. ✅ Integrate TEACHER-CONVERSATION-PARTNER
+22. ✅ Add context loading (class gap summary)
+23. ✅ Build conversation state management
+24. ✅ Build Weekly Gap Map generation
+25. ✅ Add weekly scheduled delivery
 
-**Estimated Hours:** 24-32 hours
-
----
-
-### Priority 2: Activity Delivery (4-6 days)
-**Why Second:** Demonstrates value to parents. This is what they signed up for.
-
-**Tasks:**
-1. ✅ Implement message scheduler (Celery + Redis)
-2. ✅ Add FLOW-ACTIVITY-DELIVERY
-3. ✅ Generate activity using ACT-001
-4. ✅ Validate with GUARD-001
-5. ✅ Schedule delivery for 1 day after gap profile
-
-**Acceptance Criteria:**
-- 24 hours after diagnostic, parent receives activity via WhatsApp
-- Activity uses household materials
-- Activity targets the root gap (not symptom)
-- Message is Wolf/Aurino compliant
-
-**Estimated Hours:** 32-40 hours
+**TOTAL: 8-10 weeks to actual MVP**
 
 ---
 
-### Priority 3: Check-In Cycle (3-5 days)
-**Why Third:** Completes the loop. Without this, one-time interaction only.
+## 🚨 CRITICAL DEPENDENCIES
 
-**Tasks:**
-1. ✅ Create ActivityCompletion table
-2. ✅ Schedule check-in 3 days after activity
-3. ✅ Handle completion responses
-4. ✅ Trigger new diagnostic after 3 completions
-5. ✅ Handle "not yet" and "need help" responses
+### External (Must Have Before Development):
 
-**Acceptance Criteria:**
-- 3 days after activity, parent gets check-in message
-- If parent says "done", activity marked complete
-- After 3 completions, new diagnostic automatically triggered
-- Cycle repeats indefinitely
+1. **Pilot School Recruitment** (2-3 weeks)
+   - 5-7 schools in Greater Accra
+   - Headmaster approvals
+   - 10 JHS 1 math teachers identified
+   - PTA meeting scheduled
 
-**Estimated Hours:** 24-32 hours
+2. **WhatsApp Business API Approval** (1-3 days)
+   - Template messages for voice notes
+   - Meta approval process
 
----
+3. **Twi TTS Quality Validation** (1 week)
+   - Test Google Cloud TTS Twi voice
+   - OR ElevenLabs alternative
+   - OR human-recorded templates
+   - Native speaker validation
 
-## PHASE 2: Teacher Experience (10-15 days)
+4. **NaCCA Prerequisite Mapping** (1-2 weeks)
+   - Expert teacher consultations (2-3 teachers)
+   - Map JHS 1 Math to P1-P6 prerequisites
+   - Document common misconceptions
 
-**Goal:** Teacher can view class progress and ask questions
+5. **Exercise Book Samples** (1 week)
+   - Collect 50+ photos from pilot teachers
+   - Cover common JHS 1 topics
+   - Variety of handwriting quality
 
-### Priority 4: Teacher Dashboard MVP (10-15 days)
-**Why Fourth:** Teacher needs to see impact. Also needed for UNICEF demo.
+### Technical Infrastructure:
 
-**Tasks:**
-1. ✅ Set up Next.js frontend
-2. ✅ Add teacher authentication
-3. ✅ Build class overview dashboard
-4. ✅ Build student list view
-5. ✅ Show gap profiles per student
-6. ✅ Show onboarding status (X/Y parents onboarded)
+1. **Multimodal AI Access**
+   - Anthropic Claude Sonnet 4.5 API key
+   - OR Google Gemini Pro Vision API key
 
-**Acceptance Criteria:**
-- Teacher can log in
-- Teacher sees list of students
-- Teacher can click student → see current gap profile
-- Teacher sees how many parents are onboarded
+2. **TTS/STT APIs**
+   - Google Cloud TTS (Twi voice)
+   - Whisper API (speech-to-text)
 
-**Estimated Hours:** 60-80 hours
+3. **Message Scheduler**
+   - Celery + Redis
+   - OR cloud functions (Firebase/AWS Lambda)
 
----
-
-### Priority 5: TEACHER-003 Chat Interface (2-3 days)
-**Why Fifth:** Differentiator for UNICEF pitch. "Reports ≠ conversations."
-
-**Tasks:**
-1. ✅ Add POST /v1/teachers/{id}/chat endpoint
-2. ✅ Integrate TEACHER-003 prompt
-3. ✅ Build chat UI component
-4. ✅ Maintain conversation history
-5. ✅ Handle follow-up questions
-
-**Acceptance Criteria:**
-- Teacher can type: "I'm teaching fractions next week. Which students need help?"
-- AI responds with specific students, gap data, and recommendations
-- Teacher can ask follow-up questions
-
-**Estimated Hours:** 16-24 hours
+4. **Media Storage**
+   - S3 or equivalent (for voice notes, images)
 
 ---
 
-## PHASE 3: Polish & L1 Support (5-7 days)
+## 💰 REALISTIC COST ESTIMATE
 
-### Priority 6: L1 Message Translation (5-7 days)
-**Why Sixth:** Critical for equity, but doesn't block core functionality.
+**12-Week Pilot (10 teachers, 100 parents, 400 students):**
 
-**Tasks:**
-1. ✅ Add message_templates table
-2. ✅ Create translations for 5 languages (Twi, Ewe, Ga, Dagbani, English)
-3. ✅ Add template selection logic based on parent.preferred_language
-4. ✅ Translate all system messages
-5. ✅ Test with native speakers
+| Item | Calculation | Cost (USD) |
+|------|-------------|------------|
+| WhatsApp Business API | 250 conversations/week × 12 weeks | $150-360 |
+| Multimodal AI (scans) | 100 scans/week × 12 × $0.05 | $60-120 |
+| Text AI (conversations) | 500 turns/week × 12 × $0.005 | $30-60 |
+| TTS (Twi voice notes) | 200/week × 12 × $0.01 | $24-50 |
+| STT (parent replies) | 50/week × 12 × 0.5min × $0.01/min | $3-9 |
+| Hosting (VPS/cloud) | 12 weeks | $0-60 |
+| Redis (managed) | 12 weeks | $0-30 |
+| S3 storage | Images + voice notes | $5-15 |
+| Domain + SSL | | $12 |
+| **TOTAL** | | **$284-716** |
+| **Per student** | 400 students | **$0.71-1.79** |
 
-**Acceptance Criteria:**
-- Parent who selected "Twi" receives all messages in Twi
-- Translations are culturally appropriate
-- Activities use local examples (kenkey, not pizza)
-
-**Estimated Hours:** 40-56 hours
+**This matches MVP Blueprint estimate: Under $2,000 total**
 
 ---
 
-# 📅 REALISTIC TIMELINE TO MVP COMPLETE
+## ✅ DEFINITION OF "ACTUAL MVP COMPLETE"
+
+### The Real-World Demo:
 
 ```
-Starting Point: Feb 16, 2026 (35% complete)
-Target: MVP Demo-Ready
+1. Headmaster at St. Mary's JHS approves pilot ✅
 
-Week 1 (Feb 17-23):
-  ✅ Priority 1: Diagnostic WhatsApp Integration
-  → Demo: Parent completes onboarding → gets diagnostic
+2. Mrs. Adwoa (JHS 1A Math teacher) onboards:
+   - Sends "START" to GapSense WhatsApp
+   - Uploads class register (42 students)
+   - System creates 42 student profiles ✅
 
-Week 2 (Feb 24 - Mar 2):
-  ✅ Priority 2: Activity Delivery
-  → Demo: Parent receives activity 24h after diagnostic
+3. Mrs. Adwoa shares GapSense number at PTA meeting ✅
 
-Week 3 (Mar 3-9):
-  ✅ Priority 3: Check-In Cycle
-  → Demo: Full cycle works (onboard → diagnose → activity → check-in → repeat)
+4. Ama (Kwame's mother) sends "START":
+   - Selects "Kwame Mensah" from student list
+   - Chooses "Twi" as language
+   - Receives voice welcome in Twi ✅
 
-Week 4-5 (Mar 10-23):
-  ✅ Priority 4: Teacher Dashboard MVP
-  → Demo: Teacher can view class, see gap patterns
+5. Mrs. Adwoa marks Kwame's homework:
+   - Photographs one page (long division problems)
+   - Sends to GapSense
+   - Gets AI analysis: "Place value gap at P4 level" ✅
 
-Week 6 (Mar 24-30):
-  ✅ Priority 5: TEACHER-003 Chat
-  → Demo: Teacher asks questions, gets answers
+6. That evening at 6:30 PM:
+   - Ama receives Twi voice note
+   - "Tonight, ask Kwame to figure out 3 sachets × 50p"
+   - Ama sends 👍 ✅
 
-Week 7-8 (Mar 31 - Apr 13):
-  ✅ Priority 6: L1 Translation
-  → Demo: Parent in Twi receives Twi messages
+7. 3 days later:
+   - Ama receives voice note: "How did it go?"
+   - Ama replies with voice note describing what happened
+   - Gets pedagogical coaching in Twi ✅
+
+8. Mrs. Adwoa asks GapSense:
+   - "I'm teaching fractions next week. Who needs help?"
+   - AI lists 8 students with multiplication gaps
+   - Suggests concrete fraction introduction ✅
+
+9. Sunday evening:
+   - Mrs. Adwoa receives Weekly Gap Map via WhatsApp
+   - Shows: 15 students with place value gaps
+   - 22/42 parents active this week ✅
+
+10. After 12 weeks:
+    - Re-scan students' exercise books
+    - Measure improvement
+    - Answer the three MVP questions ✅
+```
+
+---
+
+## 📅 REALISTIC TIMELINE
+
+```
+TODAY: Feb 16, 2026 (15% complete)
+
+Week 1-2 (Feb 17 - Mar 2): Foundation
+  ✅ Teacher onboarding + class roster
+  ✅ Parent linking (fix existing flow)
+  → Can demo: Teacher uploads class, parent links to student
+
+Week 3-4 (Mar 3-16): Core Diagnostic
+  ✅ Exercise book scanner + multimodal AI
+  ✅ Gap profile generation
+  → Can demo: Teacher scans work, AI diagnoses gaps
+
+Week 5-6 (Mar 17-30): Parent Voice Notes
+  ✅ TTS/STT integration
+  ✅ Evening activity generation (Twi)
+  → Can demo: Parent receives voice note at 6:30 PM
+
+Week 7-8 (Mar 31 - Apr 13): Teacher Intelligence
+  ✅ Conversation partner
+  ✅ Weekly Gap Map
+  → Can demo: Full teacher-parent-student flywheel
 
 READY FOR PILOT: April 15, 2026 (100% MVP complete)
+
+PILOT LAUNCH: April 20, 2026
+  - Recruit 10 teachers
+  - Onboard teachers (upload class rosters)
+  - Teachers invite parents (PTA meetings)
+  - Begin 12-week measurement period
+
+PILOT END: July 15, 2026
+  - Analyze results
+  - Answer three MVP questions
+  - Decide: Go/No-Go for Phase 2
 ```
 
 ---
 
-# 🚨 BLOCKERS & DEPENDENCIES
+**END OF REALISTIC STATUS DOCUMENT**
 
-## Technical Blockers:
+Last Updated: February 16, 2026 (Post-Specification Audit)
+Next Update: After Foundation Phase complete (Week 2)
 
-### 1. Message Scheduler Required
-**Blocker for:** Activity Delivery, Check-In Cycle
-**Current Status:** ❌ Not implemented
-**Options:**
-- Celery + Redis (recommended, 2 days setup)
-- APScheduler (simpler, 1 day setup, less robust)
-- Cloud Functions (Firebase/AWS Lambda, 1 day setup)
-
-**Decision Needed:** Which scheduler to use?
-
-### 2. WhatsApp Business API Limits
-**Blocker for:** Scaling beyond 100 parents
-**Current Status:** ⚠️ May hit limits
-**Issue:** Template message approval takes 1-3 days from Meta
-**Mitigation:** Pre-approve 5-10 template variations now
-
-### 3. L1 Translation Resources
-**Blocker for:** L1 message support
-**Current Status:** ❌ No translators identified
-**Need:** Native speakers of Twi, Ewe, Ga, Dagbani
-**Timeline:** 1 week to find translators, 1 week to translate
-
-## Dependencies:
-
-```
-FLOW 2 (Diagnostic) → FLOW 3 (Gap Profile) → FLOW 4 (Activity)
-            ↓
-         FLOW 5 (Check-In) ← loops back to FLOW 2
-
-FLOW 7 (Teacher Dashboard) depends on all other flows existing
-```
-
-**Critical Path:** Must complete Flows 2-5 in order. Cannot skip.
-
----
-
-# ✅ DEFINITION OF "MVP COMPLETE"
-
-## Must Have (Non-Negotiable):
-
-1. ✅ **Parent can onboard via WhatsApp** (DONE ✅)
-2. ✅ **Student record created** (DONE ✅)
-3. ✅ **Diagnostic runs automatically after onboarding**
-4. ✅ **Parent receives dignity-first gap summary**
-5. ✅ **Activity delivered 24h after diagnostic**
-6. ✅ **Check-in sent 3 days after activity**
-7. ✅ **Cycle repeats after 3 completions**
-8. ✅ **Teacher can view class dashboard**
-9. ✅ **Parent can opt-out anytime** (DONE ✅)
-
-## Nice to Have (Not Blockers):
-
-- ⚠️ L1 translations (can demo in English)
-- ⚠️ TEACHER-003 chat (can show prompt spec)
-- ⚠️ Voice note support (can add in Phase 1b)
-- ⚠️ Exercise book scanner (Phase 1b)
-
-## Demo Scenario (MVP Complete):
-
-```
-1. Teacher shares GapSense number with parents
-2. Parent (Auntie Ama) sends "Hi" → Onboarding starts
-3. Ama provides: Child name (Kwame), Age (7), Grade (B2), Language (English)
-4. System creates Student record
-5. 2 minutes later: Diagnostic starts automatically
-6. Ama answers 6 questions with Kwame
-7. System identifies gap: B2.1.1.1 (Place Value)
-8. Ama receives: "Kwame is doing great with addition! Next building block: place value"
-9. 24 hours later: Ama receives Stick Bundling activity
-10. 3 days later: "How did it go?" check-in
-11. Ama: "We did it!"
-12. System: "Wonderful! Next activity coming soon"
-13. After 3 activities: New diagnostic automatically triggered
-14. Teacher opens dashboard → Sees: "15 students working on place value, 8 on fractions"
-15. Teacher asks AI: "I'm teaching fractions next week. Who needs help?"
-16. AI lists 8 students with B2.1.3.1 gaps
-
-DEMO LENGTH: 10 minutes (compressed timeline)
-ACTORS: 1 parent, 1 teacher, system
-SCREENS: WhatsApp (parent), Dashboard (teacher)
-```
-
----
-
-# 📊 CURRENT vs COMPLETE MVP
-
-## What Works Today (Feb 16):
-```
-Parent: Hi
-System: [Welcome template] → 7-step onboarding → Student created ✅
-Parent: STOP
-System: Opted out ✅
-
-[FLOW STOPS HERE]
-```
-
-## What Should Work (MVP Complete):
-```
-Parent: Hi
-System: [Welcome] → Onboarding → Student created ✅
-System: [2 min later] Quick learning check → 6 questions ✅
-System: Gap found (B2.1.1.1) → Dignity-first summary ✅
-System: [24h later] Activity delivered ✅
-System: [3 days later] Check-in: "How did it go?" ✅
-Parent: We did it!
-System: [After 3 completions] New diagnostic ✅
-[CYCLE REPEATS]
-
-Teacher: [Opens dashboard]
-System: Shows class gaps, student progress ✅
-Teacher: "Who needs help with fractions?"
-System: [TEACHER-003] Lists 8 students with recommendations ✅
-```
-
----
-
-**END OF DOCUMENT**
-
-Last Updated: February 16, 2026
-Next Update: After Priority 1 (Diagnostic Integration) complete
+**Critical Finding:** We built a parent-initiated product. The spec requires a **teacher-initiated platform**. We need to rebuild flows 1-2 before continuing.

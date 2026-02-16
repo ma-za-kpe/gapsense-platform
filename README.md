@@ -1,6 +1,6 @@
 # GapSense Platform
 
-**AI-Powered Foundational Learning Diagnostic Platform for Ghana**
+**AI-Powered Exercise Book Diagnostic for Ghana's JHS Teachers**
 
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
@@ -9,482 +9,290 @@
 
 ---
 
-## Overview
+## 🎯 MVP Focus (Phase 1a — February 2026)
 
-GapSense identifies root learning gaps in Ghanaian primary and JHS students using AI-powered diagnostic reasoning, then engages parents via WhatsApp with dignity-preserving, evidence-based activities.
+**The Core Problem We're Solving:**
+JHS teachers inherit students with invisible primary-level gaps. A student struggling with fractions might actually have a P4 place-value gap. Teachers need to diagnose these gaps without adding another test.
 
-**The Problem:** 84% of Ghanaian children aged 7-14 lack foundational numeracy (UNICEF MICS 2023).
-
-**The Solution:** An AI that extracts diagnostic intelligence from existing artifacts (exercise books, classroom conversations) without adding another test.
-
----
-
-## Key Features
-
-- ✅ **Adaptive Diagnostic Engine** - Traces backward through prerequisite graph to find root gaps
-- ✅ **Exercise Book Analysis** - AI analyzes photos of student work for error patterns
-- ✅ **WhatsApp Parent Engagement** - Dignity-first messaging (Wolf/Aurino research-based)
-- ✅ **Teacher Conversation Partner** - Actionable insights, not just reports
-- ✅ **NaCCA-Aligned** - Ghana curriculum (35 nodes, 6 cascade failure paths)
-- ✅ **Multi-Language** - Twi, Ewe, Ga, Dagbani, English
+**Our Solution:**
+A WhatsApp-based AI that **analyzes photos of students' exercise books**, identifies error patterns, traces them to foundational gaps, and engages parents with targeted activities.
 
 ---
 
-## Architecture
+## 🚨 Current Status (February 16, 2026)
 
+**MVP Specification:** Teacher-initiated exercise book scanner + parent evening voice notes
+**Current Implementation:** 15% complete
+
+### ✅ What's Working:
+- WhatsApp webhook infrastructure
+- Parent onboarding flow (FLOW-ONBOARD: 7 steps)
+- Student record creation
+- Database schema (PostgreSQL)
+- AI prompt library (13 prompts in gapsense-data repo)
+- Opt-out flow (11+ keywords in 5 languages)
+
+### ❌ What's Missing (Core MVP Features):
+- **Exercise Book Scanner** (multimodal AI analysis) — THE CORE FEATURE
+- Teacher onboarding + class roster upload
+- Multimodal AI integration (Claude/Gemini vision)
+- Scheduled parent voice notes (6:30 PM daily in Twi)
+- Text-to-speech (Twi)
+- Speech-to-text (parent voice responses)
+- Teacher conversation partner
+- Weekly Gap Map
+
+**See:** [docs/mvp_specification_audit_CRITICAL.md](docs/mvp_specification_audit_CRITICAL.md) for full gap analysis
+
+---
+
+## 📖 The Actual MVP (from MVP Blueprint)
+
+### For Teachers:
 ```
-WhatsApp → API → SQS Queue → Worker → Claude AI → PostgreSQL
-                                   ↓
-                           GUARD-001 Compliance
-                                   ↓
-                              WhatsApp Send
+1. Teacher sends "START" → Registers class → Creates 42 student profiles
+2. Teacher sends photo of Kwame's exercise book
+3. AI analyzes handwriting → Identifies error patterns
+4. Returns: "Kwame errors on borrowing across place values (P4 gap).
+   Suggested micro-intervention: 3-min warm-up with GH₵ subtraction."
+5. Teacher asks: "I'm teaching fractions tomorrow. What should I worry about?"
+6. AI reasons across all diagnosed students → Suggests lesson adjustments
+```
+
+### For Parents:
+```
+1. Teacher shares GapSense number at PTA meeting
+2. Parent sends "START" → Links to existing student → Chooses language (Twi)
+3. Daily 6:30 PM: Parent receives Twi voice note with 3-minute activity
+   "Tonight: Ask Kwame to figure out 3 sachets of pure water at 50p each"
+4. Parent sends 👍 when done
+5. Parent sends voice note: "He got it but took too long, is that okay?"
+6. AI provides pedagogical coaching: "Perfect! Speed comes later..."
+```
+
+### Success Criteria (12-Week Pilot):
+1. **AI Diagnostic Works:** 75%+ concordance with expert teacher assessment
+2. **Humans Use It:** 7/10 teachers scan 2+/week, 60%+ parents respond to 3/5 prompts
+3. **Students Improve:** 0.15+ SD improvement on re-scan after 12 weeks
+
+**Scale:** 10 teachers, 100 parents, 400-500 students
+**Budget:** Under $700 for 12 weeks
+**Region:** Greater Accra
+**Subject:** JHS 1 Mathematics ONLY
+**Languages:** English + Twi ONLY
+
+---
+
+## 🏗️ Architecture
+
+**Current (Infrastructure Only):**
+```
+WhatsApp → Webhook → FlowExecutor → Database → WhatsApp
+```
+
+**Target MVP Architecture:**
+```
+WhatsApp → Image Upload → Claude Vision → Exercise Book Analysis
+                                        ↓
+                                   Gap Profile → Database
+                                        ↓
+                         6:30 PM → Activity Generator → Twi TTS → Parent Voice Note
+                                        ↓
+                         Parent Voice → Whisper STT → Micro-Coaching → Twi TTS
 ```
 
 **Stack:**
 - **Backend**: FastAPI (Python 3.12), async everywhere
-- **Database**: PostgreSQL 16 (RDS)
-- **AI**: Multi-provider (Anthropic Claude → xAI Grok → Rule-based)
-- **Queue**: AWS SQS FIFO
-- **Messaging**: WhatsApp Cloud API (direct)
-- **Infrastructure**: AWS (Cape Town region - 50ms to Ghana)
+- **Database**: PostgreSQL 16
+- **AI (Planned)**:
+  - Multimodal: Claude Sonnet 4.5 with vision OR Gemini Pro Vision
+  - Text: Claude Sonnet/Haiku for conversation
+  - TTS: Google Cloud TTS (Twi) or ElevenLabs
+  - STT: Whisper API
+- **Messaging**: WhatsApp Cloud API
+- **Infrastructure**: AWS (Cape Town region)
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
-gapsense-platform/
-├── src/gapsense/              # Application code
-│   ├── core/                  # Models, schemas, config
-│   ├── curriculum/            # Prerequisite graph, traversal
-│   ├── diagnostic/            # Diagnostic engine
-│   ├── engagement/            # Parent WhatsApp engagement
+gapsense/
+├── src/gapsense/
+│   ├── core/                  # Models, config
+│   ├── engagement/            # WhatsApp flows (ONBOARD, OPT-OUT)
 │   ├── webhooks/              # WhatsApp webhook handlers
-│   ├── teachers/              # Teacher reports
-│   ├── analytics/             # Aggregation
-│   └── ai/                    # Multi-provider AI (Anthropic, Grok, fallbacks)
-├── tests/                     # Test suite
-├── infrastructure/            # AWS CDK
-├── migrations/                # Alembic database migrations
-├── data/                      # Non-proprietary seed data
-└── docs/                      # Documentation
+│   ├── diagnostic/            # Diagnostic engine (partial)
+│   ├── ai/                    # AI client + prompt loader
+│   └── api/                   # REST API endpoints
+├── tests/                     # 268 tests (58% coverage)
+├── alembic/                   # Database migrations (6 versions)
+├── docs/                      # Documentation
+│   ├── mvp_specification_audit_CRITICAL.md    # Gap analysis
+│   └── mvp_user_flows_realistic_status.md     # Realistic flows
+└── scripts/                   # Utility scripts
 ```
 
-**Note:** Proprietary IP (prerequisite graph, prompts) lives in separate **gapsense-data** private repo.
+**Proprietary Data (Separate Repo):**
+```
+gapsense-data/
+├── prompts/                   # 13 AI prompts (COMPLETE)
+│   └── gapsense_prompt_library_v1.1.json
+├── curriculum/                # NaCCA prerequisite graph
+│   └── gapsense_prerequisite_graph_v1.2.json
+└── business/                  # Strategy docs
+    ├── GapSense_MVP_Blueprint.docx           # ← SOURCE OF TRUTH
+    └── GapSense_v2_AI_Native_Redesign.docx
+```
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-
 - Python 3.12+
-- Docker & Docker Compose
-- Poetry (Python dependency management)
-- Access to `gapsense-data` repo
+- PostgreSQL 16
+- Poetry
+- Access to `gapsense-data` private repo
 
-### Local Development
+### Setup
 
 ```bash
-# 1. Clone repos (platform + data)
-git clone https://github.com/ma-za-kpe/gapsense-platform.git
-cd gapsense-platform
+# 1. Clone repos
+git clone <gapsense-repo>
+cd gapsense
 
 # Clone data repo (sibling directory)
 cd ..
-git clone https://github.com/ma-za-kpe/gapsense-data.git  # Private repo
-cd gapsense-platform
+git clone <gapsense-data-repo>  # Private
+cd gapsense
 
-# 2. Run setup script
-./scripts/setup.sh
-# This will:
-# - Install Poetry if needed
-# - Install dependencies
-# - Create .env file
-# - Verify gapsense-data repo exists
-# - Install git hooks (pre-commit + pre-push) - IMPORTANT!
+# 2. Install dependencies
+poetry install
 
-# 3. Edit .env with your API keys
-nano .env
+# 3. Set up database
+createdb gapsense_dev
+poetry run alembic upgrade head
 
-# 4. Start services
-docker-compose up -d postgres
+# 4. Set environment variables
+cp .env.example .env
+# Edit .env with your credentials:
+# - DATABASE_URL
+# - ANTHROPIC_API_KEY (for AI)
+# - WHATSAPP_VERIFY_TOKEN
+# - WHATSAPP_PHONE_NUMBER_ID
+# - WHATSAPP_ACCESS_TOKEN
 
-# 5. Run migrations
-./scripts/migrate.sh up
-
-# 6. Load curriculum data
+# 5. Load curriculum data
+export GAPSENSE_DATA_PATH=../gapsense-data
 poetry run python scripts/load_curriculum.py
 
-# 7. Verify everything works (linting, tests, type checking)
-./scripts/verify.sh
+# 6. Run tests
+poetry run pytest
 
-# 8. Start development server
-./scripts/run_dev.sh
-
-# API will be available at:
-# - API: http://localhost:8000
-# - Docs: http://localhost:8000/docs
-# - Health: http://localhost:8000/health
+# 7. Start server
+poetry run uvicorn gapsense.main:app --reload
 ```
 
 ---
 
-## Development Workflow
+## 📊 Development Status
 
-### Running Tests
+### Phase 1a MVP (Target: 8-10 weeks from now)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Infrastructure** | ✅ 75% | WhatsApp, DB, API working |
+| **Parent Onboarding** | ✅ 100% | FLOW-ONBOARD complete |
+| **Teacher Onboarding** | ❌ 0% | Not started |
+| **Exercise Book Scanner** | ❌ 0% | Core MVP feature missing |
+| **Multimodal AI** | ❌ 0% | Not integrated |
+| **Parent Voice Notes** | ❌ 0% | TTS not implemented |
+| **Voice Micro-Coaching** | ❌ 0% | STT not implemented |
+| **Teacher Conversation** | ❌ 0% | Not started |
+| **Scheduled Messaging** | ❌ 0% | Not implemented |
+
+**Overall: 15% complete toward MVP**
+
+**Next 8 weeks (to MVP):**
+- Week 1-2: NaCCA knowledge base + Exercise Book Analyzer prompt + test Twi TTS
+- Week 3-4: Multimodal AI integration + image upload
+- Week 5-6: Parent voice note system (TTS + activity generator)
+- Week 7-8: Teacher conversation partner + integration
+- Week 9-20: 12-week pilot measurement
+
+---
+
+## 🧪 Testing
 
 ```bash
-# All tests
+# Run all tests
 poetry run pytest
-
-# Unit tests only
-poetry run pytest tests/unit -v
-
-# Integration tests
-poetry run pytest tests/integration -v
 
 # With coverage
 poetry run pytest --cov=src/gapsense --cov-report=html
+
+# Run specific test
+poetry run pytest tests/unit/test_flow_executor.py -v
+
+# Integration tests only
+poetry run pytest tests/integration/ -v
 ```
 
-### Code Quality
-
-```bash
-# Format
-poetry run ruff format src/
-
-# Lint
-poetry run ruff check src/ --fix
-
-# Type check
-poetry run mypy src/gapsense --strict
-
-# Run all checks
-poetry run pre-commit run --all-files
-```
-
-### Git Hooks
-
-**Automated quality checks run on every commit and push.**
-
-> **⚠️ IMPORTANT:** Git hooks are installed automatically when you run `./scripts/setup.sh` (Step 2 of Quick Start). If you skip this step, you won't have the security and quality checks that protect the codebase.
-
-#### Setup (Automatic)
-
-Git hooks are installed automatically when you run `./scripts/setup.sh`.
-
-#### Manual Installation
-
-```bash
-# Install pre-commit hooks
-poetry run pre-commit install
-
-# Install pre-push hooks
-poetry run pre-commit install --hook-type pre-push
-```
-
-#### What Hooks Do
-
-**On Every Commit** (fast checks ~10 seconds):
-- ✅ **Poetry lock file check** (ensures poetry.lock matches pyproject.toml) - CRITICAL for CI/CD
-- ✅ Ruff linting (auto-fixes safe issues)
-- ✅ Ruff formatting
-- ✅ Trailing whitespace fix
-- ✅ YAML/JSON/TOML validation
-- ✅ **Detect secrets** (API keys, tokens, passwords)
-- ✅ **Private key detection** (SSH, PGP keys)
-- ✅ **Merge conflict markers**
-- ✅ **No direct commits to main branch**
-- ❌ **Block code smells** (FIXME, HACK, XXX, TEMP, WIP)
-- ⚠️  **Warn on TODOs** (encourages fixing, but allows commit)
-- 📋 **Coding standards checklist** (reminds you to check error handling, PII, type safety, etc.)
-
-**Before Every Push** (thorough checks ~45 seconds):
-- ✅ MyPy type checking (full project)
-- ✅ Pytest all tests with coverage (≥80% required)
-- ✅ Alembic migration check
-- ✅ **Bandit security scan** (CRITICAL for student data protection)
-- ✅ **Safety vulnerability check** (dependency vulnerabilities)
-- ✅ **Vulture dead code detection** (unused code)
-- ✅ **Deptry dependency analysis** (unused/missing dependencies)
-
-#### Testing Hooks Manually
-
-```bash
-# Test all hooks without committing
-./scripts/test_hooks.sh
-
-# Test specific hooks
-poetry run pre-commit run ruff --all-files                # Linting
-poetry run pre-commit run detect-secrets --all-files      # Secret detection
-poetry run pre-commit run mypy-full --all-files           # Type checking
-poetry run pre-commit run pytest-coverage --all-files     # Tests + coverage
-poetry run pre-commit run bandit --all-files              # Security scan
-poetry run pre-commit run safety --all-files              # Vulnerability check
-poetry run pre-commit run vulture --all-files             # Dead code detection
-poetry run pre-commit run deptry --all-files              # Dependency analysis
-```
-
-#### Troubleshooting Common Hook Failures
-
-**Poetry lock file out of sync:**
-```bash
-# Error: "pyproject.toml changed significantly since poetry.lock was last generated"
-# Fix: Regenerate lock file
-poetry lock --no-update
-
-# Or if you want to update dependencies:
-poetry lock
-
-# Then stage the updated lock file:
-git add poetry.lock
-```
-
-**Why this matters:** An outdated `poetry.lock` breaks CI/CD. The pre-commit hook catches this before you push.
-
-#### Bypassing Hooks (Use Sparingly)
-
-```bash
-# Skip pre-commit hooks (emergency only)
-git commit --no-verify -m "WIP: broken, will fix"
-
-# Skip specific hook
-SKIP=mypy git commit -m "Skip type checking"
-
-# Skip pre-push hooks (DANGEROUS)
-git push --no-verify
-```
-
-**When to use `--no-verify`:**
-- ✅ Emergency hotfix (production down)
-- ✅ Saving WIP at end of day
-- ❌ **NEVER** because "tests are annoying"
-- ❌ **NEVER** as regular practice
-
-#### Code Quality Markers (TODO/FIXME Policy)
-
-**BLOCKED** (commit fails):
-```python
-# FIXME: This is broken          ❌ Fix before commit
-# XXX: Dangerous hack            ❌ Remove or refactor
-# HACK: Temporary workaround     ❌ Implement properly
-# TEMP: Will remove later        ❌ Remove now
-# WIP: Work in progress          ❌ Complete or remove
-```
-
-**WARNED** (commit allowed, but strongly encouraged to fix):
-```python
-# TODO: Add rate limiting        ⚠️  Acceptable, but fix soon
-# TODO(maku): Optimize query     ✅ Better - has owner
-# TODO(maku): Add caching [#123] ✅ Best - has owner + ticket
-```
-
-**Why this matters:**
-- FIXME/HACK = broken code that shouldn't be committed
-- TODO = future work (acceptable but accumulates debt)
-- Loud warnings encourage fixing TODOs before they're forgotten
-
-### Database Migrations
-
-```bash
-# Helper script (recommended)
-./scripts/migrate.sh create "description"  # Create migration
-./scripts/migrate.sh up                    # Apply migrations
-./scripts/migrate.sh down                  # Rollback one
-./scripts/migrate.sh status                # Check status
-./scripts/migrate.sh history               # View history
-./scripts/migrate.sh reset                 # DANGER: Reset all
-
-# Direct Alembic commands (if needed)
-poetry run alembic revision --autogenerate -m "description"
-poetry run alembic upgrade head
-poetry run alembic downgrade -1
-```
-
-### Performance Tracing & Visualization
-
-**Viztracer** - Interactive execution flow visualization
-
-```bash
-# Trace a specific test (recommended)
-./scripts/trace.sh test tests/integration/test_diagnostic_flow.py
-
-# Trace curriculum loading
-./scripts/trace.sh script scripts/load_curriculum.py
-
-# Trace FastAPI server (make requests while running)
-./scripts/trace.sh server
-
-# View trace in browser
-./scripts/trace.sh view traces/test_trace_20260214_120000.json
-
-# List available traces
-./scripts/trace.sh list
-```
-
-**What you'll see:**
-- Function call timeline (which functions, in what order)
-- Execution timing (find bottlenecks)
-- Async task switching (FastAPI concurrency)
-- Database query timing
-- Claude API call duration
-- Prerequisite graph traversal patterns
-
-**Interactive viewer features:**
-- Zoom into specific time ranges
-- Filter by module/function
-- Flamegraph view (aggregate time spent)
-- Search for specific function calls
-
-### Verification & Quality Checks
-
-**Run all checks before committing:**
-
-```bash
-./scripts/verify.sh
-```
-
-This comprehensive script runs:
-- ✅ **Ruff Linter** - Code quality checks
-- ✅ **Ruff Formatter** - Code formatting verification
-- ✅ **MyPy Type Checker** - Static type checking
-- ✅ **Pytest Unit Tests** - Full test suite with coverage
-- ✅ **Alembic Migration Check** - Database migration verification
-- ✅ **Import Check** - Verifies all modules import correctly
-
-**All checks must pass (green) before pushing code.**
+**Current Coverage:**
+- Overall: 58%
+- flow_executor.py: 72%
+- whatsapp.py: 67%
 
 ---
 
-## API Documentation
+## 📚 Key Documents
 
-Once running, visit:
-- **Interactive docs**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **Health check**: http://localhost:8000/v1/health
+### Specifications (Source of Truth):
+- **[GapSense_MVP_Blueprint.docx](../gapsense-data/business/GapSense_MVP_Blueprint.docx)** — The actual MVP (8 weeks, $700)
+- **[gapsense_prompt_library_v1.1.json](../gapsense-data/prompts/)** — All 13 AI prompts
+- **[gapsense_prerequisite_graph_v1.2.json](../gapsense-data/curriculum/)** — NaCCA curriculum
 
----
+### Current Status:
+- **[mvp_specification_audit_CRITICAL.md](docs/mvp_specification_audit_CRITICAL.md)** — Gap analysis
+- **[mvp_user_flows_realistic_status.md](docs/mvp_user_flows_realistic_status.md)** — Real-world flows
 
-## Key Modules
-
-### Diagnostic Engine (`src/gapsense/diagnostic/`)
-Orchestrates adaptive diagnostic sessions using Claude AI and the prerequisite graph.
-
-**Key algorithms:**
-- Backward tracing (B5 failure → test B4 → B2 → find root gap)
-- Cascade detection (55% of students: Place Value Collapse)
-- Confidence scoring (≥0.80 required for diagnosis)
-
-### Parent Engagement (`src/gapsense/engagement/`)
-WhatsApp messaging with Wolf/Aurino compliance.
-
-**Non-negotiable constraints:**
-- Strength-first framing
-- No deficit language ("behind", "struggling", "failing")
-- 3-minute activities, household materials only
-- GUARD-001 validation at temp=0.0
-
-### AI Service (`src/gapsense/ai/`)
-Multi-provider AI integration with automatic fallback for resilience.
-
-**AI Provider Fallback Chain:**
-1. **Anthropic Claude** (Primary) - Sonnet 4.5 / Haiku 4.5 with prompt caching (90% cost reduction)
-2. **xAI Grok** (Fallback) - Grok Beta via OpenAI-compatible API
-3. **Rule-based** (Final Fallback) - Deterministic algorithms when all AI providers fail
-
-**Key Features:**
-- Automatic provider failover (no downtime if primary provider is unavailable)
-- Unified client interface (`AIClient`) - one API for all providers
-- Graceful degradation to rule-based analysis if all AI providers fail
-- Logging to track which provider handled each request
-
-**13 prompts:**
-- DIAG-001/002/003: Diagnostic reasoning
-- PARENT-001/002/003: Parent messaging
-- GUARD-001: Compliance validation (blocking)
-- ANALYSIS-001/002: Exercise book, voice notes
-- TEACHER-001/002/003: Reports, conversation
-
-**Configuration:**
-Set API keys in `.env`:
-```bash
-ANTHROPIC_API_KEY=sk-ant-your-key-here  # Primary provider
-GROK_API_KEY=xai-your-key-here           # Fallback provider (optional)
-```
-
-If neither API key is set, system automatically uses rule-based fallbacks.
+### Architecture:
+- **[ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)** — System design
+- **[gapsense_adr.md](docs/architecture/gapsense_adr.md)** — Architecture decisions
 
 ---
 
-## Deployment
+## 🎯 MVP Success Metrics
 
-Deployed via AWS CDK to Cape Town region (af-south-1).
+From MVP Blueprint, Section 6:
 
-```bash
-cd infrastructure/cdk
-cdk deploy --all
-```
+**Question 1: Does the AI diagnostic work?**
+- Metric: 75%+ concordance between AI and expert teacher on root cause identification
+- Test: 100 exercise book scans validated by expert teachers
 
-**Infrastructure:**
-- Fargate (web + worker services)
-- RDS PostgreSQL 16
-- SQS FIFO queues
-- S3 (media storage)
-- Cognito (auth)
-- ALB (load balancing)
+**Question 2: Do humans use it?**
+- Teachers: 7/10 complete 2+ scans/week for 8+ of 12 weeks
+- Parents: 60%+ respond to 3+ of 5 weekly prompts after month 1
+- Wolf/Aurino: Parents with no formal education engage at 40%+ of overall rate
 
----
-
-## Security & Privacy
-
-**Ghana Data Protection Act Compliance:**
-- ✅ Minimal data collection (no last names, addresses, IDs)
-- ✅ Encryption at rest (RDS, S3) and in transit (TLS 1.3)
-- ✅ No PII in logs
-- ✅ Right to deletion
-- ✅ 2-year retention, then anonymize
-
-**Proprietary IP Protection:**
-- Separate `gapsense-data` repo (private)
-- Pre-commit hooks block sensitive files
-- Aggressive .gitignore
+**Question 3: Do students improve?**
+- Metric: 0.15+ standard deviation improvement on re-scan after 12 weeks
+- Stronger signal: Students with active parent engagement improve more
 
 ---
 
-## Contributing
+## 📝 License
 
-This is proprietary software. Internal team only.
-
-**Code standards:**
-- Follow `CODING_STANDARDS.md`
-- Test critical paths (GUARD-001, graph traversal)
-- Type hints on all functions (MyPy strict)
-- Semantic commits
+Proprietary. © 2026 GapSense. All rights reserved.
 
 ---
 
-## License
+## 🤝 Contributing
 
-Proprietary - Licensed to ViztaEdu under GapSense Partnership Agreement.
-
----
-
-## Support
-
-- **Documentation**: `docs/`
-- **Issues**: Internal tracker
-- **Contact**: maku@gapsense.app
+This is a private project. Contact the team for access.
 
 ---
 
-## Acknowledgments
-
-- **UNICEF StartUp Lab Cohort 6** - Technical validation & pilot funding
-- **ViztaEdu** - Partnership & distribution
-- **NaCCA** - Ghana curriculum standards
-- **Wolf & Aurino (2020)** - Evidence-based parent engagement research
-
----
-
-**Built for Ghana. Powered by AI. Grounded in dignity.**
+**Last Updated:** February 16, 2026
+**MVP Target:** April 2026 (8-10 weeks from now)
