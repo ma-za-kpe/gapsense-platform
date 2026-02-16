@@ -144,7 +144,11 @@ class TestCompleteHappyPath:
         # ===== STEP 2: Teacher Onboarding via Invitation Code =====
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",  # ✅ Required for flow routing
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
@@ -485,7 +489,11 @@ class TestErrorPaths:
 
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",  # ✅ Required for flow routing
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
@@ -540,7 +548,11 @@ class TestErrorPaths:
 
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",  # ✅ Required for flow routing
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
@@ -549,7 +561,7 @@ class TestErrorPaths:
         with patch("gapsense.engagement.teacher_flows.WhatsAppClient") as mock_client:
             mock_instance = AsyncMock()
             mock_instance.send_text_message = AsyncMock(return_value="msg_123")
-            mock_client.from_settings.return_value = mock_instance
+            mock_client.from_settings.return_value = mock_client
 
             executor = TeacherFlowExecutor(db=db_session)
             result = await executor.process_teacher_message(
@@ -579,7 +591,12 @@ class TestErrorPaths:
         db_session.add(school)
         await db_session.flush()
 
-        parent = Parent(phone="+233244999888", district_id=district.id, diagnostic_consent=True)
+        parent = Parent(
+            phone="+233244999888",
+            district_id=district.id,
+            diagnostic_consent=True,
+            onboarded_at=datetime.now(UTC),  # ✅ Parent must be onboarded
+        )
         db_session.add(parent)
         await db_session.flush()
 
@@ -600,6 +617,13 @@ class TestErrorPaths:
             status="pending",
         )
         db_session.add(session)
+
+        # Set parent to diagnostic flow state
+        parent.conversation_state = {
+            "flow": "FLOW-DIAGNOSTIC",  # ✅ Required for diagnostic flow routing
+            "step": "AWAITING_START",
+            "data": {"session_id": str(session.id)},
+        }
         await db_session.commit()
 
         # Start diagnostic with no curriculum data
