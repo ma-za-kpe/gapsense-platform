@@ -84,7 +84,7 @@ class CurriculumLoader:
         with open(self.graph_path, encoding="utf-8") as f:
             data = json.load(f)
 
-        print(f"📊 Graph version: {data.get('version', 'unknown')}")
+        print(f"📊 Graph version: {data.get('metadata', {}).get('version', 'unknown')}")
         print(f"📊 Nodes: {len(data.get('nodes', []))}")
         print(f"📊 Prerequisites: {len(data.get('prerequisites', []))}")
         print(f"📊 Misconceptions: {len(data.get('misconceptions', []))}")
@@ -99,17 +99,23 @@ class CurriculumLoader:
                 session, data.get("sub_strands_by_phase", data.get("sub_strands", []))
             )
 
-            # Step 3: Load nodes
-            await self._load_nodes(session, data.get("nodes", []))
+            # Step 3: Load nodes (returns extracted prerequisites from node objects)
+            extracted_prerequisites = await self._load_nodes(session, data.get("nodes", []))
 
             # Step 4: Load prerequisites (edges)
-            await self._load_prerequisites(session, data.get("prerequisites", []))
+            # Use embedded prerequisites if external list is empty
+            prereq_list = data.get("prerequisites", [])
+            if not prereq_list and extracted_prerequisites:
+                prereq_list = extracted_prerequisites
+            await self._load_prerequisites(session, prereq_list)
 
             # Step 5: Load misconceptions
             await self._load_misconceptions(session, data.get("misconceptions", []))
 
             # Step 6: Load cascade paths
-            await self._load_cascades(session, data.get("cascades", []))
+            await self._load_cascades(
+                session, data.get("cascades", data.get("critical_cascade_paths", []))
+            )
 
             await session.commit()
 
@@ -193,14 +199,20 @@ class CurriculumLoader:
 
     async def _load_nodes(
         self, session: AsyncSession, nodes: list[dict[str, Any]] | dict[str, Any]
-    ) -> None:
-        """Load curriculum nodes."""
+    ) -> list[dict[str, Any]]:
+        """Load curriculum nodes.
+
+        Returns:
+            List of prerequisite edges extracted from node objects
+        """
         # Handle both list and dict formats
         if isinstance(nodes, dict):
             # Filter out non-dict values (section headers, etc.)
             nodes_list = [v for v in nodes.values() if isinstance(v, dict)]
         else:
             nodes_list = nodes
+
+        extracted_prerequisites = []
 
         for node_data in nodes_list:
             # Parse code to extract strand and sub-strand numbers
@@ -257,8 +269,25 @@ class CurriculumLoader:
             )
             session.add(node)
 
+            # Extract prerequisites from node (if embedded in node_data)
+            if "prerequisites" in node_data and isinstance(node_data["prerequisites"], list):
+                for prereq_code in node_data["prerequisites"]:
+                    if prereq_code:  # Skip empty strings
+                        extracted_prerequisites.append(
+                            {
+                                "source": prereq_code,
+                                "target": node_data["code"],
+                                "relationship": "requires",
+                            }
+                        )
+
         await session.flush()
         print(f"  ✅ Loaded {len(nodes_list)} nodes")
+
+        if extracted_prerequisites:
+            print(f"  📋 Extracted {len(extracted_prerequisites)} prerequisites from nodes")
+
+        return extracted_prerequisites
 
     async def _load_prerequisites(
         self, session: AsyncSession, prerequisites: list[dict[str, Any]]
@@ -271,7 +300,7 @@ class CurriculumLoader:
             prereq = CurriculumPrerequisite(
                 source_node_id=source_id,
                 target_node_id=target_id,
-                relationship=prereq_data.get("relationship", "requires"),
+                relationship_type=prereq_data.get("relationship", "requires"),
                 weight=prereq_data.get("weight", 1.0),
                 notes=prereq_data.get("notes"),
             )
@@ -302,9 +331,29 @@ class CurriculumLoader:
         await session.flush()
         print(f"  ✅ Loaded {len(misconceptions)} misconceptions")
 
-    async def _load_cascades(self, session: AsyncSession, cascades: list[dict[str, Any]]) -> None:
+    async def _load_cascades(
+        self, session: AsyncSession, cascades: list[dict[str, Any]] | dict[str, Any]
+    ) -> None:
         """Load cascade failure paths."""
+        # Handle different formats
+        if isinstance(cascades, dict):
+            # Check if it's metadata dict (v1.2 format) or actual cascades
+            if "description" in cascades and "node_sequence" not in cascades:
+                # This is just metadata, not actual cascade data
+                print("  ℹ️  No cascade path data in current format")
+                return
+            # Otherwise treat as single cascade
+            cascades = [cascades]
+
         for cascade_data in cascades:
+            # Skip if not a dict
+            if not isinstance(cascade_data, dict):
+                continue
+
+            # Skip if doesn't have required fields
+            if "node_sequence" not in cascade_data:
+                continue
+
             # Convert node codes to UUIDs
             node_sequence = [self.node_id_map[code] for code in cascade_data["node_sequence"]]
 
@@ -325,7 +374,8 @@ class CurriculumLoader:
             session.add(cascade)
 
         await session.flush()
-        print(f"  ✅ Loaded {len(cascades)} cascade paths")
+        if cascades and isinstance(cascades, list):
+            print(f"  ✅ Loaded {len(cascades)} cascade paths")
 
     @staticmethod
     def _grade_to_phase(grade: str) -> str:
