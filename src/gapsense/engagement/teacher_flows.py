@@ -24,6 +24,13 @@ from sqlalchemy import select
 from sqlalchemy.orm.attributes import flag_modified
 
 from gapsense.core.models import School, Student
+from gapsense.core.validation import (
+    ValidationError,
+    validate_class_name,
+    validate_school_name,
+    validate_student_count,
+    validate_student_name,
+)
 from gapsense.engagement.whatsapp_client import WhatsAppClient
 
 logger = logging.getLogger(__name__)
@@ -206,9 +213,28 @@ class TeacherFlowExecutor:
         Returns:
             TeacherFlowResult
         """
+        # Validate and normalize school name
+        try:
+            normalized_school_name = validate_school_name(school_name)
+        except ValidationError as e:
+            message = f"❌ {str(e)}\n\nPlease send your school name again."
+            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            return TeacherFlowResult(
+                flow_name="FLOW-TEACHER-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="COLLECT_SCHOOL",
+                completed=False,
+                error=str(e),
+            )
+
         # For MVP: Create school if doesn't exist
         # TODO: In production, we'd want to search existing schools first
-        stmt = select(School).where(School.name == school_name).where(School.is_active == True)  # noqa: E712
+        stmt = (
+            select(School)
+            .where(School.name == normalized_school_name)
+            .where(School.is_active.is_(True))
+        )
         result = await self.db.execute(stmt)
         school = result.scalar_one_or_none()
 
@@ -216,7 +242,7 @@ class TeacherFlowExecutor:
             # Create new school (minimal info for MVP)
             # TODO: Would need to link to proper district
             school = School(
-                name=school_name,
+                name=normalized_school_name,
                 district_id=1,  # Default district - TODO: proper district selection
                 school_type="jhs",
                 is_active=True,
@@ -230,13 +256,13 @@ class TeacherFlowExecutor:
         # Update conversation state
         teacher.conversation_state["step"] = "COLLECT_CLASS"  # type: ignore[index]
         teacher.conversation_state["data"]["school_id"] = str(school.id)  # type: ignore[index]
-        teacher.conversation_state["data"]["school_name"] = school_name  # type: ignore[index]
+        teacher.conversation_state["data"]["school_name"] = normalized_school_name  # type: ignore[index]
         flag_modified(teacher, "conversation_state")
         await self.db.commit()
 
         # Ask for class name
         message = (
-            f"Great! School: {school_name} ✅\n\n"
+            f"Great! School: {normalized_school_name} ✅\n\n"
             "What class do you teach?\n"
             "Example: 'JHS 1A' or 'B4'"
         )
@@ -261,23 +287,42 @@ class TeacherFlowExecutor:
         Returns:
             TeacherFlowResult
         """
+        # Validate and normalize class name
+        try:
+            normalized_class_name = validate_class_name(class_name)
+        except ValidationError as e:
+            message = (
+                f"❌ {str(e)}\n\n"
+                "Please send your class name again.\n"
+                "Examples: 'Basic 7', 'B7', 'JHS 1'"
+            )
+            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            return TeacherFlowResult(
+                flow_name="FLOW-TEACHER-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="COLLECT_CLASS",
+                completed=False,
+                error=str(e),
+            )
+
         # Extract grade from class name (e.g., "JHS 1A" -> "JHS1")
-        grade = self._extract_grade(class_name)
+        grade = self._extract_grade(normalized_class_name)
 
         # Update teacher
-        teacher.class_name = class_name
+        teacher.class_name = normalized_class_name
         teacher.grade_taught = grade
 
         # Update conversation state
         teacher.conversation_state["step"] = "COLLECT_STUDENT_COUNT"  # type: ignore[index]
-        teacher.conversation_state["data"]["class_name"] = class_name  # type: ignore[index]
+        teacher.conversation_state["data"]["class_name"] = normalized_class_name  # type: ignore[index]
         teacher.conversation_state["data"]["grade_taught"] = grade  # type: ignore[index]
         flag_modified(teacher, "conversation_state")
         await self.db.commit()
 
         # Ask for number of students
         message = (
-            f"Perfect! Class: {class_name} ✅\n\n"
+            f"Perfect! Class: {normalized_class_name} ✅\n\n"
             "How many students are in your class?\n"
             "Just send me a number (e.g., '42')"
         )
@@ -304,13 +349,11 @@ class TeacherFlowExecutor:
         Returns:
             TeacherFlowResult
         """
+        # Validate student count
         try:
-            student_count = int(student_count_str)
-            if student_count <= 0 or student_count > 200:
-                raise ValueError("Count out of range")
-        except ValueError:
-            # Invalid number - ask again
-            message = "Please send a valid number between 1 and 200.\n\nHow many students?"
+            student_count = validate_student_count(student_count_str)
+        except ValidationError as e:
+            message = f"❌ {str(e)}\n\nPlease send a valid number.\n\nHow many students?"
             message_id = await self.whatsapp.send_text(teacher.phone, message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
@@ -318,6 +361,7 @@ class TeacherFlowExecutor:
                 message_id=message_id,
                 next_step="COLLECT_STUDENT_COUNT",
                 completed=False,
+                error=str(e),
             )
 
         # Update conversation state
@@ -362,8 +406,20 @@ class TeacherFlowExecutor:
         Returns:
             TeacherFlowResult
         """
-        # Parse student names
-        student_names = self._parse_student_names(student_list_text)
+        # Parse and validate student names
+        try:
+            student_names = self._parse_student_names(student_list_text)
+        except ValidationError as e:
+            message = f"❌ {str(e)}\n\nPlease send the student list again."
+            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            return TeacherFlowResult(
+                flow_name="FLOW-TEACHER-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="COLLECT_STUDENT_LIST",
+                completed=False,
+                error=str(e),
+            )
 
         if len(student_names) == 0:
             message = "I couldn't find any names. Please send the student list again."
@@ -486,11 +542,16 @@ class TeacherFlowExecutor:
         - "Name\nName\nName"
         - "Name, Name, Name"
 
+        Validates and normalizes each name (title case, whitespace normalization).
+
         Args:
             text: Text containing student names
 
         Returns:
-            List of student names
+            List of normalized student names
+
+        Raises:
+            ValidationError: If any student name is invalid
         """
         names = []
 
@@ -511,8 +572,16 @@ class TeacherFlowExecutor:
 
             for part in parts:
                 part = part.strip()
-                if part and len(part) > 1:  # At least 2 characters
-                    names.append(part)
+                if not part:
+                    continue
+
+                # Validate and normalize each student name
+                try:
+                    normalized_name = validate_student_name(part)
+                    names.append(normalized_name)
+                except ValidationError as e:
+                    # Re-raise with context about which name failed
+                    raise ValidationError(f"Invalid student name '{part}': {str(e)}") from e
 
         return names
 
