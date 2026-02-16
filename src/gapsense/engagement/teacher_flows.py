@@ -157,7 +157,7 @@ class TeacherFlowExecutor:
             "Example: 'St. Mary's JHS, Accra'"
         )
 
-        message_id = await self.whatsapp.send_text(teacher.phone, message)
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
 
         return TeacherFlowResult(
             flow_name="FLOW-TEACHER-ONBOARD",
@@ -185,7 +185,9 @@ class TeacherFlowExecutor:
         """
         if message_type != "text" or not isinstance(message_content, str):
             # For MVP, only handle text input
-            message_id = await self.whatsapp.send_text(teacher.phone, "Please send a text message.")
+            message_id = await self.whatsapp.send_text_message(
+                to=teacher.phone, text="Please send a text message."
+            )
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
                 message_sent=True,
@@ -227,7 +229,7 @@ class TeacherFlowExecutor:
             normalized_school_name = validate_school_name(school_name)
         except ValidationError as e:
             message = f"❌ {str(e)}\n\nPlease send your school name again."
-            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
                 message_sent=True,
@@ -276,7 +278,7 @@ class TeacherFlowExecutor:
             "Example: 'JHS 1A' or 'B4'"
         )
 
-        message_id = await self.whatsapp.send_text(teacher.phone, message)
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
 
         return TeacherFlowResult(
             flow_name="FLOW-TEACHER-ONBOARD",
@@ -305,7 +307,7 @@ class TeacherFlowExecutor:
                 "Please send your class name again.\n"
                 "Examples: 'Basic 7', 'B7', 'JHS 1'"
             )
-            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
                 message_sent=True,
@@ -336,7 +338,7 @@ class TeacherFlowExecutor:
             "Just send me a number (e.g., '42')"
         )
 
-        message_id = await self.whatsapp.send_text(teacher.phone, message)
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
 
         return TeacherFlowResult(
             flow_name="FLOW-TEACHER-ONBOARD",
@@ -363,7 +365,7 @@ class TeacherFlowExecutor:
             student_count = validate_student_count(student_count_str)
         except ValidationError as e:
             message = f"❌ {str(e)}\n\nPlease send a valid number.\n\nHow many students?"
-            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
                 message_sent=True,
@@ -393,7 +395,7 @@ class TeacherFlowExecutor:
             "Send all names in ONE message."
         )
 
-        message_id = await self.whatsapp.send_text(teacher.phone, message)
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
 
         return TeacherFlowResult(
             flow_name="FLOW-TEACHER-ONBOARD",
@@ -420,7 +422,7 @@ class TeacherFlowExecutor:
             student_names = self._parse_student_names(student_list_text)
         except ValidationError as e:
             message = f"❌ {str(e)}\n\nPlease send the student list again."
-            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
                 message_sent=True,
@@ -432,7 +434,7 @@ class TeacherFlowExecutor:
 
         if len(student_names) == 0:
             message = "I couldn't find any names. Please send the student list again."
-            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
                 message_sent=True,
@@ -480,7 +482,7 @@ class TeacherFlowExecutor:
                 "Sorry, there was an error creating student profiles. "
                 "Please try sending the student list again, or contact support if this continues."
             )
-            message_id = await self.whatsapp.send_text(teacher.phone, message)
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
                 message_sent=True,
@@ -510,7 +512,7 @@ class TeacherFlowExecutor:
             "• Ask me questions about your class"
         )
 
-        message_id = await self.whatsapp.send_text(teacher.phone, message)
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
 
         return TeacherFlowResult(
             flow_name="FLOW-TEACHER-ONBOARD",
@@ -610,7 +612,7 @@ class TeacherFlowExecutor:
             "Questions? Just ask me anything!"
         )
 
-        message_id = await self.whatsapp.send_text(teacher.phone, message)
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
 
         return TeacherFlowResult(
             flow_name="HELP",
@@ -658,7 +660,9 @@ class TeacherFlowExecutor:
         # Send response message if provided
         if cmd_result.message:
             try:
-                message_id = await self.whatsapp.send_text(teacher.phone, cmd_result.message)
+                message_id = await self.whatsapp.send_text_message(
+                    to=teacher.phone, text=cmd_result.message
+                )
 
                 return TeacherFlowResult(
                     flow_name="COMMAND",

@@ -4,7 +4,7 @@ Tests for error recovery commands (RESTART, CANCEL, HELP, STATUS).
 Phase B of TDD implementation plan.
 """
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,9 +19,19 @@ from gapsense.engagement.whatsapp_client import WhatsAppClient
 def mock_whatsapp_client():
     """Create a mock WhatsApp client."""
     client = AsyncMock(spec=WhatsAppClient)
-    client.send_text_message = AsyncMock(return_value=True)
-    client.send_template_message = AsyncMock(return_value=True)
+    client.send_text_message = AsyncMock(return_value="wamid.123456789")
+    client.send_template_message = AsyncMock(return_value="wamid.123456789")
     return client
+
+
+@pytest.fixture(autouse=True)
+def patch_whatsapp_client(mock_whatsapp_client):
+    """Automatically patch WhatsAppClient.from_settings for all tests."""
+    with patch(
+        "gapsense.engagement.whatsapp_client.WhatsAppClient.from_settings",
+        return_value=mock_whatsapp_client,
+    ):
+        yield
 
 
 # ============================================================================
@@ -38,23 +48,22 @@ class TestRestartCommand:
         """Parent sends RESTART while in onboarding - should clear state."""
         parent = Parent(
             phone="+233501111111",
-            first_name="Test",
-            last_name="Parent",
+            preferred_name="Test Parent",
             conversation_state={
                 "step": "AWAITING_LANGUAGE",
                 "data": {"selected_student_id": "some-uuid"},
             },
-            is_active=True,
         )
         db_session.add(parent)
         await db_session.commit()
 
         executor = FlowExecutor(db=db_session)
         result = await executor.process_message(
-            parent=parent, message_type="text", message_content="RESTART"
+            parent=parent, message_type="text", message_content="RESTART", message_id="msg-123"
         )
 
-        assert result.success is True
+        assert result.message_sent is True
+        assert result.completed is True
         await db_session.refresh(parent)
         assert parent.conversation_state is None
 
@@ -99,23 +108,22 @@ class TestRestartCommand:
         """Should handle RESTART in various forms (case insensitive)."""
         variations = ["RESTART", "restart", "Restart", "  restart  "]
 
-        for variation in variations:
+        for idx, variation in enumerate(variations):
             parent = Parent(
-                phone=f"+23350{variation.strip().lower()}",
-                first_name="Test",
-                last_name="Parent",
+                phone=f"+23350{idx:03d}",  # Use counter for unique phone numbers
+                preferred_name="Test Parent",
                 conversation_state={"step": "AWAITING_LANGUAGE"},
-                is_active=True,
             )
             db_session.add(parent)
             await db_session.commit()
 
             executor = FlowExecutor(db=db_session)
             result = await executor.process_message(
-                parent=parent, message_type="text", message_content=variation
+                parent=parent, message_type="text", message_content=variation, message_id="msg-123"
             )
 
-            assert result.success is True
+            assert result.message_sent is True
+            assert result.completed is True
             await db_session.refresh(parent)
             assert parent.conversation_state is None
 
@@ -134,23 +142,22 @@ class TestCancelCommand:
         """Parent sends CANCEL during onboarding - should clear state and send confirmation."""
         parent = Parent(
             phone="+233503333333",
-            first_name="Test",
-            last_name="Parent",
+            preferred_name="Test Parent",
             conversation_state={
                 "step": "AWAITING_STUDENT_SELECTION",
                 "data": {"student_ids_map": {"1": "uuid-1"}},
             },
-            is_active=True,
         )
         db_session.add(parent)
         await db_session.commit()
 
         executor = FlowExecutor(db=db_session)
         result = await executor.process_message(
-            parent=parent, message_type="text", message_content="CANCEL"
+            parent=parent, message_type="text", message_content="CANCEL", message_id="msg-123"
         )
 
-        assert result.success is True
+        assert result.message_sent is True
+        assert result.completed is True
         await db_session.refresh(parent)
         assert parent.conversation_state is None
 
@@ -160,21 +167,20 @@ class TestCancelCommand:
         """Sending CANCEL when no active flow - should send help message."""
         parent = Parent(
             phone="+233504444444",
-            first_name="Test",
-            last_name="Parent",
+            preferred_name="Test Parent",
             conversation_state=None,
             onboarded_at=None,
-            is_active=True,
         )
         db_session.add(parent)
         await db_session.commit()
 
         executor = FlowExecutor(db=db_session)
         result = await executor.process_message(
-            parent=parent, message_type="text", message_content="CANCEL"
+            parent=parent, message_type="text", message_content="CANCEL", message_id="msg-123"
         )
 
-        assert result.success is True
+        assert result.message_sent is True
+        assert result.completed is True
         # Should send "Nothing to cancel" or similar
 
 
@@ -192,20 +198,19 @@ class TestHelpCommand:
         """Parent sends HELP during onboarding - should show context-specific help."""
         parent = Parent(
             phone="+233505555555",
-            first_name="Test",
-            last_name="Parent",
+            preferred_name="Test Parent",
             conversation_state={"step": "AWAITING_LANGUAGE"},
-            is_active=True,
         )
         db_session.add(parent)
         await db_session.commit()
 
         executor = FlowExecutor(db=db_session)
         result = await executor.process_message(
-            parent=parent, message_type="text", message_content="HELP"
+            parent=parent, message_type="text", message_content="HELP", message_id="msg-123"
         )
 
-        assert result.success is True
+        assert result.message_sent is True
+        assert result.completed is True
         # Should send helpful message about current step
 
     async def test_teacher_help_general(
@@ -243,21 +248,20 @@ class TestHelpCommand:
         """HELP message should list available commands."""
         parent = Parent(
             phone="+233507777777",
-            first_name="Test",
-            last_name="Parent",
+            preferred_name="Test Parent",
             conversation_state=None,
             onboarded_at=None,
-            is_active=True,
         )
         db_session.add(parent)
         await db_session.commit()
 
         executor = FlowExecutor(db=db_session)
         result = await executor.process_message(
-            parent=parent, message_type="text", message_content="HELP"
+            parent=parent, message_type="text", message_content="HELP", message_id="msg-123"
         )
 
-        assert result.success is True
+        assert result.message_sent is True
+        assert result.completed is True
         # Should mention: RESTART, CANCEL, HELP, STATUS, START
 
 
@@ -275,23 +279,22 @@ class TestStatusCommand:
         """Parent sends STATUS during onboarding - should show progress."""
         parent = Parent(
             phone="+233508888888",
-            first_name="Test",
-            last_name="Parent",
+            preferred_name="Test Parent",
             conversation_state={
                 "step": "AWAITING_LANGUAGE",
                 "data": {"selected_student_id": "uuid-123"},
             },
-            is_active=True,
         )
         db_session.add(parent)
         await db_session.commit()
 
         executor = FlowExecutor(db=db_session)
         result = await executor.process_message(
-            parent=parent, message_type="text", message_content="STATUS"
+            parent=parent, message_type="text", message_content="STATUS", message_id="msg-123"
         )
 
-        assert result.success is True
+        assert result.message_sent is True
+        assert result.completed is True
         # Should show "Onboarding: Step 3 of 4" or similar
 
     async def test_teacher_status_during_onboarding(
@@ -334,19 +337,18 @@ class TestStatusCommand:
         """Sending STATUS when no active flow - should show account info."""
         parent = Parent(
             phone="+233500000000",
-            first_name="Test",
-            last_name="Parent",
+            preferred_name="Test Parent",
             conversation_state=None,
             onboarded_at=None,
-            is_active=True,
         )
         db_session.add(parent)
         await db_session.commit()
 
         executor = FlowExecutor(db=db_session)
         result = await executor.process_message(
-            parent=parent, message_type="text", message_content="STATUS"
+            parent=parent, message_type="text", message_content="STATUS", message_id="msg-123"
         )
 
-        assert result.success is True
+        assert result.message_sent is True
+        assert result.completed is True
         # Should show "No active flow. Send START to begin onboarding."
