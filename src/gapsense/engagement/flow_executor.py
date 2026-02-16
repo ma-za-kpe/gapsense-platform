@@ -99,6 +99,32 @@ class FlowExecutor:
         """
         self.db = db
 
+    async def process_parent_message(
+        self,
+        *,
+        parent: Parent,
+        message_type: str,
+        message_content: str | dict[str, Any],
+        message_id: str,
+    ) -> FlowResult:
+        """Alias for process_message for backwards compatibility.
+
+        Args:
+            parent: Parent model instance
+            message_type: Message type (text, interactive, image, etc.)
+            message_content: Message content (text string or structured dict)
+            message_id: WhatsApp message ID
+
+        Returns:
+            FlowResult with processing outcome
+        """
+        return await self.process_message(
+            parent=parent,
+            message_type=message_type,
+            message_content=message_content,
+            message_id=message_id,
+        )
+
     async def process_message(
         self,
         *,
@@ -144,9 +170,15 @@ class FlowExecutor:
             # Route to appropriate flow handler
             if current_flow == "FLOW-ONBOARD":
                 return await self._continue_onboarding(parent, message_type, message_content)
+            elif current_flow == "FLOW-DIAGNOSTIC":
+                return await self._continue_diagnostic(parent, message_type, message_content)
             elif current_flow is None:
-                # No active flow - start new flow
-                return await self._start_new_flow(parent, message_type, message_content)
+                # No active flow - check if diagnostic session pending, otherwise start new flow
+                pending_session = await self._get_pending_diagnostic_session(parent)
+                if pending_session:
+                    return await self._diagnostic_start_session(parent, pending_session)
+                else:
+                    return await self._start_new_flow(parent, message_type, message_content)
             else:
                 # Unknown flow - reset state and start fresh
                 logger.warning(f"Unknown flow: {current_flow}. Resetting state.")
@@ -1416,6 +1448,298 @@ class FlowExecutor:
         logger.info(
             f"Created diagnostic session for {student.first_name} "
             f"(session_id={session.id}, grade={student.current_grade})"
+        )
+
+    async def _get_pending_diagnostic_session(self, parent: Parent):
+        """Check if parent has a pending diagnostic session.
+
+        Args:
+            parent: Parent to check
+
+        Returns:
+            DiagnosticSession if pending, None otherwise
+        """
+        from sqlalchemy import select
+
+        from gapsense.core.models import DiagnosticSession, Student
+
+        # Get student linked to this parent
+        stmt = select(Student).where(Student.primary_parent_id == parent.id)
+        result = await self.db.execute(stmt)
+        student = result.scalar_one_or_none()
+
+        if not student:
+            return None
+
+        # Check for pending diagnostic session
+        stmt = (
+            select(DiagnosticSession)
+            .where(DiagnosticSession.student_id == student.id)
+            .where(DiagnosticSession.status == "pending")
+            .order_by(DiagnosticSession.created_at.desc())
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def _diagnostic_start_session(self, parent: Parent, session) -> FlowResult:
+        """Start diagnostic session and send first question.
+
+        Args:
+            parent: Parent starting diagnostic
+            session: DiagnosticSession to start
+
+        Returns:
+            FlowResult with first question sent
+        """
+        # Update session status
+        session.status = "in_progress"
+        session.started_at = datetime.now(UTC).isoformat()
+
+        # Initialize conversation state
+        parent.conversation_state = {
+            "flow": "FLOW-DIAGNOSTIC",
+            "step": "AWAITING_ANSWER",
+            "data": {
+                "session_id": str(session.id),
+            },
+        }
+        flag_modified(parent, "conversation_state")
+        await self.db.commit()
+
+        # Send first question
+        return await self._diagnostic_send_question(parent, session)
+
+    async def _continue_diagnostic(
+        self, parent: Parent, message_type: str, message_content: str | dict[str, Any]
+    ) -> FlowResult:
+        """Continue diagnostic flow based on current step.
+
+        Args:
+            parent: Parent in diagnostic flow
+            message_type: Message type
+            message_content: Message content
+
+        Returns:
+            FlowResult for next step
+        """
+        current_state = parent.conversation_state or {}
+        current_step = current_state.get("step")
+
+        if current_step == "AWAITING_ANSWER":
+            return await self._diagnostic_collect_answer(parent, message_type, message_content)
+        else:
+            logger.warning(f"Unknown diagnostic step: {current_step}")
+            return await self._send_help_message(parent)
+
+    async def _diagnostic_send_question(self, parent: Parent, session) -> FlowResult:
+        """Generate and send next diagnostic question.
+
+        Args:
+            parent: Parent receiving question
+            session: DiagnosticSession
+
+        Returns:
+            FlowResult with question sent
+        """
+        from gapsense.diagnostic import AdaptiveDiagnosticEngine, QuestionGenerator
+
+        # Use adaptive engine to select next node
+        engine = AdaptiveDiagnosticEngine(session, self.db)
+        next_node = await engine.get_next_node()
+
+        if not next_node:
+            # No more questions - complete session
+            return await self._diagnostic_complete_session(parent, session)
+
+        # Generate question for selected node
+        generator = QuestionGenerator(use_ai=True)  # Use AI by default, falls back to templates
+        question_data = generator.generate_question(next_node, session.total_questions + 1)
+
+        # Save question to database
+        from gapsense.core.models import DiagnosticQuestion
+
+        question = DiagnosticQuestion(
+            session_id=session.id,
+            question_order=session.total_questions + 1,
+            node_id=next_node.id,
+            question_text=question_data["question_text"],
+            question_type=question_data["question_type"],
+            expected_answer=question_data.get("expected_answer"),
+            question_media_url=question_data.get("question_media_url"),
+        )
+        self.db.add(question)
+
+        # Update conversation state with current question
+        parent.conversation_state["data"]["current_question_id"] = str(question.id)
+        parent.conversation_state["data"]["current_node_code"] = next_node.code
+        flag_modified(parent, "conversation_state")
+        await self.db.commit()
+
+        # Send question to parent
+        client = WhatsAppClient.from_settings()
+
+        # Get student for personalization
+        from sqlalchemy import select
+
+        stmt = select(Student).where(Student.primary_parent_id == parent.id)
+        result = await self.db.execute(stmt)
+        student = result.scalar_one()
+
+        # Format question message
+        question_num = session.total_questions + 1
+        message_text = (
+            f"Question {question_num} for {student.first_name}:\n\n{question_data['question_text']}"
+        )
+
+        message_id = await client.send_text_message(to=parent.phone, text=message_text)
+
+        return FlowResult(
+            flow_name="FLOW-DIAGNOSTIC",
+            message_sent=True,
+            message_id=message_id,
+            next_step="AWAITING_ANSWER",
+            completed=False,
+            error=None,
+        )
+
+    async def _diagnostic_collect_answer(
+        self, parent: Parent, message_type: str, message_content: str | dict[str, Any]
+    ) -> FlowResult:
+        """Collect and analyze parent's answer to diagnostic question.
+
+        Args:
+            parent: Parent answering question
+            message_type: Message type
+            message_content: Message content (answer)
+
+        Returns:
+            FlowResult with next question or completion
+        """
+        # Extract answer text
+        if message_type == "text" and isinstance(message_content, str):
+            answer_text = message_content
+        else:
+            # Non-text answer not supported for now
+            client = WhatsAppClient.from_settings()
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text="Please send your answer as text.",
+            )
+            return FlowResult(
+                flow_name="FLOW-DIAGNOSTIC",
+                message_sent=True,
+                message_id=message_id,
+                next_step="AWAITING_ANSWER",
+                completed=False,
+                error=None,
+            )
+
+        # Get current question and session
+        from uuid import UUID
+
+        from sqlalchemy import select
+
+        from gapsense.core.models import DiagnosticQuestion, DiagnosticSession
+
+        conversation_data = parent.conversation_state.get("data", {})
+        question_id = UUID(conversation_data["current_question_id"])
+        session_id = UUID(conversation_data["session_id"])
+
+        stmt = select(DiagnosticQuestion).where(DiagnosticQuestion.id == question_id)
+        result = await self.db.execute(stmt)
+        question = result.scalar_one()
+
+        stmt = select(DiagnosticSession).where(DiagnosticSession.id == session_id)
+        result = await self.db.execute(stmt)
+        session = result.scalar_one()
+
+        # Save answer
+        question.student_response = answer_text
+        question.answered_at = datetime.now(UTC).isoformat()
+
+        # Analyze answer
+        from gapsense.diagnostic import QuestionGenerator
+
+        # Use QuestionGenerator for simple correctness check
+        generator = QuestionGenerator()
+        is_correct, _ = generator.check_answer(question.expected_answer, answer_text)
+        question.is_correct = is_correct
+
+        # Use ResponseAnalyzer for deeper analysis (optional, for future)
+        # analyzer = ResponseAnalyzer(use_ai=False)  # Use rule-based for speed
+        # analysis = analyzer.analyze_response(
+        #     student=student, session=session, question=question, node_code=conversation_data["current_node_code"]
+        # )
+
+        # Update session stats
+        session.total_questions += 1
+        if is_correct:
+            session.correct_answers += 1
+
+        await self.db.commit()
+
+        # Send next question
+        return await self._diagnostic_send_question(parent, session)
+
+    async def _diagnostic_complete_session(self, parent: Parent, session) -> FlowResult:
+        """Complete diagnostic session and generate gap profile.
+
+        Args:
+            parent: Parent completing diagnostic
+            session: DiagnosticSession to complete
+
+        Returns:
+            FlowResult with results sent
+        """
+        from gapsense.diagnostic import GapProfileAnalyzer
+
+        # Update session status
+        session.status = "completed"
+        session.completed_at = datetime.now(UTC).isoformat()
+
+        # Clear conversation state
+        parent.conversation_state = None
+        await self.db.commit()
+
+        # Generate gap profile
+        analyzer = GapProfileAnalyzer(session, self.db)
+        gap_profile = await analyzer.generate_gap_profile()
+
+        # Get student for message
+        from sqlalchemy import select
+
+        stmt = select(Student).where(Student.primary_parent_id == parent.id)
+        result = await self.db.execute(stmt)
+        student = result.scalar_one()
+
+        # Send completion message with results
+        client = WhatsAppClient.from_settings()
+
+        # Format results message
+        correct_pct = int((session.correct_answers / session.total_questions) * 100)
+        message_text = (
+            f"Diagnostic complete for {student.first_name}! 🎉\n\n"
+            f"Questions answered: {session.total_questions}\n"
+            f"Correct answers: {session.correct_answers} ({correct_pct}%)\n\n"
+            f"We've identified where {student.first_name} needs support. "
+            f"We'll send personalized lessons soon to help them catch up!\n\n"
+            f"Thank you for helping {student.first_name} learn! 📚"
+        )
+
+        message_id = await client.send_text_message(to=parent.phone, text=message_text)
+
+        logger.info(
+            f"Diagnostic completed for {student.first_name} "
+            f"(session_id={session.id}, score={correct_pct}%, gap_profile_id={gap_profile.id})"
+        )
+
+        return FlowResult(
+            flow_name="FLOW-DIAGNOSTIC",
+            message_sent=True,
+            message_id=message_id,
+            next_step=None,
+            completed=True,
+            error=None,
         )
 
     async def _send_help_message(self, parent: Parent) -> FlowResult:
