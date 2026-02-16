@@ -285,15 +285,17 @@ class Parent(Base):
 ### Implementation Details (Phase 3):
 **File:** `src/gapsense/engagement/flow_executor.py`
 
-**New Functions (450 lines added):**
+**New Functions Added:**
 - `_show_student_selection_list()` - Queries unlinked students, shows numbered list
 - `_onboard_select_student()` - Validates selection, checks race conditions
 - `_onboard_collect_consent()` - New diagnostic consent step
 
-**Removed Functions (334 lines removed):**
+**Functions Removed:**
 - `_onboard_collect_child_name()` - No longer needed
 - `_onboard_collect_child_age()` - No longer needed
 - `_onboard_collect_child_grade()` - No longer needed
+
+**Git Diff:** 258 lines added, 222 lines removed (net +36 lines)
 
 **Modified Functions:**
 - `_continue_onboarding()` - Updated routing to new steps

@@ -69,9 +69,9 @@ Parent sends "START"
 **Complete rewrite of parent onboarding** (Commit: `2b2d41e`)
 
 **File:** `src/gapsense/engagement/flow_executor.py`
-- Removed 334 lines of student creation logic
-- Added 450 lines of student selection/linking logic
-- Net change: +116 lines
+- Removed 222 lines of student creation logic
+- Added 258 lines of student selection/linking logic
+- Net change: +36 lines (git diff numstat)
 
 **New Functions:**
 - `_show_student_selection_list()` - Queries and displays unlinked students
@@ -277,7 +277,7 @@ OVERALL: ████████████████████ 100% ✅
    - ✅ Tested with unit and integration tests
 
 2. **Phase 4 Complete:**
-   - ✅ Removed unused code (child name/age/grade collection - 334 lines)
+   - ✅ Removed unused code (child name/age/grade collection)
    - ✅ Verified no dead code in src/
 
 3. **Phase 5 Complete:**

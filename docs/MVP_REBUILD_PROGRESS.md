@@ -81,9 +81,9 @@ Rebuild GapSense MVP to match the **actual specification** from MVP Blueprint:
 7. **Complete + LINK** parent to existing student (NOT create)
 
 **Key Changes:**
-- Removed 334 lines of old student creation logic
-- Added 450 lines of new student selection/linking logic
-- Net change: +116 lines (258 added, 222 removed)
+- Removed 222 lines of old student creation logic
+- Added 258 lines of new student selection/linking logic
+- Net change: +36 lines (git diff numstat)
 
 **New Functions:**
 - `_show_student_selection_list()` - Queries and displays unlinked students
@@ -117,10 +117,10 @@ Searched for references to old flow steps (AWAITING_CHILD_NAME, AWAITING_CHILD_A
 - All production code clean after Phase 3 rewrite
 
 **Functions Removed in Phase 3:**
-1. `_onboard_collect_child_name()` - 78 lines removed
-2. `_onboard_collect_child_age()` - 123 lines removed
-3. `_onboard_collect_child_grade()` - 133 lines removed
-4. Total: 334 lines of student creation logic removed
+1. `_onboard_collect_child_name()` - removed
+2. `_onboard_collect_child_age()` - removed
+3. `_onboard_collect_child_grade()` - removed
+Total diff: 222 lines removed (git numstat)
 
 **Note on API Endpoints:**
 - Kept `src/gapsense/api/v1/diagnostics.py` for future use (API-only, not WhatsApp)
@@ -309,9 +309,9 @@ git log --oneline -5
 
 ### Modified Files (Phase 3):
 - `src/gapsense/engagement/flow_executor.py` - Complete rewrite of parent onboarding
-  - Removed: 334 lines (student creation logic)
-  - Added: 450 lines (student selection/linking logic)
-  - Net: +116 lines
+  - Removed: 222 lines (student creation logic)
+  - Added: 258 lines (student selection/linking logic)
+  - Net: +36 lines (git diff numstat)
 
 ### Modified Files (Phase 5):
 - `tests/unit/test_onboard_spec_compliant.py` - Complete test rewrite (8 new tests)
