@@ -63,4 +63,28 @@ async def db_session(async_engine) -> AsyncSession:
             # If truncate fails, just continue (tables may not exist yet)
             await session.rollback()
 
+        # Seed default region and district (required for teacher/student creation)
+        try:
+            await session.execute(
+                text(
+                    """
+                    INSERT INTO regions (id, name, code)
+                    VALUES (1, 'Greater Accra', 'GAR')
+                    ON CONFLICT (id) DO NOTHING
+                    """
+                )
+            )
+            await session.execute(
+                text(
+                    """
+                    INSERT INTO districts (id, region_id, name, ges_district_code)
+                    VALUES (1, 1, 'Accra Metropolitan', 'GAR-AM-001')
+                    ON CONFLICT (id) DO NOTHING
+                    """
+                )
+            )
+            await session.commit()
+        except Exception:
+            await session.rollback()
+
         yield session

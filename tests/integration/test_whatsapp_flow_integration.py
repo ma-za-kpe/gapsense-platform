@@ -294,23 +294,38 @@ class TestWebhookFlowIntegration:
             assert mock_client.send_template_message.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_complete_onboarding_creates_student(
+    async def test_complete_onboarding_links_to_student(
         self, client: AsyncClient, db_session: AsyncSession
     ) -> None:
-        """Test that completing onboarding creates a Student record."""
-        from gapsense.core.models import Student
+        """Test that completing onboarding LINKS to existing Student (teacher-initiated)."""
+        from gapsense.core.models import School, Student
 
-        # Create parent at final step (AWAITING_LANGUAGE) with all child data collected
+        # Create school and existing student (teacher created this)
+        school = School(name="Test School", district_id=1, school_type="jhs")
+        db_session.add(school)
+        await db_session.commit()
+
+        existing_student = Student(
+            full_name="Kwame Mensah",
+            first_name="Kwame",
+            current_grade="JHS1",
+            school_id=school.id,
+            primary_parent_id=None,  # Unlinked
+        )
+        db_session.add(existing_student)
+        await db_session.commit()
+        student_id = existing_student.id
+
+        # Create parent at final step (AWAITING_LANGUAGE) with student already selected
         parent = Parent(
             phone="+233501234567",
             opted_in=True,
+            diagnostic_consent=True,
             conversation_state={
                 "flow": "FLOW-ONBOARD",
                 "step": "AWAITING_LANGUAGE",
                 "data": {
-                    "child_name": "Kwame",
-                    "child_age": 7,
-                    "child_grade": "B2",
+                    "selected_student_id": str(student_id),
                 },
             },
         )
@@ -369,16 +384,21 @@ class TestWebhookFlowIntegration:
 
             assert response.status_code == 200
 
-            # CRITICAL: Verify Student was created
+            # CRITICAL: Verify parent was linked to existing student (not created new one)
             await db_session.refresh(parent)
             assert parent.preferred_language == "tw"
             assert parent.onboarded_at is not None
             assert parent.conversation_state is None  # Flow completed
 
-            # Verify Student record exists
-            stmt = select(Student).where(Student.primary_parent_id == parent_id)
+            # Verify existing student was linked to parent
+            await db_session.refresh(existing_student)
+            assert existing_student.primary_parent_id == parent_id
+            assert existing_student.first_name == "Kwame"
+            assert existing_student.current_grade == "JHS1"
+            assert existing_student.home_language == "tw"  # Updated during linking
+
+            # Verify no new students were created
+            stmt = select(Student)
             result = await db_session.execute(stmt)
-            student = result.scalar_one()
-            assert student.first_name == "Kwame"
-            assert student.age == 7
-            assert student.current_grade == "B2"
+            all_students = result.scalars().all()
+            assert len(all_students) == 1  # Only the one we created, no new ones
