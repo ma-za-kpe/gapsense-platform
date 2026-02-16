@@ -318,13 +318,12 @@ class FlowExecutor:
     ) -> FlowResult:
         """Continue onboarding flow from current step.
 
-        Spec-Compliant Onboarding Flow (gapsense_whatsapp_flows.json lines 85-197):
+        NEW Teacher-Initiated Onboarding Flow (MVP Blueprint):
             1. AWAITING_OPT_IN → handle opt-in button
-            2. AWAITING_CHILD_NAME → collect child's first_name
-            3. AWAITING_CHILD_AGE → collect child's age
-            4. AWAITING_CHILD_GRADE → collect child's grade (B1-B9)
-            5. AWAITING_LANGUAGE → collect language preference
-            6. Complete → create Student record, set onboarded_at
+            2. AWAITING_STUDENT_SELECTION → parent selects child from teacher's roster
+            3. AWAITING_DIAGNOSTIC_CONSENT → get consent for diagnostic assessment
+            4. AWAITING_LANGUAGE → collect language preference
+            5. Complete → link parent to student, set onboarded_at
 
         Args:
             parent: Parent in onboarding
@@ -339,12 +338,10 @@ class FlowExecutor:
 
         if current_step == "AWAITING_OPT_IN":
             return await self._onboard_opt_in(parent, message_type, message_content)
-        elif current_step == "AWAITING_CHILD_NAME":
-            return await self._onboard_collect_child_name(parent, message_type, message_content)
-        elif current_step == "AWAITING_CHILD_AGE":
-            return await self._onboard_collect_child_age(parent, message_type, message_content)
-        elif current_step == "AWAITING_CHILD_GRADE":
-            return await self._onboard_collect_child_grade(parent, message_type, message_content)
+        elif current_step == "AWAITING_STUDENT_SELECTION":
+            return await self._onboard_select_student(parent, message_type, message_content)
+        elif current_step == "AWAITING_DIAGNOSTIC_CONSENT":
+            return await self._onboard_collect_consent(parent, message_type, message_content)
         elif current_step == "AWAITING_LANGUAGE":
             return await self._onboard_collect_language(parent, message_type, message_content)
         else:
@@ -406,33 +403,19 @@ class FlowExecutor:
             button_id = message_content.get("id")
 
         if button_id == "yes_start":
-            # Parent opted in! Set flags and move to collect child name
+            # Parent opted in! Set flags and move to student selection
             parent.opted_in = True
             parent.opted_in_at = datetime.now(UTC)
 
             if parent.conversation_state is None:
                 parent.conversation_state = {"flow": "FLOW-ONBOARD", "data": {}}
-            parent.conversation_state["step"] = "AWAITING_CHILD_NAME"
+            parent.conversation_state["step"] = "AWAITING_STUDENT_SELECTION"
             flag_modified(parent, "conversation_state")
 
             await self.db.commit()
 
-            # Ask for child's name
-            client = WhatsAppClient.from_settings()
-            # TODO: L1 TRANSLATION
-            message_id = await client.send_text_message(
-                to=parent.phone,
-                text="Great! 🎉 Just a few quick questions.\n\nWhat is your child's first name?",
-            )
-
-            return FlowResult(
-                flow_name="FLOW-ONBOARD",
-                message_sent=True,
-                message_id=message_id,
-                next_step="AWAITING_CHILD_NAME",
-                completed=False,
-                error=None,
-            )
+            # Query unlinked students and show selection list
+            return await self._show_student_selection_list(parent)
 
         elif button_id == "not_now":
             # Parent declined - clear state and log
@@ -467,24 +450,122 @@ class FlowExecutor:
                 error=None,
             )
 
-    async def _onboard_collect_child_name(
+    async def _show_student_selection_list(self, parent: Parent) -> FlowResult:
+        """Show list of unlinked students for parent to select from.
+
+        Queries all students where primary_parent_id IS NULL and displays them
+        as a numbered list with full_name, grade, and school for disambiguation.
+
+        For MVP, shows ALL unlinked students. For production, would filter by:
+        - School/district (based on phone area code or teacher linkage)
+        - Grade range
+        - Geographic proximity
+
+        Args:
+            parent: Parent selecting their child
+
+        Returns:
+            FlowResult with student selection message
+        """
+        from sqlalchemy import select
+
+        # Query unlinked students
+        stmt = (
+            select(Student)
+            .where(Student.primary_parent_id == None)  # noqa: E711
+            .where(Student.is_active == True)  # noqa: E712
+            .order_by(Student.created_at.desc())
+            .limit(100)  # Safety limit for MVP
+        )
+        result = await self.db.execute(stmt)
+        students = result.scalars().all()
+
+        if not students:
+            # No students available - this shouldn't happen if teachers onboard first
+            client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text=(
+                    "No students are available for linking yet. "
+                    "Please make sure your child's teacher has registered their class first.\n\n"
+                    "Contact your school if you need assistance."
+                ),
+            )
+            parent.conversation_state = None
+            await self.db.commit()
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=False,
+                error="No unlinked students available",
+            )
+
+        # Build student list message
+        # Format: "1. Kwame Mensah (JHS 1, Accra Academy JHS)"
+        student_list_lines = []
+        for idx, student in enumerate(students[:50], 1):  # Show max 50 for UX
+            # Use full_name if available, otherwise first_name
+            display_name = student.full_name or student.first_name
+            school_name = student.school.name if student.school else "Unknown School"
+            line = f"{idx}. {display_name} (Grade {student.current_grade}, {school_name})"
+            student_list_lines.append(line)
+
+        student_list_text = "\n".join(student_list_lines)
+
+        # Store student IDs in conversation state for selection
+        student_ids_map = {
+            str(idx + 1): str(student.id) for idx, student in enumerate(students[:50])
+        }
+        if parent.conversation_state is None:
+            parent.conversation_state = {"flow": "FLOW-ONBOARD", "data": {}}
+        parent.conversation_state["data"]["student_ids_map"] = student_ids_map
+        flag_modified(parent, "conversation_state")
+        await self.db.commit()
+
+        # Send selection message
+        client = WhatsAppClient.from_settings()
+        # TODO: L1 TRANSLATION
+        message = (
+            f"Great! 🎉 Which child is yours?\n\n"
+            f"{student_list_text}\n\n"
+            f"Reply with the number (e.g., '1' for the first child)."
+        )
+
+        if len(students) > 50:
+            message += f"\n\n(Showing first 50 of {len(students)} students. Contact support if you don't see your child.)"
+
+        message_id = await client.send_text_message(to=parent.phone, text=message)
+
+        return FlowResult(
+            flow_name="FLOW-ONBOARD",
+            message_sent=True,
+            message_id=message_id,
+            next_step="AWAITING_STUDENT_SELECTION",
+            completed=False,
+            error=None,
+        )
+
+    async def _onboard_select_student(
         self,
         parent: Parent,
         message_type: str,
         message_content: str | dict[str, Any],
     ) -> FlowResult:
-        """Collect CHILD's first name (Step 3 of spec).
+        """Handle parent's student selection (new Step 2).
 
-        Spec: gapsense_whatsapp_flows.json Step 3-4
-        This is NOT the parent's name - it's the child's name for Student record.
+        Parent replies with number from list (e.g., "1", "5", "10").
+        System links parent to selected student.
 
         Args:
-            parent: Parent instance
+            parent: Parent making selection
             message_type: Message type
-            message_content: Message content (should be text with child's name)
+            message_content: Message content (should be text with number)
 
         Returns:
-            FlowResult for name collection
+            FlowResult for student selection
         """
         if message_type != "text" or not isinstance(message_content, str):
             # Invalid input - prompt again
@@ -492,44 +573,123 @@ class FlowExecutor:
             # TODO: L1 TRANSLATION
             message_id = await client.send_text_message(
                 to=parent.phone,
-                text="Please send me your child's first name as a text message. For example: 'Kwame'",
+                text="Please reply with the number of your child from the list above (e.g., '1').",
             )
             return FlowResult(
                 flow_name="FLOW-ONBOARD",
                 message_sent=True,
                 message_id=message_id,
-                next_step="AWAITING_CHILD_NAME",
+                next_step="AWAITING_STUDENT_SELECTION",
                 completed=False,
                 error=None,
             )
 
-        # Save CHILD's name to conversation data (will be used for Student creation)
-        child_name = message_content.strip()
+        # Extract number from message
+        selection = message_content.strip()
 
-        # Update conversation state
+        # Get student IDs map from conversation state
+        conversation_data = (
+            parent.conversation_state.get("data", {}) if parent.conversation_state else {}
+        )
+        student_ids_map = conversation_data.get("student_ids_map", {})
+
+        if selection not in student_ids_map:
+            # Invalid selection
+            client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text=(
+                    f"'{selection}' is not a valid number. "
+                    "Please reply with a number from the list above (e.g., '1')."
+                ),
+            )
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step="AWAITING_STUDENT_SELECTION",
+                completed=False,
+                error=None,
+            )
+
+        # Get selected student
+        from uuid import UUID
+
+        student_id = UUID(student_ids_map[selection])
+
+        from sqlalchemy import select
+
+        stmt = select(Student).where(Student.id == student_id)
+        result = await self.db.execute(stmt)
+        selected_student = result.scalar_one_or_none()
+
+        if not selected_student:
+            # Student not found (edge case - student deleted after list shown)
+            client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text="Sorry, that student is no longer available. Please try again by sending 'START'.",
+            )
+            parent.conversation_state = None
+            await self.db.commit()
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=False,
+                error="Selected student not found",
+            )
+
+        # Check if student already has a parent (race condition)
+        if selected_student.primary_parent_id is not None:
+            client = WhatsAppClient.from_settings()
+            # TODO: L1 TRANSLATION
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text=(
+                    f"Sorry, {selected_student.first_name} already has a parent linked. "
+                    "If this is an error, please contact your child's teacher."
+                ),
+            )
+            parent.conversation_state = None
+            await self.db.commit()
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=False,
+                error="Student already linked to another parent",
+            )
+
+        # Save student selection to conversation state (will link after consent)
         if parent.conversation_state is None:
             parent.conversation_state = {"flow": "FLOW-ONBOARD", "data": {}}
-        elif "data" not in parent.conversation_state:
-            parent.conversation_state["data"] = {}
-
-        parent.conversation_state["data"]["child_name"] = child_name
-        parent.conversation_state["step"] = "AWAITING_CHILD_AGE"
+        parent.conversation_state["data"]["selected_student_id"] = str(student_id)
+        parent.conversation_state["step"] = "AWAITING_DIAGNOSTIC_CONSENT"
         flag_modified(parent, "conversation_state")
-
         await self.db.commit()
 
-        # Ask for child's age (buttons)
+        # Ask for diagnostic consent
         client = WhatsAppClient.from_settings()
-
+        # TODO: L1 TRANSLATION
+        student_display_name = selected_student.full_name or selected_student.first_name
         try:
-            # TODO: L1 TRANSLATION
             message_id = await client.send_button_message(
                 to=parent.phone,
-                body=f"Thanks! How old is {child_name}?",
+                body=(
+                    f"Perfect! You selected {student_display_name}.\n\n"
+                    f"To help {selected_student.first_name} learn, we'll send a quick diagnostic quiz "
+                    f"to find where they need support.\n\n"
+                    f"This quiz is private - only you and the teacher will see results.\n\n"
+                    f"Do you consent to this diagnostic assessment?"
+                ),
                 buttons=[
-                    {"id": "age_5", "title": "5-6 years"},
-                    {"id": "age_7", "title": "7-8 years"},
-                    {"id": "age_9", "title": "9-10 years"},
+                    {"id": "consent_yes", "title": "Yes, proceed"},
+                    {"id": "consent_no", "title": "No, skip for now"},
                 ],
             )
 
@@ -537,39 +697,37 @@ class FlowExecutor:
                 flow_name="FLOW-ONBOARD",
                 message_sent=True,
                 message_id=message_id,
-                next_step="AWAITING_CHILD_AGE",
+                next_step="AWAITING_DIAGNOSTIC_CONSENT",
                 completed=False,
                 error=None,
             )
 
         except Exception as e:
-            logger.error(f"Failed to send age selection to {parent.phone}: {e}")
+            logger.error(f"Failed to send diagnostic consent to {parent.phone}: {e}")
             return FlowResult(
                 flow_name="FLOW-ONBOARD",
                 message_sent=False,
                 message_id=None,
-                next_step="AWAITING_CHILD_AGE",
+                next_step="AWAITING_DIAGNOSTIC_CONSENT",
                 completed=False,
                 error=str(e),
             )
 
-    async def _onboard_collect_child_age(
+    async def _onboard_collect_consent(
         self,
         parent: Parent,
         message_type: str,
         message_content: str | dict[str, Any],
     ) -> FlowResult:
-        """Collect child's age (Step 4 of spec).
-
-        Spec: gapsense_whatsapp_flows.json Step 4-5
+        """Collect diagnostic consent (new Step 3).
 
         Args:
-            parent: Parent instance
+            parent: Parent providing consent
             message_type: Message type
             message_content: Message content (should be button response)
 
         Returns:
-            FlowResult for age collection
+            FlowResult for consent collection
         """
         # Check for button response
         if message_type != "interactive" or not isinstance(message_content, dict):
@@ -578,206 +736,66 @@ class FlowExecutor:
             # TODO: L1 TRANSLATION
             message_id = await client.send_text_message(
                 to=parent.phone,
-                text="Please select your child's age from the buttons above.",
+                text="Please click one of the buttons above to continue.",
             )
             return FlowResult(
                 flow_name="FLOW-ONBOARD",
                 message_sent=True,
                 message_id=message_id,
-                next_step="AWAITING_CHILD_AGE",
+                next_step="AWAITING_DIAGNOSTIC_CONSENT",
                 completed=False,
                 error=None,
             )
 
-        # Webhook extracts button_reply, so message_content IS the button_reply dict
-        # But unit tests may pass full structure, so handle both
+        # Extract button ID
         if "button_reply" in message_content:
             button_reply = message_content.get("button_reply", {})
             button_id = button_reply.get("id")
         else:
-            # Webhook format: message_content IS the button_reply
             button_id = message_content.get("id")
 
-        # Map button ID to approximate age
-        age_map = {
-            "age_5": 5,
-            "age_7": 7,
-            "age_9": 9,
-            "age_11": 11,
-        }
-
-        if button_id not in age_map:
-            # Invalid button
-            client = WhatsAppClient.from_settings()
-            # TODO: L1 TRANSLATION
-            message_id = await client.send_text_message(
-                to=parent.phone,
-                text="Please select one of the age options above.",
-            )
-            return FlowResult(
-                flow_name="FLOW-ONBOARD",
-                message_sent=True,
-                message_id=message_id,
-                next_step="AWAITING_CHILD_AGE",
-                completed=False,
-                error=None,
-            )
-
-        # Save age
-        age = age_map[button_id]
-
-        if parent.conversation_state is None:
-            parent.conversation_state = {"flow": "FLOW-ONBOARD", "data": {}}
-        parent.conversation_state["data"]["child_age"] = age
-        parent.conversation_state["step"] = "AWAITING_CHILD_GRADE"
-        flag_modified(parent, "conversation_state")
-
-        await self.db.commit()
-
-        # Ask for child's grade (list)
-        client = WhatsAppClient.from_settings()
-
-        child_name = parent.conversation_state["data"].get("child_name", "your child")
-
-        try:
-            # TODO: L1 TRANSLATION
-            message_id = await client.send_list_message(
-                to=parent.phone,
-                body=f"What class is {child_name} in?",
-                button_text="Select class",
-                sections=[
-                    {
-                        "title": "Primary",
-                        "rows": [
-                            {"id": "grade_B1", "title": "Class 1 (B1)"},
-                            {"id": "grade_B2", "title": "Class 2 (B2)"},
-                            {"id": "grade_B3", "title": "Class 3 (B3)"},
-                            {"id": "grade_B4", "title": "Class 4 (B4)"},
-                            {"id": "grade_B5", "title": "Class 5 (B5)"},
-                            {"id": "grade_B6", "title": "Class 6 (B6)"},
-                        ],
-                    },
-                    {
-                        "title": "JHS",
-                        "rows": [
-                            {"id": "grade_B7", "title": "JHS 1 (B7)"},
-                            {"id": "grade_B8", "title": "JHS 2 (B8)"},
-                            {"id": "grade_B9", "title": "JHS 3 (B9)"},
-                        ],
-                    },
-                ],
-            )
-
-            return FlowResult(
-                flow_name="FLOW-ONBOARD",
-                message_sent=True,
-                message_id=message_id,
-                next_step="AWAITING_CHILD_GRADE",
-                completed=False,
-                error=None,
-            )
-
-        except Exception as e:
-            logger.error(f"Failed to send grade selection to {parent.phone}: {e}")
-            return FlowResult(
-                flow_name="FLOW-ONBOARD",
-                message_sent=False,
-                message_id=None,
-                next_step="AWAITING_CHILD_GRADE",
-                completed=False,
-                error=str(e),
-            )
-
-    async def _onboard_collect_child_grade(
-        self,
-        parent: Parent,
-        message_type: str,
-        message_content: str | dict[str, Any],
-    ) -> FlowResult:
-        """Collect child's grade (Step 5 of spec).
-
-        Spec: gapsense_whatsapp_flows.json Step 5-6
-
-        Args:
-            parent: Parent instance
-            message_type: Message type
-            message_content: Message content (should be list response)
-
-        Returns:
-            FlowResult for grade collection
-        """
-        # Check for list response
-        if (
-            message_type != "interactive"
-            or not isinstance(message_content, dict)
-            or message_content.get("type") != "list_reply"
-        ):
-            # Invalid input - they need to select from list
-            client = WhatsAppClient.from_settings()
-            # TODO: L1 TRANSLATION
-            message_id = await client.send_text_message(
-                to=parent.phone,
-                text="Please select your child's class from the list above.",
-            )
-            return FlowResult(
-                flow_name="FLOW-ONBOARD",
-                message_sent=True,
-                message_id=message_id,
-                next_step="AWAITING_CHILD_GRADE",
-                completed=False,
-                error=None,
-            )
-
-        # Webhook extracts list_reply, so message_content IS the list_reply dict
-        # But unit tests may pass full structure, so handle both
-        if "list_reply" in message_content:
-            list_reply = message_content.get("list_reply", {})
-            grade_id = list_reply.get("id")
+        # Save consent decision
+        if button_id == "consent_yes":
+            parent.diagnostic_consent = True
+            parent.diagnostic_consent_at = datetime.now(UTC)
+        elif button_id == "consent_no":
+            parent.diagnostic_consent = False
+            parent.diagnostic_consent_at = datetime.now(UTC)
         else:
-            # Webhook format: message_content IS the list_reply
-            grade_id = message_content.get("id")
-
-        # Extract grade from ID (e.g., "grade_B2" → "B2")
-        if not grade_id or not grade_id.startswith("grade_"):
-            # Invalid selection
+            # Unknown button
             client = WhatsAppClient.from_settings()
             # TODO: L1 TRANSLATION
             message_id = await client.send_text_message(
                 to=parent.phone,
-                text="Please select a class from the list above.",
+                text="Please select one of the options above.",
             )
             return FlowResult(
                 flow_name="FLOW-ONBOARD",
                 message_sent=True,
                 message_id=message_id,
-                next_step="AWAITING_CHILD_GRADE",
+                next_step="AWAITING_DIAGNOSTIC_CONSENT",
                 completed=False,
                 error=None,
             )
 
-        grade = grade_id.replace("grade_", "")  # "grade_B2" → "B2"
-
-        # Save grade
+        # Move to language selection
         if parent.conversation_state is None:
             parent.conversation_state = {"flow": "FLOW-ONBOARD", "data": {}}
-        parent.conversation_state["data"]["child_grade"] = grade
         parent.conversation_state["step"] = "AWAITING_LANGUAGE"
         flag_modified(parent, "conversation_state")
-
         await self.db.commit()
 
-        # Ask for language preference (final step before completion)
+        # Ask for language preference
         client = WhatsAppClient.from_settings()
-
+        # TODO: L1 TRANSLATION (this is ironic - asking for language in English)
         try:
-            # TODO: L1 TRANSLATION
             message_id = await client.send_button_message(
                 to=parent.phone,
-                body="Last question — what language do you prefer?",
+                body="One last question: What language would you like me to use?",
                 buttons=[
                     {"id": "lang_en", "title": "English"},
-                    {"id": "lang_twi", "title": "Twi"},
-                    {"id": "lang_ewe", "title": "Ewe"},
+                    {"id": "lang_tw", "title": "Twi (Akan)"},
+                    {"id": "lang_ga", "title": "Ga"},
                 ],
             )
 
@@ -850,7 +868,8 @@ class FlowExecutor:
         # Language mapping
         language_map = {
             "lang_en": "en",
-            "lang_twi": "tw",
+            "lang_tw": "tw",  # Twi (Akan)
+            "lang_twi": "tw",  # Alias for compatibility
             "lang_ewe": "ee",
             "lang_ga": "ga",
             "lang_dagbani": "dag",
@@ -877,23 +896,19 @@ class FlowExecutor:
         language_code = language_map[button_id]
         parent.preferred_language = language_code
 
-        # Get collected child data from conversation_state
+        # Get selected student ID from conversation_state
         conversation_data = (
             parent.conversation_state.get("data", {}) if parent.conversation_state else {}
         )
-        child_name = conversation_data.get("child_name")
-        child_age = conversation_data.get("child_age")
-        child_grade = conversation_data.get("child_grade")
+        selected_student_id_str = conversation_data.get("selected_student_id")
 
-        if not child_name or not child_grade:
-            # Missing required data - this shouldn't happen but handle gracefully
-            logger.error(
-                f"Missing child data for {parent.phone}: name={child_name}, grade={child_grade}"
-            )
+        if not selected_student_id_str:
+            # Missing student selection - this shouldn't happen but handle gracefully
+            logger.error(f"Missing selected_student_id for {parent.phone}")
             client = WhatsAppClient.from_settings()
             message_id = await client.send_text_message(
                 to=parent.phone,
-                text="Sorry, something went wrong. Please start over by sending 'Hi'.",
+                text="Sorry, something went wrong. Please start over by sending 'START'.",
             )
             parent.conversation_state = None
             await self.db.commit()
@@ -903,20 +918,40 @@ class FlowExecutor:
                 message_id=message_id,
                 next_step=None,
                 completed=False,
-                error="Missing required child data",
+                error="Missing selected_student_id",
             )
 
-        # CRITICAL: Create Student record
-        student = Student(
-            first_name=child_name,
-            age=child_age,
-            current_grade=child_grade,
-            primary_parent_id=parent.id,
-            home_language=language_code,
-            school_language="English",  # Default for Ghana
-            is_active=True,
-        )
-        self.db.add(student)
+        # Get selected student
+        from uuid import UUID
+
+        from sqlalchemy import select
+
+        student_id = UUID(selected_student_id_str)
+        stmt = select(Student).where(Student.id == student_id)
+        result = await self.db.execute(stmt)
+        student = result.scalar_one_or_none()
+
+        if not student:
+            logger.error(f"Student {student_id} not found for {parent.phone}")
+            client = WhatsAppClient.from_settings()
+            message_id = await client.send_text_message(
+                to=parent.phone,
+                text="Sorry, that student is no longer available. Please start over by sending 'START'.",
+            )
+            parent.conversation_state = None
+            await self.db.commit()
+            return FlowResult(
+                flow_name="FLOW-ONBOARD",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=False,
+                error="Selected student not found",
+            )
+
+        # CRITICAL: Link parent to student (don't create new student)
+        student.primary_parent_id = parent.id
+        student.home_language = language_code  # Update student's home language
 
         # Complete onboarding
         now = datetime.now(UTC)
@@ -926,11 +961,11 @@ class FlowExecutor:
         try:
             await self.db.commit()
             logger.info(
-                f"Onboarding complete for {parent.phone}: Student {student.first_name} "
-                f"(grade {student.current_grade}) created with ID {student.id}"
+                f"Onboarding complete for {parent.phone}: Linked to student {student.first_name} "
+                f"(ID {student.id}, grade {student.current_grade})"
             )
         except Exception as e:
-            logger.error(f"Failed to create Student for {parent.phone}: {e}")
+            logger.error(f"Failed to link parent {parent.phone} to student: {e}")
             await self.db.rollback()
             client = WhatsAppClient.from_settings()
             message_id = await client.send_text_message(
@@ -949,15 +984,16 @@ class FlowExecutor:
         # Send completion message
         client = WhatsAppClient.from_settings()
 
+        student_name = student.first_name
         try:
             # TODO: L1 TRANSLATION - Completion message must be in parent's preferred_language
             message_id = await client.send_text_message(
                 to=parent.phone,
                 text=(
                     f"All set! 🌟\n\n"
-                    f"{child_name} is registered. We'll send a quick learning check soon "
-                    f"to find the perfect activity for them.\n\n"
-                    f"We only use {child_name}'s first name and class to help them learn. "
+                    f"You're now linked to {student_name} (Grade {student.current_grade}). "
+                    f"We'll send a quick diagnostic quiz soon to find where {student_name} needs support.\n\n"
+                    f"We only use {student_name}'s first name and class to help them learn. "
                     f"Your info is private.\n\n"
                     f"Thank you! 🙏"
                 ),
