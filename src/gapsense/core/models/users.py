@@ -28,11 +28,13 @@ class Teacher(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
 
     __tablename__ = "teachers"
 
-    school_id: Mapped[UUID] = mapped_column(ForeignKey("schools.id"), nullable=False)
+    school_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("schools.id"), nullable=True, comment="Set during onboarding via invitation code"
+    )
 
     # Identity
-    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, comment="WhatsApp number")
     phone_verified: Mapped[bool] = mapped_column(default=False)
 
