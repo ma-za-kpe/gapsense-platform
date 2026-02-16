@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 from sqlalchemy.orm.attributes import flag_modified
 
 from gapsense.core.models import Student
+from gapsense.engagement.commands import handle_command, is_command
 from gapsense.engagement.whatsapp_client import WhatsAppClient
 
 logger = logging.getLogger(__name__)
@@ -124,6 +125,14 @@ class FlowExecutor:
             # Check for opt-out (takes precedence over all flows)
             if self._is_opt_out_message(message_type, message_content):
                 return await self._handle_opt_out(parent)
+
+            # Check for commands (RESTART, CANCEL, HELP, STATUS)
+            if (
+                message_type == "text"
+                and isinstance(message_content, str)
+                and is_command(message_content)
+            ):
+                return await self._handle_command(parent, message_content)
 
             # Get current flow state
             current_state = parent.conversation_state or {}
@@ -226,6 +235,76 @@ class FlowExecutor:
                 completed=True,  # Still mark as completed (opt-out succeeded)
                 error=str(e),
             )
+
+    async def _handle_command(self, parent: Parent, command_text: str) -> FlowResult:
+        """Handle error recovery commands (RESTART, CANCEL, HELP, STATUS).
+
+        Args:
+            parent: Parent instance
+            command_text: Command text
+
+        Returns:
+            FlowResult for command handling
+        """
+        current_state = parent.conversation_state or {}
+        has_active_flow = current_state.get("flow") is not None
+        current_step = current_state.get("step")
+
+        # Handle the command
+        cmd_result = handle_command(command_text, has_active_flow, current_step)
+
+        if not cmd_result.handled:
+            # Not a recognized command - let it flow through normal processing
+            return FlowResult(
+                flow_name="COMMAND",
+                message_sent=False,
+                message_id=None,
+                next_step=None,
+                completed=False,
+                error="Command not recognized",
+            )
+
+        # Clear conversation state if requested
+        if cmd_result.clear_state:
+            parent.conversation_state = None
+            await self.db.commit()
+
+        # Send response message if provided
+        if cmd_result.message:
+            client = WhatsAppClient.from_settings()
+            try:
+                message_id = await client.send_text_message(
+                    to=parent.phone,
+                    text=cmd_result.message,
+                )
+
+                return FlowResult(
+                    flow_name="COMMAND",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step=None,
+                    completed=True,
+                    error=None,
+                )
+            except Exception as e:
+                logger.error(f"Failed to send command response to {parent.phone}: {e}")
+                return FlowResult(
+                    flow_name="COMMAND",
+                    message_sent=False,
+                    message_id=None,
+                    next_step=None,
+                    completed=True,
+                    error=str(e),
+                )
+
+        return FlowResult(
+            flow_name="COMMAND",
+            message_sent=False,
+            message_id=None,
+            next_step=None,
+            completed=True,
+            error=None,
+        )
 
     async def _start_new_flow(
         self,

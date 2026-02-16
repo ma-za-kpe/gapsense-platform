@@ -31,6 +31,7 @@ from gapsense.core.validation import (
     validate_student_count,
     validate_student_name,
 )
+from gapsense.engagement.commands import handle_command, is_command
 from gapsense.engagement.whatsapp_client import WhatsAppClient
 
 logger = logging.getLogger(__name__)
@@ -86,6 +87,14 @@ class TeacherFlowExecutor:
             TeacherFlowResult with processing outcome
         """
         try:
+            # Check for commands (RESTART, CANCEL, HELP, STATUS)
+            if (
+                message_type == "text"
+                and isinstance(message_content, str)
+                and is_command(message_content)
+            ):
+                return await self._handle_teacher_command(teacher, message_content)
+
             # Get current flow state
             current_state = teacher.conversation_state or {}
             current_flow = current_state.get("flow")
@@ -609,4 +618,72 @@ class TeacherFlowExecutor:
             message_id=message_id,
             next_step=None,
             completed=True,
+        )
+
+    async def _handle_teacher_command(
+        self, teacher: Teacher, command_text: str
+    ) -> TeacherFlowResult:
+        """Handle error recovery commands (RESTART, CANCEL, HELP, STATUS).
+
+        Args:
+            teacher: Teacher instance
+            command_text: Command text
+
+        Returns:
+            TeacherFlowResult for command handling
+        """
+        current_state = teacher.conversation_state or {}
+        has_active_flow = current_state.get("flow") is not None
+        current_step = current_state.get("step")
+
+        # Handle the command
+        cmd_result = handle_command(command_text, has_active_flow, current_step)
+
+        if not cmd_result.handled:
+            # Not a recognized command - let it flow through normal processing
+            return TeacherFlowResult(
+                flow_name="COMMAND",
+                message_sent=False,
+                message_id=None,
+                next_step=None,
+                completed=False,
+                error="Command not recognized",
+            )
+
+        # Clear conversation state if requested
+        if cmd_result.clear_state:
+            teacher.conversation_state = None
+            await self.db.commit()
+
+        # Send response message if provided
+        if cmd_result.message:
+            try:
+                message_id = await self.whatsapp.send_text(teacher.phone, cmd_result.message)
+
+                return TeacherFlowResult(
+                    flow_name="COMMAND",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step=None,
+                    completed=True,
+                    error=None,
+                )
+            except Exception as e:
+                logger.error(f"Failed to send command response to {teacher.phone}: {e}")
+                return TeacherFlowResult(
+                    flow_name="COMMAND",
+                    message_sent=False,
+                    message_id=None,
+                    next_step=None,
+                    completed=True,
+                    error=str(e),
+                )
+
+        return TeacherFlowResult(
+            flow_name="COMMAND",
+            message_sent=False,
+            message_id=None,
+            next_step=None,
+            completed=True,
+            error=None,
         )
