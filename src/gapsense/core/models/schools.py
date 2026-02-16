@@ -18,11 +18,39 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class GESSchool(Base, TimestampMixin):
+    """GES (Ghana Education Service) School Database.
+
+    Imported from ges.gov.gh - used for autocomplete and validation.
+    Read-only reference data for school registration.
+    """
+
+    __tablename__ = "ges_schools"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    ges_id: Mapped[int] = mapped_column(
+        Integer, unique=True, nullable=False, comment="GES school ID"
+    )
+    name: Mapped[str] = mapped_column(String(300), nullable=False, comment="Official school name")
+    region: Mapped[str] = mapped_column(String(100), nullable=False, comment="Region name")
+    district: Mapped[str] = mapped_column(String(100), nullable=False, comment="District name")
+    school_type: Mapped[str] = mapped_column(
+        String(100), nullable=False, comment="School type (e.g., Senior High School)"
+    )
+    courses_offered: Mapped[str | None] = mapped_column(
+        Text, nullable=True, comment="Courses/programs offered"
+    )
+    contact: Mapped[str | None] = mapped_column(
+        String(200), nullable=True, comment="Contact person from GES database"
+    )
 
 
 class Region(Base):
@@ -81,6 +109,19 @@ class School(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         String(30), nullable=True, comment="Ghana Education Service school code"
     )
 
+    # Link to GES database (optional - for schools in GES database)
+    ges_school_id: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="FK to ges_schools table"
+    )
+
+    # Registration info (for self-service school registration)
+    registered_by: Mapped[str | None] = mapped_column(
+        String(100), nullable=True, comment="Headmaster/contact who registered"
+    )
+    registered_at: Mapped[str | None] = mapped_column(
+        nullable=True, comment="When school registered in GapSense"
+    )
+
     # Contact
     phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     location_lat: Mapped[float | None] = mapped_column(nullable=True)
@@ -105,3 +146,41 @@ class School(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     students: Mapped[list[Student]] = relationship(
         back_populates="school", cascade="all, delete-orphan"
     )
+    invitations: Mapped[list[SchoolInvitation]] = relationship(
+        back_populates="school", cascade="all, delete-orphan"
+    )
+
+
+class SchoolInvitation(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """School invitation codes for teacher onboarding.
+
+    Generated when school registers, allows teachers to join with a code.
+    """
+
+    __tablename__ = "school_invitations"
+
+    school_id: Mapped[str] = mapped_column(
+        ForeignKey("schools.id", ondelete="CASCADE"), nullable=False
+    )
+    invitation_code: Mapped[str] = mapped_column(
+        String(20), unique=True, nullable=False, comment="e.g., STMARYS-ABC123"
+    )
+
+    created_by: Mapped[str | None] = mapped_column(
+        String(100), nullable=True, comment="Headmaster/contact who created"
+    )
+    expires_at: Mapped[str | None] = mapped_column(
+        nullable=True, comment="Optional expiration date"
+    )
+
+    max_teachers: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="Max number of teachers who can use this code"
+    )
+    teachers_joined: Mapped[int] = mapped_column(
+        Integer, default=0, comment="How many teachers have used this code"
+    )
+
+    is_active: Mapped[bool] = mapped_column(default=True, comment="Can still be used?")
+
+    # Relationship
+    school: Mapped[School] = relationship(back_populates="invitations")

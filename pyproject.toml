@@ -24,6 +24,8 @@ python-jose = {extras = ["cryptography"], version = "^3.3"}
 structlog = "^24.4"
 python-multipart = "^0.0.12"  # Security: fixes CVEs in 0.0.9
 aiofiles = "^24.1"
+beautifulsoup4 = "^4.14.3"
+lxml = "^6.0.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"

@@ -18,7 +18,7 @@ from .curriculum import (
 from .diagnostics import DiagnosticQuestion, DiagnosticSession, GapProfile
 from .engagement import ParentActivity, ParentInteraction
 from .prompts import PromptCategory, PromptTestCase, PromptVersion
-from .schools import District, Region, School
+from .schools import District, GESSchool, Region, School, SchoolInvitation
 from .students import Student
 from .users import Parent, Teacher
 
@@ -38,9 +38,11 @@ __all__ = [
     "CurriculumMisconception",
     "CascadePath",
     # Schools
+    "GESSchool",
     "Region",
     "District",
     "School",
+    "SchoolInvitation",
     # Users
     "Teacher",
     "Parent",
