@@ -74,7 +74,7 @@ class TestWebhookFlowIntegration:
         with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.from_settings.return_value = mock_client
-            mock_client.send_text_message.return_value = "wamid.response123"
+            mock_client.send_template_message.return_value = "wamid.template123"
 
             # Send webhook request
             response = await client.post(
@@ -93,82 +93,13 @@ class TestWebhookFlowIntegration:
             assert parent is not None
             assert parent.conversation_state is not None
             assert parent.conversation_state["flow"] == "FLOW-ONBOARD"
-            assert parent.conversation_state["step"] == "AWAITING_NAME"
+            assert parent.conversation_state["step"] == "AWAITING_OPT_IN"
 
-            # Verify welcome message was sent
-            mock_client.send_text_message.assert_called_once()
-            call_kwargs = mock_client.send_text_message.call_args.kwargs
+            # Verify template welcome message was sent (not regular text)
+            mock_client.send_template_message.assert_called_once()
+            call_kwargs = mock_client.send_template_message.call_args.kwargs
             assert call_kwargs["to"] == "+233501234567"
-            assert "Welcome to GapSense" in call_kwargs["text"]
-
-    @pytest.mark.asyncio
-    async def test_parent_name_collection(
-        self, client: AsyncClient, db_session: AsyncSession
-    ) -> None:
-        """Test collecting parent's name during onboarding."""
-        # Create parent in AWAITING_NAME state
-        parent = Parent(
-            phone="+233501234567",
-            conversation_state={
-                "flow": "FLOW-ONBOARD",
-                "step": "AWAITING_NAME",
-                "data": {},
-            },
-        )
-        db_session.add(parent)
-        await db_session.commit()
-
-        # Setup webhook payload with name
-        webhook_payload = {
-            "object": "whatsapp_business_account",
-            "entry": [
-                {
-                    "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
-                    "changes": [
-                        {
-                            "value": {
-                                "messages": [
-                                    {
-                                        "from": "+233501234567",
-                                        "id": "wamid.test456",
-                                        "type": "text",
-                                        "text": {"body": "Auntie Ama"},
-                                    }
-                                ],
-                            },
-                            "field": "messages",
-                        }
-                    ],
-                }
-            ],
-        }
-
-        # Mock WhatsAppClient
-        with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client_class.from_settings.return_value = mock_client
-            mock_client.send_list_message.return_value = "wamid.response456"
-
-            # Send webhook request
-            response = await client.post(
-                "/v1/webhooks/whatsapp",
-                json=webhook_payload,
-            )
-
-            assert response.status_code == 200
-
-            # Verify name was saved
-            await db_session.refresh(parent)
-            assert parent.preferred_name == "Auntie Ama"
-            assert parent.conversation_state is not None
-            assert parent.conversation_state["data"]["name"] == "Auntie Ama"
-            assert parent.conversation_state["step"] == "AWAITING_LANGUAGE"
-
-            # Verify language selection list was sent
-            mock_client.send_list_message.assert_called_once()
-            call_kwargs = mock_client.send_list_message.call_args.kwargs
-            assert "Auntie Ama" in call_kwargs["header"]
-            assert "language" in call_kwargs["body"].lower()
+            assert call_kwargs["template_name"] == "gapsense_welcome"
 
     @pytest.mark.asyncio
     async def test_parent_opt_out_flow(self, client: AsyncClient, db_session: AsyncSession) -> None:
@@ -338,7 +269,7 @@ class TestWebhookFlowIntegration:
         with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.from_settings.return_value = mock_client
-            mock_client.send_text_message.return_value = "wamid.response"
+            mock_client.send_template_message.return_value = "wamid.template"
 
             # Send webhook request
             response = await client.post(
@@ -359,29 +290,35 @@ class TestWebhookFlowIntegration:
             parent2 = result2.scalar_one()
             assert parent2 is not None
 
-            # Verify messages were sent to both
-            assert mock_client.send_text_message.call_count == 2
+            # Verify template messages were sent to both
+            assert mock_client.send_template_message.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_diagnostic_consent_persistence(
+    async def test_complete_onboarding_creates_student(
         self, client: AsyncClient, db_session: AsyncSession
     ) -> None:
-        """Test that diagnostic consent is persisted to database after complete onboarding."""
-        # Create parent in AWAITING_CONSENT state
+        """Test that completing onboarding creates a Student record."""
+        from gapsense.core.models import Student
+
+        # Create parent at final step (AWAITING_LANGUAGE) with all child data collected
         parent = Parent(
             phone="+233501234567",
-            preferred_name="Auntie Ama",
-            preferred_language="en",
+            opted_in=True,
             conversation_state={
                 "flow": "FLOW-ONBOARD",
-                "step": "AWAITING_CONSENT",
-                "data": {"name": "Auntie Ama", "language": "en"},
+                "step": "AWAITING_LANGUAGE",
+                "data": {
+                    "child_name": "Kwame",
+                    "child_age": 7,
+                    "child_grade": "B2",
+                },
             },
         )
         db_session.add(parent)
         await db_session.commit()
+        parent_id = parent.id
 
-        # Setup webhook payload with consent given
+        # Setup webhook payload with language selection (matches WhatsApp API format)
         webhook_payload = {
             "object": "whatsapp_business_account",
             "entry": [
@@ -390,16 +327,22 @@ class TestWebhookFlowIntegration:
                     "changes": [
                         {
                             "value": {
+                                "messaging_product": "whatsapp",
+                                "metadata": {
+                                    "display_phone_number": "15551234567",
+                                    "phone_number_id": "PHONE_NUMBER_ID",
+                                },
                                 "messages": [
                                     {
                                         "from": "+233501234567",
-                                        "id": "wamid.consent123",
+                                        "id": "wamid.language123",
+                                        "timestamp": "1234567890",
                                         "type": "interactive",
                                         "interactive": {
                                             "type": "button_reply",
                                             "button_reply": {
-                                                "id": "consent_yes",
-                                                "title": "Yes, I consent",
+                                                "id": "lang_twi",
+                                                "title": "Twi",
                                             },
                                         },
                                     }
@@ -416,7 +359,7 @@ class TestWebhookFlowIntegration:
         with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.from_settings.return_value = mock_client
-            mock_client.send_text_message.return_value = "wamid.response_consent"
+            mock_client.send_text_message.return_value = "wamid.completion"
 
             # Send webhook request
             response = await client.post(
@@ -426,11 +369,16 @@ class TestWebhookFlowIntegration:
 
             assert response.status_code == 200
 
-            # CRITICAL: Verify diagnostic consent was persisted to database
+            # CRITICAL: Verify Student was created
             await db_session.refresh(parent)
-            assert parent.diagnostic_consent is True
-            assert parent.diagnostic_consent_at is not None
+            assert parent.preferred_language == "tw"
             assert parent.onboarded_at is not None
-            assert parent.opted_in is True
-            assert parent.opted_in_at is not None
             assert parent.conversation_state is None  # Flow completed
+
+            # Verify Student record exists
+            stmt = select(Student).where(Student.primary_parent_id == parent_id)
+            result = await db_session.execute(stmt)
+            student = result.scalar_one()
+            assert student.first_name == "Kwame"
+            assert student.age == 7
+            assert student.current_grade == "B2"

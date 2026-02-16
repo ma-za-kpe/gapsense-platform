@@ -258,6 +258,35 @@ class WhatsAppClient:
 
         return await self._send_request(payload)
 
+    async def send_template_message(
+        self,
+        *,
+        to: str,
+        template_name: str,
+        language_code: str,
+        parameters: list[dict[str, str]] | None = None,
+    ) -> str:
+        """Alias for send_template() for backward compatibility.
+
+        Args:
+            to: Phone number in international format
+            template_name: Template name (e.g., "gapsense_welcome")
+            language_code: Language code (e.g., "en", "tw")
+            parameters: Optional template parameters
+
+        Returns:
+            WhatsApp message ID
+
+        Raises:
+            WhatsAppError: If API request fails
+        """
+        return await self.send_template(
+            to=to,
+            template_name=template_name,
+            language_code=language_code,
+            parameters=parameters,
+        )
+
     async def mark_as_read(self, *, message_id: str) -> bool:
         """Mark a message as read.
 
