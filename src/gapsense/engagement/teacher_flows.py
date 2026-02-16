@@ -229,13 +229,143 @@ class TeacherFlowExecutor:
     async def _collect_school_name(self, teacher: Teacher, school_name: str) -> TeacherFlowResult:
         """Collect school name and find/create school.
 
+        Now supports invitation codes for school-initiated onboarding.
+        If teacher sends invitation code (e.g., "STMARYS-ABC123"), automatically link to school.
+
         Args:
             teacher: Teacher in onboarding
-            school_name: School name provided
+            school_name: School name OR invitation code provided
 
         Returns:
             TeacherFlowResult
         """
+        import re
+
+        from gapsense.core.models.schools import SchoolInvitation
+        from gapsense.engagement.invitation_codes import validate_invitation_code
+
+        # Step 1: Check if input is an invitation code
+        # Pattern: SCHOOLCODE-XXX123 (1-8 chars, dash, 6 alphanumeric)
+        invitation_code_pattern = r"\b([A-Z0-9]{1,8}-[A-Z0-9]{6})\b"
+        code_match = re.search(invitation_code_pattern, school_name.upper())
+
+        if code_match:
+            invitation_code = code_match.group(1)
+
+            # Validate format first
+            if validate_invitation_code(invitation_code):
+                # Validate against database
+                stmt = select(SchoolInvitation).where(
+                    SchoolInvitation.invitation_code == invitation_code
+                )
+                result = await self.db.execute(stmt)
+                invitation = result.scalar_one_or_none()
+
+                if invitation and invitation.is_active:
+                    # Check expiry
+                    from datetime import UTC, datetime
+
+                    if invitation.expires_at:
+                        try:
+                            expires_at = datetime.fromisoformat(invitation.expires_at)
+                            if expires_at < datetime.now(UTC):
+                                message = (
+                                    f"❌ Invitation code {invitation_code} has expired.\n\n"
+                                    "Please contact your headmaster for a new code, "
+                                    "or send your school name to continue."
+                                )
+                                message_id = await self.whatsapp.send_text_message(
+                                    to=teacher.phone, text=message
+                                )
+                                return TeacherFlowResult(
+                                    flow_name="FLOW-TEACHER-ONBOARD",
+                                    message_sent=True,
+                                    message_id=message_id,
+                                    next_step="COLLECT_SCHOOL",
+                                    completed=False,
+                                    error="Invitation code expired",
+                                )
+                        except (ValueError, TypeError):
+                            pass  # Invalid date format, continue
+
+                    # Check max teachers limit
+                    if (
+                        invitation.max_teachers is not None
+                        and invitation.teachers_joined >= invitation.max_teachers
+                    ):
+                        message = (
+                            f"❌ Invitation code {invitation_code} has reached its limit.\n\n"
+                            "Please contact your headmaster for a new code, "
+                            "or send your school name to continue."
+                        )
+                        message_id = await self.whatsapp.send_text_message(
+                            to=teacher.phone, text=message
+                        )
+                        return TeacherFlowResult(
+                            flow_name="FLOW-TEACHER-ONBOARD",
+                            message_sent=True,
+                            message_id=message_id,
+                            next_step="COLLECT_SCHOOL",
+                            completed=False,
+                            error="Invitation code at max teachers",
+                        )
+
+                    # Valid code! Link teacher to school
+                    stmt = select(School).where(School.id == invitation.school_id)
+                    result = await self.db.execute(stmt)
+                    school = result.scalar_one_or_none()
+
+                    if school:
+                        teacher.school_id = school.id
+
+                        # Increment teachers_joined counter
+                        invitation.teachers_joined += 1
+
+                        # Update conversation state
+                        teacher.conversation_state["step"] = "COLLECT_CLASS"  # type: ignore[index]
+                        teacher.conversation_state["data"]["school_id"] = str(school.id)  # type: ignore[index]
+                        teacher.conversation_state["data"]["school_name"] = school.name  # type: ignore[index]
+                        teacher.conversation_state["data"]["joined_via_code"] = invitation_code  # type: ignore[index]
+                        flag_modified(teacher, "conversation_state")
+                        await self.db.commit()
+
+                        # Success message
+                        message = (
+                            f"✅ Welcome to {school.name}!\n\n"
+                            f"You've successfully joined using invitation code {invitation_code}.\n\n"
+                            "What class do you teach?\n"
+                            "Example: 'JHS 1A' or 'B4'"
+                        )
+
+                        message_id = await self.whatsapp.send_text_message(
+                            to=teacher.phone, text=message
+                        )
+
+                        return TeacherFlowResult(
+                            flow_name="FLOW-TEACHER-ONBOARD",
+                            message_sent=True,
+                            message_id=message_id,
+                            next_step="COLLECT_CLASS",
+                            completed=False,
+                        )
+
+                # Code invalid or not found
+                message = (
+                    f"❌ Invitation code {invitation_code} is not valid.\n\n"
+                    "Please check the code and try again, "
+                    "or send your school name to continue."
+                )
+                message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+                return TeacherFlowResult(
+                    flow_name="FLOW-TEACHER-ONBOARD",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step="COLLECT_SCHOOL",
+                    completed=False,
+                    error="Invalid invitation code",
+                )
+
+        # Step 2: Not an invitation code - proceed with manual school name entry
         # Validate and normalize school name
         try:
             normalized_school_name = validate_school_name(school_name)
