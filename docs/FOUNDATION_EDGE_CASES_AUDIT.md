@@ -494,46 +494,62 @@ Teacher clicks "No, go back" → Can fix the list ✅
 
 ---
 
-### 13. **Abandoned Onboarding Clogs System**
-**Issue:** 50% of parents start but don't finish onboarding.
+### 13. ✅ **Abandoned Onboarding Clogs System** ~🟠 MEDIUM~ **PARTIALLY FIXED**
+**Status:** ✅ PARTIALLY FIXED in Phase D.5
 
-**Database After 1 Month:**
+**Solution Implemented:**
+- ✅ 24-hour session timeout auto-clears stale states
+- ⚠️ Still need: Periodic cleanup job for safety
+
+**Code Locations:**
+- `teacher_flows.py:680-718` - Teacher session expiry
+- `flow_executor.py:1401-1427` - Parent session expiry
+
+**What Changed:**
 ```sql
+-- Before (after 1 month):
 SELECT COUNT(*) FROM parents WHERE conversation_state IS NOT NULL;
--- Result: 500 parents stuck mid-flow
+-- Result: 500 parents stuck forever ❌
 
-SELECT COUNT(*) FROM parents WHERE onboarded_at IS NOT NULL;
--- Result: 200 parents completed
-
-Abandonment rate: 500/(500+200) = 71%
+-- After Phase D.5:
+-- All states >24 hours auto-cleared
+-- Only active sessions remain ✅
 ```
 
-**Impact:**
-- Database fills with incomplete records
-- Performance degrades (queries scan stale states)
-- Memory waste
+**Impact:** Dramatically reduces state accumulation, DB stays cleaner
 
-**Fix:** Automated cleanup job (delete states older than 7 days)
+**Remaining Work:** Add cron job for defensive cleanup (states >7 days)
 
 ---
 
-### 14. **No Way to Check Current Link Status**
-**Issue:** Parent forgets which child they're linked to.
+### 14. ✅ **No Way to Check Current Link Status** ~🟠 MEDIUM~ **FIXED**
+**Status:** ✅ FIXED in Phase B
 
-**What Happens:**
+**Solution Implemented:**
+- ✅ STATUS command shows current onboarding status
+- ✅ Shows linked student information
+- ✅ Works for both parents and teachers
+
+**Code Locations:**
+- `engagement/commands.py` - STATUS command implementation
+
+**How It Works:**
 ```
-Parent (3 months later): "Which child am I linked to?"
-System: [No command to check]
-Parent: Sends random message
-System: [No active flow, sends help or ignores]
+Parent (3 months later): "STATUS"
 
-Parent must:
-  1. Remember from 3 months ago
-  2. Ask teacher
-  3. Contact admin
+System: "✅ You're all set!
+
+        Linked to: Kwame Mensah (JHS1, St. Mary's JHS)
+        Language: Twi
+        Diagnostic consent: Yes
+
+        To change settings or restart, send HELP"
 ```
 
-**Fix:** Add "STATUS" command showing current links
+**Impact:** Self-service status checking, reduces admin burden
+
+**Tests:**
+- ✅ `tests/unit/test_error_recovery_commands.py` - STATUS command coverage
 
 ---
 
@@ -561,8 +577,12 @@ Parent must send "START" and re-onboard entirely
 ### 16. **No Progress Indicators**
 Parent doesn't know how many steps remain.
 
-### 17. **No Help Command**
-Parent stuck, types "HELP" → Ignored
+### 17. ✅ **No Help Command** **FIXED**
+**Status:** ✅ FIXED in Phase B
+
+**Solution:** HELP command provides context-aware assistance
+- Parent stuck → "HELP" → Shows available commands and current status
+- Location: `engagement/commands.py`
 
 ### 18. **Error Messages Not User-Friendly**
 "Student already linked to another parent" → Parent thinks "But I AM the parent!"
@@ -573,9 +593,14 @@ Parent starts, gets interrupted, forgets → No follow-up
 ### 20. **Button Labels Only in English**
 Language selection buttons: "English", "Twi" → Should be in respective languages
 
-### 21. **No Success Summary**
-Teacher uploads 42 students → "Perfect! ✅"
-But what if only 40 were parsed correctly? Teacher doesn't know.
+### 21. ✅ **No Success Summary** **PARTIALLY FIXED**
+**Status:** ✅ PARTIALLY FIXED in Phase C
+
+**Solution:** Confirmation step shows full preview before committing
+- Teacher sees: "I found 42 students: [list]"
+- Shows warnings (count mismatch, duplicates)
+- Still room for improvement: post-creation summary
+- Location: `teacher_flows.py:513-691`
 
 ### 22. **Unclear Student Display Format**
 "Kwame Mensah (JHS1, St. Mary's JHS)" → Too verbose for large lists
@@ -610,8 +635,19 @@ Parent deleted → Student.primary_parent_id becomes invalid
 ### 28. **No Audit Trail**
 "Who linked this student when?" → No way to know
 
-### 29. **No Data Validation**
-Student name can be empty string, single character, 500 characters
+### 29. ✅ **No Data Validation** **PARTIALLY FIXED**
+**Status:** ✅ PARTIALLY FIXED in Phase A
+
+**Solution Implemented:**
+- ✅ School name: 2-100 characters, validated format
+- ✅ Class name: 1-50 characters, validated format
+- ✅ Student count: 1-100, numeric validation
+- ✅ Student name: 1-100 characters, no empty strings
+- ⚠️ Still need: Phone number normalization
+
+**Code Location:** `src/gapsense/core/validation.py`
+
+**Impact:** Prevents empty names, oversized inputs, garbage data
 
 ### 30. **Phone Number Format Inconsistency**
 ```python
@@ -774,29 +810,39 @@ What's the state?
 
 ## 📊 Summary
 
+### Production Readiness: 30% (up from 15% after Phases A-E)
+
+**What Improved:**
+- ✅ Error recovery system (RESTART, CANCEL, HELP, STATUS commands)
+- ✅ Input validation (prevents garbage data)
+- ✅ Confirmation steps (undo capability before commit)
+- ✅ Session management (24-hour auto-cleanup)
+- ✅ Edge case detection (count mismatch, duplicates)
+- ✅ School deduplication (fuzzy matching)
+
 ### By Severity:
 
-**🔴 BLOCKERS (Can't Deploy):** 5
+**🔴 BLOCKERS (Can't Deploy):** 4 (down from 5)
 1. No L1 translations (English-only messages)
 2. No multi-child support
 3. No phone verification
 4. Feature phone incompatibility
-5. No duplicate detection
+5. ~~No duplicate detection~~ ✅ FIXED (Phase D.2)
 
-**🟡 HIGH (Major Issues):** 10
+**🟡 HIGH (Major Issues):** 6 (down from 10)
 - Student name disambiguation
 - No roster updates
-- Conversation state never expires
-- No undo for wrong selection
+- ~~Conversation state never expires~~ ✅ FIXED (Phase D.5)
+- ~~No undo for wrong selection~~ ✅ FIXED (Phase C)
 - Race conditions
 - Message limit overflow
-- No student preview
-- Abandoned onboarding cleanup
-- No status check
+- ~~No student preview~~ ✅ FIXED (Phase C)
+- ~~Abandoned onboarding cleanup~~ ✅ PARTIALLY FIXED (Phase D.5)
+- ~~No status check~~ ✅ FIXED (Phase B)
 - Accidental opt-out
 
 **🟠 MEDIUM (Usability Issues):** 15+
-**🔵 LOW (Polish):** 20+
+**🔵 LOW (Polish):** 20+ (several partially fixed)
 
 ---
 
@@ -804,20 +850,36 @@ What's the state?
 
 **Must Have Before ANY Deployment:**
 
-1. ✅ Add L1 translation system (Twi minimum)
-2. ✅ Add text-only fallback (no interactive buttons required)
-3. ✅ Add phone verification for teachers
-4. ✅ Add multi-child support for parents
-5. ✅ Add duplicate student detection
-6. ✅ Add conversation state expiry (24 hours)
-7. ✅ Add confirmation for student selection
-8. ✅ Add database indexes (primary_parent_id, phone numbers)
-9. ✅ Add rate limiting (10 msg/min per user)
-10. ✅ Add message delivery error handling
+1. ❌ Add L1 translation system (Twi minimum) - **BLOCKER**
+2. ❌ Add text-only fallback (no interactive buttons required) - **BLOCKER**
+3. ❌ Add phone verification for teachers - **BLOCKER**
+4. ❌ Add multi-child support for parents - **BLOCKER**
+5. ✅ Add duplicate student detection - **DONE (Phase D.2)**
+6. ✅ Add conversation state expiry (24 hours) - **DONE (Phase D.5)**
+7. ✅ Add confirmation for student selection - **DONE (Phase C)**
+8. ❌ Add database indexes (primary_parent_id, phone numbers)
+9. ❌ Add rate limiting (10 msg/min per user)
+10. ❌ Add message delivery error handling
 
-**Estimated Effort:** 2-3 weeks additional development
+**Progress:** 3/10 complete (30%)
+
+**Additional UX Improvements Completed (Beyond Minimum):**
+- ✅ Error recovery commands (RESTART, CANCEL, HELP, STATUS)
+- ✅ Input validation (school, class, student names, counts)
+- ✅ Edge case warnings (count mismatch, duplicate names)
+- ✅ School deduplication (fuzzy matching)
+
+**Remaining Critical Work:**
+1. L1 translation system (1-2 weeks)
+2. Feature phone fallback (1 week)
+3. Teacher phone verification (3 days)
+4. Multi-child linking (1 week)
+5. Database optimization (2 days)
+
+**Estimated Effort to Production:** 4-5 weeks
 
 ---
 
 **Last Updated:** February 16, 2026
-**Status:** Foundation MVP (Phases 1-5) Complete, But NOT Production-Ready
+**Status:** Foundation MVP (Phases 1-5) + UX Hardening (Phases A-E) Complete
+**Production Readiness:** 30% (improved from 15%)
