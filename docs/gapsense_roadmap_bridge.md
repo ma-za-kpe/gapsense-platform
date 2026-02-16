@@ -1,7 +1,20 @@
 # GapSense: Technical Roadmap Bridge
 ## Connecting the v2 Conceptual Design to the Technical Blueprint
 
-**Author:** Maku Mazakpe | **Date:** February 2026 | **For:** UNICEF StartUp Lab Cohort 6 Application
+**Author:** Maku Mazakpe | **Date:** February 16, 2026 (UPDATED) | **For:** UNICEF StartUp Lab Cohort 6 Application
+
+---
+
+## 🚨 CRITICAL UPDATE: Specification vs Implementation Status
+
+**This Document Describes:** The v2 vision and the 10 technical deliverables that specify the full system
+**Current Reality:** We are 15% complete on the actual MVP (see [mvp_specification_audit_CRITICAL.md](mvp_specification_audit_CRITICAL.md))
+
+**What's Specified (100%):** All 10 deliverables exist - prompts, architecture, data models, flows
+**What's Implemented (15%):** WhatsApp infrastructure, parent onboarding, database schema
+**What's Missing (85%):** Exercise book scanner, teacher onboarding, Twi voice notes, multimodal AI
+
+This document shows the *path* from MVP → Full Vision. For current implementation status, see [gapsense_technical_roadmap_bridge.md](gapsense_technical_roadmap_bridge.md).
 
 ---
 
@@ -10,6 +23,8 @@
 The GapSense v2 Conceptual Design describes an 18-month vision: an on-device AI diagnostic reasoning partner with 5 school-side channels, 14 parent engagement channels, dual-AI architecture, and coverage across numeracy, literacy, and TVET.
 
 The Technical Blueprint (10 deliverables, ~5,500 lines of specification) provides the engineering foundation to make that vision real. This document maps each deliverable to its role in v2's phased implementation, explains deliberate architectural choices, and shows the credible path from MVP to full vision.
+
+**Note:** This document describes the *specifications and vision*. For what's actually built vs what's needed, see the MVP audit docs.
 
 ---
 
@@ -31,9 +46,11 @@ Skipping to on-device in Phase 1 means training on insufficient data, which mean
 
 ## Phase Mapping
 
-### Phase 1a: Core Engine (Months 1-2) — BUILT
+### Phase 1a: Core Engine (Months 1-5) — 15% IMPLEMENTED
 
 This is what the 10 deliverables specify. The diagnostic reasoning core, the data infrastructure, and the primary parent engagement channel.
+
+**Status:** Specifications complete (100%), Implementation in progress (15%)
 
 | Deliverable | v2 Section Served | What It Enables |
 |---|---|---|
@@ -48,19 +65,19 @@ This is what the 10 deliverables specify. The diagnostic reasoning core, the dat
 | **#9: Test Scenario Matrix** | §10 Success Metrics | 18 scenarios across 5 categories: diagnostic accuracy, parent engagement, conversation flows, API contracts, data integrity. |
 | **#10: Claude Code System Prompt** | All sections | 458-line synthesis prompt that gives Claude Code full context to build the system. References all 9 preceding deliverables. |
 
-**v2 coverage in Phase 1a:**
+**v2 coverage in Phase 1a (SPECIFICATION STATUS, not implementation):**
 
-| v2 Feature | Phase 1a Status |
-|---|---|
-| Exercise Book Scanner (School Channel 1) | ✅ ANALYSIS-001 prompt specified |
-| Teacher Conversation Partner (School Channel 2) | ✅ TEACHER-003 prompt specified |
-| 3-Minute Evening Ritual (Parent Channel 1) | ✅ Full flow: ACT-001 → PARENT-001 → GUARD-001 → PARENT-002 |
-| Dignity-First Framing (Parent Channel 3) | ✅ GUARD-001 at temperature 0.0 enforces Wolf/Aurino on EVERY outbound message |
-| Market Math Activities (Parent Channel 4) | ✅ ACT-001 generates Ghanaian-context activities with household materials |
-| Parent Diagnostic Sensor (Parent Channel 2) | ⚠️ ANALYSIS-002 handles voice notes; cognitive process analysis deferred |
-| NaCCA Curriculum Alignment | ✅ 35-node graph with 6 cascade paths, numeracy fully populated B1-B4 |
-| L1 Language Support | ✅ Templates in Twi, Ewe, Ga, Dagbani, English. L1 math vocabulary guides. |
-| Adaptive Engagement Recovery (Parent Channel 14) | ✅ Re-engagement template + opt-out flow |
+| v2 Feature | Specification Status | Implementation Status |
+|---|---|---|
+| Exercise Book Scanner (School Channel 1) | ✅ ANALYSIS-001 prompt specified | ❌ Not implemented (0%) |
+| Teacher Conversation Partner (School Channel 2) | ✅ TEACHER-003 prompt specified | ❌ Not implemented (0%) |
+| 3-Minute Evening Ritual (Parent Channel 1) | ✅ Full flow: ACT-001 → PARENT-001 → GUARD-001 → PARENT-002 | ❌ Not implemented (0%) |
+| Dignity-First Framing (Parent Channel 3) | ✅ GUARD-001 at temperature 0.0 enforces Wolf/Aurino on EVERY outbound message | ❌ Not implemented (0%) |
+| Market Math Activities (Parent Channel 4) | ✅ ACT-001 generates Ghanaian-context activities with household materials | ❌ Not implemented (0%) |
+| Parent Diagnostic Sensor (Parent Channel 2) | ⚠️ ANALYSIS-002 handles voice notes; cognitive process analysis deferred | ❌ Not implemented (0%) |
+| NaCCA Curriculum Alignment | ✅ 35-node graph with 6 cascade paths, numeracy fully populated B1-B4 | ⚠️ Partial (data files exist, not loaded) |
+| L1 Language Support | ✅ Templates in Twi, Ewe, Ga, Dagbani, English. L1 math vocabulary guides. | ⚠️ Partial (opt-out keywords only) |
+| Adaptive Engagement Recovery (Parent Channel 14) | ✅ Re-engagement template + opt-out flow | ✅ Opt-out flow implemented |
 
 ---
 

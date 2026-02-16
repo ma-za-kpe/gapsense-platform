@@ -16,8 +16,9 @@ from sqlalchemy import select
 
 from gapsense.config import settings
 from gapsense.core.database import get_db
-from gapsense.core.models import Parent
+from gapsense.core.models import Parent, Teacher
 from gapsense.engagement.flow_executor import FlowExecutor
+from gapsense.engagement.teacher_flows import TeacherFlowExecutor
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -137,10 +138,10 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
         db: Database session
 
     Implementation:
-        1. Get or create Parent by phone number
-        2. Extract message content
-        3. Route to FlowExecutor
-        4. FlowExecutor sends response via WhatsAppClient
+        1. Detect user type (teacher or parent) by phone lookup
+        2. Get or create user entity
+        3. Route to appropriate flow executor
+        4. Flow executor sends response via WhatsAppClient
     """
     message_type = message.get("type")
     from_number = message.get("from")
@@ -159,19 +160,31 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
     logger.debug(f"Message content: {content}")
 
     try:
-        # Get or create Parent by phone number
-        parent = await _get_or_create_parent(db, from_number)
+        # Detect user type and route to appropriate executor
+        user_type, user = await _detect_user_type(db, from_number)
 
-        # Initialize FlowExecutor
-        executor = FlowExecutor(db=db)
-
-        # Process message through flow executor
-        result = await executor.process_message(
-            parent=parent,
-            message_type=message_type,
-            message_content=content,
-            message_id=message_id,
-        )
+        if user_type == "teacher":
+            logger.info(f"Routing to TeacherFlowExecutor for {from_number}")
+            executor = TeacherFlowExecutor(db=db)
+            result = await executor.process_teacher_message(
+                teacher=user,  # type: ignore[arg-type]
+                message_type=message_type,
+                message_content=content,
+                message_id=message_id,
+            )
+        elif user_type == "parent":
+            logger.info(f"Routing to ParentFlowExecutor for {from_number}")
+            executor = FlowExecutor(db=db)
+            result = await executor.process_message(
+                parent=user,  # type: ignore[arg-type]
+                message_type=message_type,
+                message_content=content,
+                message_id=message_id,
+            )
+        else:
+            # Unknown user - will be handled by role selection logic
+            logger.warning(f"Unknown user type for {from_number}")
+            return
 
         # Log result
         if result.error:
@@ -179,7 +192,7 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
                 f"Flow execution error for {from_number}: {result.error}",
                 extra={
                     "flow": result.flow_name,
-                    "parent_phone": from_number,
+                    "user_type": user_type,
                     "message_id": message_id,
                 },
             )
@@ -190,7 +203,7 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
                     "flow": result.flow_name,
                     "next_step": result.next_step,
                     "message_sent": result.message_sent,
-                    "parent_phone": from_number,
+                    "user_type": user_type,
                 },
             )
 
@@ -200,6 +213,67 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
             exc_info=True,
             extra={"message_id": message_id, "message_type": message_type},
         )
+
+
+async def _detect_user_type(
+    db: AsyncSession, phone: str
+) -> tuple[str | None, Teacher | Parent | None]:
+    """Detect whether user is a teacher or parent by phone lookup.
+
+    Args:
+        db: Database session
+        phone: WhatsApp phone number
+
+    Returns:
+        Tuple of (user_type, user_entity) where:
+        - user_type: "teacher", "parent", or None
+        - user_entity: Teacher or Parent instance, or None
+
+    Logic:
+        1. Check if phone exists in teachers table
+        2. If not, check if phone exists in parents table
+        3. If not, create new parent (default for unknown users)
+
+    Note:
+        For MVP, unknown users default to parent flow.
+        Teachers must be manually registered in system first.
+    """
+    try:
+        phone = _validate_phone(phone)
+    except ValueError as e:
+        logger.warning(f"Invalid phone number: {e}")
+        return None, None
+
+    # Check if teacher
+    stmt = select(Teacher).where(Teacher.phone == phone).where(Teacher.is_active == True)  # noqa: E712
+    result = await db.execute(stmt)
+    teacher = result.scalar_one_or_none()
+
+    if teacher:
+        logger.debug(f"Found existing teacher: {phone}")
+        return "teacher", teacher
+
+    # Check if parent
+    stmt = select(Parent).where(Parent.phone == phone)
+    result = await db.execute(stmt)
+    parent = result.scalar_one_or_none()
+
+    if parent:
+        logger.debug(f"Found existing parent: {phone}")
+        return "parent", parent
+
+    # Unknown user - create as parent (default)
+    logger.info(f"Unknown user, creating as parent: {phone}")
+    try:
+        parent = Parent(phone=phone)
+        db.add(parent)
+        await db.commit()
+        await db.refresh(parent)
+        return "parent", parent
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Failed to create parent {phone}: {e}", exc_info=True)
+        return None, None
 
 
 def _validate_phone(phone: str) -> str:
@@ -240,49 +314,6 @@ def _validate_phone(phone: str) -> str:
         raise ValueError(f"Phone number must contain only digits after +: {phone}")
 
     return phone
-
-
-async def _get_or_create_parent(db: AsyncSession, phone: str) -> Parent:
-    """Get or create Parent by phone number.
-
-    Args:
-        db: Database session
-        phone: WhatsApp phone number
-
-    Returns:
-        Parent instance (existing or newly created)
-
-    Raises:
-        ValueError: If phone validation fails
-    """
-    # Validate phone number
-    try:
-        phone = _validate_phone(phone)
-    except ValueError as e:
-        logger.warning(f"Invalid phone number: {e}")
-        raise
-
-    # Try to find existing parent
-    stmt = select(Parent).where(Parent.phone == phone)
-    result = await db.execute(stmt)
-    parent = result.scalar_one_or_none()
-
-    if parent:
-        logger.debug(f"Found existing parent: {phone}")
-        return parent
-
-    # Create new parent with transaction rollback on error
-    try:
-        logger.info(f"Creating new parent: {phone}")
-        parent = Parent(phone=phone)
-        db.add(parent)
-        await db.commit()
-        await db.refresh(parent)
-        return parent
-    except Exception as e:
-        await db.rollback()
-        logger.error(f"Failed to create parent {phone}: {e}", exc_info=True)
-        raise
 
 
 async def _handle_status_update(status: dict[str, Any]) -> None:
