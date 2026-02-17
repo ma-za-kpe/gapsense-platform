@@ -360,8 +360,13 @@ class TestCompleteHappyPath:
                     "gapsense.diagnostic.adaptive.AdaptiveDiagnosticEngine"
                 ) as mock_engine_class:
                     mock_engine = AsyncMock()
-                    mock_engine.get_next_node = AsyncMock(return_value=node_b5)
-                    mock_engine.mark_node_tested = AsyncMock()
+
+                    # Use side_effect with async function to ensure proper mocking
+                    async def mock_get_next_node():
+                        return node_b5
+
+                    mock_engine.get_next_node = mock_get_next_node
+                    mock_engine.mark_node_tested = AsyncMock(return_value=None)
                     mock_engine_class.return_value = mock_engine
 
                     result = await flow_executor.process_message(
@@ -409,8 +414,8 @@ class TestCompleteHappyPath:
                     "gapsense.diagnostic.adaptive.AdaptiveDiagnosticEngine"
                 ) as mock_engine_class:
                     mock_engine = AsyncMock()
-                    mock_engine.get_next_node = AsyncMock(return_value=node_b4)
-                    mock_engine.mark_node_tested = AsyncMock()
+                    mock_engine.get_next_node.return_value = node_b4
+                    mock_engine.mark_node_tested.return_value = None
                     mock_engine_class.return_value = mock_engine
 
                     result = await flow_executor.process_message(
@@ -446,7 +451,7 @@ class TestCompleteHappyPath:
                 "gapsense.diagnostic.adaptive.AdaptiveDiagnosticEngine"
             ) as mock_engine_class:
                 mock_engine = AsyncMock()
-                mock_engine.get_next_node = AsyncMock(return_value=None)  # No more nodes
+                mock_engine.get_next_node.return_value = None  # No more nodes
                 mock_engine_class.return_value = mock_engine
 
                 with patch(
@@ -643,12 +648,8 @@ class TestErrorPaths:
         )
         db_session.add(session)
 
-        # Set parent to diagnostic flow state
-        parent.conversation_state = {
-            "flow": "FLOW-DIAGNOSTIC",  # ✅ Required for diagnostic flow routing
-            "step": "AWAITING_START",
-            "data": {"session_id": str(session.id)},
-        }
+        # Clear parent conversation state to trigger pending session detection
+        parent.conversation_state = None
         await db_session.commit()
 
         # Start diagnostic with no curriculum data
@@ -661,7 +662,7 @@ class TestErrorPaths:
                 "gapsense.diagnostic.adaptive.AdaptiveDiagnosticEngine"
             ) as mock_engine_class:
                 mock_engine = AsyncMock()
-                mock_engine.get_next_node = AsyncMock(return_value=None)  # No nodes available
+                mock_engine.get_next_node.return_value = None  # No nodes available
                 mock_engine_class.return_value = mock_engine
 
                 with patch(
