@@ -6,8 +6,8 @@ Invitation codes follow format: SCHOOLCODE-XXX123
 - XXX123: 3 random letters + 3 random digits
 """
 
-import random
 import re
+import secrets
 import string
 from datetime import UTC, datetime
 
@@ -83,8 +83,8 @@ async def generate_invitation_code(school_name: str, max_retries: int = 10) -> s
 
     for _attempt in range(max_retries):
         # Generate random suffix: 3 letters + 3 digits
-        letters = "".join(random.choices(string.ascii_uppercase, k=3))
-        digits = "".join(random.choices(string.digits, k=3))
+        letters = "".join(secrets.choice(string.ascii_uppercase) for _ in range(3))
+        digits = "".join(secrets.choice(string.digits) for _ in range(3))
         suffix = f"{letters}{digits}"
 
         code = f"{prefix}-{suffix}"
@@ -103,7 +103,7 @@ async def generate_invitation_code(school_name: str, max_retries: int = 10) -> s
     )
 
 
-def validate_invitation_code(code: str, check_db: bool = False) -> bool:
+def validate_invitation_code(code: str) -> bool:
     """Validate invitation code format.
 
     Args:

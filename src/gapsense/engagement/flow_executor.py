@@ -924,7 +924,7 @@ class FlowExecutor:
             # Send student list again
             client = WhatsAppClient.from_settings()
             # TODO: L1 TRANSLATION
-            message_text = (
+            message_text = (  # nosec B608 - String concatenation for WhatsApp message, not SQL
                 "No problem! Let's try again.\n\n"
                 "Please select your child from the list:\n\n" + "\n".join(student_list)
             )
