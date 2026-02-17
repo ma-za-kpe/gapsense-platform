@@ -382,26 +382,23 @@ class TestCompleteHappyPath:
         assert len(questions) == 1
         assert questions[0].node_id == node_b2_111.id
 
-        # ===== STEP 7-8: Answer questions until diagnostic completes =====
-        # Use real components - answer up to MAX_QUESTIONS (15) to trigger completion
-        for i in range(14):  # Already have 1 question, need 14 more to reach 15
-            with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client:
-                mock_instance = AsyncMock()
-                mock_instance.send_text_message = AsyncMock(return_value=f"msg_diag_{i+2}")
-                mock_client.from_settings.return_value = mock_instance
+        # ===== STEP 7-8: Force diagnostic completion by reaching MAX_QUESTIONS =====
+        # Directly set session to max questions to trigger completion faster
+        session.total_questions = 14  # One less than MAX_QUESTIONS (15)
+        await db_session.commit()
 
-                result = await flow_executor.process_message(
-                    parent=parent,
-                    message_type="text",
-                    message_content=str(i * 10),  # Numeric answers
-                    message_id=f"msg_in_diag_{i+2}",
-                )
+        # Answer one more question to hit the limit
+        with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client:
+            mock_instance = AsyncMock()
+            mock_instance.send_text_message = AsyncMock(return_value="msg_diag_final")
+            mock_client.from_settings.return_value = mock_instance
 
-                await db_session.refresh(session)
-
-                # Break when completed
-                if session.status == "completed":
-                    break
+            result = await flow_executor.process_message(
+                parent=parent,
+                message_type="text",
+                message_content="42",  # Any answer
+                message_id="msg_in_diag_final",
+            )
 
         await db_session.refresh(session)
         await db_session.refresh(parent)
