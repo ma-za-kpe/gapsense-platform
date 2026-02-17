@@ -1680,7 +1680,7 @@ class FlowExecutor:
         from gapsense.diagnostic import AdaptiveDiagnosticEngine
 
         engine = AdaptiveDiagnosticEngine(session, self.db)
-        await engine.mark_node_tested(question.node_id, is_correct)
+        await engine.update_session_state(question.node_id, is_correct)
 
         await self.db.commit()
 
