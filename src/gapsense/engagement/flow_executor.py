@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from gapsense.core.models import Parent, Student
+    from gapsense.core.models import DiagnosticSession, Parent, Student
 
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -1450,7 +1450,7 @@ class FlowExecutor:
             f"(session_id={session.id}, grade={student.current_grade})"
         )
 
-    async def _get_pending_diagnostic_session(self, parent: Parent):
+    async def _get_pending_diagnostic_session(self, parent: Parent) -> DiagnosticSession | None:
         """Check if parent has a pending diagnostic session.
 
         Args:
@@ -1464,24 +1464,26 @@ class FlowExecutor:
         from gapsense.core.models import DiagnosticSession, Student
 
         # Get student linked to this parent
-        stmt = select(Student).where(Student.primary_parent_id == parent.id)
-        result = await self.db.execute(stmt)
-        student = result.scalar_one_or_none()
+        student_stmt = select(Student).where(Student.primary_parent_id == parent.id)
+        student_result = await self.db.execute(student_stmt)
+        student = student_result.scalar_one_or_none()
 
         if not student:
             return None
 
         # Check for pending diagnostic session
-        stmt = (
+        session_stmt = (
             select(DiagnosticSession)
             .where(DiagnosticSession.student_id == student.id)
             .where(DiagnosticSession.status == "pending")
             .order_by(DiagnosticSession.created_at.desc())
         )
-        result = await self.db.execute(stmt)
-        return result.scalar_one_or_none()
+        session_result = await self.db.execute(session_stmt)
+        return session_result.scalar_one_or_none()
 
-    async def _diagnostic_start_session(self, parent: Parent, session) -> FlowResult:
+    async def _diagnostic_start_session(
+        self, parent: Parent, session: DiagnosticSession
+    ) -> FlowResult:
         """Start diagnostic session and send first question.
 
         Args:
@@ -1531,7 +1533,9 @@ class FlowExecutor:
             logger.warning(f"Unknown diagnostic step: {current_step}")
             return await self._send_help_message(parent)
 
-    async def _diagnostic_send_question(self, parent: Parent, session) -> FlowResult:
+    async def _diagnostic_send_question(
+        self, parent: Parent, session: DiagnosticSession
+    ) -> FlowResult:
         """Generate and send next diagnostic question.
 
         Args:
@@ -1570,6 +1574,9 @@ class FlowExecutor:
         self.db.add(question)
 
         # Update conversation state with current question
+        if parent.conversation_state is None:
+            raise ValueError("Parent has no conversation state")
+
         parent.conversation_state["data"]["current_question_id"] = str(question.id)
         parent.conversation_state["data"]["current_node_code"] = next_node.code
         flag_modified(parent, "conversation_state")
@@ -1641,17 +1648,20 @@ class FlowExecutor:
 
         from gapsense.core.models import DiagnosticQuestion, DiagnosticSession
 
+        if parent.conversation_state is None:
+            raise ValueError("Parent has no conversation state")
+
         conversation_data = parent.conversation_state.get("data", {})
         question_id = UUID(conversation_data["current_question_id"])
         session_id = UUID(conversation_data["session_id"])
 
-        stmt = select(DiagnosticQuestion).where(DiagnosticQuestion.id == question_id)
-        result = await self.db.execute(stmt)
-        question = result.scalar_one()
+        question_stmt = select(DiagnosticQuestion).where(DiagnosticQuestion.id == question_id)
+        question_result = await self.db.execute(question_stmt)
+        question = question_result.scalar_one()
 
-        stmt = select(DiagnosticSession).where(DiagnosticSession.id == session_id)
-        result = await self.db.execute(stmt)
-        session = result.scalar_one()
+        session_stmt = select(DiagnosticSession).where(DiagnosticSession.id == session_id)
+        session_result = await self.db.execute(session_stmt)
+        session = session_result.scalar_one()
 
         # Save answer
         question.student_response = answer_text
@@ -1687,7 +1697,9 @@ class FlowExecutor:
         # Send next question
         return await self._diagnostic_send_question(parent, session)
 
-    async def _diagnostic_complete_session(self, parent: Parent, session) -> FlowResult:
+    async def _diagnostic_complete_session(
+        self, parent: Parent, session: DiagnosticSession
+    ) -> FlowResult:
         """Complete diagnostic session and generate gap profile.
 
         Args:

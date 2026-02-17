@@ -60,7 +60,7 @@ class SchoolRegistrationResponse(BaseModel):
 async def search_ges_schools(
     q: str = Query(..., min_length=1, description="Search query"),
     db: AsyncSession = Depends(get_db),  # noqa: B008
-):
+) -> SchoolSearchResponse:
     """
     Search GES schools for autocomplete.
 
@@ -82,7 +82,7 @@ async def search_ges_schools(
 async def register_school(
     data: SchoolRegistrationRequest,
     db: AsyncSession = Depends(get_db),  # noqa: B008
-):
+) -> SchoolRegistrationResponse:
     """
     Register a new school and generate invitation code.
 
@@ -111,16 +111,16 @@ async def register_school(
         from gapsense.core.models.schools import District, Region
 
         # Get default region/district (assuming MVP setup)
-        stmt = select(District).limit(1)
-        result = await db.execute(stmt)
-        district = result.scalar_one_or_none()
+        district_stmt = select(District).limit(1)
+        district_result = await db.execute(district_stmt)
+        district = district_result.scalar_one_or_none()
         if district:
             district_id = district.id
         else:
             # Create default district if none exists (MVP fallback)
-            stmt = select(Region).limit(1)
-            result = await db.execute(stmt)
-            region = result.scalar_one_or_none()
+            region_stmt = select(Region).limit(1)
+            region_result = await db.execute(region_stmt)
+            region = region_result.scalar_one_or_none()
             if region:
                 district = District(region_id=region.id, name="Default District")
                 db.add(district)

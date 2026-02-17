@@ -311,9 +311,9 @@ class TeacherFlowExecutor:
                         )
 
                     # Valid code! Link teacher to school
-                    stmt = select(School).where(School.id == invitation.school_id)
-                    result = await self.db.execute(stmt)
-                    school = result.scalar_one_or_none()
+                    school_stmt = select(School).where(School.id == invitation.school_id)
+                    school_result = await self.db.execute(school_stmt)
+                    school = school_result.scalar_one_or_none()
 
                     if school:
                         teacher.school_id = school.id
@@ -383,32 +383,32 @@ class TeacherFlowExecutor:
 
         # For MVP: Create school if doesn't exist
         # TODO: In production, we'd want to search existing schools first
-        stmt = (
+        school_query_stmt = (
             select(School)
             .where(School.name == normalized_school_name)
             .where(School.is_active.is_(True))
         )
-        result = await self.db.execute(stmt)
-        school = result.scalar_one_or_none()
+        school_query_result = await self.db.execute(school_query_stmt)
+        found_school = school_query_result.scalar_one_or_none()
 
-        if not school:
+        if not found_school:
             # Create new school (minimal info for MVP)
             # TODO: Would need to link to proper district
-            school = School(
+            found_school = School(
                 name=normalized_school_name,
                 district_id=1,  # Default district - TODO: proper district selection
                 school_type="jhs",
                 is_active=True,
             )
-            self.db.add(school)
+            self.db.add(found_school)
             await self.db.flush()
 
         # Update teacher with school
-        teacher.school_id = school.id
+        teacher.school_id = found_school.id
 
         # Update conversation state
         teacher.conversation_state["step"] = "COLLECT_CLASS"  # type: ignore[index]
-        teacher.conversation_state["data"]["school_id"] = str(school.id)  # type: ignore[index]
+        teacher.conversation_state["data"]["school_id"] = str(found_school.id)  # type: ignore[index]
         teacher.conversation_state["data"]["school_name"] = normalized_school_name  # type: ignore[index]
         flag_modified(teacher, "conversation_state")
         await self.db.commit()
