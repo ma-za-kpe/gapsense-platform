@@ -805,8 +805,8 @@ class TeacherFlowExecutor:
             if len(created_students) > 5:
                 student_list_preview += f"\n  ... and {len(created_students) - 5} more"
 
-            message = (  # nosec B608 - String formatting for WhatsApp message, not SQL
-                f"Perfect! ✅ I've created profiles for all {len(created_students)} students:\n\n"
+            message = (
+                f"Perfect! ✅ I've created profiles for all {len(created_students)} students:\n\n"  # nosec B608
                 f"{student_list_preview}\n\n"
                 "Now share this WhatsApp number with parents at your next PTA meeting "
                 "or in your class WhatsApp group.\n\n"
