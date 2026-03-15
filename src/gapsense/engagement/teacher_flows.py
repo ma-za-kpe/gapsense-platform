@@ -1124,7 +1124,13 @@ class TeacherFlowExecutor:
 
             last_scan = ""
             if overview.last_scan_date:
-                days_ago = (datetime.now(UTC) - overview.last_scan_date).days
+                # Handle both timezone-aware and naive datetimes
+                if overview.last_scan_date.tzinfo is None:
+                    # Assume naive datetime is UTC
+                    last_scan_aware = overview.last_scan_date.replace(tzinfo=UTC)
+                else:
+                    last_scan_aware = overview.last_scan_date
+                days_ago = (datetime.now(UTC) - last_scan_aware).days
                 if days_ago == 0:
                     last_scan = "Today"
                 elif days_ago == 1:
