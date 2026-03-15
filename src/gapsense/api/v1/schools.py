@@ -92,10 +92,8 @@ async def register_school(
 
     Returns invitation code for headmaster to share with teachers.
     """
-    # Get district_id from GES school if provided
-    district_id = None
+    # Verify GES school if provided
     if data.ges_school_id:
-        # Verify GES school exists
         stmt = select(GESSchool).where(GESSchool.ges_id == data.ges_school_id)
         result = await db.execute(stmt)
         ges_school = result.scalar_one_or_none()
@@ -105,27 +103,27 @@ async def register_school(
                 status_code=404, detail=f"GES school with ID {data.ges_school_id} not found"
             )
 
-        # Get or create district based on GES data
-        # For MVP, we'll use a default district if not found
-        # TODO: Implement proper district resolution from GES data
-        from gapsense.core.models.schools import District, Region
+    # Get or create district
+    # For MVP, we'll use a default district if not found
+    # TODO: Implement proper district resolution from GES data
+    from gapsense.core.models.schools import District, Region
 
-        # Get default region/district (assuming MVP setup)
-        district_stmt = select(District).limit(1)
-        district_result = await db.execute(district_stmt)
-        district = district_result.scalar_one_or_none()
-        if district:
+    district_id = None
+    district_stmt = select(District).limit(1)
+    district_result = await db.execute(district_stmt)
+    district = district_result.scalar_one_or_none()
+    if district:
+        district_id = district.id
+    else:
+        # Create default district if none exists (MVP fallback)
+        region_stmt = select(Region).limit(1)
+        region_result = await db.execute(region_stmt)
+        region = region_result.scalar_one_or_none()
+        if region:
+            district = District(region_id=region.id, name="Default District")
+            db.add(district)
+            await db.flush()
             district_id = district.id
-        else:
-            # Create default district if none exists (MVP fallback)
-            region_stmt = select(Region).limit(1)
-            region_result = await db.execute(region_stmt)
-            region = region_result.scalar_one_or_none()
-            if region:
-                district = District(region_id=region.id, name="Default District")
-                db.add(district)
-                await db.flush()
-                district_id = district.id
 
     if not district_id:
         raise HTTPException(
@@ -148,7 +146,7 @@ async def register_school(
     await db.flush()  # Get school.id
 
     # Generate invitation code
-    invitation_code = await generate_invitation_code(data.school_name)
+    invitation_code = await generate_invitation_code(data.school_name, db)
 
     # Create invitation record
     invitation = SchoolInvitation(

@@ -9,6 +9,7 @@ Handles teacher-specific flows:
 
 from __future__ import annotations
 
+import base64
 import logging
 import re
 from dataclasses import dataclass
@@ -58,14 +59,23 @@ class TeacherFlowExecutor:
     - Handle teacher conversation partner (future)
     """
 
-    def __init__(self, *, db: AsyncSession):
+    def __init__(self, *, db: AsyncSession, demo_mode: bool = False):
         """Initialize teacher flow executor.
 
         Args:
             db: Database session
+            demo_mode: If True, captures responses instead of sending via WhatsApp
         """
         self.db = db
-        self.whatsapp = WhatsAppClient.from_settings()
+        self.demo_mode = demo_mode
+        self.captured_response: str | None = None
+
+        # In demo mode, use mock client that captures messages
+        if demo_mode:
+            from gapsense.web.mock_whatsapp import MockWhatsAppClient
+            self.whatsapp = MockWhatsAppClient()
+        else:
+            self.whatsapp = WhatsAppClient.from_settings()
 
     async def process_teacher_message(
         self,
@@ -93,13 +103,18 @@ class TeacherFlowExecutor:
             # Update session tracking
             await self._update_session_tracking(teacher)
 
-            # Check for commands (RESTART, CANCEL, HELP, STATUS)
-            if (
-                message_type == "text"
-                and isinstance(message_content, str)
-                and is_command(message_content)
-            ):
-                return await self._handle_teacher_command(teacher, message_content)
+            # Check for commands (RESTART, CANCEL, HELP, STATUS, /STATUS, /GAPS, /STUDENT)
+            if message_type == "text" and isinstance(message_content, str):
+                msg_upper = message_content.strip().upper()
+                # Check for standard commands or teacher reporting commands
+                if is_command(message_content) or msg_upper.startswith(("/STATUS", "/GAPS", "/STUDENT")):
+                    return await self._handle_teacher_command(teacher, message_content)
+
+                # Check for START - always restart onboarding regardless of current flow
+                msg_lower = message_content.strip().lower()
+                if msg_lower in ("start", "hi", "hello"):
+                    # Clear any existing flow state and restart
+                    return await self._start_teacher_onboarding(teacher)
 
             # Get current flow state
             current_state = teacher.conversation_state or {}
@@ -110,12 +125,34 @@ class TeacherFlowExecutor:
                 return await self._continue_teacher_onboarding(
                     teacher, message_type, message_content
                 )
+            elif current_flow == "FLOW-EXERCISE-BOOK-SCAN":
+                return await self._continue_exercise_book_scan(
+                    teacher, message_type, message_content
+                )
             elif current_flow is None:
-                # No active flow - check if starting onboarding
+                # No active flow - check message type
                 if message_type == "text" and isinstance(message_content, str):
                     msg_lower = message_content.strip().lower()
                     if msg_lower in ("start", "hi", "hello"):
                         return await self._start_teacher_onboarding(teacher)
+
+                # Check for image upload (exercise book scan)
+                elif message_type == "image" and isinstance(message_content, dict):
+                    # Only allow if teacher is onboarded
+                    if teacher.onboarded_at is None:
+                        message_id = await self.whatsapp.send_text_message(
+                            to=teacher.phone,
+                            text="Please complete onboarding first by sending START."
+                        )
+                        return TeacherFlowResult(
+                            flow_name="IMAGE_REJECTED",
+                            message_sent=True,
+                            message_id=message_id,
+                            next_step=None,
+                            completed=True,
+                        )
+
+                    return await self._start_exercise_book_scan(teacher, message_content)
 
                 # Unknown message - provide help
                 return await self._send_teacher_help(teacher)
@@ -927,9 +964,14 @@ class TeacherFlowExecutor:
         """
         message = (
             "Welcome to GapSense! 👋\n\n"
-            "I'm your AI teaching assistant for diagnosing student gaps.\n\n"
-            "To get started, send: START\n\n"
-            "Questions? Just ask me anything!"
+            "I'm your AI teaching assistant for identifying student gaps.\n\n"
+            "📚 COMMANDS:\n"
+            "• Send START to begin onboarding\n"
+            "• Send exercise book photos to analyze\n"
+            "• Type /STATUS for class overview\n"
+            "• Type /GAPS for gap breakdown\n"
+            "• Type /STUDENT <name> for individual report\n\n"
+            "Questions? Just ask!"
         )
 
         message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
@@ -945,7 +987,13 @@ class TeacherFlowExecutor:
     async def _handle_teacher_command(
         self, teacher: Teacher, command_text: str
     ) -> TeacherFlowResult:
-        """Handle error recovery commands (RESTART, CANCEL, HELP, STATUS).
+        """Handle teacher commands including reporting commands.
+
+        Commands:
+        - /STATUS: Class overview
+        - /GAPS: Gap breakdown
+        - /STUDENT <name>: Individual report
+        - RESTART, CANCEL, HELP: Error recovery
 
         Args:
             teacher: Teacher instance
@@ -954,6 +1002,18 @@ class TeacherFlowExecutor:
         Returns:
             TeacherFlowResult for command handling
         """
+        # Handle reporting commands first
+        cmd_upper = command_text.strip().upper()
+
+        if cmd_upper == "/STATUS":
+            return await self._show_class_status(teacher)
+        elif cmd_upper == "/GAPS":
+            return await self._show_gap_breakdown(teacher)
+        elif cmd_upper.startswith("/STUDENT "):
+            student_name = command_text[9:].strip()  # Remove "/STUDENT "
+            return await self._show_student_report(teacher, student_name)
+
+        # Handle standard commands (RESTART, CANCEL, HELP)
         current_state = teacher.conversation_state or {}
         has_active_flow = current_state.get("flow") is not None
         current_step = current_state.get("step")
@@ -1010,6 +1070,546 @@ class TeacherFlowExecutor:
             next_step=None,
             completed=True,
             error=None,
+        )
+
+    async def _show_class_status(self, teacher: Teacher) -> TeacherFlowResult:
+        """Show class overview with gap summary.
+
+        Args:
+            teacher: Teacher requesting status
+
+        Returns:
+            TeacherFlowResult
+        """
+        from gapsense.services.class_gap_analyzer import ClassGapAnalyzer
+
+        analyzer = ClassGapAnalyzer(self.db)
+        overview = await analyzer.get_class_overview(teacher.id)
+
+        if overview.total_students == 0:
+            message = (
+                "📊 CLASS STATUS\n\n"
+                "You haven't added any students yet.\n\n"
+                "Send your student list to get started!"
+            )
+        elif overview.scanned_students == 0:
+            message = (
+                f"📊 {teacher.class_name or 'CLASS'} STATUS\n\n"
+                f"Students: {overview.total_students}\n"
+                f"Scanned: 0\n\n"
+                "📸 Send exercise book photos to start identifying gaps!"
+            )
+        else:
+            # Format common gaps
+            gap_text = ""
+            if overview.common_gaps:
+                gap_text = "\n\nMost common gaps:\n"
+                for gap in overview.common_gaps[:3]:  # Top 3
+                    gap_text += f"• {gap.node_title} ({gap.student_count} students)\n"
+
+            # Format improvement
+            improvement_text = ""
+            if overview.improvement_percentage is not None:
+                if overview.improvement_percentage > 0:
+                    improvement_text = f"\n📈 {overview.improvement_percentage}% improvement this week!"
+                elif overview.improvement_percentage < 0:
+                    improvement_text = (
+                        f"\n📉 {abs(overview.improvement_percentage)}% more gaps this week"
+                    )
+
+            last_scan = ""
+            if overview.last_scan_date:
+                days_ago = (datetime.now(UTC) - overview.last_scan_date).days
+                if days_ago == 0:
+                    last_scan = "Today"
+                elif days_ago == 1:
+                    last_scan = "Yesterday"
+                else:
+                    last_scan = f"{days_ago} days ago"
+
+            message = (
+                f"📊 {teacher.class_name or 'CLASS'} STATUS\n\n"
+                f"Students scanned: {overview.scanned_students}/{overview.total_students}\n"
+                f"Last scan: {last_scan}\n"
+                f"{gap_text}"
+                f"{improvement_text}\n\n"
+                "Type /GAPS for detailed breakdown\n"
+                "Type /STUDENT <name> for individual report"
+            )
+
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+        return TeacherFlowResult(
+            flow_name="STATUS",
+            message_sent=True,
+            message_id=message_id,
+            next_step=None,
+            completed=True,
+        )
+
+    async def _show_gap_breakdown(self, teacher: Teacher) -> TeacherFlowResult:
+        """Show detailed gap breakdown across all students.
+
+        Args:
+            teacher: Teacher requesting breakdown
+
+        Returns:
+            TeacherFlowResult
+        """
+        from gapsense.services.class_gap_analyzer import ClassGapAnalyzer
+
+        analyzer = ClassGapAnalyzer(self.db)
+        gaps = await analyzer.get_gap_breakdown(teacher.id)
+
+        if not gaps:
+            message = (
+                "📊 GAP BREAKDOWN\n\n"
+                "No gaps identified yet.\n\n"
+                "Send exercise book photos to start analyzing student work!"
+            )
+        else:
+            message = f"📊 {teacher.class_name or 'CLASS'} GAP BREAKDOWN\n\n"
+
+            for gap in gaps:
+                message += f"📍 {gap.node_code} - {gap.node_title}\n"
+                message += f"   {gap.student_count} student(s) | Severity: {gap.severity}/10\n\n"
+
+            message += "\n💡 Focus on higher severity gaps first for maximum impact!"
+
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+        return TeacherFlowResult(
+            flow_name="GAPS",
+            message_sent=True,
+            message_id=message_id,
+            next_step=None,
+            completed=True,
+        )
+
+    async def _show_student_report(
+        self, teacher: Teacher, student_name: str
+    ) -> TeacherFlowResult:
+        """Show individual student gap report.
+
+        Args:
+            teacher: Teacher requesting report
+            student_name: Student's first name
+
+        Returns:
+            TeacherFlowResult
+        """
+        from gapsense.services.class_gap_analyzer import ClassGapAnalyzer
+
+        # Find student by name
+        from sqlalchemy import select
+
+        stmt = (
+            select(Student)
+            .where(Student.teacher_id == teacher.id)
+            .where(Student.first_name.ilike(f"%{student_name}%"))
+        )
+        result = await self.db.execute(stmt)
+        student = result.scalar_one_or_none()
+
+        if not student:
+            message = (
+                f"❌ Student '{student_name}' not found in your class.\n\n"
+                "Check the spelling or send your student list again."
+            )
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+            return TeacherFlowResult(
+                flow_name="STUDENT_REPORT",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=True,
+                error="Student not found",
+            )
+
+        # Get student report
+        analyzer = ClassGapAnalyzer(self.db)
+        report = await analyzer.get_student_report(student.id)
+
+        if not report or not report.scan_date:
+            message = (
+                f"📊 REPORT: {student.first_name}\n\n"
+                "No exercise book scanned yet.\n\n"
+                f"Send a photo of {student.first_name}'s work to get started!"
+            )
+        else:
+            # Format scan date
+            days_ago = (datetime.now(UTC) - report.scan_date).days
+            if days_ago == 0:
+                scan_date = "Today"
+            elif days_ago == 1:
+                scan_date = "Yesterday"
+            else:
+                scan_date = f"{days_ago} days ago"
+
+            # Format gaps
+            gap_text = ""
+            if report.gap_list:
+                gap_text = "\n\n📍 Gaps identified:\n"
+                for gap in report.gap_list[:5]:  # Top 5
+                    gap_text += f"• {gap}\n"
+                if len(report.gap_list) > 5:
+                    gap_text += f"... and {len(report.gap_list) - 5} more\n"
+
+            # Format primary gap
+            primary_text = ""
+            if report.primary_gap:
+                primary_text = f"\n\n🎯 PRIMARY GAP (root cause):\n{report.primary_gap}\n"
+
+            # Format recommendations
+            rec_text = ""
+            if report.recommended_actions:
+                rec_text = f"\n\n💡 WHAT TO DO:\n{report.recommended_actions}\n"
+
+            message = (
+                f"📊 REPORT: {student.first_name}\n"
+                f"Last scan: {scan_date}\n"
+                f"{gap_text}"
+                f"{primary_text}"
+                f"{rec_text}\n"
+                f"⏱️ Estimated time: {report.estimated_time}"
+            )
+
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+        return TeacherFlowResult(
+            flow_name="STUDENT_REPORT",
+            message_sent=True,
+            message_id=message_id,
+            next_step=None,
+            completed=True,
+        )
+
+    # ==================== Exercise Book Scan Flow ====================
+
+    async def _start_exercise_book_scan(
+        self, teacher: Teacher, image_content: dict[str, Any]
+    ) -> TeacherFlowResult:
+        """Start exercise book scan flow when teacher sends image.
+
+        Args:
+            teacher: Teacher who sent image
+            image_content: Image message content (contains image_id, mime_type, etc.)
+
+        Returns:
+            TeacherFlowResult
+        """
+        # Get teacher's students for selection
+        stmt = (
+            select(Student)
+            .where(Student.teacher_id == teacher.id)
+            .order_by(Student.first_name)
+        )
+        result = await self.db.execute(stmt)
+        students = result.scalars().all()
+
+        if not students:
+            message = (
+                "📸 Exercise book photo received!\n\n"
+                "But you haven't added any students yet.\n\n"
+                "Please complete onboarding first by sending START."
+            )
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+            return TeacherFlowResult(
+                flow_name="EXERCISE_BOOK_SCAN",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=True,
+                error="No students in class",
+            )
+
+        # Store image in conversation state
+        # In demo mode, also store base64-encoded image_bytes so they survive JSON serialization
+        data_dict = {
+            "image_id": image_content.get("id"),
+            "mime_type": image_content.get("mime_type"),
+            "sha256": image_content.get("sha256"),
+        }
+
+        if self.demo_mode and "image_bytes" in image_content:
+            # Base64 encode the bytes for JSON storage
+            image_bytes = image_content.get("image_bytes")
+            if isinstance(image_bytes, bytes):
+                data_dict["image_bytes_b64"] = base64.b64encode(image_bytes).decode("utf-8")
+
+        teacher.conversation_state = {
+            "flow": "FLOW-EXERCISE-BOOK-SCAN",
+            "step": "SELECT_STUDENT",
+            "data": data_dict,
+        }
+        flag_modified(teacher, "conversation_state")
+        await self.db.commit()
+
+        # Build student selection message
+        message = "📸 Exercise book received!\n\nWhich student is this for?\n\n"
+        for idx, student in enumerate(students, 1):
+            message += f"{idx}. {student.first_name}\n"
+        message += "\nReply with the number (e.g., '1' for first student)"
+
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+        return TeacherFlowResult(
+            flow_name="FLOW-EXERCISE-BOOK-SCAN",
+            message_sent=True,
+            message_id=message_id,
+            next_step="SELECT_STUDENT",
+            completed=False,
+        )
+
+    async def _continue_exercise_book_scan(
+        self,
+        teacher: Teacher,
+        message_type: str,
+        message_content: str | dict[str, Any],
+    ) -> TeacherFlowResult:
+        """Continue exercise book scan flow (student selection).
+
+        Args:
+            teacher: Teacher in scan flow
+            message_type: Message type
+            message_content: Message content
+
+        Returns:
+            TeacherFlowResult
+        """
+        current_step = teacher.conversation_state.get("step")  # type: ignore[union-attr]
+
+        if current_step == "SELECT_STUDENT":
+            # Expect text input with student number
+            if message_type != "text" or not isinstance(message_content, str):
+                message_id = await self.whatsapp.send_text_message(
+                    to=teacher.phone,
+                    text="Please reply with the student number (e.g., '1')"
+                )
+                return TeacherFlowResult(
+                    flow_name="FLOW-EXERCISE-BOOK-SCAN",
+                    message_sent=True,
+                    message_id=message_id,
+                    next_step="SELECT_STUDENT",
+                    completed=False,
+                )
+
+            return await self._process_student_selection(teacher, message_content.strip())
+
+        # Unknown step - reset
+        logger.warning(f"Unknown exercise book scan step: {current_step}. Resetting.")
+        teacher.conversation_state = None
+        await self.db.commit()
+        return await self._send_teacher_help(teacher)
+
+    async def _process_student_selection(
+        self, teacher: Teacher, selection: str
+    ) -> TeacherFlowResult:
+        """Process student selection and trigger analysis.
+
+        Args:
+            teacher: Teacher who made selection
+            selection: Student number or name
+
+        Returns:
+            TeacherFlowResult
+        """
+        # Get students list
+        stmt = (
+            select(Student)
+            .where(Student.teacher_id == teacher.id)
+            .order_by(Student.first_name)
+        )
+        result = await self.db.execute(stmt)
+        students = list(result.scalars().all())
+
+        # Try parsing as number
+        selected_student = None
+        try:
+            student_idx = int(selection) - 1  # Convert to 0-based index
+            if 0 <= student_idx < len(students):
+                selected_student = students[student_idx]
+        except ValueError:
+            # Not a number - try matching by name
+            selection_lower = selection.lower()
+            for student in students:
+                if student.first_name and selection_lower in student.first_name.lower():
+                    selected_student = student
+                    break
+
+        if not selected_student:
+            message = (
+                f"❌ Invalid selection: '{selection}'\n\n"
+                "Please reply with the student number (e.g., '1')"
+            )
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+            return TeacherFlowResult(
+                flow_name="FLOW-EXERCISE-BOOK-SCAN",
+                message_sent=True,
+                message_id=message_id,
+                next_step="SELECT_STUDENT",
+                completed=False,
+                error="Invalid selection",
+            )
+
+        # Get image data from conversation state
+        image_data = teacher.conversation_state.get("data", {})  # type: ignore[union-attr]
+        image_id = image_data.get("image_id")
+
+        if not image_id:
+            message = "❌ Image data lost. Please send the exercise book photo again."
+            message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
+
+            teacher.conversation_state = None
+            await self.db.commit()
+
+            return TeacherFlowResult(
+                flow_name="FLOW-EXERCISE-BOOK-SCAN",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=True,
+                error="Image data lost",
+            )
+
+        # Clear conversation state
+        teacher.conversation_state = None
+        flag_modified(teacher, "conversation_state")
+        await self.db.commit()
+
+        # Trigger analysis
+        return await self._trigger_exercise_book_analysis(
+            teacher, selected_student, image_id, image_data
+        )
+
+    async def _trigger_exercise_book_analysis(
+        self,
+        teacher: Teacher,
+        student: Student,
+        image_id: str,
+        image_data: dict[str, Any],
+    ) -> TeacherFlowResult:
+        """Trigger exercise book analysis via ExerciseBookScanner.
+
+        Args:
+            teacher: Teacher who uploaded image
+            student: Student whose work is being analyzed
+            image_id: WhatsApp image ID
+            image_data: Additional image metadata
+
+        Returns:
+            TeacherFlowResult
+        """
+        # Send confirmation message
+        confirmation = (
+            f"✅ Analyzing {student.first_name}'s exercise book...\n\n"
+            "This will take about 30 seconds. I'll send the results shortly!"
+        )
+        message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=confirmation)
+
+        # Queue exercise book analysis with real AI (Grok)
+        try:
+            from gapsense.ai.async_client import AsyncAIClient
+            from gapsense.ai.prompt_service import PromptService
+            from gapsense.config import settings
+            from gapsense.engagement.exercise_book_scanner import ExerciseBookScanner
+            from gapsense.services.guard_service import GuardService
+            from gapsense.services.media_service import MediaService
+            from gapsense.services.worker_service import WorkerService
+
+            # Download image from WhatsApp (or use demo image bytes)
+            if self.demo_mode:
+                # In demo mode, image_bytes are stored as base64 in conversation state
+                logger.info(f"Demo mode: Using provided image bytes for student {student.id}")
+                image_bytes_b64 = image_data.get("image_bytes_b64")
+                if not image_bytes_b64:
+                    raise ValueError("Demo mode requires image_bytes_b64 in image_data")
+                image_bytes = base64.b64decode(image_bytes_b64)
+            else:
+                image_bytes = await self.whatsapp.download_media(image_id)
+
+            # Initialize AI client
+            ai_client = AsyncAIClient(
+                anthropic_api_key=settings.ANTHROPIC_API_KEY,
+                max_concurrent=10,
+            )
+
+            # Initialize other services
+            media_service = MediaService(settings=settings)
+            prompt_service = PromptService(settings=settings)
+            guard_service = GuardService(ai_client=ai_client, prompt_service=prompt_service)
+
+            # Initialize WorkerService with all required dependencies
+            worker_service = WorkerService(
+                ai_client=ai_client,
+                media_service=media_service,
+                guard_service=guard_service,
+                prompt_service=prompt_service,
+                settings=settings,
+                db=self.db,
+            )
+
+            scanner = ExerciseBookScanner(
+                db=self.db,
+                media_service=media_service,
+                worker_service=worker_service,
+                guard_service=guard_service,
+                ai_client=ai_client,
+                prompt_service=prompt_service,
+            )
+
+            # Trigger analysis
+            from gapsense.core.country_utils import get_country_from_student
+
+            result = await scanner.handle_image_message(
+                teacher=teacher,
+                student=student,
+                image_bytes=image_bytes,
+                filename=f"exercise_book_{student.id}_{image_id}.jpg",
+                content_type=image_data.get("mime_type", "image/jpeg"),
+                country=get_country_from_student(student),
+            )
+
+            if not result.success:
+                raise Exception(result.error or "Unknown error")
+
+            logger.info(
+                f"Exercise book analysis queued for student {student.id} "
+                f"by teacher {teacher.id}: s3_key={result.s3_key}"
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to queue exercise book analysis: {e}", exc_info=True)
+
+            # Send error message to teacher
+            error_msg = (
+                f"❌ Failed to analyze {student.first_name}'s work.\n\n"
+                "Please try again or contact support."
+            )
+            await self.whatsapp.send_text_message(to=teacher.phone, text=error_msg)
+
+            return TeacherFlowResult(
+                flow_name="FLOW-EXERCISE-BOOK-SCAN",
+                message_sent=True,
+                message_id=message_id,
+                next_step=None,
+                completed=True,
+                error=str(e),
+            )
+
+        # Clear flow state - exercise book scan complete
+        teacher.conversation_state = None
+        await self.db.commit()
+
+        return TeacherFlowResult(
+            flow_name="FLOW-EXERCISE-BOOK-SCAN",
+            message_sent=True,
+            message_id=message_id,
+            next_step=None,
+            completed=True,
         )
 
     async def _check_session_expiry(self, teacher: Teacher) -> None:

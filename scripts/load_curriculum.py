@@ -124,7 +124,7 @@ class CurriculumLoader:
     async def _load_strands(
         self, session: AsyncSession, strands: list[dict[str, Any]] | dict[str, Any]
     ) -> None:
-        """Load curriculum strands."""
+        """Load curriculum strands (skip existing)."""
         # Handle both list and dict formats
         if isinstance(strands, dict):
             strands_list = [
@@ -139,7 +139,19 @@ class CurriculumLoader:
         else:
             strands_list = strands
 
+        added = 0
+        skipped = 0
         for strand_data in strands_list:
+            # Check if strand already exists
+            result = await session.execute(
+                select(CurriculumStrand.id).where(
+                    CurriculumStrand.strand_number == strand_data["strand_number"]
+                )
+            )
+            if result.scalar_one_or_none() is not None:
+                skipped += 1
+                continue
+
             strand = CurriculumStrand(
                 strand_number=strand_data["strand_number"],
                 name=strand_data["name"],
@@ -147,13 +159,14 @@ class CurriculumLoader:
                 description=strand_data.get("description"),
             )
             session.add(strand)
+            added += 1
         await session.flush()
-        print(f"  ✅ Loaded {len(strands_list)} strands")
+        print(f"  ✅ Loaded {added} strands (skipped {skipped} existing)")
 
     async def _load_sub_strands(
         self, session: AsyncSession, sub_strands: list[dict[str, Any]] | dict[str, Any]
     ) -> None:
-        """Load curriculum sub-strands."""
+        """Load curriculum sub-strands (skip existing)."""
         # Handle both list and dict formats
         if isinstance(sub_strands, dict):
             # New format: sub_strands_by_phase
@@ -177,6 +190,8 @@ class CurriculumLoader:
         else:
             sub_strands_list = sub_strands
 
+        added = 0
+        skipped = 0
         for sub_strand_data in sub_strands_list:
             # Look up strand_id from strand_number
             result = await session.execute(
@@ -186,6 +201,18 @@ class CurriculumLoader:
             )
             strand_id = result.scalar_one()
 
+            # Check if sub-strand already exists
+            result = await session.execute(
+                select(CurriculumSubStrand.id).where(
+                    CurriculumSubStrand.strand_id == strand_id,
+                    CurriculumSubStrand.sub_strand_number == sub_strand_data["sub_strand_number"],
+                    CurriculumSubStrand.phase == sub_strand_data["phase"],
+                )
+            )
+            if result.scalar_one_or_none() is not None:
+                skipped += 1
+                continue
+
             sub_strand = CurriculumSubStrand(
                 strand_id=strand_id,
                 sub_strand_number=sub_strand_data["sub_strand_number"],
@@ -194,8 +221,9 @@ class CurriculumLoader:
                 description=sub_strand_data.get("description"),
             )
             session.add(sub_strand)
+            added += 1
         await session.flush()
-        print(f"  ✅ Loaded {len(sub_strands_list)} sub-strands")
+        print(f"  ✅ Loaded {added} sub-strands (skipped {skipped} existing)")
 
     async def _load_nodes(
         self, session: AsyncSession, nodes: list[dict[str, Any]] | dict[str, Any]
@@ -213,8 +241,21 @@ class CurriculumLoader:
             nodes_list = nodes
 
         extracted_prerequisites = []
+        added = 0
+        skipped = 0
 
         for node_data in nodes_list:
+            # Check if node already exists
+            result = await session.execute(
+                select(CurriculumNode.id).where(CurriculumNode.code == node_data["code"])
+            )
+            existing_id = result.scalar_one_or_none()
+            if existing_id is not None:
+                # Node exists - add to map for prerequisite linking
+                self.node_id_map[node_data["code"]] = existing_id
+                skipped += 1
+                continue
+
             # Parse code to extract strand and sub-strand numbers
             # Format: B2.1.1.1 = grade.strand.substrand.content
             code_parts = node_data["code"].split(".")
@@ -268,6 +309,7 @@ class CurriculumLoader:
                 population_status=node_data.get("population_status", "skeleton"),
             )
             session.add(node)
+            added += 1
 
             # Extract prerequisites from node (if embedded in node_data)
             if "prerequisites" in node_data and isinstance(node_data["prerequisites"], list):
@@ -282,7 +324,7 @@ class CurriculumLoader:
                         )
 
         await session.flush()
-        print(f"  ✅ Loaded {len(nodes_list)} nodes")
+        print(f"  ✅ Loaded {added} nodes (skipped {skipped} existing)")
 
         if extracted_prerequisites:
             print(f"  📋 Extracted {len(extracted_prerequisites)} prerequisites from nodes")
@@ -292,10 +334,49 @@ class CurriculumLoader:
     async def _load_prerequisites(
         self, session: AsyncSession, prerequisites: list[dict[str, Any]]
     ) -> None:
-        """Load prerequisite edges."""
+        """Load prerequisite edges (supporting cross-curriculum references)."""
+        added = 0
+        skipped = 0
+
         for prereq_data in prerequisites:
-            source_id = self.node_id_map[prereq_data["source"]]
-            target_id = self.node_id_map[prereq_data["target"]]
+            # Get source node ID (check map first, then DB)
+            source_id = self.node_id_map.get(prereq_data["source"])
+            if source_id is None:
+                result = await session.execute(
+                    select(CurriculumNode.id).where(CurriculumNode.code == prereq_data["source"])
+                )
+                source_id = result.scalar_one_or_none()
+                if source_id is None:
+                    print(f"⚠️  Skipping prerequisite: source node {prereq_data['source']} not found")
+                    skipped += 1
+                    continue
+                # Cache for future use
+                self.node_id_map[prereq_data["source"]] = source_id
+
+            # Get target node ID (check map first, then DB)
+            target_id = self.node_id_map.get(prereq_data["target"])
+            if target_id is None:
+                result = await session.execute(
+                    select(CurriculumNode.id).where(CurriculumNode.code == prereq_data["target"])
+                )
+                target_id = result.scalar_one_or_none()
+                if target_id is None:
+                    print(f"⚠️  Skipping prerequisite: target node {prereq_data['target']} not found")
+                    skipped += 1
+                    continue
+                # Cache for future use
+                self.node_id_map[prereq_data["target"]] = target_id
+
+            # Check if prerequisite edge already exists
+            result = await session.execute(
+                select(CurriculumPrerequisite.id).where(
+                    CurriculumPrerequisite.source_node_id == source_id,
+                    CurriculumPrerequisite.target_node_id == target_id,
+                )
+            )
+            if result.scalar_one_or_none() is not None:
+                skipped += 1
+                continue
 
             prereq = CurriculumPrerequisite(
                 source_node_id=source_id,
@@ -305,9 +386,10 @@ class CurriculumLoader:
                 notes=prereq_data.get("notes"),
             )
             session.add(prereq)
+            added += 1
 
         await session.flush()
-        print(f"  ✅ Loaded {len(prerequisites)} prerequisite edges")
+        print(f"  ✅ Loaded {added} prerequisite edges (skipped {skipped})")
 
     async def _load_misconceptions(
         self, session: AsyncSession, misconceptions: list[dict[str, Any]]

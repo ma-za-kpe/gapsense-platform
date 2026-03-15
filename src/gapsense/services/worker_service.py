@@ -17,6 +17,8 @@ from typing import Any
 import structlog
 from aiobotocore.session import get_session
 
+from gapsense.engagement.whatsapp_client import WhatsAppClient
+
 logger = structlog.get_logger(__name__)
 
 # Supported task types
@@ -45,6 +47,7 @@ class WorkerService:
         guard_service: Any,
         prompt_service: Any,
         settings: Any,
+        db: Any = None,
         max_concurrent: int = 5,
     ) -> None:
         self._ai_client = ai_client
@@ -52,6 +55,7 @@ class WorkerService:
         self._guard_service = guard_service
         self._prompt_service = prompt_service
         self._settings = settings
+        self._db = db
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._running = False
         self._session = get_session()
@@ -110,10 +114,25 @@ class WorkerService:
             }
         )
         async with self._session.create_client(**self._client_kwargs()) as client:
-            resp = await client.send_message(
-                QueueUrl=self._queue_url,
-                MessageBody=body,
-            )
+            # If queue_url looks like just a name, resolve it
+            queue_url = self._queue_url
+            if not queue_url.startswith("http"):
+                # It's a queue name, get the URL
+                response = await client.get_queue_url(QueueName=queue_url)
+                queue_url = response["QueueUrl"]
+                logger.debug("resolved_queue_url", name=self._queue_url, url=queue_url)
+
+            # Prepare send_message kwargs
+            send_kwargs = {
+                "QueueUrl": queue_url,
+                "MessageBody": body,
+            }
+
+            # FIFO queues require MessageGroupId
+            if queue_url.endswith(".fifo"):
+                send_kwargs["MessageGroupId"] = task.task_type
+
+            resp = await client.send_message(**send_kwargs)
         msg_id = resp.get("MessageId", "")
         logger.info("task_enqueued", task_type=task.task_type, message_id=msg_id)
         return msg_id
@@ -216,37 +235,204 @@ class WorkerService:
 
     async def _handle_image_analyze(self, task: WorkerTask) -> None:
         """Image analysis: download from S3, send to AI with ANALYSIS-001."""
+        import base64
+        import json
+        from uuid import UUID
+
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+
+        from gapsense.ai.async_client import ImageContent
+        from gapsense.core.models import Student
+        from gapsense.core.models.curriculum import (
+            CurriculumIndicator,
+            CurriculumNode,
+            IndicatorErrorPattern,
+        )
+
         payload = task.payload
         s3_key = payload.get("s3_key", "")
         student_id = payload.get("student_id", "")
-        country = payload.get("country", "GH")
+        country_code = payload.get("country", "GH")
 
         logger.info("image_analyze_start", s3_key=s3_key, student_id=student_id)
 
-        # Download image
+        # 1. Load student with school and teacher to get context
+        result = await self._db.execute(
+            select(Student)
+            .where(Student.id == UUID(student_id))
+            .options(
+                selectinload(Student.school),
+                selectinload(Student.teacher),
+            )
+        )
+        student = result.scalar_one_or_none()
+        if not student:
+            raise ValueError(f"Student {student_id} not found")
+
+        student_grade = student.current_grade  # e.g., "JHS1"
+
+        # Derive country and subject from context
+        from gapsense.core.country_utils import get_country_from_student, get_subject_from_teacher
+
+        country_key = get_country_from_student(student)
+        subject = get_subject_from_teacher(student.teacher, default="mathematics")
+
+        # 2. Download image
         image_bytes = await self._media_service.download(s3_key)
 
-        # Send to AI with ANALYSIS-001 prompt
-        import base64
+        # 3. Load curriculum nodes for this grade/country/subject
+        curriculum_result = await self._db.execute(
+            select(CurriculumNode)
+            .where(
+                CurriculumNode.country == country_key,
+                CurriculumNode.grade == student_grade,
+                CurriculumNode.subject == subject,
+            )
+            .options(
+                selectinload(CurriculumNode.indicators).selectinload(
+                    CurriculumIndicator.error_patterns
+                )
+            )
+            .limit(50)  # Limit to first 50 nodes to avoid token overflow
+        )
+        curriculum_nodes = curriculum_result.scalars().all()
 
-        from gapsense.ai.async_client import ImageContent
+        # 4. Build curriculum_graph JSON for prompt
+        curriculum_graph = []
+        for node in curriculum_nodes:
+            node_data = {
+                "node_id": str(node.id),
+                "code": node.code,
+                "title": node.title,
+                "description": node.description,
+                "indicators": [],
+            }
 
-        rendered = self._prompt_service.render_prompt("ANALYSIS-001", country=country)
+            for indicator in node.indicators:
+                indicator_data = {
+                    "indicator_code": indicator.indicator_code,
+                    "title": indicator.title,
+                    "error_patterns": [
+                        {
+                            "error_description": ep.error_description,
+                            "severity": ep.severity,
+                        }
+                        for ep in indicator.error_patterns
+                    ],
+                }
+                node_data["indicators"].append(indicator_data)
+
+            curriculum_graph.append(node_data)
+
+        curriculum_graph_json = json.dumps(curriculum_graph, indent=2)
+
+        # 5. Render ANALYSIS-001 prompt
+        # PromptService will inject curriculum_authority, curriculum_name, grade_structure from country_config
+        rendered = self._prompt_service.render_prompt(
+            "ANALYSIS-001",
+            country=country_key,
+            extra_context={
+                # Custom variables not in country_config
+                "curriculum_nodes_json": curriculum_graph_json,
+                "current_grade": student_grade,
+                "student_name": student.first_name,
+                "school_name": student.school.name if student.school else "Unknown School",
+            },
+        )
+
+        # 6. Send to AI (detect image format from bytes)
+        # Detect media type from image magic bytes
+        media_type = "image/jpeg"  # default
+        if image_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+            media_type = "image/png"
+        elif image_bytes[:2] == b'\xff\xd8':
+            media_type = "image/jpeg"
+        elif image_bytes[:6] in (b'GIF87a', b'GIF89a'):
+            media_type = "image/gif"
+        elif image_bytes[:4] == b'RIFF' and image_bytes[8:12] == b'WEBP':
+            media_type = "image/webp"
+
         image_b64 = base64.b64encode(image_bytes).decode()
         response = await self._ai_client.generate(
             prompt_id="ANALYSIS-001",
             system=rendered.system_prompt,
-            messages=[{"role": "user", "content": "Analyze this exercise book page."}],
+            messages=[{"role": "user", "content": rendered.user_template}],
             model=rendered.model,
             json_mode=True,
-            images=[ImageContent(data=image_b64, media_type="image/jpeg", source_type="base64")],
+            images=[ImageContent(data=image_b64, media_type=media_type, source_type="base64")],
         )
 
+        # 6b. Log AI usage and cost
+        if response:
+            from gapsense.ai.cost_calculator import calculate_cost
+            from gapsense.core.models import AIUsageLog
+
+            input_cost, output_cost, total_cost = calculate_cost(
+                provider=response.provider,
+                model=response.model,
+                input_tokens=response.input_tokens,
+                output_tokens=response.output_tokens,
+            )
+
+            usage_log = AIUsageLog(
+                student_id=student.id if student else None,
+                teacher_id=student.teacher_id if student and student.teacher_id else None,
+                provider=response.provider,
+                model=response.model,
+                prompt_id=response.prompt_id,
+                input_tokens=response.input_tokens,
+                output_tokens=response.output_tokens,
+                input_cost_usd=input_cost,
+                output_cost_usd=output_cost,
+                total_cost_usd=total_cost,
+                latency_ms=response.latency_ms,
+                success=response.json_parsed is not None,
+                error_message=None,
+            )
+            self._db.add(usage_log)
+            await self._db.flush()
+
+            logger.info(
+                "ai_usage_logged",
+                provider=response.provider,
+                model=response.model,
+                input_tokens=response.input_tokens,
+                output_tokens=response.output_tokens,
+                total_cost_usd=float(total_cost),
+            )
+
+        # 7. Process results
         if response and response.json_parsed:
+            # Log the full Grok response for debugging
+            logger.info(
+                "grok_analysis_response",
+                student_id=student_id,
+                response_keys=list(response.json_parsed.keys()),
+                full_response=response.json_parsed,
+            )
             logger.info(
                 "image_analyze_complete",
                 student_id=student_id,
-                gaps_found=len(response.json_parsed.get("gap_nodes", [])),
+                gaps_found=len(response.json_parsed.get("gap_node_ids", [])),
+            )
+
+            from gapsense.engagement.exercise_book_scanner import ExerciseBookScanner
+
+            scanner = ExerciseBookScanner(
+                db=self._db,
+                media_service=self._media_service,
+                worker_service=self,
+                guard_service=self._guard_service,
+                ai_client=self._ai_client,
+                prompt_service=self._prompt_service,
+            )
+            await scanner.process_analysis_result(
+                student_id=student_id,
+                teacher_phone=payload.get("teacher_phone", ""),
+                analysis=response.json_parsed,
+                country=country_code,
+                language=payload.get("language", "en"),
             )
 
     async def _handle_scheduled_message(self, task: WorkerTask) -> None:
@@ -266,7 +452,11 @@ class WorkerService:
 
         if guard_result.passed:
             logger.info("scheduled_message_delivered")
-            # WhatsApp delivery would happen here
+            client = WhatsAppClient.from_settings()
+            await client.send_text_message(
+                to=payload.get("recipient_phone", ""),
+                text=message,
+            )
         else:
             logger.warning(
                 "scheduled_message_blocked",

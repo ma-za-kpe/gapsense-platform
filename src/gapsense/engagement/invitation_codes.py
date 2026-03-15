@@ -64,11 +64,12 @@ def generate_school_code_prefix(school_name: str, max_length: int = 8) -> str:
     return code[:max_length]
 
 
-async def generate_invitation_code(school_name: str, max_retries: int = 10) -> str:
+async def generate_invitation_code(school_name: str, db, max_retries: int = 10) -> str:
     """Generate unique invitation code for school.
 
     Args:
         school_name: School name to generate code for
+        db: Database session to use
         max_retries: Maximum attempts to generate unique code
 
     Returns:
@@ -88,13 +89,12 @@ async def generate_invitation_code(school_name: str, max_retries: int = 10) -> s
         code = f"{prefix}-{suffix}"
 
         # Check if code already exists in database
-        async for db in get_db():
-            stmt = select(SchoolInvitation).where(SchoolInvitation.invitation_code == code)
-            result = await db.execute(stmt)
-            existing = result.scalar_one_or_none()
+        stmt = select(SchoolInvitation).where(SchoolInvitation.invitation_code == code)
+        result = await db.execute(stmt)
+        existing = result.scalar_one_or_none()
 
-            if not existing:
-                return code
+        if not existing:
+            return code
 
     raise InvitationCodeError(
         f"Could not generate unique code for {school_name} after {max_retries} attempts"

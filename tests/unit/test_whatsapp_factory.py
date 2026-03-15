@@ -40,6 +40,9 @@ class TestWhatsAppProviderFactory:
             mock_settings.TWILIO_ACCOUNT_SID = "ACtest123"
             mock_settings.TWILIO_AUTH_TOKEN = "test_auth_token"
             mock_settings.TWILIO_WHATSAPP_NUMBER = "whatsapp:+14155238886"
+            # Ensure API Key settings are not set (factory prefers API Key over Auth Token)
+            mock_settings.TWILIO_API_KEY_SID = None
+            mock_settings.TWILIO_API_KEY_SECRET = None
 
             provider = WhatsAppProviderFactory.create()
 

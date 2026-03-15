@@ -138,7 +138,7 @@ class TestCompleteHappyPath:
         # Generate invitation code
         from gapsense.engagement.invitation_codes import generate_invitation_code
 
-        invitation_code = await generate_invitation_code(school.name)
+        invitation_code = await generate_invitation_code(school.name, db_session)
 
         invitation = SchoolInvitation(
             school_id=school.id,

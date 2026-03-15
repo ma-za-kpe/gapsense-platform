@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GapSense Analysis Report - {{ student_name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #252526;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .header {
+            border-bottom: 3px double #569cd6;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #4ec9b0;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .separator {
+            color: #569cd6;
+            margin: 20px 0;
+            font-size: 12px;
+        }
+        .section {
+            margin: 25px 0;
+            padding: 15px;
+            background: #1e1e1e;
+            border-left: 3px solid #569cd6;
+        }
+        .section-title {
+            color: #4ec9b0;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        .field {
+            margin: 8px 0;
+            padding-left: 10px;
+        }
+        .field-label {
+            color: #9cdcfe;
+            display: inline-block;
+            width: 180px;
+        }
+        .field-value {
+            color: #ce9178;
+        }
+        .error-item {
+            background: #3c1f1f;
+            border-left: 3px solid #f48771;
+            padding: 12px;
+            margin: 10px 0;
+        }
+        .error-number {
+            color: #f48771;
+            font-weight: bold;
+        }
+        .error-type {
+            color: #dcdcaa;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        .error-desc {
+            color: #d4d4d4;
+            margin-top: 5px;
+        }
+        .pattern-list, .gap-list, .focus-list {
+            padding-left: 20px;
+        }
+        .pattern-list li, .gap-list li, .focus-list li {
+            margin: 5px 0;
+            color: #d4d4d4;
+        }
+        .pattern-list li:before {
+            content: "• ";
+            color: #4ec9b0;
+        }
+        .gap-tag {
+            display: inline-block;
+            background: #264f78;
+            color: #9cdcfe;
+            padding: 4px 10px;
+            margin: 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .severity-high {
+            background: #5a1d1d;
+            color: #f48771;
+        }
+        .severity-medium {
+            background: #5a4d1d;
+            color: #dcdcaa;
+        }
+        .json-block {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            border: 1px solid #3c3c3c;
+        }
+        .success {
+            color: #4ec9b0;
+        }
+        .warning {
+            color: #dcdcaa;
+        }
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .metadata-item {
+            background: #2d2d30;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .back-button {
+            display: inline-block;
+            background: #0e639c;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .back-button:hover {
+            background: #1177bb;
+        }
+        .reasoning-box {
+            background: #2d2d30;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-style: italic;
+            color: #b5cea8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/demo/reports/{{ teacher_phone }}" class="back-button">← Back to Dashboard</a>
+
+        <div class="header">
+            <div class="separator">================================================================================</div>
+            <h1>GAPSENSE EXERCISE BOOK ANALYSIS REPORT</h1>
+            <div class="separator">================================================================================</div>
+        </div>
+
+        <div class="field">
+            <span class="field-label">Generated:</span>
+            <span class="field-value">{{ report.timestamp }}</span>
+        </div>
+        <div class="field">
+            <span class="field-label">Report ID:</span>
+            <span class="field-value">{{ report.report_id }}</span>
+        </div>
+
+        <!-- STUDENT INFORMATION -->
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">STUDENT INFORMATION (Database)</div>
+            <div class="field">
+                <span class="field-label">Student ID:</span>
+                <span class="field-value">{{ report.student.id }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Name:</span>
+                <span class="field-value">{{ report.student.name }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Age:</span>
+                <span class="field-value">{{ report.student.age or 'N/A' }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Gender:</span>
+                <span class="field-value">{{ report.student.gender or 'N/A' }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Current Grade:</span>
+                <span class="field-value">{{ report.student.grade }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">School:</span>
+                <span class="field-value">{{ report.student.school }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">School Type:</span>
+                <span class="field-value">{{ report.student.school_type }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Home Language:</span>
+                <span class="field-value">{{ report.student.home_language or 'N/A' }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">School Language:</span>
+                <span class="field-value">{{ report.student.school_language }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Previous Diagnoses:</span>
+                <span class="field-value">{{ report.student.diagnosis_count }}</span>
+            </div>
+        </div>
+
+        <!-- AI ANALYSIS METADATA -->
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">AI ANALYSIS METADATA (Database)</div>
+            <div class="field">
+                <span class="field-label">Analysis ID:</span>
+                <span class="field-value">{{ report.ai_metadata.analysis_id }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Timestamp:</span>
+                <span class="field-value">{{ report.ai_metadata.timestamp }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Provider:</span>
+                <span class="field-value">{{ report.ai_metadata.provider }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Model:</span>
+                <span class="field-value">{{ report.ai_metadata.model }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Prompt:</span>
+                <span class="field-value">{{ report.ai_metadata.prompt }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Input Tokens:</span>
+                <span class="field-value">{{ report.ai_metadata.input_tokens }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Output Tokens:</span>
+                <span class="field-value">{{ report.ai_metadata.output_tokens }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Total Tokens:</span>
+                <span class="field-value">{{ report.ai_metadata.total_tokens }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Latency:</span>
+                <span class="field-value">{{ report.ai_metadata.latency_ms }}ms ({{ report.ai_metadata.latency_seconds }}s)</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Input Cost:</span>
+                <span class="field-value">${{ report.ai_metadata.input_cost }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Output Cost:</span>
+                <span class="field-value">${{ report.ai_metadata.output_cost }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Total Cost:</span>
+                <span class="field-value">${{ report.ai_metadata.total_cost }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Success:</span>
+                <span class="field-value success">{{ report.ai_metadata.success }}</span>
+            </div>
+        </div>
+
+        <!-- ANALYSIS RESULTS -->
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">ANALYSIS RESULTS</div>
+
+            <div class="field">
+                <span class="field-label">Topic:</span>
+                <span class="field-value">{{ report.analysis.topic }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Readable:</span>
+                <span class="field-value success">{{ report.analysis.readable }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Confidence:</span>
+                <span class="field-value">{{ report.analysis.confidence }}%</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Student Approach:</span>
+                <span class="field-value">{{ report.analysis.student_approach }}</span>
+            </div>
+
+            {% if report.analysis.errors %}
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 13px;">ERRORS IDENTIFIED:</div>
+                {% for error in report.analysis.errors %}
+                <div class="error-item">
+                    <div class="error-number">{{ loop.index }}. {{ error.error_type }}</div>
+                    <div class="error-desc">Line {{ error.line_number }}</div>
+                    <div class="error-desc">{{ error.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if report.analysis.patterns %}
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 13px;">ERROR PATTERNS:</div>
+                <ul class="pattern-list">
+                    {% for pattern in report.analysis.patterns %}
+                    <li>{{ pattern }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if report.analysis.gap_nodes %}
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 13px;">CURRICULUM GAP NODES (NaCCA):</div>
+                <div>
+                    {% for gap in report.analysis.gap_nodes %}
+                    <span class="gap-tag severity-{{ gap.severity }}">{{ gap.code }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if report.analysis.focus_areas %}
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 13px;">REMEDIATION FOCUS AREAS:</div>
+                <ul class="pattern-list">
+                    {% for area in report.analysis.focus_areas %}
+                    <li>{{ area }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if report.analysis.reasoning %}
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 13px;">AI REASONING:</div>
+                <div class="reasoning-box">{{ report.analysis.reasoning }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- HISTORICAL AI USAGE -->
+        {% if report.historical_usage %}
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">HISTORICAL AI USAGE (Last 5 analyses for this student)</div>
+            {% for usage in report.historical_usage %}
+            <div class="field">
+                <span class="field-label">{{ loop.index }}. {{ usage.timestamp }}</span>
+                <span class="field-value">| {{ usage.model }} | {{ usage.prompt }} | ${{ usage.cost }} | {{ usage.latency_ms }}ms | {{ usage.status }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- RAW AI RESPONSE -->
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">RAW AI RESPONSE (JSON)</div>
+            <div class="json-block">
+                <pre>{{ report.raw_response }}</pre>
+            </div>
+        </div>
+
+        <div class="separator">================================================================================</div>
+        <div style="text-align: center; margin: 20px 0; color: #4ec9b0; font-weight: bold;">
+            END OF REPORT
+        </div>
+        <div class="separator">================================================================================</div>
+    </div>
+</body>
+</html>

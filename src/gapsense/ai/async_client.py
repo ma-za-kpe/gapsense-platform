@@ -45,12 +45,11 @@ class AIResponse:
 
 
 class AsyncAIClient:
-    """Async AI client with retry, fallback, concurrency control, and multimodal support."""
+    """Async AI client with retry, concurrency control, and multimodal support."""
 
     def __init__(
         self,
         anthropic_api_key: str,
-        grok_api_key: str | None = None,
         max_concurrent: int = 10,
         timeout_seconds: float = 30.0,
         max_retries: int = 3,
@@ -58,8 +57,6 @@ class AsyncAIClient:
         from anthropic import AsyncAnthropic
 
         self._anthropic = AsyncAnthropic(api_key=anthropic_api_key)
-        self._grok_api_key = grok_api_key
-        self._grok_client: Any | None = None
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._timeout_seconds = timeout_seconds
         self._max_retries = max_retries
@@ -80,12 +77,11 @@ class AsyncAIClient:
         json_mode: bool = False,
         images: list[ImageContent] | None = None,
     ) -> AIResponse | None:
-        """Generate completion with retry, fallback, and logging.
+        """Generate completion with retry and logging.
 
-        Returns None when all providers fail (signals rule-based fallback).
+        Returns None when provider fails (signals rule-based fallback).
         """
         async with self._semaphore:
-            # Try Anthropic first
             response = await self._call_anthropic(
                 prompt_id=prompt_id,
                 system=system,
@@ -96,33 +92,15 @@ class AsyncAIClient:
                 json_mode=json_mode,
                 images=images,
             )
-            if response is not None:
-                return response
 
-            # Fallback to Grok
-            if self._grok_api_key:
-                response = await self._call_grok(
-                    prompt_id=prompt_id,
-                    system=system,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    json_mode=json_mode,
-                )
-                if response is not None:
-                    return response
+            if response is None:
+                logger.warning("anthropic_failed", prompt_id=prompt_id)
 
-            logger.warning(
-                "all_providers_failed",
-                prompt_id=prompt_id,
-            )
-            return None
+            return response
 
     async def close(self) -> None:
         """Close HTTP connection pools."""
         await self._anthropic.close()
-        if self._grok_client is not None:
-            await self._grok_client.close()
 
     # ------------------------------------------------------------------
     # Anthropic provider
@@ -178,11 +156,25 @@ class AsyncAIClient:
                     try:
                         json_parsed = json.loads(text)
                     except json.JSONDecodeError:
-                        logger.warning(
-                            "json_parse_failed",
-                            provider="anthropic",
-                            prompt_id=prompt_id,
-                        )
+                        # Try stripping markdown code blocks (```json ... ```)
+                        import re
+                        stripped = re.sub(r'^```(?:json)?\s*\n?', '', text.strip())
+                        stripped = re.sub(r'\n?```\s*$', '', stripped)
+                        try:
+                            json_parsed = json.loads(stripped)
+                            logger.info(
+                                "json_parse_recovered",
+                                provider="anthropic",
+                                prompt_id=prompt_id,
+                                msg="Stripped markdown code blocks",
+                            )
+                        except json.JSONDecodeError:
+                            logger.warning(
+                                "json_parse_failed",
+                                provider="anthropic",
+                                prompt_id=prompt_id,
+                                text_preview=text[:200],
+                            )
 
                 response = AIResponse(
                     text=text,
@@ -269,97 +261,6 @@ class AsyncAIClient:
             last_error=str(last_error),
         )
         return None
-
-    # ------------------------------------------------------------------
-    # Grok fallback provider
-    # ------------------------------------------------------------------
-
-    async def _call_grok(
-        self,
-        *,
-        prompt_id: str,
-        system: str,
-        messages: list[dict[str, Any]],
-        max_tokens: int,
-        temperature: float,
-        json_mode: bool,
-    ) -> AIResponse | None:
-        if self._grok_client is None:
-            from openai import AsyncOpenAI
-
-            self._grok_client = AsyncOpenAI(
-                api_key=self._grok_api_key,
-                base_url="https://api.x.ai/v1",
-            )
-
-        openai_messages: list[dict[str, Any]] = [{"role": "system", "content": system}]
-        openai_messages.extend(messages)
-
-        kwargs: dict[str, Any] = {
-            "model": "grok-3",
-            "messages": openai_messages,
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-        }
-        if json_mode:
-            kwargs["response_format"] = {"type": "json_object"}
-
-        start = time.perf_counter()
-        try:
-            raw = await asyncio.wait_for(
-                self._grok_client.chat.completions.create(**kwargs),
-                timeout=self._timeout_seconds,
-            )
-            latency_ms = (time.perf_counter() - start) * 1000
-
-            text = raw.choices[0].message.content if raw.choices else ""
-            input_tokens = raw.usage.prompt_tokens if raw.usage else 0
-            output_tokens = raw.usage.completion_tokens if raw.usage else 0
-
-            json_parsed = None
-            if json_mode and text:
-                try:
-                    json_parsed = json.loads(text)
-                except json.JSONDecodeError:
-                    logger.warning(
-                        "json_parse_failed",
-                        provider="grok",
-                        prompt_id=prompt_id,
-                    )
-
-            response = AIResponse(
-                text=text or "",
-                provider="grok",
-                model="grok-3",
-                prompt_id=prompt_id,
-                latency_ms=latency_ms,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                json_parsed=json_parsed,
-            )
-
-            logger.info(
-                "ai_call_success",
-                provider="grok",
-                prompt_id=prompt_id,
-                latency_ms=round(latency_ms, 2),
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                success=True,
-            )
-            return response
-
-        except Exception as exc:
-            latency_ms = (time.perf_counter() - start) * 1000
-            logger.error(
-                "ai_call_failed",
-                provider="grok",
-                prompt_id=prompt_id,
-                latency_ms=round(latency_ms, 2),
-                error=str(exc),
-                success=False,
-            )
-            return None
 
     # ------------------------------------------------------------------
     # Helpers

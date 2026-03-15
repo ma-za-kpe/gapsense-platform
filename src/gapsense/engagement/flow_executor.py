@@ -1749,11 +1749,13 @@ class FlowExecutor:
                 worker_service=WorkerService(),
             )
 
+            from gapsense.core.country_utils import get_country_from_parent
+
             await activity_delivery.deliver_activity(
                 parent=parent,
                 student=student,
                 gap_profile=gap_profile,
-                country="GH",
+                country=get_country_from_parent(parent, student),
                 language=parent.preferred_language or "en",
             )
         except Exception as e:

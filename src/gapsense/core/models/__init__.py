@@ -4,6 +4,7 @@ GapSense SQLAlchemy Models
 All models follow the data model specification in docs/specs/gapsense_data_model.sql
 """
 
+from .ai_usage import AIUsageLog
 from .base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 from .curriculum import (
     CascadePath,
@@ -28,6 +29,8 @@ __all__ = [
     "UUIDPrimaryKeyMixin",
     "TimestampMixin",
     "SoftDeleteMixin",
+    # AI Usage
+    "AIUsageLog",
     # Curriculum
     "CurriculumStrand",
     "CurriculumSubStrand",

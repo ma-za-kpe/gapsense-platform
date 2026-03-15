@@ -75,13 +75,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         from gapsense.ai.async_client import AsyncAIClient
 
         anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
-        grok_key = os.environ.get("GROK_API_KEY")
+
         if anthropic_key:
-            ai_client = AsyncAIClient(
-                anthropic_api_key=anthropic_key,
-                grok_api_key=grok_key,
-            )
-            print("✅ AsyncAIClient initialized")
+            ai_client = AsyncAIClient(anthropic_api_key=anthropic_key)
+            print("✅ AsyncAIClient initialized (Anthropic)")
         else:
             _logger.warning("ai_client_no_key", msg="ANTHROPIC_API_KEY not set")
             print("⚠️ AsyncAIClient: no API key, AI features disabled")
@@ -256,6 +253,7 @@ def create_app() -> FastAPI:
     # Register API routers
     from gapsense.api.v1 import curriculum, diagnostics, parents, schools, teachers
     from gapsense.webhooks import whatsapp
+    from gapsense.web import demo
 
     app.include_router(curriculum.router, prefix="/api/v1/curriculum", tags=["Curriculum"])
     app.include_router(diagnostics.router, prefix="/api/v1/diagnostics", tags=["Diagnostics"])
@@ -263,6 +261,7 @@ def create_app() -> FastAPI:
     app.include_router(schools.router, prefix="/api", tags=["Schools"])
     app.include_router(teachers.router, prefix="/api/v1/teachers", tags=["Teachers"])
     app.include_router(whatsapp.router, prefix="/v1")
+    app.include_router(demo.router)  # Teacher demo UI
 
     return app
 

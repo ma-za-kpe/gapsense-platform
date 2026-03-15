@@ -131,20 +131,47 @@ class ExerciseBookScanner:
 
         from sqlalchemy import select
 
+        from gapsense.core.models import Student
         from gapsense.core.models.diagnostics import GapProfile
+
+        # Get student name for personalized message
+        student_result = await self.db.execute(
+            select(Student).where(Student.id == UUID(student_id))
+        )
+        student = student_result.scalar_one_or_none()
+        student_name = student.first_name if student and student.first_name else "Student"
 
         # Check for unreadable image
         if analysis.get("unreadable"):
             client = WhatsAppClient.from_settings()
             await client.send_text_message(
                 to=teacher_phone,
-                text="📷 The image was too blurry to analyze. Could you retake the photo with better lighting?",
+                text=f"📷 {student_name}'s exercise book was too blurry to analyze. Could you retake the photo with better lighting?",
             )
             return
 
         # Create/update GapProfile with source="exercise_book"
-        gap_nodes = [UUID(code) for code in analysis.get("gap_node_ids", []) if code]
+        # Convert curriculum codes to node UUIDs
+        from gapsense.core.models import CurriculumNode
+
+        gap_codes = analysis.get("gap_node_ids", [])
+        gap_nodes = []
+        if gap_codes:
+            nodes_result = await self.db.execute(
+                select(CurriculumNode.id).where(CurriculumNode.code.in_(gap_codes))
+            )
+            gap_nodes = [row[0] for row in nodes_result.fetchall()]
+
         focus_areas = analysis.get("focus_areas", [])
+
+        # Store analysis metadata for dashboard
+        metadata = {
+            "errors": analysis.get("errors", []),
+            "patterns": analysis.get("patterns", []),
+            "focus_areas": focus_areas,
+            "image_quality": analysis.get("image_quality", "unknown"),
+            "confidence": analysis.get("confidence", 0.0),
+        }
 
         result = await self.db.execute(
             select(GapProfile).where(
@@ -157,6 +184,7 @@ class ExerciseBookScanner:
         if existing:
             existing.gap_nodes = list(set(existing.gap_nodes + gap_nodes))
             existing.source = "exercise_book"
+            existing.analysis_metadata = metadata
         else:
             profile = GapProfile(
                 student_id=UUID(student_id),
@@ -165,33 +193,48 @@ class ExerciseBookScanner:
                 gap_nodes=gap_nodes,
                 mastered_nodes=[],
                 uncertain_nodes=[],
+                analysis_metadata=metadata,
             )
             self.db.add(profile)
 
         await self.db.commit()
 
-        # Send summary to teacher via GuardService
-        errors = analysis.get("errors", [])
-        patterns = analysis.get("patterns", [])
-        summary = self._build_teacher_summary(errors, patterns, focus_areas)
+        # Send WhatsApp message with link to comprehensive dashboard
+        from gapsense.config import settings
 
-        guard_result = await self._guard_service.check(
-            summary,
-            student_context={"student_id": student_id},
-            country=country,
-            language=language,
+        # Build dashboard URL
+        dashboard_url = f"{settings.APP_URL}/demo/reports/{teacher_phone}"
+
+        message = (
+            f"✅ *{student_name}'s Exercise Book Analysis Complete*\n\n"
+            f"📊 View comprehensive report:\n"
+            f"{dashboard_url}\n\n"
+            f"Your dashboard shows:\n"
+            f"• Detailed gap analysis\n"
+            f"• All students overview\n"
+            f"• Focus areas & patterns\n"
+            f"• Priority recommendations"
         )
 
-        if guard_result.passed:
-            client = WhatsAppClient.from_settings()
-            await client.send_text_message(to=teacher_phone, text=summary)
+        # Send via WhatsApp
+        client = WhatsAppClient.from_settings()
+        await client.send_text_message(to=teacher_phone, text=message, preview_url=True)
+
+        # Also log for demo UI polling
+        logger.info(
+            "analysis_complete_message_sent",
+            teacher_phone=teacher_phone,
+            student_name=student_name,
+            dashboard_url=dashboard_url,
+            message=message,
+        )
 
     @staticmethod
     def _build_teacher_summary(
-        errors: list[dict], patterns: list[str], focus_areas: list[str]
+        student_name: str, errors: list[dict], patterns: list[str], focus_areas: list[str]
     ) -> str:
         """Build a human-readable summary for the teacher."""
-        lines = ["📊 Exercise Book Analysis Complete\n"]
+        lines = [f"✅ {student_name}'s Exercise Book Analysis Complete\n"]
 
         if errors:
             lines.append(f"Found {len(errors)} error(s):")
@@ -203,6 +246,8 @@ class ExerciseBookScanner:
             lines.append(f"\nPatterns identified: {', '.join(patterns[:3])}")
 
         if focus_areas:
-            lines.append(f"\nRecommended focus: {', '.join(focus_areas[:3])}")
+            lines.append(f"\n💡 Recommended focus: {', '.join(focus_areas[:3])}")
+
+        lines.append(f"\n📊 For full gap report, type: /STUDENT {student_name}")
 
         return "\n".join(lines)

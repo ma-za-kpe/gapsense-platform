@@ -90,7 +90,7 @@ class TestLoadFromTempDirectory:
             "GH",
             "primary",
             "mathematics",
-            "nodes.json",
+            "populated_nodes_complete.json",  # Fixed: Must use this exact filename
             {
                 "B2.1.1.1": {
                     "title": "Counting up to 1000",
@@ -112,20 +112,21 @@ class TestLoadFromTempDirectory:
 
     @pytest.mark.asyncio
     async def test_load_multiple_files(self, tmp_path: Path) -> None:
+        # Create two different subjects, each with populated_nodes_complete.json
         _write_curriculum_json(
             tmp_path,
             "GH",
             "primary",
             "mathematics",
-            "a.json",
+            "populated_nodes_complete.json",
             {"B2.1.1.1": {"title": "Node A", "description": "Desc A", "severity": 2}},
         )
         _write_curriculum_json(
             tmp_path,
             "GH",
             "primary",
-            "mathematics",
-            "b.json",
+            "english",  # Different subject to create 2 files
+            "populated_nodes_complete.json",
             {"B3.1.1.1": {"title": "Node B", "description": "Desc B", "severity": 4}},
         )
         session = _mock_session_no_existing()
@@ -144,7 +145,7 @@ class TestLoadFromTempDirectory:
             "GH",
             "primary",
             "mathematics",
-            "nodes.json",
+            "populated_nodes_complete.json",
             {"B2.1.1.1": {"title": "GH Node", "description": "Desc", "severity": 3}},
         )
         _write_curriculum_json(
@@ -152,7 +153,7 @@ class TestLoadFromTempDirectory:
             "UG",
             "primary",
             "mathematics",
-            "nodes.json",
+            "populated_nodes_complete.json",
             {"U2.1.1.1": {"title": "UG Node", "description": "Desc", "severity": 3}},
         )
         session = _mock_session_no_existing()
@@ -202,7 +203,7 @@ class TestUpsertLogic:
             "GH",
             "primary",
             "mathematics",
-            "nodes.json",
+            "populated_nodes_complete.json",
             {"B2.1.1.1": {"title": "Node", "description": "Desc", "severity": 3}},
         )
         settings = _make_settings(tmp_path)
@@ -239,12 +240,13 @@ class TestErrorResilience:
             "GH",
             "primary",
             "mathematics",
-            "valid.json",
+            "populated_nodes_complete.json",
             {"B2.1.1.1": {"title": "Valid", "description": "Desc", "severity": 3}},
         )
-        # Write an invalid JSON file
-        bad_dir = tmp_path / "curricula" / "GH" / "primary" / "mathematics"
-        (bad_dir / "invalid.json").write_text("{bad json content")
+        # Write an invalid JSON file (with correct name but bad content)
+        bad_dir = tmp_path / "curricula" / "GH" / "primary" / "english"
+        bad_dir.mkdir(parents=True, exist_ok=True)
+        (bad_dir / "populated_nodes_complete.json").write_text("{bad json content")
 
         session = _mock_session_no_existing()
         settings = _make_settings(tmp_path)
@@ -261,7 +263,7 @@ class TestErrorResilience:
         """A JSON file containing an array instead of object is an error."""
         dir_path = tmp_path / "curricula" / "GH" / "primary" / "mathematics"
         dir_path.mkdir(parents=True)
-        (dir_path / "array.json").write_text(json.dumps([1, 2, 3]))
+        (dir_path / "populated_nodes_complete.json").write_text(json.dumps([1, 2, 3]))
 
         session = _mock_session_no_existing()
         settings = _make_settings(tmp_path)
@@ -274,10 +276,14 @@ class TestErrorResilience:
 
     @pytest.mark.asyncio
     async def test_multiple_invalid_files_counted(self, tmp_path: Path) -> None:
-        bad_dir = tmp_path / "curricula" / "GH" / "primary" / "mathematics"
-        bad_dir.mkdir(parents=True)
-        (bad_dir / "bad1.json").write_text("not json")
-        (bad_dir / "bad2.json").write_text("{also bad")
+        # Create two invalid files in different subjects (must use correct filename)
+        bad_dir1 = tmp_path / "curricula" / "GH" / "primary" / "mathematics"
+        bad_dir1.mkdir(parents=True)
+        (bad_dir1 / "populated_nodes_complete.json").write_text("not json")
+
+        bad_dir2 = tmp_path / "curricula" / "GH" / "primary" / "english"
+        bad_dir2.mkdir(parents=True)
+        (bad_dir2 / "populated_nodes_complete.json").write_text("{also bad")
 
         session = _mock_session_no_existing()
         settings = _make_settings(tmp_path)
@@ -299,7 +305,7 @@ class TestPathToColumnMapping:
             "KE",
             "secondary",
             "english",
-            "nodes.json",
+            "populated_nodes_complete.json",
             {"K1.1.1.1": {"title": "Kenya Node", "description": "Desc", "severity": 2}},
         )
         session = _mock_session_no_existing()
@@ -324,7 +330,7 @@ class TestPathToColumnMapping:
             "GH",
             "primary",
             "mathematics",
-            "nodes.json",
+            "populated_nodes_complete.json",
             {"B4.2.3.1": {"title": "Grade 4 Node", "description": "Desc", "severity": 3}},
         )
         session = _mock_session_no_existing()
@@ -343,7 +349,7 @@ class TestPathToColumnMapping:
             "GH",
             "primary",
             "mathematics",
-            "n.json",
+            "populated_nodes_complete.json",
             {"B1.1.1.1": {"title": "GH", "description": "D", "severity": 1}},
         )
         _write_curriculum_json(
@@ -351,7 +357,7 @@ class TestPathToColumnMapping:
             "NG",
             "primary",
             "mathematics",
-            "n.json",
+            "populated_nodes_complete.json",
             {"N1.1.1.1": {"title": "NG", "description": "D", "severity": 1}},
         )
         session = _mock_session_no_existing()
@@ -383,7 +389,7 @@ class TestCountryConfig:
             "GH",
             "primary",
             "mathematics",
-            "n.json",
+            "populated_nodes_complete.json",
             {"B1.1.1.1": {"title": "Primary", "description": "D", "severity": 1}},
         )
         _write_curriculum_json(
@@ -391,7 +397,7 @@ class TestCountryConfig:
             "GH",
             "secondary",
             "mathematics",
-            "n.json",
+            "populated_nodes_complete.json",
             {"S1.1.1.1": {"title": "Secondary", "description": "D", "severity": 1}},
         )
 
@@ -422,7 +428,7 @@ class TestCountryConfig:
             "GH",
             "primary",
             "mathematics",
-            "n.json",
+            "populated_nodes_complete.json",
             {"B1.1.1.1": {"title": "Math", "description": "D", "severity": 1}},
         )
         _write_curriculum_json(
@@ -430,7 +436,7 @@ class TestCountryConfig:
             "GH",
             "primary",
             "english",
-            "n.json",
+            "populated_nodes_complete.json",
             {"E1.1.1.1": {"title": "English", "description": "D", "severity": 1}},
         )
 

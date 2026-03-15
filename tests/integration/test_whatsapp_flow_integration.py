@@ -74,7 +74,7 @@ class TestWebhookFlowIntegration:
         with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.from_settings.return_value = mock_client
-            mock_client.send_template_message.return_value = "wamid.template123"
+            mock_client.send_text_message.return_value = "wamid.text123"
 
             # Send webhook request
             response = await client.post(
@@ -95,11 +95,11 @@ class TestWebhookFlowIntegration:
             assert parent.conversation_state["flow"] == "FLOW-ONBOARD"
             assert parent.conversation_state["step"] == "AWAITING_OPT_IN"
 
-            # Verify template welcome message was sent (not regular text)
-            mock_client.send_template_message.assert_called_once()
-            call_kwargs = mock_client.send_template_message.call_args.kwargs
+            # Verify text welcome message was sent (using 24hr window, not template)
+            mock_client.send_text_message.assert_called_once()
+            call_kwargs = mock_client.send_text_message.call_args.kwargs
             assert call_kwargs["to"] == "+233501234567"
-            assert call_kwargs["template_name"] == "gapsense_welcome"
+            assert "Welcome to GapSense" in call_kwargs["text"]
 
     @pytest.mark.asyncio
     async def test_parent_opt_out_flow(self, client: AsyncClient, db_session: AsyncSession) -> None:
@@ -269,7 +269,7 @@ class TestWebhookFlowIntegration:
         with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.from_settings.return_value = mock_client
-            mock_client.send_template_message.return_value = "wamid.template"
+            mock_client.send_text_message.return_value = "wamid.text"
 
             # Send webhook request
             response = await client.post(
@@ -290,8 +290,8 @@ class TestWebhookFlowIntegration:
             parent2 = result2.scalar_one()
             assert parent2 is not None
 
-            # Verify template messages were sent to both
-            assert mock_client.send_template_message.call_count == 2
+            # Verify text messages were sent to both (using 24hr window, not template)
+            assert mock_client.send_text_message.call_count == 2
 
     @pytest.mark.asyncio
     async def test_complete_onboarding_links_to_student(

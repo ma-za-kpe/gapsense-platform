@@ -168,16 +168,8 @@ async def _handle_message(
 
         result: TeacherFlowResult | FlowResult
         if user_type == "teacher":
-            # Special handling for teacher image messages (Exercise Book Scanner)
-            if message_type == "image":
-                await _handle_teacher_image(user, content, db)  # type: ignore[arg-type]
-                return
-
-            # Special handling for teacher text messages (Conversation Partner)
-            if message_type == "text":
-                await _handle_teacher_conversation(user, content, db)  # type: ignore[arg-type]
-                return
-
+            # Route all teacher messages through TeacherFlowExecutor
+            # (including images for exercise book scanning with student selection)
             logger.info(f"Routing to TeacherFlowExecutor for {from_number}")
             teacher_executor = TeacherFlowExecutor(db=db)
             result = await teacher_executor.process_teacher_message(
@@ -430,7 +422,7 @@ async def _handle_teacher_image(
 
     try:
         # Extract media info (URL for Twilio, ID for Meta)
-        media_id = image_content.get("id") or image_content.get("url")
+        media_id = image_content.get("url") or image_content.get("id")
         mime_type = image_content.get("mime_type", "image/jpeg")
 
         if not media_id:
@@ -461,13 +453,19 @@ async def _handle_teacher_image(
             return
 
         # Initialize ExerciseBookScanner with services
+        ai_client = AsyncAIClient(anthropic_api_key=settings.ANTHROPIC_API_KEY)
+        prompt_service = PromptService(settings=settings)
+        guard_service = GuardService(ai_client=ai_client, prompt_service=prompt_service)
+        media_service = MediaService(settings=settings)
+        worker_service = WorkerService(ai_client=ai_client, media_service=media_service, guard_service=guard_service, prompt_service=prompt_service, settings=settings, db=db)
+
         scanner = ExerciseBookScanner(
             db=db,
-            media_service=MediaService(),
-            worker_service=WorkerService(),
-            guard_service=GuardService(),
-            ai_client=AsyncAIClient(),
-            prompt_service=PromptService(),
+            media_service=media_service,
+            worker_service=worker_service,
+            guard_service=guard_service,
+            ai_client=ai_client,
+            prompt_service=prompt_service,
         )
 
         # Process image
@@ -527,10 +525,12 @@ async def _handle_teacher_conversation(teacher: Teacher, message: str, db: Async
         )
 
         # Handle conversation turn
+        from gapsense.core.country_utils import get_country_from_teacher
+
         result = await conversation.handle_teacher_message(
             teacher=teacher,
             message=message,
-            country="GH",
+            country=get_country_from_teacher(teacher),
             language="en",
         )
 
@@ -570,7 +570,7 @@ async def _handle_parent_voice(
 
     try:
         # Extract media info (URL for Twilio, ID for Meta)
-        media_id = voice_content.get("id") or voice_content.get("url")
+        media_id = voice_content.get("url") or voice_content.get("id")
         mime_type = voice_content.get("mime_type", "audio/ogg")
 
         if not media_id:
@@ -584,7 +584,7 @@ async def _handle_parent_voice(
         # Get parent's student
         stmt = (
             select(Student)
-            .where(Student.parent_id == parent.id)
+            .where(Student.primary_parent_id == parent.id)
             .order_by(Student.created_at.desc())  # type: ignore[attr-defined]
             .limit(1)
         )
@@ -600,23 +600,31 @@ async def _handle_parent_voice(
             return
 
         # Initialize VoiceMicroCoaching with services
+        ai_client = AsyncAIClient(anthropic_api_key=settings.ANTHROPIC_API_KEY)
+        prompt_service = PromptService(settings=settings)
+        guard_service = GuardService(ai_client=ai_client, prompt_service=prompt_service)
+        media_service = MediaService(settings=settings)
+        worker_service = WorkerService(ai_client=ai_client, media_service=media_service, guard_service=guard_service, prompt_service=prompt_service, settings=settings, db=db)
+
         coaching = VoiceMicroCoaching(
             db=db,
-            ai_client=AsyncAIClient(),
-            prompt_service=PromptService(),
-            guard_service=GuardService(),
-            media_service=MediaService(),
-            worker_service=WorkerService(),
+            ai_client=ai_client,
+            prompt_service=prompt_service,
+            guard_service=guard_service,
+            media_service=media_service,
+            worker_service=worker_service,
         )
 
         # Process voice message
+        from gapsense.core.country_utils import get_country_from_parent
+
         result = await coaching.handle_voice_message(
             parent=parent,
             student=student,
             audio_bytes=audio_bytes,
             filename=f"voice_{media_id[:8]}.ogg",
             content_type=mime_type,
-            country="GH",  # TODO: Get from parent location
+            country=get_country_from_parent(parent, student),
             language=parent.preferred_language or "en",
         )
 

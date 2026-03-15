@@ -49,6 +49,10 @@ async def normalize_webhook(request: Request) -> dict[str, Any] | None:
     if isinstance(body, dict) and body.get("object") == "whatsapp_business_account":
         return body  # Already in Meta format
 
+    # Return non-WhatsApp Meta webhooks (e.g., Instagram) so handler can ignore them
+    if isinstance(body, dict) and body.get("object"):
+        return body
+
     return None
 
 

@@ -305,6 +305,11 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
         nullable=True, comment="How confident we are in this profile (0.0-1.0)"
     )
 
+    # Exercise book analysis metadata (for dashboard display)
+    analysis_metadata: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB, nullable=True, comment="Analysis metadata: errors, patterns, focus_areas, reasoning, etc."
+    )
+
     is_current: Mapped[bool] = mapped_column(
         default=True, comment="Only one current profile per student"
     )

@@ -39,7 +39,7 @@ def _write_curriculum_file(
     level: str,
     subject: str,
     nodes: dict,
-    filename: str = "nodes.json",
+    filename: str = "populated_nodes_complete.json",
 ) -> Path:
     dir_path = base / country / level / subject
     dir_path.mkdir(parents=True, exist_ok=True)
@@ -230,12 +230,13 @@ async def test_curriculum_loader_error_resilience(
 
     with tempfile.TemporaryDirectory() as tmpdir:
         base = Path(tmpdir)
-        dir_path = base / "GH" / "primary" / "mathematics"
-        dir_path.mkdir(parents=True, exist_ok=True)
 
-        # Write valid files
+        # Write valid files in different subjects (each with populated_nodes_complete.json)
         total_valid_nodes = 0
         for i in range(num_valid):
+            subject = f"subject_valid_{i}"
+            dir_path = base / "GH" / "primary" / subject
+            dir_path.mkdir(parents=True, exist_ok=True)
             code = f"B{i+1}.1.1.1"
             data = {
                 code: {
@@ -246,12 +247,15 @@ async def test_curriculum_loader_error_resilience(
                     "sub_strand_id": 1,
                 }
             }
-            (dir_path / f"valid_{i}.json").write_text(json.dumps(data))
+            (dir_path / "populated_nodes_complete.json").write_text(json.dumps(data))
             total_valid_nodes += 1
 
-        # Write invalid files
+        # Write invalid files in different subjects (each with populated_nodes_complete.json)
         for i in range(num_invalid):
-            (dir_path / f"invalid_{i}.json").write_text("{{not valid json!!")
+            subject = f"subject_invalid_{i}"
+            dir_path = base / "GH" / "primary" / subject
+            dir_path.mkdir(parents=True, exist_ok=True)
+            (dir_path / "populated_nodes_complete.json").write_text("{{not valid json!!")
 
         settings_mock = _make_settings(base)
         loader = CurriculumLoader(db_session, settings_mock)

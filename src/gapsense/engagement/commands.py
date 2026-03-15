@@ -19,7 +19,9 @@ class CommandResult:
 
 
 # List of reserved command keywords
-RESERVED_COMMANDS = ["RESTART", "CANCEL", "HELP", "STATUS", "START", "STOP"]
+# Note: START is not a command - it's a trigger word for onboarding
+# It should be handled by the flow logic, not command handler
+RESERVED_COMMANDS = ["RESTART", "CANCEL", "HELP", "STATUS", "STOP"]
 
 
 def is_command(message: str) -> bool:

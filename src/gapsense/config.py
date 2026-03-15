@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     DEBUG: bool = False
 
+    APP_URL: str = Field(
+        default="http://localhost:8000",
+        description="Base URL for the application (used in WhatsApp links)",
+    )
+
     # ========================================================================
     # DATABASE
     # ========================================================================

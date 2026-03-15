@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GapSense Teacher Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            height: 90vh;
+            max-height: 800px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: #f0f2f5;
+            border-bottom: 1px solid #e4e6eb;
+            overflow-x: auto;
+        }
+
+        .quick-btn {
+            background: white;
+            border: 1px solid #25D366;
+            color: #25D366;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: #25D366;
+            color: white;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #e5ddd5;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4ccc4' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.received .message-bubble {
+            background: white;
+            border-bottom-left-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.sent .message-bubble {
+            background: #dcf8c6;
+            border-bottom-right-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #667781;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .input-area {
+            background: #f0f2f5;
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            background: white;
+            border-radius: 24px;
+            padding: 8px 12px;
+        }
+
+        #messageInput {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            resize: none;
+            max-height: 100px;
+            font-family: inherit;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: #25D366;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 18px;
+        }
+
+        .icon-btn:hover {
+            background: #128C7E;
+            transform: scale(1.05);
+        }
+
+        .icon-btn.secondary {
+            background: #667781;
+        }
+
+        .icon-btn.secondary:hover {
+            background: #54656f;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667781;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #25D366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .student-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .student-item {
+            background: #f0f2f5;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .gap-item {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .whatsapp-button {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            margin: 6px 0;
+            background: #ffffff;
+            border: 1px solid #25D366;
+            border-radius: 8px;
+            color: #25D366;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .whatsapp-button:hover {
+            background: #25D366;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+        }
+
+        .whatsapp-button:active {
+            transform: translateY(0);
+        }
+
+        .button-container {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gap-title {
+            font-weight: 600;
+            color: #856404;
+        }
+
+        .gap-meta {
+            font-size: 11px;
+            color: #856404;
+            margin-top: 4px;
+        }
+
+        #imagePreview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 14px;
+            background: white;
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        .typing-indicator.show {
+            display: flex;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667781;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .info-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .info-modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #667781;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                height: 100vh;
+                max-height: none;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <div class="header-title">🎓 GapSense Teacher</div>
+                <div class="header-subtitle">AI Teaching Assistant</div>
+            </div>
+            <div class="status-badge" id="statusBadge">Demo Mode</div>
+        </div>
+
+        <div class="quick-actions">
+            <button class="quick-btn" onclick="sendQuickMessage('/STATUS')">📊 Status</button>
+            <button class="quick-btn" onclick="sendQuickMessage('/GAPS')">📍 Gaps</button>
+            <button class="quick-btn" onclick="sendQuickMessage('START')">🚀 Start</button>
+            <button class="quick-btn" onclick="showHelp()">❓ Help</button>
+        </div>
+
+        <div class="messages" id="messages">
+            <div class="message received">
+                <div>
+                    <div class="message-bubble">
+                        Welcome to GapSense! 👋<br><br>
+                        I'm your AI teaching assistant for identifying student gaps.<br><br>
+                        Send <strong>START</strong> to begin onboarding or upload an exercise book photo!
+                    </div>
+                    <div class="message-time">Just now</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <input type="file" id="imageInput" accept="image/*" style="display: none" onchange="handleImageSelect()">
+                <button class="icon-btn secondary" onclick="document.getElementById('imageInput').click()">
+                    📎
+                </button>
+                <textarea
+                    id="messageInput"
+                    placeholder="Type a message..."
+                    rows="1"
+                    onkeydown="handleKeyDown(event)"
+                ></textarea>
+            </div>
+            <button class="icon-btn" onclick="sendMessage()">
+                ➤
+            </button>
+        </div>
+    </div>
+
+    <div class="info-modal" id="infoModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h2>Available Commands</h2>
+            <p style="margin-top: 16px; line-height: 1.6;">
+                <strong>/STATUS</strong> - View class overview<br>
+                <strong>/GAPS</strong> - See detailed gap breakdown<br>
+                <strong>/STUDENT &lt;name&gt;</strong> - Individual student report<br>
+                <strong>START</strong> - Begin teacher onboarding<br>
+                <br>
+                You can also upload exercise book photos by clicking the 📎 button!
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const TEACHER_PHONE = '+233501234567'; // Demo phone number
+        let selectedImage = null;
+
+        function addMessage(text, isSent = false) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+            // Parse buttons from message
+            const { messageText, buttons } = parseButtonsFromMessage(text);
+
+            // Create bubble content
+            let bubbleContent = messageText.replace(/\n/g, '<br>');
+
+            // Add buttons if present
+            if (buttons.length > 0 && !isSent) {
+                bubbleContent += '<div class="button-container">';
+                buttons.forEach(button => {
+                    bubbleContent += `
+                        <button class="whatsapp-button" onclick="sendButtonClick('${escapeHtml(button.text)}', '${button.id}')">
+                            ${escapeHtml(button.text)}
+                        </button>
+                    `;
+                });
+                bubbleContent += '</div>';
+            }
+
+            messageDiv.innerHTML = `
+                <div>
+                    <div class="message-bubble">${bubbleContent}</div>
+                    <div class="message-time">${timeStr}</div>
+                </div>
+            `;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function parseButtonsFromMessage(text) {
+            const lines = text.split('\n');
+            const buttons = [];
+            const messageLines = [];
+
+            for (const line of lines) {
+                // Check if line is a button (starts with "• ")
+                if (line.trim().startsWith('• ')) {
+                    const buttonText = line.trim().substring(2); // Remove "• "
+                    const buttonId = mapButtonTextToId(buttonText);
+                    buttons.push({ text: buttonText, id: buttonId });
+                } else {
+                    messageLines.push(line);
+                }
+            }
+
+            return {
+                messageText: messageLines.join('\n').trim(),
+                buttons: buttons
+            };
+        }
+
+        function mapButtonTextToId(buttonText) {
+            // Map button text to expected backend IDs
+            const lowerText = buttonText.toLowerCase();
+
+            // Confirmation buttons
+            if (lowerText.includes('yes')) {
+                return 'confirm_yes';
+            }
+            if (lowerText.includes('no')) {
+                return 'confirm_no';
+            }
+
+            // Default: generate ID from text
+            return buttonText.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function sendButtonClick(buttonText, buttonId) {
+            // Show button click as sent message
+            addMessage(buttonText, true);
+
+            showTyping();
+
+            try {
+                const formData = new FormData();
+                formData.append('message', buttonText);
+                formData.append('button_id', buttonId);
+                formData.append('teacher_phone', TEACHER_PHONE);
+
+                const response = await fetch('/demo/api/message', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                hideTyping();
+
+                if (data.success) {
+                    await handleFlowResponse(data);
+                } else {
+                    addMessage(`❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage(`❌ Error: ${error.message}`);
+            }
+        }
+
+        function showTyping() {
+            const messagesDiv = document.getElementById('messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message received';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div>
+                    <div class="typing-indicator show">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typingDiv = document.getElementById('typing-indicator');
+            if (typingDiv) {
+                typingDiv.remove();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            addMessage(message, true);
+            input.value = '';
+
+            showTyping();
+
+            try {
+                const formData = new FormData();
+                formData.append('message', message);
+                formData.append('teacher_phone', TEACHER_PHONE);
+
+                const response = await fetch('/demo/api/message', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                hideTyping();
+
+                if (data.success) {
+                    // Simulate response based on flow state
+                    await handleFlowResponse(data);
+                } else {
+                    addMessage(`❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage(`❌ Error: ${error.message}`);
+            }
+        }
+
+        let analysisPollingInterval = null;
+        let initialGapProfileCount = 0;
+
+        async function getGapProfileCount() {
+            try {
+                const response = await fetch(`/demo/reports/${TEACHER_PHONE}`);
+                const html = await response.text();
+                // Count how many gap tags exist (indicates students with gap profiles)
+                const matches = html.match(/gap-tag/g);
+                return matches ? matches.length : 0;
+            } catch (e) {
+                console.error('Error checking gap profiles:', e);
+                return 0;
+            }
+        }
+
+        async function checkAnalysisComplete() {
+            const currentCount = await getGapProfileCount();
+            // New analysis is complete if gap profile count increased
+            return currentCount > initialGapProfileCount;
+        }
+
+        function showDashboardButton() {
+            const dashboardUrl = `/demo/reports/${TEACHER_PHONE}`;
+            const dashboardLink = `
+                <div style="margin-top: 10px; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; text-align: center;">
+                    <a href="${dashboardUrl}" target="_blank" style="color: white; text-decoration: none; font-weight: bold; display: block;">
+                        📊 VIEW COMPREHENSIVE REPORT
+                    </a>
+                    <div style="font-size: 12px; color: #f0f0f0; margin-top: 5px;">
+                        Click to see full analysis dashboard
+                    </div>
+                </div>
+            `;
+            addMessage(dashboardLink);
+        }
+
+        async function startPollingForCompletion() {
+            // Capture initial state
+            initialGapProfileCount = await getGapProfileCount();
+
+            // Poll every 2 seconds for up to 60 seconds
+            let attempts = 0;
+            const maxAttempts = 30;
+
+            analysisPollingInterval = setInterval(async () => {
+                attempts++;
+
+                const isComplete = await checkAnalysisComplete();
+                if (isComplete) {
+                    clearInterval(analysisPollingInterval);
+                    addMessage("✅ Analysis complete!");
+                    showDashboardButton();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(analysisPollingInterval);
+                    addMessage("⏱️ Analysis is taking longer than expected. Please check back in a moment.");
+                }
+            }, 2000);
+        }
+
+        async function handleFlowResponse(data) {
+            // Simply display the response from the server
+            if (data.response) {
+                addMessage(data.response);
+
+                // If message contains "Analyzing", start polling for completion
+                if (data.response.includes("Analyzing") && data.response.includes("exercise book")) {
+                    startPollingForCompletion();
+                }
+            }
+        }
+
+        async function fetchTeacherInfo() {
+            const response = await fetch(`/demo/api/teacher-info?teacher_phone=${TEACHER_PHONE}`);
+            return await response.json();
+        }
+
+        async function sendQuickMessage(message) {
+            document.getElementById('messageInput').value = message;
+            await sendMessage();
+        }
+
+        async function handleImageSelect() {
+            const input = document.getElementById('imageInput');
+            const file = input.files[0];
+
+            if (!file) return;
+
+            selectedImage = file;
+            addMessage(`📸 Uploading: ${file.name}`, true);
+            showTyping();
+
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('teacher_phone', TEACHER_PHONE);
+
+                const response = await fetch('/demo/api/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                hideTyping();
+
+                if (data.success) {
+                    // Display the response from server
+                    if (data.response) {
+                        addMessage(data.response);
+                    }
+                } else {
+                    addMessage(`❌ Upload error: ${data.error}`);
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage(`❌ Error: ${error.message}`);
+            }
+
+            input.value = '';
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function showHelp() {
+            document.getElementById('infoModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('infoModal').classList.remove('show');
+        }
+
+        // Auto-resize textarea
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Load initial teacher info
+        async function initDemo() {
+            try {
+                const info = await fetchTeacherInfo();
+                if (info.teacher.onboarded) {
+                    document.getElementById('statusBadge').textContent = '✅ Onboarded';
+                }
+            } catch (error) {
+                console.error('Error loading teacher info:', error);
+            }
+        }
+
+        initDemo();
+    </script>
+</body>
+</html>
