@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from gapsense.core.database import get_db
 from gapsense.core.models import Student, Teacher
@@ -572,10 +573,19 @@ async def student_detailed_report(
         if profile.analysis_metadata and isinstance(profile.analysis_metadata, dict):
             metadata_dict = profile.analysis_metadata
 
-        # Get gap nodes details
+        # Get gap nodes details with comprehensive curriculum information
         gap_nodes_data = []
         if profile.gap_nodes:
-            nodes_stmt = select(CurriculumNode).where(CurriculumNode.id.in_(profile.gap_nodes))
+            from gapsense.core.models.curriculum import CurriculumStrand, CurriculumSubStrand
+
+            nodes_stmt = (
+                select(CurriculumNode)
+                .options(
+                    selectinload(CurriculumNode.strand),
+                    selectinload(CurriculumNode.sub_strand)
+                )
+                .where(CurriculumNode.id.in_(profile.gap_nodes))
+            )
             nodes_result = await db.execute(nodes_stmt)
             nodes = nodes_result.scalars().all()
 
@@ -584,9 +594,23 @@ async def student_detailed_report(
                     {
                         "code": node.code,
                         "title": node.title,
+                        "description": node.description,
                         "severity": "high"
                         if node.severity >= 4
                         else ("medium" if node.severity >= 3 else "low"),
+                        "severity_numeric": node.severity,
+                        "severity_rationale": node.severity_rationale or "Not specified",
+                        "ghana_evidence": node.ghana_evidence or "No specific evidence documented",
+                        "grade": node.grade,
+                        "subject": node.subject,
+                        "level": node.level,
+                        "strand_name": node.strand.name if node.strand else "N/A",
+                        "strand_description": node.strand.description if node.strand and node.strand.description else "",
+                        "substrand_name": node.sub_strand.name if node.sub_strand else "N/A",
+                        "substrand_description": node.sub_strand.description if node.sub_strand and node.sub_strand.description else "",
+                        "questions_required": node.questions_required,
+                        "confidence_threshold": f"{node.confidence_threshold * 100:.0f}%",
+                        "population_status": node.population_status.capitalize(),
                     }
                 )
 
@@ -674,11 +698,67 @@ async def student_detailed_report(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/curriculum", response_class=HTMLResponse)
+async def curriculum_explorer(request: Request):
+    """Curriculum explorer page - interactive Ghana curriculum browser."""
+    return templates.TemplateResponse("curriculum.html", {"request": request})
+
+
+@router.get("/api/curriculum")
+async def get_curriculum_data(
+    grade: str | None = None,
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """Get curriculum data for the explorer."""
+    try:
+        from gapsense.core.models import CurriculumNode
+
+        # Build query (country stored as "GH" in database)
+        stmt = select(CurriculumNode).where(CurriculumNode.country == "GH")
+
+        if grade:
+            stmt = stmt.where(CurriculumNode.grade == grade)
+
+        stmt = stmt.order_by(CurriculumNode.code)
+
+        result = await db.execute(stmt)
+        nodes = result.scalars().all()
+
+        # Group by grade
+        by_grade = {}
+        total_count = 0
+
+        for node in nodes:
+            total_count += 1
+            grade_key = node.grade or "Unknown"
+            if grade_key not in by_grade:
+                by_grade[grade_key] = []
+
+            by_grade[grade_key].append({
+                "code": node.code,
+                "title": node.title,
+                "grade": node.grade,
+                "subject": node.subject,
+                "description": node.description,
+            })
+
+        return JSONResponse({
+            "success": True,
+            "total": total_count,
+            "by_grade": by_grade,
+            "grades": sorted(by_grade.keys()),
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching curriculum: {e}", exc_info=True)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
 async def get_or_create_demo_teacher(db: AsyncSession, phone: str) -> Teacher:
     """Get or create a demo teacher account."""
     try:
-        # Try to find existing
-        stmt = select(Teacher).where(Teacher.phone == phone)
+        # Try to find existing (eagerly load school relationship)
+        stmt = select(Teacher).options(selectinload(Teacher.school)).where(Teacher.phone == phone)
         result = await db.execute(stmt)
         teacher = result.scalar_one_or_none()
 

@@ -175,103 +175,138 @@
             border-left: 4px solid #E8B923;
         }
 
-        /* Mobile responsiveness - WCAG compliant */
-        @media (max-width: 768px) {
-            body {
-                padding: 12px;
-            }
-
-            .container {
-                padding: 20px;
-                border-radius: 10px;
-            }
-
-            /* Typography scaling */
-            .header h1 {
-                font-size: 22px;
-            }
-
-            .section-title {
-                font-size: 16px;
-            }
-
-            /* Fix field labels - stack vertically on mobile */
-            .field {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-                padding-left: 0;
-            }
-
-            .field-label {
-                width: 100%;
-                display: block;
-            }
-
-            .field-value {
-                padding-left: 0;
-            }
-
-            /* Metadata grid - single column on mobile */
-            .metadata-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .metadata-item {
-                padding: 12px;
-            }
-
-            /* Error items */
-            .error-item {
-                padding: 12px;
-            }
-
-            /* Gap tags - touch-friendly */
-            .gap-tag {
-                padding: 10px 16px;
-                font-size: 14px;
-                margin: 6px 4px;
-                min-height: 36px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            /* Back button - WCAG compliant touch target */
-            .back-button {
-                padding: 14px 20px;
-                min-height: 48px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            /* Section spacing */
-            .section {
-                padding: 16px;
-                margin: 20px 0;
-            }
-
-            /* JSON blocks */
-            .json-block {
-                padding: 12px;
-                font-size: 12px;
-            }
-
-            /* Reasoning box */
-            .reasoning-box {
-                padding: 12px;
-                font-size: 14px;
-            }
+        /* Enhanced gap card styles */
+        .gap-card {
+            display: block;
+            margin: 12px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
         }
 
-        /* Extra small devices */
-        @media (max-width: 480px) {
+        .gap-header {
+            padding: 15px;
+            background: white;
+            border-bottom: 2px solid #25D366;
+        }
+
+        .gap-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #2C3E50;
+        }
+
+        .gap-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .badge-code {
+            background: #F8F9FA;
+            color: #666;
+        }
+
+        .badge-severity {
+            background: #FFF9E6;
+            color: #856404;
+        }
+
+        .badge-grade {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .gap-details {
+            padding: 15px;
+            background: #FAFBFC;
+        }
+
+        .detail-block {
+            margin-bottom: 15px;
+        }
+
+        .detail-title {
+            font-weight: 600;
+            color: #25D366;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .detail-content {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .context-box {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #25D366;
+            margin-bottom: 15px;
+        }
+
+        .rationale-box {
+            padding: 12px;
+            background: #FFF9E6;
+            border-radius: 8px;
+            border-left: 3px solid #E8B923;
+            margin-bottom: 15px;
+        }
+
+        .evidence-box {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #E8B923;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .diagnostic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .diagnostic-item {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .diagnostic-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #25D366;
+        }
+
+        .diagnostic-label {
+            font-size: 11px;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
             body {
-                padding: 8px;
+                padding: 10px;
             }
 
             .container {
                 padding: 16px;
+                border-radius: 10px;
             }
 
             .header h1 {
@@ -282,17 +317,94 @@
                 font-size: 15px;
             }
 
-            .gap-tag {
-                padding: 8px 12px;
+            .field {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                padding-left: 0;
+            }
+
+            .field-label {
+                width: 100%;
                 font-size: 13px;
             }
 
-            .error-item {
-                padding: 10px;
+            .field-value {
+                padding-left: 0;
+                font-size: 14px;
+            }
+
+            .metadata-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
             }
 
             .section {
+                padding: 14px;
+                margin: 16px 0;
+            }
+
+            .back-button {
+                padding: 12px 18px;
+                font-size: 14px;
+            }
+
+            .error-item {
                 padding: 12px;
+                font-size: 14px;
+            }
+
+            .json-block {
+                padding: 10px;
+                font-size: 11px;
+            }
+
+            /* Gap cards - mobile */
+            .gap-header {
+                padding: 12px;
+            }
+
+            .gap-title {
+                font-size: 16px;
+            }
+
+            .gap-badges {
+                gap: 6px;
+            }
+
+            .badge {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+
+            .gap-details {
+                padding: 12px;
+            }
+
+            .detail-title {
+                font-size: 12px;
+            }
+
+            .detail-content {
+                font-size: 13px;
+            }
+
+            .context-box, .rationale-box, .evidence-box {
+                padding: 10px;
+                font-size: 13px;
+            }
+
+            .diagnostic-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .diagnostic-value {
+                font-size: 18px;
+            }
+
+            .diagnostic-label {
+                font-size: 10px;
             }
         }
     </style>
@@ -471,98 +583,57 @@
                 <div class="section-title">📚 Knowledge Gaps Identified ({{ report.analysis.gap_nodes|length }} gaps)</div>
                 <div class="gap-list" style="list-style: none; padding: 0;">
                     {% for gap in report.analysis.gap_nodes %}
-                    <div class="gap-tag severity-{{ gap.severity }}" style="display: block; margin: 8px 0; padding: 0; text-align: left; border-radius: 12px; overflow: hidden;">
-                        <!-- Gap Header -->
-                        <div style="padding: 15px; background: white; border-bottom: 2px solid #25D366;">
-                            <div style="font-weight: 700; font-size: 18px; margin-bottom: 8px; color: #2C3E50;">
-                                {{ loop.index }}. {{ gap.title }}
-                            </div>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-                                <span style="font-size: 11px; padding: 4px 10px; background: #F8F9FA; border-radius: 12px; color: #666;">
-                                    📋 {{ gap.code }}
-                                </span>
-                                <span style="font-size: 11px; padding: 4px 10px; background: #FFF9E6; border-radius: 12px; color: #856404;">
-                                    ⚠️ Severity {{ gap.severity_numeric }}/5
-                                </span>
-                                <span style="font-size: 11px; padding: 4px 10px; background: #E8F5E9; border-radius: 12px; color: #2E7D32;">
-                                    🎓 {{ gap.grade }}
-                                </span>
+                    <div class="gap-card severity-{{ gap.severity }}">
+                        <div class="gap-header">
+                            <div class="gap-title">{{ loop.index }}. {{ gap.title }}</div>
+                            <div class="gap-badges">
+                                <span class="badge badge-code">📋 {{ gap.code }}</span>
+                                <span class="badge badge-severity">⚠️ Severity {{ gap.severity_numeric }}/5</span>
+                                <span class="badge badge-grade">🎓 {{ gap.grade }}</span>
                             </div>
                         </div>
 
-                        <!-- Gap Details -->
-                        <div style="padding: 15px; background: #FAFBFC;">
-                            <!-- Description -->
-                            <div style="margin-bottom: 15px;">
-                                <div style="font-weight: 600; color: #25D366; font-size: 13px; margin-bottom: 6px;">
-                                    📖 WHAT THE STUDENT SHOULD MASTER:
-                                </div>
-                                <div style="color: #555; font-size: 14px; line-height: 1.6;">
-                                    {{ gap.description }}
+                        <div class="gap-details">
+                            <div class="detail-block">
+                                <div class="detail-title">📖 WHAT THE STUDENT SHOULD MASTER:</div>
+                                <div class="detail-content">{{ gap.description }}</div>
+                            </div>
+
+                            <div class="context-box">
+                                <div class="detail-title">🗂️ CURRICULUM CONTEXT:</div>
+                                <div class="detail-content">
+                                    <div><strong>Strand:</strong> {{ gap.strand_name }}</div>
+                                    <div><strong>Sub-strand:</strong> {{ gap.substrand_name }}</div>
+                                    <div><strong>Subject:</strong> {{ gap.subject|title }} | <strong>Level:</strong> {{ gap.level|title }}</div>
                                 </div>
                             </div>
 
-                            <!-- Curriculum Context -->
-                            <div style="margin-bottom: 15px; padding: 12px; background: white; border-radius: 8px; border-left: 3px solid #25D366;">
-                                <div style="font-weight: 600; color: #25D366; font-size: 13px; margin-bottom: 6px;">
-                                    🗂️ CURRICULUM CONTEXT:
-                                </div>
-                                <div style="color: #555; font-size: 13px;">
-                                    <div style="margin-bottom: 4px;">
-                                        <strong>Strand:</strong> {{ gap.strand_name }}
-                                        {% if gap.strand_description %}
-                                        <br><span style="font-size: 12px; color: #777;">{{ gap.strand_description }}</span>
-                                        {% endif %}
-                                    </div>
-                                    <div style="margin-bottom: 4px;">
-                                        <strong>Sub-strand:</strong> {{ gap.substrand_name }}
-                                        {% if gap.substrand_description %}
-                                        <br><span style="font-size: 12px; color: #777;">{{ gap.substrand_description }}</span>
-                                        {% endif %}
-                                    </div>
-                                    <div style="margin-bottom: 4px;">
-                                        <strong>Subject:</strong> {{ gap.subject|title }} | <strong>Level:</strong> {{ gap.level|title }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Why This Matters -->
                             {% if gap.severity_rationale != "Not specified" %}
-                            <div style="margin-bottom: 15px; padding: 12px; background: #FFF9E6; border-radius: 8px; border-left: 3px solid #E8B923;">
-                                <div style="font-weight: 600; color: #856404; font-size: 13px; margin-bottom: 6px;">
-                                    💡 WHY THIS MATTERS:
-                                </div>
-                                <div style="color: #555; font-size: 13px; line-height: 1.6;">
-                                    {{ gap.severity_rationale }}
-                                </div>
+                            <div class="rationale-box">
+                                <div class="detail-title">💡 WHY THIS MATTERS:</div>
+                                <div class="detail-content">{{ gap.severity_rationale }}</div>
                             </div>
                             {% endif %}
 
-                            <!-- Ghana Evidence -->
                             {% if gap.ghana_evidence != "No specific evidence documented" %}
-                            <div style="margin-bottom: 15px; padding: 12px; background: white; border-radius: 8px; border-left: 3px solid #E8B923;">
-                                <div style="font-weight: 600; color: #E8B923; font-size: 13px; margin-bottom: 6px;">
-                                    🇬🇭 GHANA-SPECIFIC EVIDENCE:
-                                </div>
-                                <div style="color: #555; font-size: 13px; line-height: 1.6; font-style: italic;">
-                                    {{ gap.ghana_evidence }}
-                                </div>
+                            <div class="evidence-box">
+                                <div class="detail-title">🇬🇭 GHANA-SPECIFIC EVIDENCE:</div>
+                                <div class="detail-content">{{ gap.ghana_evidence }}</div>
                             </div>
                             {% endif %}
 
-                            <!-- Diagnostic Info -->
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px;">
-                                <div style="padding: 10px; background: white; border-radius: 6px; text-align: center;">
-                                    <div style="font-size: 20px; font-weight: 700; color: #25D366;">{{ gap.questions_required }}</div>
-                                    <div style="font-size: 11px; color: #777;">Questions to Confirm</div>
+                            <div class="diagnostic-grid">
+                                <div class="diagnostic-item">
+                                    <div class="diagnostic-value">{{ gap.questions_required }}</div>
+                                    <div class="diagnostic-label">Questions to Confirm</div>
                                 </div>
-                                <div style="padding: 10px; background: white; border-radius: 6px; text-align: center;">
-                                    <div style="font-size: 20px; font-weight: 700; color: #25D366;">{{ gap.confidence_threshold }}</div>
-                                    <div style="font-size: 11px; color: #777;">Mastery Threshold</div>
+                                <div class="diagnostic-item">
+                                    <div class="diagnostic-value">{{ gap.confidence_threshold }}</div>
+                                    <div class="diagnostic-label">Mastery Threshold</div>
                                 </div>
-                                <div style="padding: 10px; background: white; border-radius: 6px; text-align: center;">
-                                    <div style="font-size: 14px; font-weight: 700; color: #25D366;">{{ gap.population_status }}</div>
-                                    <div style="font-size: 11px; color: #777;">Data Status</div>
+                                <div class="diagnostic-item">
+                                    <div class="diagnostic-value">{{ gap.population_status }}</div>
+                                    <div class="diagnostic-label">Data Status</div>
                                 </div>
                             </div>
                         </div>

@@ -6,12 +6,14 @@ AI-powered foundational learning diagnostic platform for Ghana.
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 
 from gapsense.ai import get_prompt_library
@@ -19,6 +21,10 @@ from gapsense.config import settings
 from gapsense.core.database import close_db, engine
 
 _logger = structlog.get_logger(__name__)
+
+# Template setup
+TEMPLATES_DIR = Path(__file__).parent / "web" / "templates"
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @asynccontextmanager
@@ -154,16 +160,11 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Health check endpoints
-    @app.get("/", tags=["Health"])
-    async def root() -> dict[str, str]:
-        """Root endpoint."""
-        return {
-            "service": "GapSense Platform",
-            "status": "operational",
-            "version": "0.1.0",
-            "environment": settings.ENVIRONMENT,
-        }
+    # Landing page
+    @app.get("/", response_class=HTMLResponse)
+    async def landing_page(request: Request) -> HTMLResponse:
+        """Root landing page."""
+        return templates.TemplateResponse("index.html", {"request": request})
 
     @app.get("/health", tags=["Health"], response_model=None)
     async def health_check() -> JSONResponse:

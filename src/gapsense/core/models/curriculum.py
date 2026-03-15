@@ -126,9 +126,9 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         String(20), nullable=False, default="primary", comment="Education level"
     )
 
-    strand_id: Mapped[int] = mapped_column(ForeignKey("curriculum_strands.id"), nullable=False)
-    sub_strand_id: Mapped[int] = mapped_column(
-        ForeignKey("curriculum_sub_strands.id"), nullable=False
+    strand_id: Mapped[int | None] = mapped_column(ForeignKey("curriculum_strands.id"), nullable=True)
+    sub_strand_id: Mapped[int | None] = mapped_column(
+        ForeignKey("curriculum_sub_strands.id"), nullable=True
     )
     content_standard_number: Mapped[int] = mapped_column(SmallInteger, nullable=False)
 

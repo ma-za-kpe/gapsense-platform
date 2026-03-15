@@ -7,9 +7,10 @@ processes results into GapProfiles, and sends teacher summaries.
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+
+import structlog
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 from gapsense.engagement.whatsapp_client import WhatsAppClient
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -56,6 +57,25 @@ class ExerciseBookScanner:
         self._guard_service = guard_service
         self._ai_client = ai_client
         self._prompt_service = prompt_service
+
+    @staticmethod
+    def _is_demo_mode(teacher_phone: str) -> bool:
+        """Check if this is a demo mode teacher (bypasses WhatsApp/Twilio).
+
+        Demo phones use patterns:
+        - +2335000* (test scripts with double-zero)
+        - +23350 followed by test patterns like "1234567"
+        - Contains obvious test patterns
+
+        These won't conflict with real Vodafone numbers (+233 50X... where X is 1-9).
+        """
+        # Check for test phone patterns
+        if teacher_phone.startswith("+2335000"):  # Double-zero test phones
+            return True
+
+        # Check for obvious test patterns (with or without leading zero)
+        test_patterns = ["1234567", "01234567", "1111111", "2222222", "0000000", "9999999"]
+        return any(pattern in teacher_phone for pattern in test_patterns)
 
     async def handle_image_message(
         self,
@@ -98,20 +118,23 @@ class ExerciseBookScanner:
             )
             await self._worker_service.enqueue(task)
 
-            # Send acknowledgment
-            client = WhatsAppClient.from_settings()
-            try:
-                await client.send_text_message(
-                    to=teacher.phone,
-                    text="📸 Analyzing the exercise book page. I'll send you the results shortly.",
-                )
-            except Exception as e:
-                logger.warning(f"Failed to send ack to {teacher.phone}: {e}")
+            # Send acknowledgment (skip in demo mode - UI polls for completion)
+            if not self._is_demo_mode(teacher.phone):
+                client = WhatsAppClient.from_settings()
+                try:
+                    await client.send_text_message(
+                        to=teacher.phone,
+                        text="📸 Analyzing the exercise book page. I'll send you the results shortly.",
+                    )
+                except Exception as e:
+                    logger.warning("failed_to_send_ack", teacher_phone=teacher.phone, error=str(e))
+            else:
+                logger.info("demo_mode_skip_ack", teacher_phone=teacher.phone)
 
             return ScanResult(success=True, s3_key=s3_key, task_enqueued=True, message_sent=True)
 
         except Exception as e:
-            logger.error(f"Exercise book scan failed: {e}", exc_info=True)
+            logger.error("exercise_book_scan_failed", error=str(e), exc_info=True)
             return ScanResult(success=False, error=str(e))
 
     async def process_analysis_result(
@@ -120,8 +143,8 @@ class ExerciseBookScanner:
         student_id: str,
         teacher_phone: str,
         analysis: dict[str, Any],
-        country: str = "GH",
-        language: str = "en",
+        country: str = "GH",  # noqa: ARG002 - Part of API contract
+        language: str = "en",  # noqa: ARG002 - Part of API contract
     ) -> None:
         """Process completed image analysis and update GapProfile.
 
@@ -134,6 +157,13 @@ class ExerciseBookScanner:
         from gapsense.core.models import Student
         from gapsense.core.models.diagnostics import GapProfile
 
+        logger.info(
+            "process_analysis_result_start",
+            student_id=student_id,
+            teacher_phone=teacher_phone,
+            gap_count=len(analysis.get("gap_node_ids", [])),
+        )
+
         # Get student name for personalized message
         student_result = await self.db.execute(
             select(Student).where(Student.id == UUID(student_id))
@@ -143,11 +173,19 @@ class ExerciseBookScanner:
 
         # Check for unreadable image
         if analysis.get("unreadable"):
-            client = WhatsAppClient.from_settings()
-            await client.send_text_message(
-                to=teacher_phone,
-                text=f"📷 {student_name}'s exercise book was too blurry to analyze. Could you retake the photo with better lighting?",
+            logger.info(
+                "unreadable_image_detected",
+                student_id=student_id,
+                teacher_phone=teacher_phone,
             )
+            if not self._is_demo_mode(teacher_phone):
+                client = WhatsAppClient.from_settings()
+                await client.send_text_message(
+                    to=teacher_phone,
+                    text=f"📷 {student_name}'s exercise book was too blurry to analyze. Could you retake the photo with better lighting?",
+                )
+            else:
+                logger.info("demo_mode_skip_unreadable_msg", teacher_phone=teacher_phone)
             return
 
         # Create/update GapProfile with source="exercise_book"
@@ -199,6 +237,13 @@ class ExerciseBookScanner:
 
         await self.db.commit()
 
+        logger.info(
+            "gap_profile_saved",
+            student_id=student_id,
+            student_name=student_name,
+            gap_nodes_count=len(gap_nodes),
+        )
+
         # Send WhatsApp message with link to comprehensive dashboard
         from gapsense.config import settings
 
@@ -216,18 +261,24 @@ class ExerciseBookScanner:
             f"• Priority recommendations"
         )
 
-        # Send via WhatsApp
-        client = WhatsAppClient.from_settings()
-        await client.send_text_message(to=teacher_phone, text=message, preview_url=True)
-
-        # Also log for demo UI polling
-        logger.info(
-            "analysis_complete_message_sent",
-            teacher_phone=teacher_phone,
-            student_name=student_name,
-            dashboard_url=dashboard_url,
-            message=message,
-        )
+        # Send via WhatsApp (skip in demo mode - UI polls for gap profile)
+        if not self._is_demo_mode(teacher_phone):
+            client = WhatsAppClient.from_settings()
+            await client.send_text_message(to=teacher_phone, text=message, preview_url=True)
+            logger.info(
+                "analysis_complete_message_sent",
+                teacher_phone=teacher_phone,
+                student_name=student_name,
+                dashboard_url=dashboard_url,
+            )
+        else:
+            logger.info(
+                "demo_mode_skip_whatsapp",
+                teacher_phone=teacher_phone,
+                student_name=student_name,
+                dashboard_url=dashboard_url,
+                message="Demo mode: Gap profile saved, UI will detect via polling",
+            )
 
     @staticmethod
     def _build_teacher_summary(
