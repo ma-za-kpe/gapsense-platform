@@ -1733,6 +1733,32 @@ class FlowExecutor:
         self.db.add(gap_profile)
         await self.db.commit()
 
+        # ✅ Task 7: Deliver personalized activity after diagnostic completion
+        try:
+            from gapsense.ai.async_client import AsyncAIClient
+            from gapsense.ai.prompt_service import PromptService
+            from gapsense.engagement.parent_activity_delivery import ParentActivityDelivery
+            from gapsense.services.guard_service import GuardService
+            from gapsense.services.worker_service import WorkerService
+
+            activity_delivery = ParentActivityDelivery(
+                db=self.db,
+                ai_client=AsyncAIClient(),
+                prompt_service=PromptService(),
+                guard_service=GuardService(),
+                worker_service=WorkerService(),
+            )
+
+            await activity_delivery.deliver_activity(
+                parent=parent,
+                student=student,
+                gap_profile=gap_profile,
+                country="GH",
+                language=parent.preferred_language or "en",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to deliver activity after diagnostic: {e}")
+
         # Send completion message with results
         client = WhatsAppClient.from_settings()
 

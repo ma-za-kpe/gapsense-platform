@@ -100,6 +100,13 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Index("idx_curriculum_nodes_grade", "grade"),
         Index("idx_curriculum_nodes_severity", "severity", postgresql_ops={"severity": "DESC"}),
         Index("idx_curriculum_nodes_code", "code"),
+        Index(
+            "idx_curriculum_nodes_country_subject_level_grade",
+            "country",
+            "subject",
+            "level",
+            "grade",
+        ),
     )
 
     code: Mapped[str] = mapped_column(
@@ -107,6 +114,16 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     grade: Mapped[str] = mapped_column(
         String(5), nullable=False, comment="Grade level ('B1' through 'B9')"
+    )
+
+    country: Mapped[str] = mapped_column(
+        String(5), nullable=False, default="GH", comment="ISO country code (GH, UG, KE, NG)"
+    )
+    subject: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="mathematics", comment="Subject name"
+    )
+    level: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="primary", comment="Education level"
     )
 
     strand_id: Mapped[int] = mapped_column(ForeignKey("curriculum_strands.id"), nullable=False)

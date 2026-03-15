@@ -234,6 +234,10 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
     __table_args__ = (
         Index("idx_gap_profiles_student", "student_id"),
         Index("idx_gap_profiles_current", "student_id", postgresql_where="is_current = TRUE"),
+        CheckConstraint(
+            "session_id IS NOT NULL OR (source != '' AND source != 'diagnostic')",
+            name="ck_gap_profiles_source_when_no_session",
+        ),
     )
 
     student_id: Mapped[UUID] = mapped_column(
@@ -241,10 +245,17 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
         ForeignKey("students.id", name="fk_gap_profiles_student"),
         nullable=False,
     )
-    session_id: Mapped[UUID] = mapped_column(
+    session_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("diagnostic_sessions.id", name="fk_gap_profiles_session"),
+        nullable=True,
+    )
+
+    source: Mapped[str] = mapped_column(
+        String(30),
         nullable=False,
+        default="diagnostic",
+        comment="Origin: diagnostic, exercise_book, teacher_report, voice_coaching",
     )
 
     # Gap summary
@@ -303,7 +314,7 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
     student: Mapped[Student] = relationship(
         foreign_keys=[student_id], back_populates="gap_profiles"
     )
-    session: Mapped[DiagnosticSession] = relationship(back_populates="gap_profile")
+    session: Mapped[DiagnosticSession | None] = relationship(back_populates="gap_profile")
     primary_gap: Mapped[CurriculumNode] = relationship(foreign_keys=[primary_gap_node])
     recommended_focus: Mapped[CurriculumNode] = relationship(foreign_keys=[recommended_focus_node])
     parent_activities: Mapped[list[ParentActivity]] = relationship(

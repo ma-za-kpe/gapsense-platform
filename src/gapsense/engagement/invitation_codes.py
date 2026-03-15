@@ -20,8 +20,6 @@ from gapsense.core.models.schools import SchoolInvitation
 class InvitationCodeError(Exception):
     """Error raised when invitation code operations fail."""
 
-    pass
-
 
 def generate_school_code_prefix(school_name: str, max_length: int = 8) -> str:
     """Generate school code prefix from school name.

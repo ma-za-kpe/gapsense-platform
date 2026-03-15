@@ -16,8 +16,6 @@ import re
 class ValidationError(Exception):
     """Raised when user input fails validation."""
 
-    pass
-
 
 # ============================================================================
 # Phone Number Validation

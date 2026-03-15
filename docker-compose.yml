@@ -31,18 +31,32 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://gapsense:localdev@db:5432/gapsense
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WHATSAPP_PROVIDER=${WHATSAPP_PROVIDER:-meta}
       - WHATSAPP_VERIFY_TOKEN=local_verify_token
       - WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN:-}
       - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_API_KEY_SID=${TWILIO_API_KEY_SID:-}
+      - TWILIO_API_KEY_SECRET=${TWILIO_API_KEY_SECRET:-}
+      - TWILIO_WHATSAPP_NUMBER=${TWILIO_WHATSAPP_NUMBER:-}
       - AWS_REGION=af-south-1
       - ENVIRONMENT=local
       - LOG_LEVEL=DEBUG
       - SQS_QUEUE_URL=http://localstack:4566/000000000000/gapsense-messages
       - GAPSENSE_DATA_PATH=/app/data
+      - S3_ENDPOINT_URL=http://localstack:4566
+      - S3_MEDIA_BUCKET=gapsense-media-local
+      - GROK_API_KEY=${GROK_API_KEY:-}
     ports:
       - "8000:8000"
     volumes:
       - ./src:/app/src
+      - ./tests:/app/tests
+      - ./alembic:/app/alembic
+      # Local dev: mount ./data for small test data.
+      # For full v2.0 data, mount the gapsense-data repo instead:
+      #   ../gapsense-data:/app/data
       - ./data:/app/data
     depends_on:
       db:
@@ -60,15 +74,26 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://gapsense:localdev@db:5432/gapsense
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WHATSAPP_PROVIDER=${WHATSAPP_PROVIDER:-meta}
       - WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN:-}
       - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_API_KEY_SID=${TWILIO_API_KEY_SID:-}
+      - TWILIO_API_KEY_SECRET=${TWILIO_API_KEY_SECRET:-}
+      - TWILIO_WHATSAPP_NUMBER=${TWILIO_WHATSAPP_NUMBER:-}
       - AWS_REGION=af-south-1
       - ENVIRONMENT=local
       - LOG_LEVEL=DEBUG
       - SQS_QUEUE_URL=http://localstack:4566/000000000000/gapsense-messages
       - GAPSENSE_DATA_PATH=/app/data
+      - S3_ENDPOINT_URL=http://localstack:4566
+      - S3_MEDIA_BUCKET=gapsense-media-local
+      - GROK_API_KEY=${GROK_API_KEY:-}
     volumes:
       - ./src:/app/src
+      - ./tests:/app/tests
+      - ./alembic:/app/alembic
       - ./data:/app/data
     depends_on:
       db:
@@ -85,7 +110,7 @@ services:
     ports:
       - "4566:4566"
     volumes:
-      - ./infrastructure/localstack-init.sh:/etc/localstack/init/ready.d/init.sh
+      - ./infrastructure/gapsense_localstack-init.sh:/etc/localstack/init/ready.d/init.sh
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
       interval: 5s

@@ -22,7 +22,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from gapsense.core.models import Parent, School, Student, Teacher
+from gapsense.core.models import Parent, Student, Teacher
 from gapsense.engagement.flow_executor import FlowExecutor
 
 
@@ -31,20 +31,21 @@ class TestTeacherInitiatedOnboarding:
 
     @pytest.mark.asyncio
     async def test_step1_uses_template_message(self, db_session: AsyncSession) -> None:
-        """Step 1: Should use template message, not regular text."""
+        """Step 1: Should send welcome message (uses text, not template per FIX GAP #3)."""
         # Create new parent
         parent = Parent(phone="+233501234567")
         db_session.add(parent)
         await db_session.commit()
 
-        executor = FlowExecutor(db=db_session)
-
         with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.from_settings.return_value = mock_client
-            mock_client.send_template_message.return_value = "wamid.template123"
+            mock_client.send_text_message.return_value = "wamid.text123"
 
-            # First message should trigger template
+            # Create executor AFTER patching
+            executor = FlowExecutor(db=db_session)
+
+            # First message should trigger welcome text message
             result = await executor.process_message(
                 parent=parent,
                 message_type="text",
@@ -52,18 +53,20 @@ class TestTeacherInitiatedOnboarding:
                 message_id="wamid.incoming1",
             )
 
-            # Should use template message, not text message
-            mock_client.send_template_message.assert_called_once()
+            # Should send text message with welcome text (per FIX GAP #3)
+            mock_client.send_text_message.assert_called_once()
+            call_args = mock_client.send_text_message.call_args
+            assert "Welcome to GapSense" in call_args.kwargs["text"]
             assert result.message_sent is True
             assert result.completed is False
 
     @pytest.mark.asyncio
-    async def test_step2_opt_in_shows_student_list(self, db_session: AsyncSession) -> None:
+    async def test_step2_opt_in_shows_student_list(
+        self, db_session: AsyncSession, region_district_school
+    ) -> None:
         """Step 2: After opt-in, should show student selection list."""
         # Create school and teacher
-        school = School(name="Test School", district_id=1, school_type="jhs")
-        db_session.add(school)
-        await db_session.commit()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233200000001",
@@ -136,12 +139,12 @@ class TestTeacherInitiatedOnboarding:
             assert "student_ids_map" in parent.conversation_state["data"]
 
     @pytest.mark.asyncio
-    async def test_step3_parent_selects_student(self, db_session: AsyncSession) -> None:
+    async def test_step3_parent_selects_student(
+        self, db_session: AsyncSession, region_district_school
+    ) -> None:
         """Step 3: Parent selects child from list by number."""
         # Create school and student
-        school = School(name="Test School", district_id=1, school_type="jhs")
-        db_session.add(school)
-        await db_session.commit()
+        _region, _district, school = region_district_school
 
         student = Student(
             full_name="Kwame Mensah",
@@ -234,12 +237,12 @@ class TestTeacherInitiatedOnboarding:
             assert mock_client.send_button_message.called
 
     @pytest.mark.asyncio
-    async def test_step5_language_links_to_student(self, db_session: AsyncSession) -> None:
+    async def test_step5_language_links_to_student(
+        self, db_session: AsyncSession, region_district_school
+    ) -> None:
         """Step 5: Language selection should LINK parent to existing student (not create)."""
         # Create school and student
-        school = School(name="Test School", district_id=1, school_type="jhs")
-        db_session.add(school)
-        await db_session.commit()
+        _region, _district, school = region_district_school
 
         student = Student(
             full_name="Kwame Mensah",
@@ -297,12 +300,12 @@ class TestTeacherInitiatedOnboarding:
             assert student.home_language == "tw"
 
     @pytest.mark.asyncio
-    async def test_student_linking_not_creation(self, db_session: AsyncSession) -> None:
+    async def test_student_linking_not_creation(
+        self, db_session: AsyncSession, region_district_school
+    ) -> None:
         """CRITICAL: Onboarding should LINK to student, NOT create new student."""
         # Create school and student
-        school = School(name="Test School", district_id=1, school_type="jhs")
-        db_session.add(school)
-        await db_session.commit()
+        _region, _district, school = region_district_school
 
         existing_student = Student(
             full_name="Kwame Mensah",
@@ -401,12 +404,12 @@ class TestTeacherInitiatedOnboarding:
             assert parent.conversation_state is None
 
     @pytest.mark.asyncio
-    async def test_race_condition_student_already_linked(self, db_session: AsyncSession) -> None:
+    async def test_race_condition_student_already_linked(
+        self, db_session: AsyncSession, region_district_school
+    ) -> None:
         """Should handle race condition where student gets linked by another parent."""
         # Create school and student
-        school = School(name="Test School", district_id=1, school_type="jhs")
-        db_session.add(school)
-        await db_session.commit()
+        _region, _district, school = region_district_school
 
         # Create real parent (student already linked to them)
         other_parent = Parent(phone="+233999999999")

@@ -31,6 +31,7 @@ lxml = "^6.0.2"
 pytest = "^8.3"
 pytest-asyncio = "^0.25"
 pytest-cov = "^6.0"
+hypothesis = "^6.0"
 factory-boy = "^3.3"
 mypy = "^1.14"
 ruff = "^0.9"
@@ -59,7 +60,7 @@ src = ["src"]
 select = [
     "E",    # pycodestyle errors
     "W",    # pycodestyle warnings
-    "F",    # pyflakes
+    "F",    # pyflakes (unused imports, variables)
     "I",    # isort
     "N",    # pep8-naming
     "UP",   # pyupgrade
@@ -67,15 +68,31 @@ select = [
     "C4",   # flake8-comprehensions
     "SIM",  # flake8-simplify
     "TCH",  # flake8-type-checking
+    "ARG",  # flake8-unused-arguments (unused function args)
+    "ERA",  # eradicate (commented-out code)
+    "PIE",  # flake8-pie (unnecessary pass, duplicates)
+    "RUF",  # Ruff-specific rules (unused noqa, etc.)
+    "PLC",  # pylint convention
+    "PLE",  # pylint error
+    "PLR",  # pylint refactor
+    "PLW",  # pylint warning
 ]
 ignore = [
-    "E501",  # Line too long (handled by formatter)
+    "E501",    # Line too long (handled by formatter)
+    "PLR0913", # Too many arguments to function (sometimes necessary)
+    "PLR2004", # Magic value used in comparison (context-dependent)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101"]  # Allow assert in tests
+"tests/*" = ["S101", "ARG001", "ARG002", "PLR2004"]  # Allow asserts, unused args, magic values in tests
 "src/gapsense/core/models/*" = ["TC003"]  # datetime/UUID used at runtime in SQLAlchemy
-"src/gapsense/ai/prompt_loader.py" = ["TC003"]  # Path used at runtime
+"src/gapsense/ai/prompt_loader.py" = ["TC003", "PLW0603"]  # Path used at runtime, global cache OK
+"src/gapsense/engagement/whatsapp/factory.py" = ["PLW0603"]  # Global singleton pattern
+"src/gapsense/engagement/whatsapp/twilio_provider.py" = ["ARG002"]  # Interface arguments required but unused
+"src/gapsense/config.py" = ["ERA001"]  # Section headers as comments
+"alembic/versions/*" = ["ERA001", "PLR0915"]  # Allow commented code and long functions in migrations
+"alembic/env.py" = ["ARG001"]  # Alembic callbacks have required signatures
+"scripts/*" = ["RUF001"]  # Allow emoji in scripts
 
 [tool.ruff.lint.isort]
 known-first-party = ["gapsense"]

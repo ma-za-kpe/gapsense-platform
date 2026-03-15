@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from gapsense.core.models import Parent, School, Student, Teacher
+from gapsense.core.models import Parent, Student, Teacher
 from gapsense.engagement.flow_executor import FlowExecutor
 from gapsense.engagement.teacher_flows import TeacherFlowExecutor
 from gapsense.engagement.whatsapp_client import WhatsAppClient
@@ -218,12 +218,10 @@ class TestTeacherOnboardingConfirmation:
     """Tests for teacher confirming student creation before committing."""
 
     async def test_teacher_previews_before_creation(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher completes roster → sees preview before creating students."""
-        school = School(name="St. Mary's JHS", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233505555555",
@@ -266,12 +264,10 @@ class TestTeacherOnboardingConfirmation:
         assert len(students) == 0  # No students created yet!
 
     async def test_teacher_confirms_creation(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher confirms → students created."""
-        school = School(name="St. Mary's JHS", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233506666666",
@@ -314,12 +310,10 @@ class TestTeacherOnboardingConfirmation:
         assert result.message_sent is True
 
     async def test_teacher_declines_asks_to_resend(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher says 'No' → can resend student list."""
-        school = School(name="St. Mary's JHS", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233507777777",
@@ -362,12 +356,10 @@ class TestTeacherOnboardingConfirmation:
         assert len(students) == 0
 
     async def test_preview_shows_student_count(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Preview message should show number of students."""
-        school = School(name="Test School", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233508888888",

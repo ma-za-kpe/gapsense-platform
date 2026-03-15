@@ -2,9 +2,13 @@
 Pytest Configuration and Fixtures
 
 Shared test fixtures for unit and integration tests.
+Includes custom Hypothesis strategies for domain types.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
+from hypothesis import strategies as st
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import configure_mappers, sessionmaker
@@ -21,6 +25,11 @@ from gapsense.core.models import (  # noqa: F401 - imported for SQLAlchemy regis
 
 # Ensure all mappers are configured
 configure_mappers()
+
+
+# ============================================================================
+# Database Fixtures
+# ============================================================================
 
 
 @pytest.fixture
@@ -83,3 +92,246 @@ async def db_session(async_engine) -> AsyncSession:
             await session.rollback()
 
         yield session
+
+
+@pytest.fixture
+async def region_district_school(db_session: AsyncSession):
+    """Create Region → District → School hierarchy for tests.
+
+    Fixes foreign key errors by providing proper geographic hierarchy.
+    Returns tuple of (region, district, school) for test use.
+    """
+    from gapsense.core.models import District, Region, School
+
+    # Create region (root of hierarchy)
+    region = Region(
+        name="Greater Accra",
+        code="GAR",
+    )
+    db_session.add(region)
+    await db_session.flush()
+
+    # Create district in that region
+    district = District(
+        name="Test District",
+        region_id=region.id,
+    )
+    db_session.add(district)
+    await db_session.flush()
+
+    # Create school in that district
+    school = School(
+        name="Test School",
+        district_id=district.id,
+        school_type="jhs",
+        is_active=True,
+    )
+    db_session.add(school)
+    await db_session.flush()
+
+    await db_session.commit()
+    await db_session.refresh(region)
+    await db_session.refresh(district)
+    await db_session.refresh(school)
+
+    return region, district, school
+
+
+# ============================================================================
+# Custom Hypothesis Strategies
+# ============================================================================
+
+# Strategy for generating CountryConfig instances
+country_config_st = st.fixed_dictionaries(
+    {
+        "country_code": st.sampled_from(["GH", "UG", "KE", "NG"]),
+        "country_name": st.sampled_from(["Ghana", "Uganda", "Kenya", "Nigeria"]),
+        "curriculum_authority": st.text(
+            min_size=1, max_size=20, alphabet=st.characters(whitelist_categories=("L",))
+        ),
+        "currency": st.text(
+            min_size=1, max_size=15, alphabet=st.characters(whitelist_categories=("L", "N", "S"))
+        ),
+        "common_foods": st.lists(
+            st.text(min_size=1, max_size=15, alphabet=st.characters(whitelist_categories=("L",))),
+            min_size=1,
+            max_size=5,
+        ),
+        "common_names": st.lists(
+            st.text(min_size=1, max_size=15, alphabet=st.characters(whitelist_categories=("L",))),
+            min_size=1,
+            max_size=5,
+        ),
+        "household_materials": st.lists(
+            st.text(min_size=1, max_size=15, alphabet=st.characters(whitelist_categories=("L",))),
+            min_size=1,
+            max_size=5,
+        ),
+        "geographic_contexts": st.lists(
+            st.text(min_size=1, max_size=15, alphabet=st.characters(whitelist_categories=("L",))),
+            min_size=1,
+            max_size=5,
+        ),
+        "supported_languages": st.just(["en", "tw"]),
+        "timezone": st.just("GMT"),
+    }
+)
+
+# Strategy for generating L1LanguageContext data
+l1_language_context_st = st.fixed_dictionaries(
+    {
+        "language_code": st.sampled_from(["en", "tw", "ee", "ga", "dag"]),
+        "language_name": st.sampled_from(["English", "Twi", "Ewe", "Ga", "Dagbani"]),
+        "greetings": st.lists(
+            st.text(min_size=1, max_size=15, alphabet=st.characters(whitelist_categories=("L",))),
+            min_size=1,
+            max_size=3,
+        ),
+        "encouragement_phrases": st.lists(
+            st.text(min_size=1, max_size=15, alphabet=st.characters(whitelist_categories=("L",))),
+            min_size=1,
+            max_size=3,
+        ),
+        "math_vocabulary": st.dictionaries(
+            st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=("L",))),
+            st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=("L",))),
+            min_size=1,
+            max_size=3,
+        ),
+        "materials": st.dictionaries(
+            st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=("L",))),
+            st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=("L",))),
+            min_size=0,
+            max_size=3,
+        ),
+        "action_verbs": st.dictionaries(
+            st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=("L",))),
+            st.text(min_size=1, max_size=10, alphabet=st.characters(whitelist_categories=("L",))),
+            min_size=0,
+            max_size=3,
+        ),
+    }
+)
+
+# Strategy for WorkerTask payloads
+worker_task_st = st.fixed_dictionaries(
+    {
+        "task_type": st.sampled_from(
+            ["tts_generate", "image_analyze", "scheduled_message", "voice_transcribe"]
+        ),
+        "payload": st.fixed_dictionaries(
+            {
+                "text": st.text(min_size=1, max_size=100),
+                "language": st.sampled_from(["en", "tw", "ee"]),
+                "country": st.sampled_from(["GH", "UG", "KE", "NG"]),
+            }
+        ),
+        "retry_count": st.integers(min_value=0, max_value=5),
+        "max_retries": st.integers(min_value=1, max_value=5),
+    }
+)
+
+# Strategy for ImageContent
+image_content_st = st.fixed_dictionaries(
+    {
+        "data": st.text(
+            min_size=10, max_size=50, alphabet=st.characters(whitelist_categories=("L", "N"))
+        ),
+        "media_type": st.sampled_from(["image/jpeg", "image/png", "image/webp"]),
+        "source_type": st.sampled_from(["base64", "url"]),
+    }
+)
+
+
+# ============================================================================
+# Mock Service Fixtures
+# ============================================================================
+
+
+@pytest.fixture
+def mock_ai_client():
+    """Mock AsyncAIClient for testing."""
+    from gapsense.ai.async_client import AIResponse
+
+    client = MagicMock()
+    client.generate = AsyncMock(
+        return_value=AIResponse(
+            text="mock response",
+            provider="anthropic",
+            model="claude-sonnet-4-5",
+            prompt_id="TEST-001",
+            latency_ms=100.0,
+            input_tokens=50,
+            output_tokens=20,
+        )
+    )
+    client.close = AsyncMock()
+    return client
+
+
+@pytest.fixture
+def mock_prompt_service():
+    """Mock PromptService for testing."""
+    from gapsense.ai.prompt_service import PromptService, RenderedPrompt
+
+    svc = MagicMock(spec=PromptService)
+    svc.render_prompt.return_value = RenderedPrompt(
+        prompt_id="TEST-001",
+        system_prompt="You are a test assistant.",
+        user_template=None,
+        model="claude-sonnet-4-5",
+        temperature=0.3,
+        max_tokens=2048,
+        country="GH",
+        language="en",
+    )
+    svc.get_supported_countries.return_value = ["GH", "KE", "NG", "UG"]
+    svc.get_supported_languages.return_value = ["en", "tw"]
+    svc.list_prompts.return_value = [
+        "ACT-001",
+        "ANALYSIS-001",
+        "ANALYSIS-002",
+        "DIAG-001",
+        "DIAG-002",
+        "DIAG-003",
+        "GUARD-001",
+        "PARENT-001",
+        "PARENT-002",
+        "PARENT-003",
+        "TEACHER-001",
+        "TEACHER-002",
+        "TEACHER-003",
+    ]
+    return svc
+
+
+@pytest.fixture
+def mock_media_service():
+    """Mock MediaService for testing."""
+    from gapsense.services.media_service import MediaService
+
+    svc = MagicMock(spec=MediaService)
+    svc.upload = AsyncMock(return_value="GH/student-1/image/123_test.jpg")
+    svc.download = AsyncMock(return_value=b"fake-image-bytes")
+    svc.generate_download_url = AsyncMock(return_value="https://s3.example.com/presigned")
+    svc.generate_upload_url = AsyncMock(return_value="https://s3.example.com/upload")
+    svc.verify_connectivity = AsyncMock(return_value=True)
+    return svc
+
+
+@pytest.fixture
+def mock_guard_service():
+    """Mock GuardService for testing."""
+    from gapsense.services.guard_service import GuardResult, GuardService
+
+    svc = MagicMock(spec=GuardService)
+    svc.check = AsyncMock(
+        return_value=GuardResult(
+            passed=True,
+            original_message="test",
+            violations=[],
+            latency_ms=50.0,
+            ai_available=True,
+        )
+    )
+    return svc

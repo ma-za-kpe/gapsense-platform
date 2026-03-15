@@ -73,8 +73,6 @@ class TeacherBase(BaseModel):
 class TeacherCreate(TeacherBase):
     """Schema for creating a new teacher."""
 
-    pass
-
 
 class TeacherUpdate(BaseModel):
     """Schema for updating teacher information."""

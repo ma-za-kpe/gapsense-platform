@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from gapsense.core.models import Parent, School, Teacher
+from gapsense.core.models import Parent, Teacher
 from gapsense.engagement.flow_executor import FlowExecutor
 from gapsense.engagement.teacher_flows import TeacherFlowExecutor
 from gapsense.engagement.whatsapp_client import WhatsAppClient
@@ -50,12 +50,10 @@ class TestStudentCountMismatch:
     """Tests for handling student count mismatch."""
 
     async def test_teacher_sends_fewer_names_than_expected(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher says 50 students, sends 48 → warned + asked to confirm."""
-        school = School(name="Test School", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233501111111",
@@ -102,12 +100,10 @@ class TestStudentCountMismatch:
         assert "50" in message_body or "expected" in message_body.lower()
 
     async def test_teacher_sends_more_names_than_expected(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher says 10 students, sends 12 → warned + asked to confirm."""
-        school = School(name="Test School", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233502222222",
@@ -152,12 +148,10 @@ class TestStudentCountMismatch:
         assert "10" in message_body or "expected" in message_body.lower()
 
     async def test_exact_count_match_no_warning(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher says 5 students, sends 5 → no warning, just preview."""
-        school = School(name="Test School", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233503333333",
@@ -211,12 +205,10 @@ class TestDuplicateStudentNames:
     """Tests for detecting duplicate student names."""
 
     async def test_detect_duplicate_names(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher sends 'Kwame' twice → warned about duplicate."""
-        school = School(name="Test School", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233504444444",
@@ -306,12 +298,10 @@ class TestSessionTimeout:
         assert result.message_sent is True
 
     async def test_teacher_session_expires_after_24_hours(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher abandons flow → state expires after 24h."""
-        school = School(name="Test School", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         # NOTE: Teacher.last_active_at expects timezone-naive datetime
         old_time = (datetime.now(UTC) - timedelta(hours=26)).replace(tzinfo=None)

@@ -8,6 +8,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -17,28 +18,32 @@ from gapsense.ai import get_prompt_library
 from gapsense.config import settings
 from gapsense.core.database import close_db, engine
 
+_logger = structlog.get_logger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan events.
 
     Startup:
-    - Load prompt library into memory
-    - Verify database connection
-    - Initialize services
+    - Initialize AsyncAIClient singleton with connection pooling
+    - Initialize PromptService and load v2.0 prompts
+    - Initialize MediaService and verify S3 connectivity
+    - Initialize GuardService
+    - Verify database connectivity
+    - Store services in app.state
 
     Shutdown:
+    - Close AI client connection pool
     - Close database connections
-    - Cleanup resources
+    - Release all resources
     """
+    import os
+
     # Startup
     print("🚀 GapSense Platform starting...")
 
-    # Load prompt library
-    prompt_lib = get_prompt_library()
-    print(f"📚 Loaded {len(prompt_lib)} prompts (v{prompt_lib.metadata['version']})")
-
-    # Verify database connection
+    # 1. Verify database connection (critical — refuse to start on failure)
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
@@ -47,12 +52,83 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         print(f"❌ Database connection failed: {e}")
         raise
 
+    # 2. Load prompt library (critical — refuse to start on failure)
+    prompt_lib = get_prompt_library()
+    print(f"📚 Loaded {len(prompt_lib)} prompts (v{prompt_lib.metadata['version']})")
+
+    # 3. Initialize PromptService with v2.0 multi-country support
+    prompt_service = None
+    try:
+        from gapsense.ai.prompt_service import PromptService
+
+        prompt_service = PromptService(settings)
+        prompt_count = len(prompt_service.list_prompts())
+        countries = prompt_service.get_supported_countries()
+        print(f"📚 PromptService: {prompt_count} prompts, countries: {countries}")
+    except Exception as e:
+        print(f"❌ PromptService initialization failed: {e}")
+        raise
+
+    # 4. Initialize AsyncAIClient singleton
+    ai_client = None
+    try:
+        from gapsense.ai.async_client import AsyncAIClient
+
+        anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        grok_key = os.environ.get("GROK_API_KEY")
+        if anthropic_key:
+            ai_client = AsyncAIClient(
+                anthropic_api_key=anthropic_key,
+                grok_api_key=grok_key,
+            )
+            print("✅ AsyncAIClient initialized")
+        else:
+            _logger.warning("ai_client_no_key", msg="ANTHROPIC_API_KEY not set")
+            print("⚠️ AsyncAIClient: no API key, AI features disabled")
+    except Exception as e:
+        _logger.warning("ai_client_init_failed", error=str(e))
+        print(f"⚠️ AsyncAIClient initialization failed: {e}")
+
+    # 5. Initialize MediaService and verify S3 connectivity
+    media_service = None
+    s3_healthy = False
+    try:
+        from gapsense.services.media_service import MediaService
+
+        media_service = MediaService(settings)
+        s3_healthy = await media_service.verify_connectivity()
+        if s3_healthy:
+            print("✅ MediaService: S3 connectivity verified")
+        else:
+            print("⚠️ MediaService: S3 not reachable (degraded)")
+    except Exception as e:
+        _logger.warning("media_service_init_failed", error=str(e))
+        print(f"⚠️ MediaService initialization failed: {e}")
+
+    # 6. Initialize GuardService
+    guard_service = None
+    if ai_client and prompt_service:
+        from gapsense.services.guard_service import GuardService
+
+        guard_service = GuardService(ai_client, prompt_service)
+        print("✅ GuardService initialized")
+
+    # Store services in app.state for dependency injection
+    app.state.ai_client = ai_client
+    app.state.prompt_service = prompt_service
+    app.state.media_service = media_service
+    app.state.guard_service = guard_service
+    app.state.s3_healthy = s3_healthy
+
     print("✅ GapSense Platform ready!")
 
     yield
 
     # Shutdown
     print("🛑 GapSense Platform shutting down...")
+    if ai_client:
+        await ai_client.close()
+        print("✅ AI client connection pool closed")
     await close_db()
     print("✅ Shutdown complete")
 
@@ -98,7 +174,7 @@ def create_app() -> FastAPI:
 
         Returns:
             - status: healthy/unhealthy
-            - checks: Individual health checks
+            - checks: Individual health checks (database, prompt_library, ai_client, s3)
         """
         checks: dict[str, dict[str, Any]] = {}
 
@@ -120,6 +196,24 @@ def create_app() -> FastAPI:
             }
         except Exception as e:
             checks["prompt_library"] = {"status": "unhealthy", "error": str(e)}
+
+        # AI client readiness
+        ai_client = getattr(app.state, "ai_client", None)
+        if ai_client is not None:
+            checks["ai_client"] = {"status": "healthy", "ready": True}
+        else:
+            checks["ai_client"] = {"status": "degraded", "ready": False}
+
+        # S3 connectivity
+        s3_healthy = getattr(app.state, "s3_healthy", False)
+        media_service = getattr(app.state, "media_service", None)
+        if media_service is not None:
+            if s3_healthy:
+                checks["s3"] = {"status": "healthy"}
+            else:
+                checks["s3"] = {"status": "unhealthy", "error": "S3 not reachable"}
+        else:
+            checks["s3"] = {"status": "degraded", "error": "MediaService not initialized"}
 
         # Overall status
         all_healthy = all(check["status"] == "healthy" for check in checks.values())

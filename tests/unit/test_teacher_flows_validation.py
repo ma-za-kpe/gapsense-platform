@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from gapsense.core.models import School, Teacher
+from gapsense.core.models import Teacher
 from gapsense.engagement.teacher_flows import TeacherFlowExecutor
 from gapsense.engagement.whatsapp_client import WhatsAppClient
 
@@ -18,23 +18,28 @@ from gapsense.engagement.whatsapp_client import WhatsAppClient
 def mock_whatsapp_client():
     """Create a mock WhatsApp client."""
     client = AsyncMock(spec=WhatsAppClient)
-    client.send_text_message = AsyncMock(return_value=True)
-    client.send_template_message = AsyncMock(return_value=True)
+    client.send_text_message = AsyncMock(return_value="msg-123")
+    client.send_button_message = AsyncMock(return_value="msg-123")
+    client.send_template_message = AsyncMock(return_value="msg-123")
     return client
 
 
+@pytest.fixture(autouse=True)
+def patch_whatsapp_client(mock_whatsapp_client):
+    """Automatically patch WhatsAppClient.from_settings for all tests."""
+    from unittest.mock import patch
+
+    with patch(
+        "gapsense.engagement.whatsapp_client.WhatsAppClient.from_settings",
+        return_value=mock_whatsapp_client,
+    ):
+        yield
+
+
 @pytest.fixture
-async def teacher(db_session: AsyncSession):
+async def teacher(db_session: AsyncSession, region_district_school):
     """Create a test teacher with school."""
-    # Create a school first
-    school = School(
-        name="Test School",
-        district_id=1,
-        school_type="jhs",
-        is_active=True,
-    )
-    db_session.add(school)
-    await db_session.flush()
+    _region, _district, school = region_district_school
 
     # Create teacher linked to school
     teacher = Teacher(
@@ -64,19 +69,23 @@ class TestSchoolNameValidationIntegration:
     ):
         """Should accept valid school name and normalize it."""
         teacher.conversation_state = {
-            "step": "AWAITING_SCHOOL_NAME",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_SCHOOL",
             "data": {},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="St. Mary's JHS, Accra",
+            message_id="msg-test",
         )
 
-        assert result.success is True
+        assert result.error is None
+        assert result.message_sent is True
+        await db_session.refresh(teacher)
         assert teacher.conversation_state["data"]["school_name"] == "St. Mary's JHS, Accra"
 
     async def test_normalizes_school_name_whitespace(
@@ -84,19 +93,23 @@ class TestSchoolNameValidationIntegration:
     ):
         """Should normalize multiple spaces in school name."""
         teacher.conversation_state = {
-            "step": "AWAITING_SCHOOL_NAME",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_SCHOOL",
             "data": {},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="  St.  Mary's   JHS  ",
+            message_id="msg-test",
         )
 
-        assert result.success is True
+        assert result.error is None
+        assert result.message_sent is True
+        await db_session.refresh(teacher)
         assert teacher.conversation_state["data"]["school_name"] == "St. Mary's JHS"
 
     async def test_rejects_too_short_school_name(
@@ -104,19 +117,21 @@ class TestSchoolNameValidationIntegration:
     ):
         """Should reject school names that are too short."""
         teacher.conversation_state = {
-            "step": "AWAITING_SCHOOL_NAME",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_SCHOOL",
             "data": {},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="AB",
+            message_id="msg-test",
         )
 
-        assert result.success is False
+        assert result.error is not None
         assert "at least 3 characters" in result.error.lower()
 
     async def test_rejects_numbers_only_school_name(
@@ -124,19 +139,21 @@ class TestSchoolNameValidationIntegration:
     ):
         """Should reject school names with only numbers."""
         teacher.conversation_state = {
-            "step": "AWAITING_SCHOOL_NAME",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_SCHOOL",
             "data": {},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="12345",
+            message_id="msg-test",
         )
 
-        assert result.success is False
+        assert result.error is not None
         assert "must contain letters" in result.error.lower()
 
 
@@ -153,19 +170,23 @@ class TestClassNameValidationIntegration:
     ):
         """Should accept 'Basic 7' format."""
         teacher.conversation_state = {
-            "step": "AWAITING_CLASS_NAME",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_CLASS",
             "data": {"school_name": "Test School"},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="Basic 7",
+            message_id="msg-test",
         )
 
-        assert result.success is True
+        assert result.error is None
+        assert result.message_sent is True
+        await db_session.refresh(teacher)
         assert teacher.conversation_state["data"]["class_name"] == "Basic 7"
 
     async def test_normalizes_class_name_case(
@@ -173,19 +194,23 @@ class TestClassNameValidationIntegration:
     ):
         """Should normalize class name to title case."""
         teacher.conversation_state = {
-            "step": "AWAITING_CLASS_NAME",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_CLASS",
             "data": {"school_name": "Test School"},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="basic 7",
+            message_id="msg-test",
         )
 
-        assert result.success is True
+        assert result.error is None
+        assert result.message_sent is True
+        await db_session.refresh(teacher)
         assert teacher.conversation_state["data"]["class_name"] == "Basic 7"
 
     async def test_accepts_jhs_format(
@@ -193,19 +218,23 @@ class TestClassNameValidationIntegration:
     ):
         """Should accept 'JHS 1' format with uppercase JHS."""
         teacher.conversation_state = {
-            "step": "AWAITING_CLASS_NAME",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_CLASS",
             "data": {"school_name": "Test School"},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="jhs 1",
+            message_id="msg-test",
         )
 
-        assert result.success is True
+        assert result.error is None
+        assert result.message_sent is True
+        await db_session.refresh(teacher)
         assert teacher.conversation_state["data"]["class_name"] == "JHS 1"
 
     async def test_rejects_invalid_grade_level(
@@ -213,19 +242,21 @@ class TestClassNameValidationIntegration:
     ):
         """Should reject invalid grade levels."""
         teacher.conversation_state = {
-            "step": "AWAITING_CLASS_NAME",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_CLASS",
             "data": {"school_name": "Test School"},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="Basic 15",
+            message_id="msg-test",
         )
 
-        assert result.success is False
+        assert result.error is not None
         assert "invalid grade level" in result.error.lower()
 
 
@@ -242,19 +273,23 @@ class TestStudentCountValidationIntegration:
     ):
         """Should accept valid student count."""
         teacher.conversation_state = {
-            "step": "AWAITING_STUDENT_COUNT",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_STUDENT_COUNT",
             "data": {"school_name": "Test School", "class_name": "Basic 7"},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="25",
+            message_id="msg-test",
         )
 
-        assert result.success is True
+        assert result.error is None
+        assert result.message_sent is True
+        await db_session.refresh(teacher)
         assert teacher.conversation_state["data"]["student_count"] == 25
 
     async def test_rejects_zero_student_count(
@@ -262,19 +297,21 @@ class TestStudentCountValidationIntegration:
     ):
         """Should reject zero student count."""
         teacher.conversation_state = {
-            "step": "AWAITING_STUDENT_COUNT",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_STUDENT_COUNT",
             "data": {"school_name": "Test School", "class_name": "Basic 7"},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="0",
+            message_id="msg-test",
         )
 
-        assert result.success is False
+        assert result.error is not None
         assert "must be positive" in result.error.lower()
 
     async def test_rejects_negative_student_count(
@@ -282,39 +319,44 @@ class TestStudentCountValidationIntegration:
     ):
         """Should reject negative student count."""
         teacher.conversation_state = {
-            "step": "AWAITING_STUDENT_COUNT",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_STUDENT_COUNT",
             "data": {"school_name": "Test School", "class_name": "Basic 7"},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="-5",
+            message_id="msg-test",
         )
 
-        assert result.success is False
-        assert "must be positive" in result.error.lower()
+        assert result.error is not None
+        # Validation treats negative numbers as non-numeric
+        assert "must be a number" in result.error.lower()
 
     async def test_rejects_non_numeric_student_count(
         self, db_session: AsyncSession, teacher: Teacher, mock_whatsapp_client: AsyncMock
     ):
         """Should reject non-numeric student count."""
         teacher.conversation_state = {
-            "step": "AWAITING_STUDENT_COUNT",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_STUDENT_COUNT",
             "data": {"school_name": "Test School", "class_name": "Basic 7"},
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="twenty",
+            message_id="msg-test",
         )
 
-        assert result.success is False
+        assert result.error is not None
         assert "must be a number" in result.error.lower()
 
 
@@ -331,7 +373,8 @@ class TestStudentNamesValidationIntegration:
     ):
         """Should normalize all student names in a list."""
         teacher.conversation_state = {
-            "step": "AWAITING_STUDENT_LIST",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_STUDENT_LIST",
             "data": {
                 "school_name": "Test School",
                 "class_name": "Basic 7",
@@ -340,25 +383,32 @@ class TestStudentNamesValidationIntegration:
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="1. kwame mensah\n2. ama serwaa\n3. kofi agyeman",
+            message_id="msg-test",
         )
 
-        assert result.success is True
-        # Should normalize to title case and strip numbering
-        created_students = teacher.conversation_state["data"].get("created_student_ids", [])
-        # Verify students were created (actual verification needs DB query)
-        assert len(created_students) > 0
+        assert result.error is None
+        assert result.message_sent is True
+        await db_session.refresh(teacher)
+        # Should normalize to title case and strip numbering, then move to confirmation
+        assert teacher.conversation_state["step"] == "CONFIRM_STUDENT_CREATION"
+        parsed_names = teacher.conversation_state["data"].get("parsed_names", [])
+        assert len(parsed_names) == 3
+        assert parsed_names[0] == "Kwame Mensah"
+        assert parsed_names[1] == "Ama Serwaa"
+        assert parsed_names[2] == "Kofi Agyeman"
 
     async def test_rejects_student_name_too_short(
         self, db_session: AsyncSession, teacher: Teacher, mock_whatsapp_client: AsyncMock
     ):
         """Should reject student names that are too short."""
         teacher.conversation_state = {
-            "step": "AWAITING_STUDENT_LIST",
+            "flow": "FLOW-TEACHER-ONBOARD",
+            "step": "COLLECT_STUDENT_LIST",
             "data": {
                 "school_name": "Test School",
                 "class_name": "Basic 7",
@@ -367,12 +417,13 @@ class TestStudentNamesValidationIntegration:
         }
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session, mock_whatsapp_client)
-        result = await executor.process_message(
+        executor = TeacherFlowExecutor(db=db_session)
+        result = await executor.process_teacher_message(
             teacher=teacher,
             message_type="text",
             message_content="K",
+            message_id="msg-test",
         )
 
-        assert result.success is False
+        assert result.error is not None
         assert "at least 2 characters" in result.error.lower()

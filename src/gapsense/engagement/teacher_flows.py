@@ -370,7 +370,7 @@ class TeacherFlowExecutor:
         try:
             normalized_school_name = validate_school_name(school_name)
         except ValidationError as e:
-            message = f"❌ {str(e)}\n\nPlease send your school name again."
+            message = f"❌ {e!s}\n\nPlease send your school name again."
             message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
@@ -445,7 +445,7 @@ class TeacherFlowExecutor:
             normalized_class_name = validate_class_name(class_name)
         except ValidationError as e:
             message = (
-                f"❌ {str(e)}\n\n"
+                f"❌ {e!s}\n\n"
                 "Please send your class name again.\n"
                 "Examples: 'Basic 7', 'B7', 'JHS 1'"
             )
@@ -506,7 +506,7 @@ class TeacherFlowExecutor:
         try:
             student_count = validate_student_count(student_count_str)
         except ValidationError as e:
-            message = f"❌ {str(e)}\n\nPlease send a valid number.\n\nHow many students?"
+            message = f"❌ {e!s}\n\nPlease send a valid number.\n\nHow many students?"
             message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
@@ -563,7 +563,7 @@ class TeacherFlowExecutor:
         try:
             student_names = self._parse_student_names(student_list_text)
         except ValidationError as e:
-            message = f"❌ {str(e)}\n\nPlease send the student list again."
+            message = f"❌ {e!s}\n\nPlease send the student list again."
             message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
             return TeacherFlowResult(
                 flow_name="FLOW-TEACHER-ONBOARD",
@@ -912,7 +912,7 @@ class TeacherFlowExecutor:
                     names.append(normalized_name)
                 except ValidationError as e:
                     # Re-raise with context about which name failed
-                    raise ValidationError(f"Invalid student name '{part}': {str(e)}") from e
+                    raise ValidationError(f"Invalid student name '{part}': {e!s}") from e
 
         return names
 

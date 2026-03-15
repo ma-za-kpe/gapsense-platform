@@ -140,12 +140,13 @@ class TestOnboardingFlow:
         await db_session.commit()
         await db_session.refresh(parent)
 
-        executor = FlowExecutor(db=db_session)
-
         with patch("gapsense.engagement.flow_executor.WhatsAppClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.from_settings.return_value = mock_client
-            mock_client.send_template_message.return_value = "wamid.template123"
+            mock_client.send_text_message.return_value = "wamid.text123"
+
+            # Create executor AFTER patching
+            executor = FlowExecutor(db=db_session)
 
             result = await executor.process_message(
                 parent=parent,
@@ -164,10 +165,10 @@ class TestOnboardingFlow:
             assert parent.conversation_state["flow"] == "FLOW-ONBOARD"
             assert parent.conversation_state["step"] == "AWAITING_OPT_IN"
 
-            # Verify template welcome message sent (not regular text)
-            mock_client.send_template_message.assert_called_once()
-            call_kwargs = mock_client.send_template_message.call_args.kwargs
-            assert call_kwargs["template_name"] == "gapsense_welcome"
+            # Verify welcome text message sent (per FIX GAP #3)
+            mock_client.send_text_message.assert_called_once()
+            call_kwargs = mock_client.send_text_message.call_args.kwargs
+            assert "Welcome to GapSense" in call_kwargs["text"]
 
     @pytest.mark.asyncio
     async def test_onboarding_invalid_language(self, db_session: AsyncSession):

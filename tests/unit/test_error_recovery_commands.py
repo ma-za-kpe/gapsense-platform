@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from gapsense.core.models import Parent, School, Teacher
+from gapsense.core.models import Parent, Teacher
 from gapsense.engagement.flow_executor import FlowExecutor
 from gapsense.engagement.teacher_flows import TeacherFlowExecutor
 from gapsense.engagement.whatsapp_client import WhatsAppClient
@@ -68,12 +68,10 @@ class TestRestartCommand:
         assert parent.conversation_state is None
 
     async def test_teacher_restart_during_onboarding(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher sends RESTART while collecting student list - should clear state."""
-        school = School(name="Test School", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233502222222",
@@ -214,12 +212,10 @@ class TestHelpCommand:
         # Should send helpful message about current step
 
     async def test_teacher_help_general(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher sends HELP with no active flow - should show general help."""
-        school = School(name="Test School", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233506666666",
@@ -298,12 +294,10 @@ class TestStatusCommand:
         # Should show "Onboarding: Step 3 of 4" or similar
 
     async def test_teacher_status_during_onboarding(
-        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock
+        self, db_session: AsyncSession, mock_whatsapp_client: AsyncMock, region_district_school
     ):
         """Teacher sends STATUS during onboarding - should show progress."""
-        school = School(name="Test School", district_id=1, school_type="jhs", is_active=True)
-        db_session.add(school)
-        await db_session.flush()
+        _region, _district, school = region_district_school
 
         teacher = Teacher(
             phone="+233509999999",

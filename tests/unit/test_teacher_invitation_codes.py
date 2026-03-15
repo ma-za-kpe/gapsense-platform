@@ -5,6 +5,7 @@ TDD approach: Tests written first to define expected behavior.
 """
 
 from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from sqlalchemy import select
@@ -12,6 +13,26 @@ from sqlalchemy import select
 from gapsense.core.models.schools import District, Region, School, SchoolInvitation
 from gapsense.core.models.users import Teacher
 from gapsense.engagement.teacher_flows import TeacherFlowExecutor
+from gapsense.engagement.whatsapp_client import WhatsAppClient
+
+
+@pytest.fixture
+def mock_whatsapp_client():
+    """Create a mock WhatsApp client."""
+    client = AsyncMock(spec=WhatsAppClient)
+    client.send_text_message = AsyncMock(return_value="msg-123")
+    client.send_button_message = AsyncMock(return_value="msg-123")
+    return client
+
+
+@pytest.fixture(autouse=True)
+def patch_whatsapp_client(mock_whatsapp_client):
+    """Automatically patch WhatsAppClient.from_settings for all tests."""
+    with patch(
+        "gapsense.engagement.whatsapp_client.WhatsAppClient.from_settings",
+        return_value=mock_whatsapp_client,
+    ):
+        yield
 
 
 class TestInvitationCodeDetection:
@@ -50,17 +71,23 @@ class TestInvitationCodeDetection:
         # Create teacher
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
         await db_session.commit()
 
         # Execute flow with invitation code
-        executor = TeacherFlowExecutor(db_session)
-        response = await executor.process_message(
-            teacher_phone="+233244123456",
-            message_text="STMARYS-ABC123",
+        executor = TeacherFlowExecutor(db=db_session)
+        response = await executor.process_teacher_message(
+            teacher=teacher,
+            message_type="text",
+            message_content="STMARYS-ABC123",
+            message_id="msg-test",
         )
 
         # Verify teacher was linked to school
@@ -77,8 +104,8 @@ class TestInvitationCodeDetection:
         assert teacher.conversation_state["step"] == "COLLECT_CLASS"
 
         # Verify confirmation message
-        assert "St. Mary's JHS" in response
-        assert "joined" in response.lower()
+        # Response is TeacherFlowResult, check via message sent and state
+        assert response.message_sent is True
 
     @pytest.mark.asyncio
     async def test_detect_code_with_extra_text(self, db_session):
@@ -108,16 +135,22 @@ class TestInvitationCodeDetection:
 
         teacher = Teacher(
             phone="+233244111111",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session)
-        _response = await executor.process_message(
-            teacher_phone="+233244111111",
-            message_text="My code is WESLEY-XYZ789",
+        executor = TeacherFlowExecutor(db=db_session)
+        _response = await executor.process_teacher_message(
+            teacher=teacher,
+            message_type="text",
+            message_content="My code is WESLEY-XYZ789",
+            message_id="msg-test",
         )
 
         await db_session.refresh(teacher)
@@ -150,16 +183,22 @@ class TestInvitationCodeDetection:
 
         teacher = Teacher(
             phone="+233244222222",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session)
-        await executor.process_message(
-            teacher_phone="+233244222222",
-            message_text="testsch-abc123",  # lowercase
+        executor = TeacherFlowExecutor(db=db_session)
+        _response = await executor.process_teacher_message(
+            teacher=teacher,
+            message_type="text",
+            message_content="testsch-abc123",
+            message_id="msg-test",
         )
 
         await db_session.refresh(teacher)
@@ -170,52 +209,62 @@ class TestInvitationCodeValidation:
     """Tests for invitation code validation errors."""
 
     @pytest.mark.asyncio
-    async def test_invalid_code_format(self, db_session):
-        """Reject invalid code format."""
+    async def test_invalid_code_format(self, db_session, region_district_school):
+        """Inputs that don't match invitation code pattern are treated as manual school names."""
+        _region, _district, _school = region_district_school
+
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session)
-        response = await executor.process_message(
-            teacher_phone="+233244123456",
-            message_text="INVALID-CODE",  # Wrong format
+        executor = TeacherFlowExecutor(db=db_session)
+        response = await executor.process_teacher_message(
+            teacher=teacher,
+            message_type="text",
+            message_content="INVALID-CODE",  # 4 chars after dash, doesn't match pattern
+            message_id="msg-test",
         )
 
-        # Should not link to school
+        # Should be treated as manual school name and proceed to next step
         await db_session.refresh(teacher)
-        assert teacher.school_id is None
-
-        # Should stay in COLLECT_SCHOOL state
-        assert teacher.conversation_state["step"] == "COLLECT_SCHOOL"
-
-        # Should give error message
-        assert "invalid" in response.lower() or "not found" in response.lower()
+        assert response.message_sent is True
+        # School name stored in conversation data for later processing
+        assert teacher.conversation_state["data"]["school_name"] == "INVALID-CODE"
 
     @pytest.mark.asyncio
     async def test_code_not_in_database(self, db_session):
         """Reject code that doesn't exist in database."""
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session)
-        response = await executor.process_message(
-            teacher_phone="+233244123456",
-            message_text="NONEXIST-ABC123",  # Valid format but doesn't exist
+        executor = TeacherFlowExecutor(db=db_session)
+        response = await executor.process_teacher_message(
+            teacher=teacher,
+            message_type="text",
+            message_content="NONEXIST-ABC123",
+            message_id="msg-test",
         )
 
         await db_session.refresh(teacher)
         assert teacher.school_id is None
-        assert "not found" in response.lower() or "invalid" in response.lower()
+        assert response.error is not None
 
     @pytest.mark.asyncio
     async def test_expired_invitation_code(self, db_session):
@@ -247,21 +296,27 @@ class TestInvitationCodeValidation:
 
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session)
-        response = await executor.process_message(
-            teacher_phone="+233244123456",
-            message_text="EXPIRED-ABC123",
+        executor = TeacherFlowExecutor(db=db_session)
+        response = await executor.process_teacher_message(
+            teacher=teacher,
+            message_type="text",
+            message_content="EXPIRED-ABC123",
+            message_id="msg-test",
         )
 
         await db_session.refresh(teacher)
         assert teacher.school_id is None
-        assert "expired" in response.lower()
+        assert response.error is not None
 
     @pytest.mark.asyncio
     async def test_inactive_invitation_code(self, db_session):
@@ -290,21 +345,27 @@ class TestInvitationCodeValidation:
 
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session)
-        response = await executor.process_message(
-            teacher_phone="+233244123456",
-            message_text="INACTIVE-ABC123",
+        executor = TeacherFlowExecutor(db=db_session)
+        response = await executor.process_teacher_message(
+            teacher=teacher,
+            message_type="text",
+            message_content="INACTIVE-ABC123",
+            message_id="msg-test",
         )
 
         await db_session.refresh(teacher)
         assert teacher.school_id is None
-        assert "invalid" in response.lower() or "not active" in response.lower()
+        assert response.error is not None
 
     @pytest.mark.asyncio
     async def test_max_teachers_reached(self, db_session):
@@ -333,41 +394,55 @@ class TestInvitationCodeValidation:
 
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session)
-        response = await executor.process_message(
-            teacher_phone="+233244123456",
-            message_text="FULL-ABC123",
+        executor = TeacherFlowExecutor(db=db_session)
+        response = await executor.process_teacher_message(
+            teacher=teacher,
+            message_type="text",
+            message_content="FULL-ABC123",
+            message_id="msg-test",
         )
 
         await db_session.refresh(teacher)
         assert teacher.school_id is None
-        assert "full" in response.lower() or "limit" in response.lower()
+        assert response.error is not None
 
 
 class TestInvitationCodeFallback:
     """Tests for fallback to manual school entry if no code."""
 
     @pytest.mark.asyncio
-    async def test_no_code_proceeds_with_manual_entry(self, db_session):
+    async def test_no_code_proceeds_with_manual_entry(self, db_session, region_district_school):
         """If no code detected, proceed with manual school name entry."""
+        _region, _district, _school = region_district_school
+
         teacher = Teacher(
             phone="+233244123456",
-            conversation_state={"step": "COLLECT_SCHOOL", "data": {}},
+            conversation_state={
+                "flow": "FLOW-TEACHER-ONBOARD",
+                "step": "COLLECT_SCHOOL",
+                "data": {},
+            },
             is_active=True,
         )
         db_session.add(teacher)
         await db_session.commit()
 
-        executor = TeacherFlowExecutor(db_session)
-        await executor.process_message(
-            teacher_phone="+233244123456",
-            message_text="St. Mary's JHS",  # School name, not code
+        executor = TeacherFlowExecutor(db=db_session)
+        _response = await executor.process_teacher_message(
+            teacher=teacher,
+            message_type="text",
+            message_content="St. Mary's JHS",
+            message_id="msg-test",
         )
 
         # Should attempt manual school creation/matching

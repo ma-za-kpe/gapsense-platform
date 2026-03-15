@@ -1,8 +1,9 @@
 """
-WhatsApp Cloud API Webhook Handlers
+WhatsApp Webhook Handlers (Multi-Provider)
 
 Handles webhook verification (GET) and incoming messages (POST).
-Based on Meta WhatsApp Cloud API v21.0 specification.
+Supports both Meta WhatsApp Cloud API and Twilio WhatsApp webhooks
+via the webhook adapter normalization layer.
 """
 # ruff: noqa: B008 - FastAPI Depends in function defaults is standard pattern
 
@@ -19,6 +20,7 @@ from gapsense.core.database import get_db
 from gapsense.core.models import Parent, Teacher
 from gapsense.engagement.flow_executor import FlowExecutor, FlowResult
 from gapsense.engagement.teacher_flows import TeacherFlowExecutor, TeacherFlowResult
+from gapsense.engagement.whatsapp.webhook_adapter import normalize_webhook
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -73,24 +75,23 @@ async def handle_webhook(
 ) -> dict[str, str]:
     """Handle incoming WhatsApp messages and status updates.
 
-    WhatsApp Cloud API sends POST requests with:
-    - Inbound messages (text, image, voice, button, list)
-    - Delivery statuses (sent, delivered, read, failed)
-    - Read receipts
+    Supports both Meta and Twilio webhook formats via the normalize_webhook adapter.
+    Meta sends JSON, Twilio sends form-encoded data — both are normalized to
+    Meta's format before processing.
 
     Returns:
         Always returns {"status": "received"} or {"status": "ignored"}
-        to prevent Meta from retrying
+        to prevent provider retries
 
     Note:
         This endpoint must respond within 20 seconds or Meta will retry.
         Complex processing should be offloaded to async queues (SQS).
     """
-    try:
-        body = await request.json()
-    except Exception as e:
-        logger.warning(f"Failed to parse webhook body: {e}")
-        # Still return 200 to prevent Meta retries
+    # Normalize webhook from any provider to Meta-compatible format
+    body = await normalize_webhook(request)
+
+    if body is None:
+        logger.warning("Failed to parse or normalize webhook body")
         return {"status": "received"}
 
     # Log the webhook for debugging
@@ -129,12 +130,14 @@ async def handle_webhook(
     return {"status": "received"}
 
 
-async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: AsyncSession) -> None:
+async def _handle_message(
+    message: dict[str, Any], _value: dict[str, Any], db: AsyncSession
+) -> None:
     """Handle an inbound WhatsApp message.
 
     Args:
         message: Message object from webhook
-        value: Parent value object with metadata
+        _value: Parent value object with metadata (reserved for future use)
         db: Database session
 
     Implementation:
@@ -165,6 +168,16 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
 
         result: TeacherFlowResult | FlowResult
         if user_type == "teacher":
+            # Special handling for teacher image messages (Exercise Book Scanner)
+            if message_type == "image":
+                await _handle_teacher_image(user, content, db)  # type: ignore[arg-type]
+                return
+
+            # Special handling for teacher text messages (Conversation Partner)
+            if message_type == "text":
+                await _handle_teacher_conversation(user, content, db)  # type: ignore[arg-type]
+                return
+
             logger.info(f"Routing to TeacherFlowExecutor for {from_number}")
             teacher_executor = TeacherFlowExecutor(db=db)
             result = await teacher_executor.process_teacher_message(
@@ -174,6 +187,11 @@ async def _handle_message(message: dict[str, Any], value: dict[str, Any], db: As
                 message_id=message_id,
             )
         elif user_type == "parent":
+            # Special handling for parent voice messages (Micro-Coaching)
+            if message_type == "voice":
+                await _handle_parent_voice(user, content, db)  # type: ignore[arg-type]
+                return
+
             logger.info(f"Routing to ParentFlowExecutor for {from_number}")
             parent_executor = FlowExecutor(db=db)
             result = await parent_executor.process_message(
@@ -381,3 +399,244 @@ def _extract_message_content(message: dict[str, Any]) -> str | dict[str, Any]:
         return voice_data
 
     return ""
+
+
+async def _handle_teacher_image(
+    teacher: Teacher, image_content: dict[str, Any], db: AsyncSession
+) -> None:
+    """Handle exercise book image from teacher (Task 6: ExerciseBookScanner).
+
+    Routes teacher image uploads to ExerciseBookScanner which:
+    1. Downloads image from WhatsApp
+    2. Uploads image to S3
+    3. Enqueues image_analyze task
+    4. Sends acknowledgment to teacher
+
+    Args:
+        teacher: Teacher instance
+        image_content: Image metadata from webhook
+        db: Database session
+    """
+    from sqlalchemy import select
+
+    from gapsense.ai.async_client import AsyncAIClient
+    from gapsense.ai.prompt_service import PromptService
+    from gapsense.core.models import Student
+    from gapsense.engagement.exercise_book_scanner import ExerciseBookScanner
+    from gapsense.engagement.whatsapp import get_whatsapp_client
+    from gapsense.services.guard_service import GuardService
+    from gapsense.services.media_service import MediaService
+    from gapsense.services.worker_service import WorkerService
+
+    try:
+        # Extract media info (URL for Twilio, ID for Meta)
+        media_id = image_content.get("id") or image_content.get("url")
+        mime_type = image_content.get("mime_type", "image/jpeg")
+
+        if not media_id:
+            logger.warning(f"No media ID/URL in image content: {image_content}")
+            return
+
+        # Download image from WhatsApp
+        client = get_whatsapp_client()
+        image_bytes = await client.download_media(media_id=media_id)
+
+        # Get teacher's most recent student (or first student)
+        # TODO: In production, might want to ask teacher which student
+        stmt = (
+            select(Student)
+            .where(Student.teacher_id == teacher.id)
+            .order_by(Student.created_at.desc())  # type: ignore[attr-defined]
+            .limit(1)
+        )
+        result = await db.execute(stmt)
+        student = result.scalar_one_or_none()
+
+        if not student:
+            # No students yet - send message asking teacher to register student first
+            await client.send_text_message(
+                to=teacher.phone,
+                text="⚠️ Please register at least one student first before uploading exercise books.",
+            )
+            return
+
+        # Initialize ExerciseBookScanner with services
+        scanner = ExerciseBookScanner(
+            db=db,
+            media_service=MediaService(),
+            worker_service=WorkerService(),
+            guard_service=GuardService(),
+            ai_client=AsyncAIClient(),
+            prompt_service=PromptService(),
+        )
+
+        # Process image
+        result = await scanner.handle_image_message(
+            teacher=teacher,
+            student=student,
+            image_bytes=image_bytes,
+            filename=f"exercise_book_{media_id[:8]}.jpg",
+            content_type=mime_type,
+            country=teacher.school.district.region.country_code if teacher.school else "GH",
+        )
+
+        if result.success:
+            logger.info(f"Exercise book scan queued: {result.s3_key} for student {student.id}")
+        else:
+            logger.error(f"Exercise book scan failed: {result.error}")
+            await client.send_text_message(
+                to=teacher.phone,
+                text=f"⚠️ Failed to process exercise book: {result.error}",
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to handle teacher image: {e}", exc_info=True)
+        # Send error message to teacher
+        try:
+            client = get_whatsapp_client()
+            await client.send_text_message(
+                to=teacher.phone,
+                text="⚠️ Sorry, we encountered an error processing your image. Please try again.",
+            )
+        except Exception:
+            pass  # Don't fail if error message fails
+
+
+async def _handle_teacher_conversation(teacher: Teacher, message: str, db: AsyncSession) -> None:
+    """Handle teacher text message (Task 8: TeacherConversation).
+
+    Routes teacher text messages to TeacherConversationPartner which:
+    1. Analyzes question with class gap data
+    2. Generates pedagogical response
+    3. Sends formatted response via WhatsApp
+    """
+    from gapsense.ai.async_client import AsyncAIClient
+    from gapsense.ai.prompt_service import PromptService
+    from gapsense.engagement.teacher_conversation import TeacherConversationPartner
+
+    try:
+        # Initialize services
+        ai_client = AsyncAIClient()
+        prompt_service = PromptService()
+
+        # Initialize conversation partner
+        conversation = TeacherConversationPartner(
+            db=db,
+            ai_client=ai_client,
+            prompt_service=prompt_service,
+        )
+
+        # Handle conversation turn
+        result = await conversation.handle_teacher_message(
+            teacher=teacher,
+            message=message,
+            country="GH",
+            language="en",
+        )
+
+        if not result.success:
+            logger.warning(f"Teacher conversation failed: {result.error}")
+
+    except Exception as e:
+        logger.error(f"Failed to handle teacher conversation: {e}", exc_info=True)
+
+
+async def _handle_parent_voice(
+    parent: Parent, voice_content: dict[str, Any], db: AsyncSession
+) -> None:
+    """Handle parent voice message (Task 9: VoiceMicroCoaching).
+
+    Routes parent voice notes to VoiceMicroCoaching which:
+    1. Downloads audio from WhatsApp
+    2. Uploads audio to S3
+    3. Enqueues voice_transcribe task
+    4. Sends acknowledgment
+
+    Args:
+        parent: Parent instance
+        voice_content: Voice audio metadata from webhook
+        db: Database session
+    """
+    from sqlalchemy import select
+
+    from gapsense.ai.async_client import AsyncAIClient
+    from gapsense.ai.prompt_service import PromptService
+    from gapsense.core.models import Student
+    from gapsense.engagement.voice_micro_coaching import VoiceMicroCoaching
+    from gapsense.engagement.whatsapp import get_whatsapp_client
+    from gapsense.services.guard_service import GuardService
+    from gapsense.services.media_service import MediaService
+    from gapsense.services.worker_service import WorkerService
+
+    try:
+        # Extract media info (URL for Twilio, ID for Meta)
+        media_id = voice_content.get("id") or voice_content.get("url")
+        mime_type = voice_content.get("mime_type", "audio/ogg")
+
+        if not media_id:
+            logger.warning(f"No media ID/URL in voice content: {voice_content}")
+            return
+
+        # Download audio from WhatsApp
+        client = get_whatsapp_client()
+        audio_bytes = await client.download_media(media_id=media_id)
+
+        # Get parent's student
+        stmt = (
+            select(Student)
+            .where(Student.parent_id == parent.id)
+            .order_by(Student.created_at.desc())  # type: ignore[attr-defined]
+            .limit(1)
+        )
+        result = await db.execute(stmt)
+        student = result.scalar_one_or_none()
+
+        if not student:
+            # No students yet - prompt parent to complete onboarding
+            await client.send_text_message(
+                to=parent.phone,
+                text="⚠️ Please complete registration first before sending voice messages.",
+            )
+            return
+
+        # Initialize VoiceMicroCoaching with services
+        coaching = VoiceMicroCoaching(
+            db=db,
+            ai_client=AsyncAIClient(),
+            prompt_service=PromptService(),
+            guard_service=GuardService(),
+            media_service=MediaService(),
+            worker_service=WorkerService(),
+        )
+
+        # Process voice message
+        result = await coaching.handle_voice_message(
+            parent=parent,
+            student=student,
+            audio_bytes=audio_bytes,
+            filename=f"voice_{media_id[:8]}.ogg",
+            content_type=mime_type,
+            country="GH",  # TODO: Get from parent location
+            language=parent.preferred_language or "en",
+        )
+
+        if result.success:
+            logger.info(f"Voice coaching queued for parent {parent.phone}")
+        else:
+            logger.error(f"Voice coaching failed: {result.error}")
+            await client.send_text_message(
+                to=parent.phone,
+                text=f"⚠️ Failed to process voice message: {result.error}",
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to handle parent voice: {e}", exc_info=True)
+        # Send error message to parent
+        try:
+            client = get_whatsapp_client()
+            await client.send_text_message(
+                to=parent.phone,
+                text="⚠️ Sorry, we encountered an error processing your voice message. Please try again.",
+            )
+        except Exception:
+            pass  # Don't fail if error message fails

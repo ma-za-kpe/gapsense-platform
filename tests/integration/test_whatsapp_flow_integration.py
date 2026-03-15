@@ -295,15 +295,13 @@ class TestWebhookFlowIntegration:
 
     @pytest.mark.asyncio
     async def test_complete_onboarding_links_to_student(
-        self, client: AsyncClient, db_session: AsyncSession
+        self, client: AsyncClient, db_session: AsyncSession, region_district_school
     ) -> None:
         """Test that completing onboarding LINKS to existing Student (teacher-initiated)."""
-        from gapsense.core.models import School, Student
+        from gapsense.core.models import Student
 
         # Create school and existing student (teacher created this)
-        school = School(name="Test School", district_id=1, school_type="jhs")
-        db_session.add(school)
-        await db_session.commit()
+        _region, _district, school = region_district_school
 
         existing_student = Student(
             full_name="Kwame Mensah",
