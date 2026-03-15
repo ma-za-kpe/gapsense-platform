@@ -12,7 +12,7 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -28,7 +28,7 @@
             margin-bottom: 30px;
         }
         .header h1 {
-            color: #667eea;
+            color: #25D366;
             font-size: 32px;
             margin-bottom: 10px;
             display: flex;
@@ -75,7 +75,7 @@
             margin-bottom: 30px;
         }
         .students-section h2 {
-            color: #667eea;
+            color: #25D366;
             font-size: 24px;
             margin-bottom: 20px;
             display: flex;
@@ -87,17 +87,17 @@
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 15px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #25D366;
             cursor: pointer;
             transition: all 0.3s;
         }
         .student-card:hover {
             transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.2);
         }
         .student-card.expanded {
             background: white;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.3);
         }
         .student-details {
             display: none;
@@ -112,7 +112,7 @@
             margin-bottom: 20px;
         }
         .detail-section h4 {
-            color: #667eea;
+            color: #25D366;
             font-size: 16px;
             margin-bottom: 10px;
             display: flex;
@@ -133,7 +133,7 @@
             content: "•";
             position: absolute;
             left: 5px;
-            color: #667eea;
+            color: #25D366;
             font-weight: bold;
         }
         .expand-icon {
@@ -165,8 +165,8 @@
             padding: 8px 15px;
             border-radius: 20px;
             font-size: 13px;
-            color: #667eea;
-            border: 1px solid #667eea;
+            color: #25D366;
+            border: 1px solid #25D366;
         }
         .severity-high {
             background: #fee;
@@ -191,7 +191,7 @@
             margin-bottom: 30px;
         }
         .analysis-report h2 {
-            color: #667eea;
+            color: #25D366;
             font-size: 24px;
             margin-bottom: 20px;
             padding-bottom: 15px;
@@ -223,7 +223,7 @@
             content: "•";
             position: absolute;
             left: 10px;
-            color: #667eea;
+            color: #25D366;
             font-weight: bold;
         }
         .no-data {
@@ -242,7 +242,7 @@
         }
         .view-full-report-btn {
             display: inline-block;
-            background: #667eea;
+            background: #25D366;
             color: white;
             padding: 12px 24px;
             border-radius: 8px;
@@ -250,19 +250,148 @@
             font-weight: bold;
             margin-bottom: 20px;
             transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
         }
         .view-full-report-btn:hover {
-            background: #5568d3;
+            background: #128C7E;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
         }
+        /* Mobile responsiveness - WCAG compliant */
         @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            /* Stats grid - single column on mobile */
             .stats-grid {
                 grid-template-columns: 1fr;
+                gap: 15px;
+                margin-bottom: 20px;
             }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-card .value {
+                font-size: 32px;
+            }
+
+            /* Typography scaling */
             .header h1 {
                 font-size: 24px;
+                gap: 10px;
+            }
+
+            .header .subtitle {
+                font-size: 14px;
+            }
+
+            .students-section h2,
+            .analysis-report h2 {
+                font-size: 20px;
+            }
+
+            .report-section h3 {
+                font-size: 16px;
+            }
+
+            /* Student cards */
+            .student-card {
+                padding: 16px;
+                margin-bottom: 12px;
+            }
+
+            .student-card .name {
+                font-size: 18px;
+            }
+
+            .student-card .info {
+                font-size: 13px;
+            }
+
+            /* Gap tags - ensure touch-friendly */
+            .gap-tag {
+                padding: 10px 16px;
+                font-size: 14px;
+                min-height: 36px;
+                display: inline-flex;
+                align-items: center;
+            }
+
+            .gaps-summary {
+                gap: 10px;
+            }
+
+            /* Analysis sections */
+            .analysis-report,
+            .students-section {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .report-section {
+                margin-bottom: 20px;
+            }
+
+            .report-section li {
+                font-size: 14px;
+                line-height: 1.6;
+            }
+
+            /* View full report button */
+            .view-full-report-btn {
+                padding: 14px 20px;
+                font-size: 15px;
+                min-height: 48px;
+                display: inline-flex;
+                align-items: center;
+            }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .header .subtitle {
+                font-size: 13px;
+            }
+
+            .stat-card .value {
+                font-size: 28px;
+            }
+
+            .stat-card .icon {
+                font-size: 40px;
+            }
+
+            .student-card .name {
+                font-size: 16px;
+            }
+
+            .gap-tag {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .analysis-report,
+            .students-section {
+                padding: 16px;
+                border-radius: 10px;
             }
         }
     </style>
@@ -381,7 +510,7 @@
 
                     <!-- Expandable Details -->
                     <div class="student-details">
-                        <h3 style="color: #667eea; margin-bottom: 15px;">📝 Detailed Analysis Report</h3>
+                        <h3 style="color: #25D366; margin-bottom: 15px;">📝 Detailed Analysis Report</h3>
 
                         <a href="/demo/reports/{{ teacher_phone }}/student/{{ student.id }}"
                            class="view-full-report-btn"
