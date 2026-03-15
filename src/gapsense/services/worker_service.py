@@ -280,12 +280,14 @@ class WorkerService:
         # 2. Download image
         image_bytes = await self._media_service.download(s3_key)
 
-        # 3. Load curriculum nodes for this grade/country/subject
+        # 3. Load curriculum nodes for this country/subject
+        # NOTE: Removed grade filter because student.current_grade may be "JHS1"
+        # but curriculum nodes are stored as "B7", "B8", etc.
+        # AI will select appropriate nodes based on work shown in image.
         curriculum_result = await self._db.execute(
             select(CurriculumNode)
             .where(
                 CurriculumNode.country == country_key,
-                CurriculumNode.grade == student_grade,
                 CurriculumNode.subject == subject,
             )
             .options(
@@ -293,7 +295,7 @@ class WorkerService:
                     CurriculumIndicator.error_patterns
                 )
             )
-            .limit(50)  # Limit to first 50 nodes to avoid token overflow
+            .limit(100)  # Increased from 50 to cover more grades
         )
         curriculum_nodes = curriculum_result.scalars().all()
 
