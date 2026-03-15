@@ -87,9 +87,7 @@ class TestDemoUI:
         assert teacher.phone == phone
 
     @pytest.mark.asyncio
-    async def test_complete_onboarding_flow(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_complete_onboarding_flow(self, client: AsyncClient, db_session: AsyncSession):
         """Test complete teacher onboarding flow."""
         phone = "+233500000002"
 
@@ -190,7 +188,9 @@ class TestDemoUI:
         assert data["success"] is True
         assert "teacher" in data
         # Phone might be normalized differently, check that it contains the digits
-        assert phone.replace("+", "").replace(" ", "") in data["teacher"]["phone"].replace("+", "").replace(" ", "")
+        assert phone.replace("+", "").replace(" ", "") in data["teacher"]["phone"].replace(
+            "+", ""
+        ).replace(" ", "")
         assert "students" in data
 
     @pytest.mark.asyncio
@@ -241,9 +241,7 @@ class TestDemoUI:
         assert response.status_code in [200, 400, 422]
 
     @pytest.mark.asyncio
-    async def test_idempotent_teacher_creation(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_idempotent_teacher_creation(self, client: AsyncClient, db_session: AsyncSession):
         """Test that sending START twice doesn't create duplicate teachers."""
         phone = "+233500000008"
 

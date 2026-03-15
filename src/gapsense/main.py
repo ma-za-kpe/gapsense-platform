@@ -252,8 +252,8 @@ def create_app() -> FastAPI:
 
     # Register API routers
     from gapsense.api.v1 import curriculum, diagnostics, parents, schools, teachers
-    from gapsense.webhooks import whatsapp
     from gapsense.web import demo
+    from gapsense.webhooks import whatsapp
 
     app.include_router(curriculum.router, prefix="/api/v1/curriculum", tags=["Curriculum"])
     app.include_router(diagnostics.router, prefix="/api/v1/diagnostics", tags=["Diagnostics"])

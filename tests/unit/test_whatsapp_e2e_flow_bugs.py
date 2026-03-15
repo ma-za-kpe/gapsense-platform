@@ -15,16 +15,13 @@ Bug 4 — WorkerService missing `db` parameter
 
 from __future__ import annotations
 
-import asyncio
 import json
-from dataclasses import dataclass
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from hypothesis import given, settings as hyp_settings
+from hypothesis import given
+from hypothesis import settings as hyp_settings
 from hypothesis import strategies as st
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -110,13 +107,16 @@ async def test_handle_teacher_image_no_constructor_crash():
     mock_client.send_text_message = AsyncMock()
 
     # Track whether ExerciseBookScanner.handle_image_message is called
-    mock_handle_image = AsyncMock(return_value=MagicMock(success=True, s3_key="test/key.jpg", error=None))
+    mock_handle_image = AsyncMock(
+        return_value=MagicMock(success=True, s3_key="test/key.jpg", error=None)
+    )
 
-    with patch(
-        "gapsense.engagement.whatsapp.get_whatsapp_client", return_value=mock_client
-    ), patch(
-        "gapsense.engagement.exercise_book_scanner.ExerciseBookScanner.handle_image_message",
-        mock_handle_image,
+    with (
+        patch("gapsense.engagement.whatsapp.get_whatsapp_client", return_value=mock_client),
+        patch(
+            "gapsense.engagement.exercise_book_scanner.ExerciseBookScanner.handle_image_message",
+            mock_handle_image,
+        ),
     ):
         await _handle_teacher_image(teacher, image_content, db)
 
@@ -159,11 +159,12 @@ async def test_handle_parent_voice_no_constructor_crash():
     # Track whether VoiceMicroCoaching.handle_voice_message is called
     mock_handle_voice = AsyncMock(return_value=MagicMock(success=True, error=None))
 
-    with patch(
-        "gapsense.engagement.whatsapp.get_whatsapp_client", return_value=mock_client
-    ), patch(
-        "gapsense.engagement.voice_micro_coaching.VoiceMicroCoaching.handle_voice_message",
-        mock_handle_voice,
+    with (
+        patch("gapsense.engagement.whatsapp.get_whatsapp_client", return_value=mock_client),
+        patch(
+            "gapsense.engagement.voice_micro_coaching.VoiceMicroCoaching.handle_voice_message",
+            mock_handle_voice,
+        ),
     ):
         await _handle_parent_voice(parent, voice_content, db)
 
@@ -221,16 +222,14 @@ async def test_twilio_media_id_extraction_uses_url(message_sid: str, media_url: 
     mock_client.download_media = AsyncMock(return_value=b"fake-image-bytes")
     mock_client.send_text_message = AsyncMock()
 
-    with patch(
-        "gapsense.engagement.whatsapp.get_whatsapp_client", return_value=mock_client
-    ):
+    with patch("gapsense.engagement.whatsapp.get_whatsapp_client", return_value=mock_client):
         await _handle_teacher_image(teacher, image_content, db)
 
     # download_media is called before the constructor crash (Bug 1),
     # so we can isolate the media ID extraction bug
-    assert mock_client.download_media.call_count > 0, (
-        "download_media was never called — unexpected test setup issue"
-    )
+    assert (
+        mock_client.download_media.call_count > 0
+    ), "download_media was never called — unexpected test setup issue"
     actual_media_id = mock_client.download_media.call_args[1].get("media_id")
     assert actual_media_id == media_url, (
         f"download_media called with message SID '{actual_media_id}' "
@@ -374,6 +373,4 @@ def test_worker_service_has_db_attribute():
         "WorkerService does not have '_db' attribute. "
         "Cannot access database session for ExerciseBookScanner."
     )
-    assert svc._db is mock_db, (
-        "WorkerService._db does not reference the provided db session."
-    )
+    assert svc._db is mock_db, "WorkerService._db does not reference the provided db session."

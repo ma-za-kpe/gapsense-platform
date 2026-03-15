@@ -107,7 +107,7 @@ async def main() -> None:
             )
             print("✅ WorkerService initialized")
             print(f"📡 Queue: {worker_service._queue_url}")
-            print(f"🔄 Max concurrent tasks: 5")
+            print("🔄 Max concurrent tasks: 5")
 
             # Setup graceful shutdown
             shutdown_event = asyncio.Event()

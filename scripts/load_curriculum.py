@@ -347,7 +347,9 @@ class CurriculumLoader:
                 )
                 source_id = result.scalar_one_or_none()
                 if source_id is None:
-                    print(f"⚠️  Skipping prerequisite: source node {prereq_data['source']} not found")
+                    print(
+                        f"⚠️  Skipping prerequisite: source node {prereq_data['source']} not found"
+                    )
                     skipped += 1
                     continue
                 # Cache for future use
@@ -361,7 +363,9 @@ class CurriculumLoader:
                 )
                 target_id = result.scalar_one_or_none()
                 if target_id is None:
-                    print(f"⚠️  Skipping prerequisite: target node {prereq_data['target']} not found")
+                    print(
+                        f"⚠️  Skipping prerequisite: target node {prereq_data['target']} not found"
+                    )
                     skipped += 1
                     continue
                 # Cache for future use

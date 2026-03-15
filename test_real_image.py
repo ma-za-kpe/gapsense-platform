@@ -1,4 +1,5 @@
 """Test exercise book analysis with real image."""
+
 import asyncio
 import base64
 
@@ -36,8 +37,8 @@ async def test_real_image_analysis():
             "student_name": "Test Student",
             "current_grade": "JHS1",
             "school_name": "Test School",
-            "curriculum_nodes_json": "[]"
-        }
+            "curriculum_nodes_json": "[]",
+        },
     )
 
     print(f"\n📝 Using prompt: {rendered.prompt_id}")
@@ -45,11 +46,7 @@ async def test_real_image_analysis():
     print(f"   Temperature: {rendered.temperature}")
 
     # Create image content
-    images = [ImageContent(
-        data=image_base64,
-        media_type="image/jpeg",
-        source_type="base64"
-    )]
+    images = [ImageContent(data=image_base64, media_type="image/jpeg", source_type="base64")]
 
     # Call AI
     print("\n🤖 Calling Claude Haiku 4.5 with image...")
@@ -66,7 +63,7 @@ async def test_real_image_analysis():
 
     # Show results
     if response:
-        print(f"\n✅ Analysis completed!")
+        print("\n✅ Analysis completed!")
         print(f"   Provider: {response.provider}")
         print(f"   Model: {response.model}")
         print(f"   Latency: {response.latency_ms:.0f}ms")
@@ -74,21 +71,25 @@ async def test_real_image_analysis():
 
         # Calculate cost
         from gapsense.ai.cost_calculator import calculate_cost, format_cost
+
         input_cost, output_cost, total_cost = calculate_cost(
             provider=response.provider,
             model=response.model,
             input_tokens=response.input_tokens,
             output_tokens=response.output_tokens,
         )
-        print(f"   Cost: {format_cost(total_cost)} (input: {format_cost(input_cost)}, output: {format_cost(output_cost)})")
+        print(
+            f"   Cost: {format_cost(total_cost)} (input: {format_cost(input_cost)}, output: {format_cost(output_cost)})"
+        )
 
         # Show analysis
         if response.json_parsed:
-            print(f"\n📊 Analysis Result:")
+            print("\n📊 Analysis Result:")
             import json
+
             print(json.dumps(response.json_parsed, indent=2))
         else:
-            print(f"\n📄 Raw Response:")
+            print("\n📄 Raw Response:")
             print(response.text[:500])
     else:
         print("❌ Analysis failed - all providers unavailable")

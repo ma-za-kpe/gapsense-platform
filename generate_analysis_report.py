@@ -1,4 +1,5 @@
 """Generate complete exercise book analysis report with database audit trail."""
+
 import asyncio
 import base64
 import json
@@ -7,13 +8,14 @@ from datetime import datetime
 
 async def generate_report():
     """Generate full analysis report with database data."""
+    from sqlalchemy import select
+
     from gapsense.ai.async_client import AsyncAIClient, ImageContent
     from gapsense.ai.cost_calculator import calculate_cost, format_cost
     from gapsense.ai.prompt_service import PromptService
     from gapsense.config import settings
     from gapsense.core.database import AsyncSessionLocal
     from gapsense.core.models import AIUsageLog, School, Student
-    from sqlalchemy import select
 
     # Read the exercise book image
     image_path = "/app/exercise_book.png"
@@ -32,10 +34,7 @@ async def generate_report():
     async with AsyncSessionLocal() as db:
         # Get first Ghana student for demo
         result = await db.execute(
-            select(Student)
-            .join(School)
-            .where(Student.is_active == True)
-            .limit(1)
+            select(Student).join(School).where(Student.is_active == True).limit(1)
         )
         student = result.scalar_one_or_none()
 
@@ -168,9 +167,7 @@ async def generate_report():
         report_lines.append(f"School Language: {student.school_language or 'English'}")
         report_lines.append(f"Previous Diagnoses: {student.diagnosis_count}")
         if student.last_diagnosed_at:
-            report_lines.append(
-                f"Last Diagnosed: {student.last_diagnosed_at.strftime('%Y-%m-%d')}"
-            )
+            report_lines.append(f"Last Diagnosed: {student.last_diagnosed_at.strftime('%Y-%m-%d')}")
         report_lines.append("")
 
         # SECTION 2: AI Analysis Details (from database)
@@ -185,7 +182,9 @@ async def generate_report():
         report_lines.append(f"Input Tokens: {usage_log.input_tokens:,}")
         report_lines.append(f"Output Tokens: {usage_log.output_tokens:,}")
         report_lines.append(f"Total Tokens: {usage_log.input_tokens + usage_log.output_tokens:,}")
-        report_lines.append(f"Latency: {usage_log.latency_ms:.0f}ms ({usage_log.latency_ms/1000:.1f}s)")
+        report_lines.append(
+            f"Latency: {usage_log.latency_ms:.0f}ms ({usage_log.latency_ms/1000:.1f}s)"
+        )
         report_lines.append(f"Input Cost: {format_cost(usage_log.input_cost_usd)}")
         report_lines.append(f"Output Cost: {format_cost(usage_log.output_cost_usd)}")
         report_lines.append(f"Total Cost: {format_cost(usage_log.total_cost_usd)}")

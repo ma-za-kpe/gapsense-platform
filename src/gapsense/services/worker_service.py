@@ -247,7 +247,6 @@ class WorkerService:
         from gapsense.core.models.curriculum import (
             CurriculumIndicator,
             CurriculumNode,
-            IndicatorErrorPattern,
         )
 
         payload = task.payload
@@ -344,13 +343,13 @@ class WorkerService:
         # 6. Send to AI (detect image format from bytes)
         # Detect media type from image magic bytes
         media_type = "image/jpeg"  # default
-        if image_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+        if image_bytes[:8] == b"\x89PNG\r\n\x1a\n":
             media_type = "image/png"
-        elif image_bytes[:2] == b'\xff\xd8':
+        elif image_bytes[:2] == b"\xff\xd8":
             media_type = "image/jpeg"
-        elif image_bytes[:6] in (b'GIF87a', b'GIF89a'):
+        elif image_bytes[:6] in (b"GIF87a", b"GIF89a"):
             media_type = "image/gif"
-        elif image_bytes[:4] == b'RIFF' and image_bytes[8:12] == b'WEBP':
+        elif image_bytes[:4] == b"RIFF" and image_bytes[8:12] == b"WEBP":
             media_type = "image/webp"
 
         image_b64 = base64.b64encode(image_bytes).decode()

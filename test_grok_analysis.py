@@ -30,9 +30,9 @@ async def test_grok_ai_analysis():
         return
 
     async with httpx.AsyncClient(timeout=60.0) as client:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("🧠 TESTING GROK AI ANALYSIS WITH REAL EXERCISE BOOK")
-        print("="*70)
+        print("=" * 70)
         print(f"\n📚 Using image: {exercise_book_path.name}")
         print(f"   Size: {exercise_book_path.stat().st_size / 1024:.1f} KB")
 
@@ -60,7 +60,7 @@ async def test_grok_ai_analysis():
             data={"message": "Tema International School", "teacher_phone": teacher_phone},
         )
         data = response.json()
-        print(f"   ✅ School set")
+        print("   ✅ School set")
 
         # Step 3: Class name (must be Ghana format: JHS 1-3 or Basic 7-9)
         print("\n3️⃣  Entering class name...")
@@ -69,7 +69,7 @@ async def test_grok_ai_analysis():
             data={"message": "JHS 1A", "teacher_phone": teacher_phone},
         )
         data = response.json()
-        print(f"   ✅ Class set")
+        print("   ✅ Class set")
 
         # Step 4: Student count
         print("\n4️⃣  Entering student count...")
@@ -78,7 +78,7 @@ async def test_grok_ai_analysis():
             data={"message": "2", "teacher_phone": teacher_phone},
         )
         data = response.json()
-        print(f"   ✅ Count set")
+        print("   ✅ Count set")
 
         # Step 5: Student names
         print("\n5️⃣  Entering student names...")
@@ -88,26 +88,26 @@ async def test_grok_ai_analysis():
             data={"message": student_names, "teacher_phone": teacher_phone},
         )
         data = response.json()
-        print(f"   ✅ Students added")
+        print("   ✅ Students added")
 
         # Step 5b: Confirm student creation
-        if data.get('next_step') == 'CONFIRM_STUDENT_CREATION':
+        if data.get("next_step") == "CONFIRM_STUDENT_CREATION":
             print("\n5️⃣b Confirming student creation...")
             response = await client.post(
                 f"{base_url}/demo/api/message",
                 data={
                     "message": "Yes, create profiles",
                     "button_id": "confirm_yes",
-                    "teacher_phone": teacher_phone
+                    "teacher_phone": teacher_phone,
                 },
             )
             data = response.json()
-            print(f"   ✅ Students confirmed")
+            print("   ✅ Students confirmed")
 
         # Step 6: Upload REAL exercise book image
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("📸 UPLOADING REAL EXERCISE BOOK IMAGE FOR GROK AI ANALYSIS")
-        print("="*70)
+        print("=" * 70)
         print("\n   Topic: SIMULTANEOUS EQUATIONS")
         print("   Content: Worked example with substitution method")
         print("   Expected gaps: Algebraic manipulation, substitution method")
@@ -131,41 +131,48 @@ async def test_grok_ai_analysis():
 
         data = response.json()
 
-        if not data.get('success'):
+        if not data.get("success"):
             print(f"\n❌ Upload failed: {data.get('error')}")
             print(f"   Full response: {data}")
             return
 
         print("\n✅ UPLOAD SUCCESSFUL!")
-        print(f"\n📋 Response from API:")
+        print("\n📋 Response from API:")
         print(f"   {data['response'][:200]}")
 
         # Step 7: Select student for the exercise book
-        if data.get('next_step') == 'SELECT_STUDENT':
+        if data.get("next_step") == "SELECT_STUDENT":
             print("\n7️⃣  Selecting student (Ama - option 1)...")
             response = await client.post(
                 f"{base_url}/demo/api/message",
                 data={"message": "1", "teacher_phone": teacher_phone},
             )
             data = response.json()
-            print(f"\n🧠 GROK AI ANALYSIS TRIGGERED!")
-            print(f"\n📊 Analysis response:")
+            print("\n🧠 GROK AI ANALYSIS TRIGGERED!")
+            print("\n📊 Analysis response:")
             print(f"   {data['response'][:300]}")
 
             # Check if it's real analysis or mock
-            if "Found 3 gaps in fractions" in data['response']:
+            if "Found 3 gaps in fractions" in data["response"]:
                 print("\n⚠️  WARNING: Still using MOCK analysis (hard-coded)")
             else:
                 print("\n✅ REAL GROK AI ANALYSIS DETECTED!")
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("🎉 TEST COMPLETE")
-        print("="*70)
+        print("=" * 70)
         print("\n📝 Summary:")
         print("   • Teacher onboarding: ✅")
         print("   • Exercise book upload: ✅")
         print("   • Student selection: ✅")
-        print("   • Grok AI analysis: " + ("✅ REAL" if "Found 3 gaps in fractions" not in data.get('response', '') else "❌ MOCK"))
+        print(
+            "   • Grok AI analysis: "
+            + (
+                "✅ REAL"
+                if "Found 3 gaps in fractions" not in data.get("response", "")
+                else "❌ MOCK"
+            )
+        )
         print("")
 
 

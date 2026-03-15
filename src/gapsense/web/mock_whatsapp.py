@@ -19,12 +19,14 @@ class MockWhatsAppClient:
     async def send_text_message(self, to: str, text: str, preview_url: bool = True) -> str:
         """Capture text message instead of sending it."""
         message_id = f"mock_{len(self.messages)}"
-        self.messages.append({
-            "id": message_id,
-            "to": to,
-            "text": text,
-            "type": "text",
-        })
+        self.messages.append(
+            {
+                "id": message_id,
+                "to": to,
+                "text": text,
+                "type": "text",
+            }
+        )
         self.last_message = text
         return message_id
 
@@ -39,15 +41,17 @@ class MockWhatsAppClient:
     ) -> str:
         """Capture button message instead of sending it."""
         message_id = f"mock_{len(self.messages)}"
-        self.messages.append({
-            "id": message_id,
-            "to": to,
-            "body": body,
-            "buttons": buttons,
-            "header": header,
-            "footer": footer,
-            "type": "buttons",
-        })
+        self.messages.append(
+            {
+                "id": message_id,
+                "to": to,
+                "body": body,
+                "buttons": buttons,
+                "header": header,
+                "footer": footer,
+                "type": "buttons",
+            }
+        )
         # Format for display
         message_text = ""
         if header:
@@ -74,16 +78,18 @@ class MockWhatsAppClient:
     ) -> str:
         """Capture list message instead of sending it."""
         message_id = f"mock_{len(self.messages)}"
-        self.messages.append({
-            "id": message_id,
-            "to": to,
-            "body": body,
-            "button_text": button_text,
-            "sections": sections,
-            "header": header,
-            "footer": footer,
-            "type": "list",
-        })
+        self.messages.append(
+            {
+                "id": message_id,
+                "to": to,
+                "body": body,
+                "button_text": button_text,
+                "sections": sections,
+                "header": header,
+                "footer": footer,
+                "type": "list",
+            }
+        )
         # Format for display
         message_text = ""
         if header:
@@ -111,14 +117,16 @@ class MockWhatsAppClient:
     ) -> str:
         """Capture template message instead of sending it."""
         message_id = f"mock_{len(self.messages)}"
-        self.messages.append({
-            "id": message_id,
-            "to": to,
-            "template_name": template_name,
-            "language_code": language_code,
-            "parameters": parameters or [],
-            "type": "template",
-        })
+        self.messages.append(
+            {
+                "id": message_id,
+                "to": to,
+                "template_name": template_name,
+                "language_code": language_code,
+                "parameters": parameters or [],
+                "type": "template",
+            }
+        )
         # For demo, convert template to text representation
         self.last_message = f"[Template: {template_name}]"
         return message_id
@@ -147,13 +155,15 @@ class MockWhatsAppClient:
     ) -> str:
         """Capture interactive message instead of sending it."""
         message_id = f"mock_{len(self.messages)}"
-        self.messages.append({
-            "id": message_id,
-            "to": to,
-            "body_text": body_text,
-            "buttons": buttons or [],
-            "type": "interactive",
-        })
+        self.messages.append(
+            {
+                "id": message_id,
+                "to": to,
+                "body_text": body_text,
+                "buttons": buttons or [],
+                "type": "interactive",
+            }
+        )
         self.last_message = body_text
         if buttons:
             self.last_message += "\n\n" + "\n".join(

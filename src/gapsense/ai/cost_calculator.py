@@ -7,7 +7,6 @@ Pricing accurate as of March 2026.
 
 from decimal import Decimal
 
-
 # Pricing per million tokens (MTok) as of March 2026
 # Source: https://platform.claude.com/docs/en/about-claude/pricing
 ANTHROPIC_PRICING = {
@@ -40,7 +39,6 @@ ANTHROPIC_PRICING = {
         "output": Decimal("1.25"),  # $1.25/MTok
     },
 }
-
 
 
 def calculate_cost(

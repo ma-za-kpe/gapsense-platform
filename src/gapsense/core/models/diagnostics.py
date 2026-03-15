@@ -307,7 +307,9 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
 
     # Exercise book analysis metadata (for dashboard display)
     analysis_metadata: Mapped[dict[str, Any] | None] = mapped_column(
-        JSONB, nullable=True, comment="Analysis metadata: errors, patterns, focus_areas, reasoning, etc."
+        JSONB,
+        nullable=True,
+        comment="Analysis metadata: errors, patterns, focus_areas, reasoning, etc.",
     )
 
     is_current: Mapped[bool] = mapped_column(

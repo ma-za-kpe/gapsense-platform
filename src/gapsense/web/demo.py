@@ -8,7 +8,7 @@ Uses the same backend services as the WhatsApp integration.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/demo", tags=["demo"])
 
 # Template setup
-import os
 from pathlib import Path
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -70,12 +69,7 @@ async def send_message(
         if button_id:
             # Button click - format as interactive message
             message_type = "interactive"
-            message_content = {
-                "button_reply": {
-                    "id": button_id,
-                    "title": message
-                }
-            }
+            message_content = {"button_reply": {"id": button_id, "title": message}}
         else:
             # Regular text message
             message_type = "text"
@@ -93,21 +87,20 @@ async def send_message(
 
         await db.refresh(teacher)
 
-        return JSONResponse({
-            "success": True,
-            "response": response_text,
-            "flow": result.flow_name,
-            "next_step": result.next_step,
-            "completed": result.completed,
-            "conversation_state": teacher.conversation_state,
-        })
+        return JSONResponse(
+            {
+                "success": True,
+                "response": response_text,
+                "flow": result.flow_name,
+                "next_step": result.next_step,
+                "completed": result.completed,
+                "conversation_state": teacher.conversation_state,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error processing message: {e}", exc_info=True)
-        return JSONResponse({
-            "success": False,
-            "error": str(e)
-        }, status_code=500)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 @router.post("/api/upload-image")
@@ -151,20 +144,19 @@ async def upload_exercise_book(
 
         await db.refresh(teacher)
 
-        return JSONResponse({
-            "success": True,
-            "response": response_text,
-            "flow": result.flow_name,
-            "next_step": result.next_step,
-            "conversation_state": teacher.conversation_state,
-        })
+        return JSONResponse(
+            {
+                "success": True,
+                "response": response_text,
+                "flow": result.flow_name,
+                "next_step": result.next_step,
+                "conversation_state": teacher.conversation_state,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error uploading image: {e}", exc_info=True)
-        return JSONResponse({
-            "success": False,
-            "error": str(e)
-        }, status_code=500)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 @router.get("/api/status")
@@ -190,21 +182,22 @@ async def get_class_status(
             for gap in overview.common_gaps[:5]
         ]
 
-        return JSONResponse({
-            "success": True,
-            "total_students": overview.total_students,
-            "scanned_students": overview.scanned_students,
-            "last_scan_date": overview.last_scan_date.isoformat() if overview.last_scan_date else None,
-            "common_gaps": common_gaps,
-            "improvement_percentage": overview.improvement_percentage,
-        })
+        return JSONResponse(
+            {
+                "success": True,
+                "total_students": overview.total_students,
+                "scanned_students": overview.scanned_students,
+                "last_scan_date": overview.last_scan_date.isoformat()
+                if overview.last_scan_date
+                else None,
+                "common_gaps": common_gaps,
+                "improvement_percentage": overview.improvement_percentage,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error getting status: {e}", exc_info=True)
-        return JSONResponse({
-            "success": False,
-            "error": str(e)
-        }, status_code=500)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 @router.get("/api/gaps")
@@ -229,17 +222,16 @@ async def get_gap_breakdown(
             for gap in gaps
         ]
 
-        return JSONResponse({
-            "success": True,
-            "gaps": gap_list,
-        })
+        return JSONResponse(
+            {
+                "success": True,
+                "gaps": gap_list,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error getting gaps: {e}", exc_info=True)
-        return JSONResponse({
-            "success": False,
-            "error": str(e)
-        }, status_code=500)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 @router.get("/api/student/{student_name}")
@@ -265,37 +257,32 @@ async def get_student_report(
         student = result.scalar_one_or_none()
 
         if not student:
-            return JSONResponse({
-                "success": False,
-                "error": f"Student '{student_name}' not found"
-            }, status_code=404)
+            return JSONResponse(
+                {"success": False, "error": f"Student '{student_name}' not found"}, status_code=404
+            )
 
         # Get report
         analyzer = ClassGapAnalyzer(db)
         report = await analyzer.get_student_report(student.id)
 
         if not report:
-            return JSONResponse({
-                "success": False,
-                "error": "No report available"
-            }, status_code=404)
+            return JSONResponse({"success": False, "error": "No report available"}, status_code=404)
 
-        return JSONResponse({
-            "success": True,
-            "student_name": report.student_name,
-            "scan_date": report.scan_date.isoformat() if report.scan_date else None,
-            "primary_gap": report.primary_gap,
-            "gap_list": report.gap_list,
-            "recommended_actions": report.recommended_actions,
-            "estimated_time": report.estimated_time,
-        })
+        return JSONResponse(
+            {
+                "success": True,
+                "student_name": report.student_name,
+                "scan_date": report.scan_date.isoformat() if report.scan_date else None,
+                "primary_gap": report.primary_gap,
+                "gap_list": report.gap_list,
+                "recommended_actions": report.recommended_actions,
+                "estimated_time": report.estimated_time,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error getting student report: {e}", exc_info=True)
-        return JSONResponse({
-            "success": False,
-            "error": str(e)
-        }, status_code=500)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 @router.get("/api/teacher-info")
@@ -310,11 +297,7 @@ async def get_teacher_info(
         # Get student list
         from gapsense.core.models import Student
 
-        stmt = (
-            select(Student)
-            .where(Student.teacher_id == teacher.id)
-            .order_by(Student.first_name)
-        )
+        stmt = select(Student).where(Student.teacher_id == teacher.id).order_by(Student.first_name)
         result = await db.execute(stmt)
         students = result.scalars().all()
 
@@ -327,24 +310,23 @@ async def get_teacher_info(
             for student in students
         ]
 
-        return JSONResponse({
-            "success": True,
-            "teacher": {
-                "phone": teacher.phone,
-                "school_name": teacher.school.name if teacher.school else None,
-                "class_name": teacher.class_name,
-                "onboarded": teacher.onboarded_at is not None,
-            },
-            "students": student_list,
-            "conversation_state": teacher.conversation_state,
-        })
+        return JSONResponse(
+            {
+                "success": True,
+                "teacher": {
+                    "phone": teacher.phone,
+                    "school_name": teacher.school.name if teacher.school else None,
+                    "class_name": teacher.class_name,
+                    "onboarded": teacher.onboarded_at is not None,
+                },
+                "students": student_list,
+                "conversation_state": teacher.conversation_state,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error getting teacher info: {e}", exc_info=True)
-        return JSONResponse({
-            "success": False,
-            "error": str(e)
-        }, status_code=500)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 @router.get("/reports/{teacher_phone}", response_class=HTMLResponse)
@@ -355,7 +337,8 @@ async def teacher_reports_dashboard(
 ) -> HTMLResponse:
     """Comprehensive teacher dashboard with exercise book analysis reports."""
     try:
-        from datetime import datetime, timedelta
+        from datetime import datetime
+
         from gapsense.core.models import CurriculumNode
 
         teacher = await get_or_create_demo_teacher(db, teacher_phone)
@@ -394,7 +377,9 @@ async def teacher_reports_dashboard(
             if latest_student:
                 # Get curriculum nodes for gaps
                 if latest_profile.gap_nodes:
-                    nodes_stmt = select(CurriculumNode).where(CurriculumNode.id.in_(latest_profile.gap_nodes))
+                    nodes_stmt = select(CurriculumNode).where(
+                        CurriculumNode.id.in_(latest_profile.gap_nodes)
+                    )
                     nodes_result = await db.execute(nodes_stmt)
                     gap_nodes = nodes_result.scalars().all()
 
@@ -402,7 +387,9 @@ async def teacher_reports_dashboard(
                         {
                             "code": node.code,
                             "title": node.title,
-                            "severity": "high" if node.severity >= 4 else ("medium" if node.severity >= 3 else "low"),
+                            "severity": "high"
+                            if node.severity >= 4
+                            else ("medium" if node.severity >= 3 else "low"),
                         }
                         for node in gap_nodes
                     ]
@@ -411,7 +398,9 @@ async def teacher_reports_dashboard(
 
                 # Extract metadata safely (might be dict or None)
                 metadata_dict = {}
-                if latest_profile.analysis_metadata and isinstance(latest_profile.analysis_metadata, dict):
+                if latest_profile.analysis_metadata and isinstance(
+                    latest_profile.analysis_metadata, dict
+                ):
                     metadata_dict = latest_profile.analysis_metadata
 
                 latest_analysis = {
@@ -453,31 +442,39 @@ async def teacher_reports_dashboard(
                 if profile.gap_nodes:
                     total_gaps += len(profile.gap_nodes)
                     # Get node details
-                    nodes_stmt = select(CurriculumNode).where(CurriculumNode.id.in_(profile.gap_nodes))
+                    nodes_stmt = select(CurriculumNode).where(
+                        CurriculumNode.id.in_(profile.gap_nodes)
+                    )
                     nodes_result = await db.execute(nodes_stmt)
                     nodes = nodes_result.scalars().all()
 
                     for node in nodes:
                         if node.severity >= 4:
                             high_priority += 1
-                        gaps_data.append({
-                            "code": node.code,
-                            "title": node.title,
-                            "severity": "high" if node.severity >= 4 else ("medium" if node.severity >= 3 else "low"),
-                        })
+                        gaps_data.append(
+                            {
+                                "code": node.code,
+                                "title": node.title,
+                                "severity": "high"
+                                if node.severity >= 4
+                                else ("medium" if node.severity >= 3 else "low"),
+                            }
+                        )
 
-            students_data.append({
-                "id": str(student.id),
-                "first_name": student.first_name or student.full_name or "Unknown",
-                "full_name": student.full_name or "",
-                "grade": student.current_grade or "JHS1",
-                "scan_count": scan_count,
-                "last_diagnosed": profile.created_at.strftime("%b %d") if profile else None,
-                "gaps": gaps_data,
-                "errors": metadata_dict.get("errors", []),
-                "patterns": metadata_dict.get("patterns", []),
-                "focus_areas": metadata_dict.get("focus_areas", []),
-            })
+            students_data.append(
+                {
+                    "id": str(student.id),
+                    "first_name": student.first_name or student.full_name or "Unknown",
+                    "full_name": student.full_name or "",
+                    "grade": student.current_grade or "JHS1",
+                    "scan_count": scan_count,
+                    "last_diagnosed": profile.created_at.strftime("%b %d") if profile else None,
+                    "gaps": gaps_data,
+                    "errors": metadata_dict.get("errors", []),
+                    "patterns": metadata_dict.get("patterns", []),
+                    "focus_areas": metadata_dict.get("focus_areas", []),
+                }
+            )
 
         stats = {
             "total_students": total_students,
@@ -490,7 +487,8 @@ async def teacher_reports_dashboard(
             "teacher_reports.html",
             {
                 "request": request,
-                "teacher_name": f"{teacher.first_name or ''} {teacher.last_name or ''}".strip() or "Demo Teacher",
+                "teacher_name": f"{teacher.first_name or ''} {teacher.last_name or ''}".strip()
+                or "Demo Teacher",
                 "teacher_phone": teacher_phone,
                 "stats": stats,
                 "latest_analysis": latest_analysis,
@@ -512,19 +510,23 @@ async def student_detailed_report(
 ) -> HTMLResponse:
     """Comprehensive student detailed report with AI metadata and analysis."""
     try:
+        import json
         from datetime import datetime
         from uuid import UUID
-        from gapsense.core.models import CurriculumNode
-        from gapsense.core.models.ai_usage import AIUsageLog
-        import json
 
         from sqlalchemy.orm import selectinload
-        from gapsense.core.models import School
+
+        from gapsense.core.models import CurriculumNode
+        from gapsense.core.models.ai_usage import AIUsageLog
 
         teacher = await get_or_create_demo_teacher(db, teacher_phone)
 
         # Get student with eager loading of school
-        stmt = select(Student).options(selectinload(Student.school)).where(Student.id == UUID(student_id))
+        stmt = (
+            select(Student)
+            .options(selectinload(Student.school))
+            .where(Student.id == UUID(student_id))
+        )
         result = await db.execute(stmt)
         student = result.scalar_one_or_none()
 
@@ -578,11 +580,15 @@ async def student_detailed_report(
             nodes = nodes_result.scalars().all()
 
             for node in nodes:
-                gap_nodes_data.append({
-                    "code": node.code,
-                    "title": node.title,
-                    "severity": "high" if node.severity >= 4 else ("medium" if node.severity >= 3 else "low"),
-                })
+                gap_nodes_data.append(
+                    {
+                        "code": node.code,
+                        "title": node.title,
+                        "severity": "high"
+                        if node.severity >= 4
+                        else ("medium" if node.severity >= 3 else "low"),
+                    }
+                )
 
         # Get diagnosis count
         diagnosis_count_stmt = select(GapProfile).where(GapProfile.student_id == UUID(student_id))
@@ -595,7 +601,8 @@ async def student_detailed_report(
             "report_id": str(profile.id),
             "student": {
                 "id": str(student.id),
-                "name": f"{student.first_name or ''} {student.full_name or ''}".strip() or "Unknown",
+                "name": f"{student.first_name or ''} {student.full_name or ''}".strip()
+                or "Unknown",
                 "age": getattr(student, "age", None),
                 "gender": getattr(student, "gender", None),
                 "grade": student.current_grade or "N/A",
@@ -607,15 +614,21 @@ async def student_detailed_report(
             },
             "ai_metadata": {
                 "analysis_id": str(ai_usage.id) if ai_usage else "N/A",
-                "timestamp": ai_usage.created_at.strftime("%Y-%m-%d %H:%M:%S UTC") if ai_usage else "N/A",
+                "timestamp": ai_usage.created_at.strftime("%Y-%m-%d %H:%M:%S UTC")
+                if ai_usage
+                else "N/A",
                 "provider": ai_usage.provider if ai_usage else "N/A",
                 "model": ai_usage.model if ai_usage else "N/A",
                 "prompt": ai_usage.prompt_id if ai_usage else "N/A",
                 "input_tokens": f"{ai_usage.input_tokens:,}" if ai_usage else "N/A",
                 "output_tokens": f"{ai_usage.output_tokens:,}" if ai_usage else "N/A",
-                "total_tokens": f"{(ai_usage.input_tokens + ai_usage.output_tokens):,}" if ai_usage else "N/A",
+                "total_tokens": f"{(ai_usage.input_tokens + ai_usage.output_tokens):,}"
+                if ai_usage
+                else "N/A",
                 "latency_ms": f"{ai_usage.latency_ms:.2f}" if ai_usage else "N/A",
-                "latency_seconds": f"{(float(ai_usage.latency_ms) / 1000):.2f}" if ai_usage else "N/A",
+                "latency_seconds": f"{(float(ai_usage.latency_ms) / 1000):.2f}"
+                if ai_usage
+                else "N/A",
                 "input_cost": f"{ai_usage.input_cost_usd:.6f}" if ai_usage else "0.000000",
                 "output_cost": f"{ai_usage.output_cost_usd:.6f}" if ai_usage else "0.000000",
                 "total_cost": f"{ai_usage.total_cost_usd:.6f}" if ai_usage else "0.000000",
@@ -661,9 +674,7 @@ async def student_detailed_report(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def get_or_create_demo_teacher(
-    db: AsyncSession, phone: str
-) -> Teacher:
+async def get_or_create_demo_teacher(db: AsyncSession, phone: str) -> Teacher:
     """Get or create a demo teacher account."""
     try:
         # Try to find existing

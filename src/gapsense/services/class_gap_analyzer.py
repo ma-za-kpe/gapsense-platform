@@ -229,9 +229,7 @@ class ClassGapAnalyzer:
             StudentReport or None if student not found
         """
         # Get student
-        student_result = await self.db.execute(
-            select(Student).where(Student.id == student_id)
-        )
+        student_result = await self.db.execute(select(Student).where(Student.id == student_id))
         student = student_result.scalar_one_or_none()
 
         if not student:

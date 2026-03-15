@@ -158,8 +158,9 @@ class AsyncAIClient:
                     except json.JSONDecodeError:
                         # Try stripping markdown code blocks (```json ... ```)
                         import re
-                        stripped = re.sub(r'^```(?:json)?\s*\n?', '', text.strip())
-                        stripped = re.sub(r'\n?```\s*$', '', stripped)
+
+                        stripped = re.sub(r"^```(?:json)?\s*\n?", "", text.strip())
+                        stripped = re.sub(r"\n?```\s*$", "", stripped)
                         try:
                             json_parsed = json.loads(stripped)
                             logger.info(

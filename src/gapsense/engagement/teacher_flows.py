@@ -73,6 +73,7 @@ class TeacherFlowExecutor:
         # In demo mode, use mock client that captures messages
         if demo_mode:
             from gapsense.web.mock_whatsapp import MockWhatsAppClient
+
             self.whatsapp = MockWhatsAppClient()
         else:
             self.whatsapp = WhatsAppClient.from_settings()
@@ -107,7 +108,9 @@ class TeacherFlowExecutor:
             if message_type == "text" and isinstance(message_content, str):
                 msg_upper = message_content.strip().upper()
                 # Check for standard commands or teacher reporting commands
-                if is_command(message_content) or msg_upper.startswith(("/STATUS", "/GAPS", "/STUDENT")):
+                if is_command(message_content) or msg_upper.startswith(
+                    ("/STATUS", "/GAPS", "/STUDENT")
+                ):
                     return await self._handle_teacher_command(teacher, message_content)
 
                 # Check for START - always restart onboarding regardless of current flow
@@ -142,7 +145,7 @@ class TeacherFlowExecutor:
                     if teacher.onboarded_at is None:
                         message_id = await self.whatsapp.send_text_message(
                             to=teacher.phone,
-                            text="Please complete onboarding first by sending START."
+                            text="Please complete onboarding first by sending START.",
                         )
                         return TeacherFlowResult(
                             flow_name="IMAGE_REJECTED",
@@ -1111,7 +1114,9 @@ class TeacherFlowExecutor:
             improvement_text = ""
             if overview.improvement_percentage is not None:
                 if overview.improvement_percentage > 0:
-                    improvement_text = f"\n📈 {overview.improvement_percentage}% improvement this week!"
+                    improvement_text = (
+                        f"\n📈 {overview.improvement_percentage}% improvement this week!"
+                    )
                 elif overview.improvement_percentage < 0:
                     improvement_text = (
                         f"\n📉 {abs(overview.improvement_percentage)}% more gaps this week"
@@ -1186,9 +1191,7 @@ class TeacherFlowExecutor:
             completed=True,
         )
 
-    async def _show_student_report(
-        self, teacher: Teacher, student_name: str
-    ) -> TeacherFlowResult:
+    async def _show_student_report(self, teacher: Teacher, student_name: str) -> TeacherFlowResult:
         """Show individual student gap report.
 
         Args:
@@ -1198,10 +1201,10 @@ class TeacherFlowExecutor:
         Returns:
             TeacherFlowResult
         """
-        from gapsense.services.class_gap_analyzer import ClassGapAnalyzer
-
         # Find student by name
         from sqlalchemy import select
+
+        from gapsense.services.class_gap_analyzer import ClassGapAnalyzer
 
         stmt = (
             select(Student)
@@ -1300,11 +1303,7 @@ class TeacherFlowExecutor:
             TeacherFlowResult
         """
         # Get teacher's students for selection
-        stmt = (
-            select(Student)
-            .where(Student.teacher_id == teacher.id)
-            .order_by(Student.first_name)
-        )
+        stmt = select(Student).where(Student.teacher_id == teacher.id).order_by(Student.first_name)
         result = await self.db.execute(stmt)
         students = result.scalars().all()
 
@@ -1385,8 +1384,7 @@ class TeacherFlowExecutor:
             # Expect text input with student number
             if message_type != "text" or not isinstance(message_content, str):
                 message_id = await self.whatsapp.send_text_message(
-                    to=teacher.phone,
-                    text="Please reply with the student number (e.g., '1')"
+                    to=teacher.phone, text="Please reply with the student number (e.g., '1')"
                 )
                 return TeacherFlowResult(
                     flow_name="FLOW-EXERCISE-BOOK-SCAN",
@@ -1417,11 +1415,7 @@ class TeacherFlowExecutor:
             TeacherFlowResult
         """
         # Get students list
-        stmt = (
-            select(Student)
-            .where(Student.teacher_id == teacher.id)
-            .order_by(Student.first_name)
-        )
+        stmt = select(Student).where(Student.teacher_id == teacher.id).order_by(Student.first_name)
         result = await self.db.execute(stmt)
         students = list(result.scalars().all())
 

@@ -457,7 +457,14 @@ async def _handle_teacher_image(
         prompt_service = PromptService(settings=settings)
         guard_service = GuardService(ai_client=ai_client, prompt_service=prompt_service)
         media_service = MediaService(settings=settings)
-        worker_service = WorkerService(ai_client=ai_client, media_service=media_service, guard_service=guard_service, prompt_service=prompt_service, settings=settings, db=db)
+        worker_service = WorkerService(
+            ai_client=ai_client,
+            media_service=media_service,
+            guard_service=guard_service,
+            prompt_service=prompt_service,
+            settings=settings,
+            db=db,
+        )
 
         scanner = ExerciseBookScanner(
             db=db,
@@ -604,7 +611,14 @@ async def _handle_parent_voice(
         prompt_service = PromptService(settings=settings)
         guard_service = GuardService(ai_client=ai_client, prompt_service=prompt_service)
         media_service = MediaService(settings=settings)
-        worker_service = WorkerService(ai_client=ai_client, media_service=media_service, guard_service=guard_service, prompt_service=prompt_service, settings=settings, db=db)
+        worker_service = WorkerService(
+            ai_client=ai_client,
+            media_service=media_service,
+            guard_service=guard_service,
+            prompt_service=prompt_service,
+            settings=settings,
+            db=db,
+        )
 
         coaching = VoiceMicroCoaching(
             db=db,

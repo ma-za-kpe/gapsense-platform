@@ -12,14 +12,12 @@ and Non-Image Worker Tasks.
 
 from __future__ import annotations
 
-import asyncio
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from hypothesis import given, settings as hyp_settings
+from hypothesis import given
+from hypothesis import settings as hyp_settings
 from hypothesis import strategies as st
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -126,30 +124,38 @@ async def test_teacher_text_routes_to_conversation_handler(message_body: str):
     # Mock _detect_user_type to return teacher
     mock_teacher_conv = AsyncMock()
 
-    with patch(
-        "gapsense.webhooks.whatsapp._detect_user_type",
-        new_callable=AsyncMock,
-        return_value=("teacher", teacher),
-    ), patch(
-        "gapsense.webhooks.whatsapp._handle_teacher_conversation",
-        mock_teacher_conv,
-    ) as patched_conv, patch(
-        "gapsense.webhooks.whatsapp._handle_teacher_image",
-        new_callable=AsyncMock,
-        side_effect=AssertionError("_handle_teacher_image should not be called for text"),
-    ), patch(
-        "gapsense.services.media_service.MediaService.__init__",
-        side_effect=AssertionError("MediaService should not be instantiated for text messages"),
-    ), patch(
-        "gapsense.services.worker_service.WorkerService.__init__",
-        side_effect=AssertionError("WorkerService should not be instantiated for text messages"),
+    with (
+        patch(
+            "gapsense.webhooks.whatsapp._detect_user_type",
+            new_callable=AsyncMock,
+            return_value=("teacher", teacher),
+        ),
+        patch(
+            "gapsense.webhooks.whatsapp._handle_teacher_conversation",
+            mock_teacher_conv,
+        ) as patched_conv,
+        patch(
+            "gapsense.webhooks.whatsapp._handle_teacher_image",
+            new_callable=AsyncMock,
+            side_effect=AssertionError("_handle_teacher_image should not be called for text"),
+        ),
+        patch(
+            "gapsense.services.media_service.MediaService.__init__",
+            side_effect=AssertionError("MediaService should not be instantiated for text messages"),
+        ),
+        patch(
+            "gapsense.services.worker_service.WorkerService.__init__",
+            side_effect=AssertionError(
+                "WorkerService should not be instantiated for text messages"
+            ),
+        ),
     ):
         await _handle_message(message, value, mock_db)
 
     # Verify _handle_teacher_conversation was called with the teacher and message
-    assert patched_conv.call_count == 1, (
-        "_handle_teacher_conversation should be called exactly once for teacher text"
-    )
+    assert (
+        patched_conv.call_count == 1
+    ), "_handle_teacher_conversation should be called exactly once for teacher text"
     call_args = patched_conv.call_args[0]
     assert call_args[0] is teacher  # first positional arg is teacher
     assert call_args[1] == message_body  # second positional arg is message content
@@ -191,26 +197,33 @@ async def test_parent_text_routes_to_flow_executor(message_body: str):
 
     mock_process_message = AsyncMock(return_value=mock_flow_result)
 
-    with patch(
-        "gapsense.webhooks.whatsapp._detect_user_type",
-        new_callable=AsyncMock,
-        return_value=("parent", parent),
-    ), patch(
-        "gapsense.engagement.flow_executor.FlowExecutor.process_message",
-        mock_process_message,
-    ), patch(
-        "gapsense.services.media_service.MediaService.__init__",
-        side_effect=AssertionError("MediaService should not be instantiated for text messages"),
-    ), patch(
-        "gapsense.services.worker_service.WorkerService.__init__",
-        side_effect=AssertionError("WorkerService should not be instantiated for text messages"),
+    with (
+        patch(
+            "gapsense.webhooks.whatsapp._detect_user_type",
+            new_callable=AsyncMock,
+            return_value=("parent", parent),
+        ),
+        patch(
+            "gapsense.engagement.flow_executor.FlowExecutor.process_message",
+            mock_process_message,
+        ),
+        patch(
+            "gapsense.services.media_service.MediaService.__init__",
+            side_effect=AssertionError("MediaService should not be instantiated for text messages"),
+        ),
+        patch(
+            "gapsense.services.worker_service.WorkerService.__init__",
+            side_effect=AssertionError(
+                "WorkerService should not be instantiated for text messages"
+            ),
+        ),
     ):
         await _handle_message(message, value, mock_db)
 
     # Verify FlowExecutor.process_message was called
-    assert mock_process_message.call_count == 1, (
-        "FlowExecutor.process_message should be called exactly once for parent text"
-    )
+    assert (
+        mock_process_message.call_count == 1
+    ), "FlowExecutor.process_message should be called exactly once for parent text"
     call_kwargs = mock_process_message.call_args[1]
     assert call_kwargs["parent"] is parent
     assert call_kwargs["message_type"] == "text"
@@ -258,16 +271,14 @@ async def test_meta_image_uses_media_id_when_no_url(meta_id: str):
     mock_client.download_media = AsyncMock(return_value=b"fake-image-bytes")
     mock_client.send_text_message = AsyncMock()
 
-    with patch(
-        "gapsense.engagement.whatsapp.get_whatsapp_client", return_value=mock_client
-    ):
+    with patch("gapsense.engagement.whatsapp.get_whatsapp_client", return_value=mock_client):
         await _handle_teacher_image(teacher, image_content, db)
 
     # download_media is called before the constructor crash (Bug 1),
     # so we can verify the media ID extraction in isolation
-    assert mock_client.download_media.call_count > 0, (
-        "download_media was not called — unexpected test setup issue"
-    )
+    assert (
+        mock_client.download_media.call_count > 0
+    ), "download_media was not called — unexpected test setup issue"
     actual_media_id = mock_client.download_media.call_args[1].get("media_id")
     assert actual_media_id == meta_id, (
         f"Meta media ID extraction returned '{actual_media_id}' "
@@ -332,15 +343,18 @@ async def test_non_image_worker_tasks_dispatch_without_exercise_book_scanner(tas
     task = WorkerTask(task_type=task_type, payload=payload)
 
     # Patch ExerciseBookScanner to detect if it's ever touched
-    with patch(
-        "gapsense.engagement.exercise_book_scanner.ExerciseBookScanner.__init__",
-        side_effect=AssertionError(
-            "ExerciseBookScanner should not be instantiated for non-image tasks"
+    with (
+        patch(
+            "gapsense.engagement.exercise_book_scanner.ExerciseBookScanner.__init__",
+            side_effect=AssertionError(
+                "ExerciseBookScanner should not be instantiated for non-image tasks"
+            ),
         ),
-    ), patch(
-        "gapsense.engagement.exercise_book_scanner.ExerciseBookScanner.process_analysis_result",
-        side_effect=AssertionError(
-            "process_analysis_result should not be called for non-image tasks"
+        patch(
+            "gapsense.engagement.exercise_book_scanner.ExerciseBookScanner.process_analysis_result",
+            side_effect=AssertionError(
+                "process_analysis_result should not be called for non-image tasks"
+            ),
         ),
     ):
         # Should dispatch to the correct handler without error
