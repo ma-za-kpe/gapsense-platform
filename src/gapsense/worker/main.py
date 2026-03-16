@@ -6,6 +6,7 @@ scheduled messages, and voice transcription tasks.
 """
 
 import asyncio
+import contextlib
 import os
 import signal
 import sys
@@ -111,7 +112,7 @@ async def main() -> None:
         # Setup graceful shutdown
         shutdown_event = asyncio.Event()
 
-        def signal_handler(sig, frame):
+        def signal_handler(sig, _frame):
             """Handle shutdown signals."""
             logger.info("shutdown_signal_received", signal=sig)
             shutdown_event.set()
@@ -132,10 +133,8 @@ async def main() -> None:
         await worker_service.stop()
         worker_task.cancel()
 
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await worker_task
-        except asyncio.CancelledError:
-            pass
 
     except Exception as e:
         print(f"❌ WorkerService initialization failed: {e}")

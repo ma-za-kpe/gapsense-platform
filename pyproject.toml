@@ -93,6 +93,7 @@ ignore = [
 "alembic/versions/*" = ["ERA001", "PLR0915"]  # Allow commented code and long functions in migrations
 "alembic/env.py" = ["ARG001"]  # Alembic callbacks have required signatures
 "scripts/*" = ["RUF001"]  # Allow emoji in scripts
+"src/gapsense/worker/main.py" = ["PLR0915", "SIM105"]  # Bootstrap entrypoint: long init + signal cleanup
 
 [tool.ruff.lint.isort]
 known-first-party = ["gapsense"]
@@ -189,4 +190,4 @@ ignore_names = ["cls"]  # Required by Pydantic validators
 extend_exclude = ["tests", "migrations", "infrastructure"]
 known_first_party = ["gapsense"]
 # Per-rule ignores for dependencies used in future modules or indirectly
-per_rule_ignores = { DEP002 = ["asyncpg", "alembic", "anthropic", "httpx", "aiobotocore", "python-jose", "structlog", "python-multipart", "aiofiles"] }
+per_rule_ignores = { DEP002 = ["asyncpg", "alembic", "anthropic", "httpx", "aiobotocore", "python-jose", "structlog", "python-multipart", "aiofiles", "beautifulsoup4", "lxml"] }
