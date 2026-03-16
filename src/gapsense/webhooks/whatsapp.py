@@ -466,6 +466,11 @@ async def _handle_teacher_image(
             db=db,
         )
 
+        # Initialize WhatsApp notification service for production
+        from gapsense.services.notification_service import WhatsAppNotificationService
+
+        whatsapp_notifier = WhatsAppNotificationService(whatsapp_client=client)
+
         scanner = ExerciseBookScanner(
             db=db,
             media_service=media_service,
@@ -473,6 +478,7 @@ async def _handle_teacher_image(
             guard_service=guard_service,
             ai_client=ai_client,
             prompt_service=prompt_service,
+            notification_service=whatsapp_notifier,
         )
 
         # Process image
@@ -517,12 +523,13 @@ async def _handle_teacher_conversation(teacher: Teacher, message: str, db: Async
     """
     from gapsense.ai.async_client import AsyncAIClient
     from gapsense.ai.prompt_service import PromptService
+    from gapsense.config import settings
     from gapsense.engagement.teacher_conversation import TeacherConversationPartner
 
     try:
-        # Initialize services
-        ai_client = AsyncAIClient()
-        prompt_service = PromptService()
+        # Initialize services with required arguments
+        ai_client = AsyncAIClient(anthropic_api_key=settings.ANTHROPIC_API_KEY)
+        prompt_service = PromptService(settings=settings)
 
         # Initialize conversation partner
         conversation = TeacherConversationPartner(

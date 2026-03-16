@@ -8,6 +8,7 @@ Includes custom Hypothesis strategies for domain types.
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from httpx import AsyncClient
 from hypothesis import strategies as st
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -91,7 +92,40 @@ async def db_session(async_engine) -> AsyncSession:
             # If sequence reset fails, just continue
             await session.rollback()
 
+        # Seed default region and district for MVP teacher onboarding
+        # This matches the production seed migration
+        try:
+            await session.execute(
+                text("""
+                INSERT INTO regions (id, name, code)
+                VALUES (1, 'Greater Accra', 'GAR')
+                ON CONFLICT (id) DO NOTHING;
+            """)
+            )
+            await session.execute(
+                text("""
+                INSERT INTO districts (id, region_id, name, ges_district_code)
+                VALUES (1, 1, 'Accra Metropolitan', 'GAR-AM-001')
+                ON CONFLICT (id) DO NOTHING;
+            """)
+            )
+            await session.commit()
+        except Exception:
+            await session.rollback()
+
         yield session
+
+
+@pytest.fixture
+async def async_client() -> AsyncClient:
+    """Create async HTTP client for testing FastAPI endpoints."""
+    from httpx import ASGITransport
+
+    from gapsense.main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
 
 
 @pytest.fixture

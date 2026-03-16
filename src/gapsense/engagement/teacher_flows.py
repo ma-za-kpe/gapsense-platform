@@ -1552,6 +1552,17 @@ class TeacherFlowExecutor:
                 db=self.db,
             )
 
+            # Inject appropriate notification service based on demo_mode
+            from gapsense.services.notification_service import (
+                DemoNotificationService,
+                WhatsAppNotificationService,
+            )
+
+            if self.demo_mode:
+                notification_service = DemoNotificationService()
+            else:
+                notification_service = WhatsAppNotificationService(whatsapp_client=self.whatsapp)
+
             scanner = ExerciseBookScanner(
                 db=self.db,
                 media_service=media_service,
@@ -1559,6 +1570,7 @@ class TeacherFlowExecutor:
                 guard_service=guard_service,
                 ai_client=ai_client,
                 prompt_service=prompt_service,
+                notification_service=notification_service,
             )
 
             # Trigger analysis

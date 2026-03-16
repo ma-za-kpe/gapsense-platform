@@ -171,8 +171,27 @@ class WorkerService:
                 receipt_handle=msg.get("ReceiptHandle"),
             )
 
+            # Log task received with sanitized payload
+            payload_summary = {
+                k: v if k not in ["image_bytes", "image_bytes_b64"] else f"<{len(str(v))} bytes>"
+                for k, v in task.payload.items()
+            }
+            logger.info(
+                "task_received",
+                task_type=task.task_type,
+                message_id=task.message_id,
+                retry_count=task.retry_count,
+                payload_keys=list(task.payload.keys()),
+                payload_summary=payload_summary,
+            )
+
             start = time.perf_counter()
             try:
+                logger.info(
+                    "task_started",
+                    task_type=task.task_type,
+                    message_id=task.message_id,
+                )
                 await self._route_task(task)
                 # Delete message on success
                 await self._delete_message(task.receipt_handle)
@@ -180,6 +199,7 @@ class WorkerService:
                 logger.info(
                     "task_completed",
                     task_type=task.task_type,
+                    message_id=task.message_id,
                     latency_ms=round(latency_ms, 2),
                 )
             except Exception as exc:
@@ -187,9 +207,12 @@ class WorkerService:
                 logger.error(
                     "task_failed",
                     task_type=task.task_type,
+                    message_id=task.message_id,
                     retry_count=task.retry_count,
                     error=str(exc),
+                    error_type=type(exc).__name__,
                     latency_ms=round(latency_ms, 2),
+                    exc_info=True,
                 )
                 await self._handle_failure(task, exc)
 
@@ -234,207 +257,35 @@ class WorkerService:
         logger.info("tts_generate_complete", student_id=student_id)
 
     async def _handle_image_analyze(self, task: WorkerTask) -> None:
-        """Image analysis: download from S3, send to AI with ANALYSIS-001."""
-        import base64
-        import json
-        from uuid import UUID
+        """Delegate entirely to ImageAnalysisOrchestrator with its own DB session."""
+        from gapsense.core.database import AsyncSessionLocal
+        from gapsense.services.image_analysis_orchestrator import ImageAnalysisOrchestrator
 
-        from sqlalchemy import select
-        from sqlalchemy.orm import selectinload
-
-        from gapsense.ai.async_client import ImageContent
-        from gapsense.core.models import Student
-        from gapsense.core.models.curriculum import (
-            CurriculumIndicator,
-            CurriculumNode,
+        # Log handler entry
+        logger.info(
+            "image_analyze_handler_start",
+            student_id=task.payload.get("student_id"),
+            s3_key=task.payload.get("s3_key"),
+            country=task.payload.get("country"),
+            language=task.payload.get("language"),
         )
 
-        payload = task.payload
-        s3_key = payload.get("s3_key", "")
-        student_id = payload.get("student_id", "")
-        country_code = payload.get("country", "GH")
-
-        logger.info("image_analyze_start", s3_key=s3_key, student_id=student_id)
-
-        # 1. Load student with school and teacher to get context
-        result = await self._db.execute(
-            select(Student)
-            .where(Student.id == UUID(student_id))
-            .options(
-                selectinload(Student.school),
-                selectinload(Student.teacher),
-            )
-        )
-        student = result.scalar_one_or_none()
-        if not student:
-            raise ValueError(f"Student {student_id} not found")
-
-        student_grade = student.current_grade  # e.g., "JHS1"
-
-        # Derive country and subject from context
-        from gapsense.core.country_utils import get_country_from_student, get_subject_from_teacher
-
-        country_key = get_country_from_student(student)
-        subject = get_subject_from_teacher(student.teacher, default="mathematics")
-
-        # 2. Download image
-        image_bytes = await self._media_service.download(s3_key)
-
-        # 3. Load curriculum nodes for this country/subject
-        # NOTE: Removed grade filter because student.current_grade may be "JHS1"
-        # but curriculum nodes are stored as "B7", "B8", etc.
-        # AI will select appropriate nodes based on work shown in image.
-        curriculum_result = await self._db.execute(
-            select(CurriculumNode)
-            .where(
-                CurriculumNode.country == country_key,
-                CurriculumNode.subject == subject,
-            )
-            .options(
-                selectinload(CurriculumNode.indicators).selectinload(
-                    CurriculumIndicator.error_patterns
-                )
-            )
-            .limit(100)  # Increased from 50 to cover more grades
-        )
-        curriculum_nodes = curriculum_result.scalars().all()
-
-        # 4. Build curriculum_graph JSON for prompt
-        curriculum_graph = []
-        for node in curriculum_nodes:
-            node_data = {
-                "node_id": str(node.id),
-                "code": node.code,
-                "title": node.title,
-                "description": node.description,
-                "indicators": [],
-            }
-
-            for indicator in node.indicators:
-                indicator_data = {
-                    "indicator_code": indicator.indicator_code,
-                    "title": indicator.title,
-                    "error_patterns": [
-                        {
-                            "error_description": ep.error_description,
-                            "severity": ep.severity,
-                        }
-                        for ep in indicator.error_patterns
-                    ],
-                }
-                node_data["indicators"].append(indicator_data)
-
-            curriculum_graph.append(node_data)
-
-        curriculum_graph_json = json.dumps(curriculum_graph, indent=2)
-
-        # 5. Render ANALYSIS-001 prompt
-        # PromptService will inject curriculum_authority, curriculum_name, grade_structure from country_config
-        rendered = self._prompt_service.render_prompt(
-            "ANALYSIS-001",
-            country=country_key,
-            extra_context={
-                # Custom variables not in country_config
-                "curriculum_nodes_json": curriculum_graph_json,
-                "current_grade": student_grade,
-                "student_name": student.first_name,
-                "school_name": student.school.name if student.school else "Unknown School",
-            },
-        )
-
-        # 6. Send to AI (detect image format from bytes)
-        # Detect media type from image magic bytes
-        media_type = "image/jpeg"  # default
-        if image_bytes[:8] == b"\x89PNG\r\n\x1a\n":
-            media_type = "image/png"
-        elif image_bytes[:2] == b"\xff\xd8":
-            media_type = "image/jpeg"
-        elif image_bytes[:6] in (b"GIF87a", b"GIF89a"):
-            media_type = "image/gif"
-        elif image_bytes[:4] == b"RIFF" and image_bytes[8:12] == b"WEBP":
-            media_type = "image/webp"
-
-        image_b64 = base64.b64encode(image_bytes).decode()
-        response = await self._ai_client.generate(
-            prompt_id="ANALYSIS-001",
-            system=rendered.system_prompt,
-            messages=[{"role": "user", "content": rendered.user_template}],
-            model=rendered.model,
-            json_mode=True,
-            images=[ImageContent(data=image_b64, media_type=media_type, source_type="base64")],
-        )
-
-        # 6b. Log AI usage and cost
-        if response:
-            from gapsense.ai.cost_calculator import calculate_cost
-            from gapsense.core.models import AIUsageLog
-
-            input_cost, output_cost, total_cost = calculate_cost(
-                provider=response.provider,
-                model=response.model,
-                input_tokens=response.input_tokens,
-                output_tokens=response.output_tokens,
-            )
-
-            usage_log = AIUsageLog(
-                student_id=student.id if student else None,
-                teacher_id=student.teacher_id if student and student.teacher_id else None,
-                provider=response.provider,
-                model=response.model,
-                prompt_id=response.prompt_id,
-                input_tokens=response.input_tokens,
-                output_tokens=response.output_tokens,
-                input_cost_usd=input_cost,
-                output_cost_usd=output_cost,
-                total_cost_usd=total_cost,
-                latency_ms=response.latency_ms,
-                success=response.json_parsed is not None,
-                error_message=None,
-            )
-            self._db.add(usage_log)
-            await self._db.flush()
-
-            logger.info(
-                "ai_usage_logged",
-                provider=response.provider,
-                model=response.model,
-                input_tokens=response.input_tokens,
-                output_tokens=response.output_tokens,
-                total_cost_usd=float(total_cost),
-            )
-
-        # 7. Process results
-        if response and response.json_parsed:
-            # Log the full Grok response for debugging
-            logger.info(
-                "grok_analysis_response",
-                student_id=student_id,
-                response_keys=list(response.json_parsed.keys()),
-                full_response=response.json_parsed,
-            )
-            logger.info(
-                "image_analyze_complete",
-                student_id=student_id,
-                gaps_found=len(response.json_parsed.get("gap_node_ids", [])),
-            )
-
-            from gapsense.engagement.exercise_book_scanner import ExerciseBookScanner
-
-            scanner = ExerciseBookScanner(
-                db=self._db,
-                media_service=self._media_service,
-                worker_service=self,
-                guard_service=self._guard_service,
+        # Create a fresh DB session for this task (no shared session)
+        async with AsyncSessionLocal() as db_session:
+            orchestrator = ImageAnalysisOrchestrator(
+                db=db_session,
                 ai_client=self._ai_client,
+                media_service=self._media_service,
+                guard_service=self._guard_service,
                 prompt_service=self._prompt_service,
+                worker_service=self,
             )
-            await scanner.process_analysis_result(
-                student_id=student_id,
-                teacher_phone=payload.get("teacher_phone", ""),
-                analysis=response.json_parsed,
-                country=country_code,
-                language=payload.get("language", "en"),
-            )
+            await orchestrator.run(task.payload)
+
+        logger.info(
+            "image_analyze_handler_complete",
+            student_id=task.payload.get("student_id"),
+        )
 
     async def _handle_scheduled_message(self, task: WorkerTask) -> None:
         """Scheduled message: pass through GuardService before delivery."""

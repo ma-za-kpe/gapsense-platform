@@ -5,40 +5,32 @@ Revises: 5bc892a1d3e7
 Create Date: 2026-03-15 22:01:47.269072+00:00
 
 """
-from typing import Sequence, Union
 
-from alembic import op
+from collections.abc import Sequence
+
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = 'b6e696c45284'
-down_revision: Union[str, None] = '5bc892a1d3e7'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "b6e696c45284"
+down_revision: str | None = "5bc892a1d3e7"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     """Make strand_id and sub_strand_id nullable to support English/Science curriculum."""
     # Make strand_id nullable
-    op.alter_column('curriculum_nodes', 'strand_id',
-                    existing_type=sa.Integer(),
-                    nullable=True)
+    op.alter_column("curriculum_nodes", "strand_id", existing_type=sa.Integer(), nullable=True)
 
     # Make sub_strand_id nullable
-    op.alter_column('curriculum_nodes', 'sub_strand_id',
-                    existing_type=sa.Integer(),
-                    nullable=True)
+    op.alter_column("curriculum_nodes", "sub_strand_id", existing_type=sa.Integer(), nullable=True)
 
 
 def downgrade() -> None:
     """Revert strand columns to NOT NULL."""
     # Make sub_strand_id NOT NULL again
-    op.alter_column('curriculum_nodes', 'sub_strand_id',
-                    existing_type=sa.Integer(),
-                    nullable=False)
+    op.alter_column("curriculum_nodes", "sub_strand_id", existing_type=sa.Integer(), nullable=False)
 
     # Make strand_id NOT NULL again
-    op.alter_column('curriculum_nodes', 'strand_id',
-                    existing_type=sa.Integer(),
-                    nullable=False)
+    op.alter_column("curriculum_nodes", "strand_id", existing_type=sa.Integer(), nullable=False)

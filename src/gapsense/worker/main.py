@@ -89,54 +89,53 @@ async def main() -> None:
         guard_service = GuardService(ai_client, prompt_service)
         print("✅ GuardService initialized")
 
-    # 7. Initialize WorkerService
+    # 7. Initialize WorkerService (WITHOUT db session - each task gets its own)
     try:
-        from gapsense.core.database import AsyncSessionLocal
         from gapsense.services.worker_service import WorkerService
 
-        # Create a database session for the worker
-        async with AsyncSessionLocal() as db_session:
-            worker_service = WorkerService(
-                ai_client=ai_client,
-                media_service=media_service,
-                guard_service=guard_service,
-                prompt_service=prompt_service,
-                settings=settings,
-                db=db_session,
-                max_concurrent=5,
-            )
-            print("✅ WorkerService initialized")
-            print(f"📡 Queue: {worker_service._queue_url}")
-            print("🔄 Max concurrent tasks: 5")
+        # WorkerService no longer takes a shared db session
+        # Each task handler will create its own session as needed
+        worker_service = WorkerService(
+            ai_client=ai_client,
+            media_service=media_service,
+            guard_service=guard_service,
+            prompt_service=prompt_service,
+            settings=settings,
+            db=None,  # No shared session - tasks create their own
+            max_concurrent=5,
+        )
+        print("✅ WorkerService initialized")
+        print(f"📡 Queue: {worker_service._queue_url}")
+        print("🔄 Max concurrent tasks: 5")
 
-            # Setup graceful shutdown
-            shutdown_event = asyncio.Event()
+        # Setup graceful shutdown
+        shutdown_event = asyncio.Event()
 
-            def signal_handler(sig, frame):
-                """Handle shutdown signals."""
-                logger.info("shutdown_signal_received", signal=sig)
-                shutdown_event.set()
+        def signal_handler(sig, frame):
+            """Handle shutdown signals."""
+            logger.info("shutdown_signal_received", signal=sig)
+            shutdown_event.set()
 
-            signal.signal(signal.SIGINT, signal_handler)
-            signal.signal(signal.SIGTERM, signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
 
-            print("✅ GapSense Worker ready!")
+        print("✅ GapSense Worker ready!")
 
-            # Start the worker in a task
-            worker_task = asyncio.create_task(worker_service.start())
+        # Start the worker in a task
+        worker_task = asyncio.create_task(worker_service.start())
 
-            # Wait for shutdown signal
-            await shutdown_event.wait()
+        # Wait for shutdown signal
+        await shutdown_event.wait()
 
-            # Graceful shutdown
-            print("🛑 GapSense Worker shutting down...")
-            await worker_service.stop()
-            worker_task.cancel()
+        # Graceful shutdown
+        print("🛑 GapSense Worker shutting down...")
+        await worker_service.stop()
+        worker_task.cancel()
 
-            try:
-                await worker_task
-            except asyncio.CancelledError:
-                pass
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            pass
 
     except Exception as e:
         print(f"❌ WorkerService initialization failed: {e}")

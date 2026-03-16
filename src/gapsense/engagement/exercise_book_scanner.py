@@ -22,8 +22,6 @@ if TYPE_CHECKING:
     from gapsense.services.media_service import MediaService
     from gapsense.services.worker_service import WorkerService
 
-from gapsense.engagement.whatsapp_client import WhatsAppClient
-
 logger = structlog.get_logger(__name__)
 
 
@@ -50,6 +48,7 @@ class ExerciseBookScanner:
         guard_service: GuardService,
         ai_client: AsyncAIClient,
         prompt_service: PromptService,
+        notification_service: Any,  # NotificationService interface
     ) -> None:
         self.db = db
         self._media_service = media_service
@@ -57,25 +56,7 @@ class ExerciseBookScanner:
         self._guard_service = guard_service
         self._ai_client = ai_client
         self._prompt_service = prompt_service
-
-    @staticmethod
-    def _is_demo_mode(teacher_phone: str) -> bool:
-        """Check if this is a demo mode teacher (bypasses WhatsApp/Twilio).
-
-        Demo phones use patterns:
-        - +2335000* (test scripts with double-zero)
-        - +23350 followed by test patterns like "1234567"
-        - Contains obvious test patterns
-
-        These won't conflict with real Vodafone numbers (+233 50X... where X is 1-9).
-        """
-        # Check for test phone patterns
-        if teacher_phone.startswith("+2335000"):  # Double-zero test phones
-            return True
-
-        # Check for obvious test patterns (with or without leading zero)
-        test_patterns = ["1234567", "01234567", "1111111", "2222222", "0000000", "9999999"]
-        return any(pattern in teacher_phone for pattern in test_patterns)
+        self._notification_service = notification_service
 
     async def handle_image_message(
         self,
@@ -118,20 +99,19 @@ class ExerciseBookScanner:
             )
             await self._worker_service.enqueue(task)
 
-            # Send acknowledgment (skip in demo mode - UI polls for completion)
-            if not self._is_demo_mode(teacher.phone):
-                client = WhatsAppClient.from_settings()
-                try:
-                    await client.send_text_message(
-                        to=teacher.phone,
-                        text="📸 Analyzing the exercise book page. I'll send you the results shortly.",
-                    )
-                except Exception as e:
-                    logger.warning("failed_to_send_ack", teacher_phone=teacher.phone, error=str(e))
-            else:
-                logger.info("demo_mode_skip_ack", teacher_phone=teacher.phone)
+            # Send acknowledgment via notification service
+            message_sent = await self._notification_service.send_analysis_started(
+                teacher_phone=teacher.phone,
+                student_name=student.first_name or "Student",
+                country=country,
+            )
 
-            return ScanResult(success=True, s3_key=s3_key, task_enqueued=True, message_sent=True)
+            return ScanResult(
+                success=True,
+                s3_key=s3_key,
+                task_enqueued=True,
+                message_sent=message_sent,
+            )
 
         except Exception as e:
             logger.error("exercise_book_scan_failed", error=str(e), exc_info=True)
@@ -178,14 +158,13 @@ class ExerciseBookScanner:
                 student_id=student_id,
                 teacher_phone=teacher_phone,
             )
-            if not self._is_demo_mode(teacher_phone):
-                client = WhatsAppClient.from_settings()
-                await client.send_text_message(
-                    to=teacher_phone,
-                    text=f"📷 {student_name}'s exercise book was too blurry to analyze. Could you retake the photo with better lighting?",
-                )
-            else:
-                logger.info("demo_mode_skip_unreadable_msg", teacher_phone=teacher_phone)
+            # Notify via notification service
+            await self._notification_service.send_analysis_failed(
+                teacher_phone=teacher_phone,
+                student_name=student_name,
+                error_message="Image too blurry - please retake with better lighting",
+                retry_count=0,
+            )
             return
 
         # Create/update GapProfile with source="exercise_book"
@@ -244,41 +223,24 @@ class ExerciseBookScanner:
             gap_nodes_count=len(gap_nodes),
         )
 
-        # Send WhatsApp message with link to comprehensive dashboard
+        # Build dashboard URL and notify teacher
         from gapsense.config import settings
 
-        # Build dashboard URL
         dashboard_url = f"{settings.APP_URL}/demo/reports/{teacher_phone}"
 
-        message = (
-            f"✅ *{student_name}'s Exercise Book Analysis Complete*\n\n"
-            f"📊 View comprehensive report:\n"
-            f"{dashboard_url}\n\n"
-            f"Your dashboard shows:\n"
-            f"• Detailed gap analysis\n"
-            f"• All students overview\n"
-            f"• Focus areas & patterns\n"
-            f"• Priority recommendations"
+        # Notify via notification service (decoupled from WhatsApp)
+        await self._notification_service.send_analysis_complete(
+            teacher_phone=teacher_phone,
+            student_name=student_name,
+            dashboard_url=dashboard_url,
         )
 
-        # Send via WhatsApp (skip in demo mode - UI polls for gap profile)
-        if not self._is_demo_mode(teacher_phone):
-            client = WhatsAppClient.from_settings()
-            await client.send_text_message(to=teacher_phone, text=message, preview_url=True)
-            logger.info(
-                "analysis_complete_message_sent",
-                teacher_phone=teacher_phone,
-                student_name=student_name,
-                dashboard_url=dashboard_url,
-            )
-        else:
-            logger.info(
-                "demo_mode_skip_whatsapp",
-                teacher_phone=teacher_phone,
-                student_name=student_name,
-                dashboard_url=dashboard_url,
-                message="Demo mode: Gap profile saved, UI will detect via polling",
-            )
+        logger.info(
+            "analysis_complete_notification_sent",
+            teacher_phone=teacher_phone,
+            student_name=student_name,
+            dashboard_url=dashboard_url,
+        )
 
     @staticmethod
     def _build_teacher_summary(

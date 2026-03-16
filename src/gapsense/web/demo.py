@@ -576,13 +576,10 @@ async def student_detailed_report(
         # Get gap nodes details with comprehensive curriculum information
         gap_nodes_data = []
         if profile.gap_nodes:
-            from gapsense.core.models.curriculum import CurriculumStrand, CurriculumSubStrand
-
             nodes_stmt = (
                 select(CurriculumNode)
                 .options(
-                    selectinload(CurriculumNode.strand),
-                    selectinload(CurriculumNode.sub_strand)
+                    selectinload(CurriculumNode.strand), selectinload(CurriculumNode.sub_strand)
                 )
                 .where(CurriculumNode.id.in_(profile.gap_nodes))
             )
@@ -605,9 +602,13 @@ async def student_detailed_report(
                         "subject": node.subject,
                         "level": node.level,
                         "strand_name": node.strand.name if node.strand else "N/A",
-                        "strand_description": node.strand.description if node.strand and node.strand.description else "",
+                        "strand_description": node.strand.description
+                        if node.strand and node.strand.description
+                        else "",
                         "substrand_name": node.sub_strand.name if node.sub_strand else "N/A",
-                        "substrand_description": node.sub_strand.description if node.sub_strand and node.sub_strand.description else "",
+                        "substrand_description": node.sub_strand.description
+                        if node.sub_strand and node.sub_strand.description
+                        else "",
                         "questions_required": node.questions_required,
                         "confidence_threshold": f"{node.confidence_threshold * 100:.0f}%",
                         "population_status": node.population_status.capitalize(),
@@ -734,20 +735,24 @@ async def get_curriculum_data(
             if grade_key not in by_grade:
                 by_grade[grade_key] = []
 
-            by_grade[grade_key].append({
-                "code": node.code,
-                "title": node.title,
-                "grade": node.grade,
-                "subject": node.subject,
-                "description": node.description,
-            })
+            by_grade[grade_key].append(
+                {
+                    "code": node.code,
+                    "title": node.title,
+                    "grade": node.grade,
+                    "subject": node.subject,
+                    "description": node.description,
+                }
+            )
 
-        return JSONResponse({
-            "success": True,
-            "total": total_count,
-            "by_grade": by_grade,
-            "grades": sorted(by_grade.keys()),
-        })
+        return JSONResponse(
+            {
+                "success": True,
+                "total": total_count,
+                "by_grade": by_grade,
+                "grades": sorted(by_grade.keys()),
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error fetching curriculum: {e}", exc_info=True)
