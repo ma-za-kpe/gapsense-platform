@@ -745,26 +745,45 @@
 
             .slide {
                 padding: 24px 16px !important;
+                text-align: center !important;
+            }
+
+            /* Force all divs in slides to center */
+            .slide div {
+                text-align: center !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+
+            /* Force all paragraphs to center */
+            .slide p {
+                text-align: center !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
             }
 
             .slide h1 {
                 font-size: 24px !important;
                 margin-bottom: 12px !important;
+                text-align: center !important;
             }
 
             .slide h2 {
                 font-size: 20px !important;
                 margin-bottom: 12px !important;
+                text-align: center !important;
             }
 
             .slide h3 {
                 font-size: 16px !important;
                 margin-bottom: 10px !important;
+                text-align: center !important;
             }
 
             .slide .stat {
                 font-size: 36px !important;
                 margin: 12px 0 !important;
+                text-align: center !important;
             }
 
             .slide p {
@@ -775,19 +794,24 @@
 
             .slide .caption {
                 font-size: 12px !important;
+                text-align: center !important;
             }
 
             .slide .highlight {
                 font-size: 15px !important;
+                text-align: center !important;
             }
 
             .slide ul {
                 margin: 12px auto !important;
+                text-align: left !important;
+                display: inline-block !important;
             }
 
             .slide ul li {
                 font-size: 14px !important;
                 margin-bottom: 6px !important;
+                text-align: left !important;
             }
 
             .card-grid {
@@ -798,6 +822,7 @@
 
             .card {
                 padding: 14px !important;
+                text-align: left !important;
             }
 
             .card-title {
@@ -831,27 +856,32 @@
                 padding: 3px 8px !important;
             }
 
-            /* Make sections with display: flex stack vertically */
-            .slide > div[style*="display: flex"] {
-                flex-direction: column !important;
-                gap: 12px !important;
-            }
-
-            /* Grid layouts should be single column */
-            .slide > div[style*="display: grid"] {
-                grid-template-columns: 1fr !important;
-                gap: 12px !important;
-            }
-
-            /* Reduce margins on mobile for better spacing */
-            .slide > div[style*="margin"] {
-                margin: 12px auto !important;
+            /* Override ALL inline flex styles to stack and center */
+            .slide div[style] {
+                display: block !important;
+                text-align: center !important;
+                width: 100% !important;
                 max-width: 100% !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                padding-left: 16px !important;
+                padding-right: 16px !important;
             }
 
-            /* Make boxes less padded */
-            .slide > div > div[style*="padding"] {
-                padding: 16px !important;
+            /* Keep grids as grids but make them single column */
+            .card-grid {
+                display: grid !important;
+            }
+
+            /* Reduce internal padding */
+            .slide div[style*="padding"] {
+                padding: 12px !important;
+            }
+
+            /* Make margins reasonable */
+            .slide div[style*="margin"] {
+                margin-top: 8px !important;
+                margin-bottom: 8px !important;
             }
 
             .slideshow-header {
@@ -1869,43 +1899,94 @@
         }
 
         let analysisPollingInterval = null;
-        let initialGapProfileCount = 0;
+        let initialAnalysisTimestamp = null;
 
-        async function getGapProfileCount() {
+        async function checkAnalysisStatus() {
             try {
                 const response = await fetch(`/demo/reports/${TEACHER_PHONE}`);
                 const html = await response.text();
-                const matches = html.match(/gap-tag/g);
-                return matches ? matches.length : 0;
+
+                // Check 1: Gap tags count
+                const gapMatches = html.match(/gap-tag/g);
+                const gapCount = gapMatches ? gapMatches.length : 0;
+
+                // Check 2: "Latest Analysis" section exists (indicates analysis completed)
+                const hasLatestAnalysis = html.includes('Latest Analysis:');
+
+                // Check 3: Error count in latest analysis
+                const errorMatch = html.match(/❌ Errors Found \((\d+)\)/);
+                const errorCount = errorMatch ? parseInt(errorMatch[1]) : 0;
+
+                // Check 4: Extract timestamp from "Latest Analysis" section to detect new analysis
+                // Match specifically the timestamp after "Latest Analysis:" to avoid matching student cards
+                const timestampMatch = html.match(/Latest Analysis:.*?Scanned: ([^<]+)</s);
+                const timestamp = timestampMatch ? timestampMatch[1] : null;
+
+                return {
+                    completed: hasLatestAnalysis,
+                    gapCount: gapCount,
+                    errorCount: errorCount,
+                    hasIssues: gapCount > 0 || errorCount > 0,
+                    timestamp: timestamp
+                };
             } catch (e) {
-                return 0;
+                return { completed: false, gapCount: 0, errorCount: 0, hasIssues: false, timestamp: null };
             }
         }
 
         async function startPollingForCompletion() {
-            initialGapProfileCount = await getGapProfileCount();
+            const initialStatus = await checkAnalysisStatus();
+            initialAnalysisTimestamp = initialStatus.timestamp;
+
             let attempts = 0;
             const maxAttempts = 30;
 
             analysisPollingInterval = setInterval(async () => {
                 attempts++;
-                const currentCount = await getGapProfileCount();
+                const status = await checkAnalysisStatus();
 
-                if (currentCount > initialGapProfileCount) {
+                // Check if a NEW analysis completed (timestamp changed OR analysis just appeared)
+                const isNewAnalysis = status.completed && (
+                    !initialAnalysisTimestamp ||
+                    status.timestamp !== initialAnalysisTimestamp
+                );
+
+                if (isNewAnalysis) {
                     clearInterval(analysisPollingInterval);
-                    addMessage("✅ Analysis complete!");
+
                     const dashboardUrl = `/demo/reports/${TEACHER_PHONE}`;
                     const dashboardLink = `
                         <div style="margin-top: 10px; padding: 12px; background: #25D366; border-radius: 10px; text-align: center;">
                             <a href="${dashboardUrl}" target="_blank" style="color: white; text-decoration: none; font-weight: bold; display: block;">
-                                📊 VIEW COMPREHENSIVE REPORT
+                                📊 VIEW FULL REPORT
                             </a>
                         </div>
                     `;
+
+                    // Show contextual message based on findings
+                    if (status.gapCount > 0) {
+                        addMessage(`✅ Analysis complete! ${status.gapCount} learning gap${status.gapCount > 1 ? 's' : ''} identified.`);
+                    } else if (status.errorCount > 0) {
+                        addMessage(`⚠️ Analysis complete! Errors found. Check report for recommendations.`);
+                    } else {
+                        addMessage(`✅ Analysis complete! No issues found - excellent work!`);
+                    }
+
                     addMessage(dashboardLink);
                 } else if (attempts >= maxAttempts) {
                     clearInterval(analysisPollingInterval);
                     addMessage("⏱️ Analysis is taking longer than expected. Please check back in a moment.");
+
+                    // Still provide dashboard link even on timeout
+                    const dashboardUrl = `/demo/reports/${TEACHER_PHONE}`;
+                    const dashboardLink = `
+                        <div style="margin-top: 10px; padding: 12px; background: #FFA500; border-radius: 10px; text-align: center;">
+                            <a href="${dashboardUrl}" target="_blank" style="color: white; text-decoration: none; font-weight: bold; display: block;">
+                                📊 CHECK DASHBOARD
+                            </a>
+                        </div>
+                    `;
+                    addMessage(dashboardLink);
                 }
             }, 2000);
         }
