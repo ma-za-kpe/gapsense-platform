@@ -58,7 +58,7 @@ async def main() -> None:
         anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
 
         if anthropic_key:
-            ai_client = AsyncAIClient(anthropic_api_key=anthropic_key)
+            ai_client = AsyncAIClient(anthropic_api_key=anthropic_key, timeout_seconds=120.0)
             print("✅ AsyncAIClient initialized (Anthropic)")
         else:
             logger.warning("ai_client_no_key", msg="ANTHROPIC_API_KEY not set")
@@ -92,17 +92,17 @@ async def main() -> None:
 
     # 7. Initialize WorkerService (WITHOUT db session - each task gets its own)
     try:
+        from gapsense.core.database import AsyncSessionLocal
         from gapsense.services.worker_service import WorkerService
 
-        # WorkerService no longer takes a shared db session
-        # Each task handler will create its own session as needed
+        # WorkerService uses session_factory to create per-task sessions
         worker_service = WorkerService(
             ai_client=ai_client,
             media_service=media_service,
             guard_service=guard_service,
             prompt_service=prompt_service,
             settings=settings,
-            db=None,  # No shared session - tasks create their own
+            session_factory=AsyncSessionLocal,
             max_concurrent=5,
         )
         print("✅ WorkerService initialized")

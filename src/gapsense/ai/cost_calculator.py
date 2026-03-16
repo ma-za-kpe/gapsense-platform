@@ -14,6 +14,10 @@ ANTHROPIC_PRICING = {
         "input": Decimal("5.00"),  # $5/MTok
         "output": Decimal("25.00"),  # $25/MTok
     },
+    "claude-sonnet-4-6": {
+        "input": Decimal("3.00"),  # $3/MTok
+        "output": Decimal("15.00"),  # $15/MTok
+    },
     "claude-sonnet-4-20250514": {
         "input": Decimal("3.00"),  # $3/MTok
         "output": Decimal("15.00"),  # $15/MTok
@@ -26,8 +30,12 @@ ANTHROPIC_PRICING = {
         "input": Decimal("3.00"),  # $3/MTok
         "output": Decimal("15.00"),  # $15/MTok
     },
-    "claude-haiku-4-5": {
+    "claude-haiku-4-5-20251001": {
         "input": Decimal("1.00"),  # $1/MTok
+        "output": Decimal("5.00"),  # $5/MTok
+    },
+    "claude-haiku-4-5": {
+        "input": Decimal("1.00"),  # $1/MTok (kept for backwards compatibility)
         "output": Decimal("5.00"),  # $5/MTok
     },
     "claude-3-5-haiku-20241022": {

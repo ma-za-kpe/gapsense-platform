@@ -246,6 +246,278 @@ poetry run pytest tests/integration/ -v
 
 ---
 
+## 🚢 Production Deployment
+
+### Prerequisites
+- AWS CLI configured with `gapsense-prod` profile
+- Docker with buildx support
+- ECR repository: `607415053998.dkr.ecr.us-east-1.amazonaws.com/gapsense-web`
+- ECS cluster: `gapsense-prod` (us-east-1)
+
+### Build and Push Docker Image
+
+```bash
+# 1. Login to ECR
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin \
+  607415053998.dkr.ecr.us-east-1.amazonaws.com
+
+# 2. Build for production (linux/amd64 platform)
+docker buildx build \
+  --platform linux/amd64 \
+  --target production \
+  -t gapsense-web:latest \
+  -t 607415053998.dkr.ecr.us-east-1.amazonaws.com/gapsense-web:latest \
+  --load .
+
+# 3. Push to ECR
+docker push 607415053998.dkr.ecr.us-east-1.amazonaws.com/gapsense-web:latest
+```
+
+### Deploy to ECS
+
+#### Option 1: Force New Deployment (Most Common)
+```bash
+# Deploy web service
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-web \
+  --force-new-deployment \
+  --region us-east-1
+
+# Deploy worker service
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-worker \
+  --force-new-deployment \
+  --region us-east-1
+```
+
+#### Option 2: Update Task Definition First
+```bash
+# Register new task definitions
+aws ecs register-task-definition \
+  --cli-input-json file:///tmp/ecs-task-web.json \
+  --region us-east-1 \
+  --query 'taskDefinition.[family,taskDefinitionArn,status]' \
+  --output table
+
+aws ecs register-task-definition \
+  --cli-input-json file:///tmp/ecs-task-worker.json \
+  --region us-east-1 \
+  --query 'taskDefinition.[family,taskDefinitionArn,status]' \
+  --output table
+
+# Update services with specific task definition version
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-web \
+  --task-definition gapsense-web:3 \
+  --force-new-deployment \
+  --region us-east-1
+
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-worker \
+  --task-definition gapsense-worker:3 \
+  --force-new-deployment \
+  --region us-east-1
+```
+
+### Monitoring and Verification
+
+```bash
+# Check service status
+aws ecs describe-services \
+  --cluster gapsense-prod \
+  --services gapsense-web gapsense-worker \
+  --region us-east-1 \
+  --query 'services[*].[serviceName,runningCount,desiredCount,deployments[0].rolloutState]' \
+  --output table
+
+# Monitor web logs (real-time)
+aws logs tail /ecs/gapsense-web \
+  --region us-east-1 \
+  --follow \
+  --format short
+
+# Monitor worker logs (real-time)
+aws logs tail /ecs/gapsense-worker \
+  --region us-east-1 \
+  --follow \
+  --format short
+
+# Check recent logs (last 5 minutes)
+aws logs tail /ecs/gapsense-web \
+  --region us-east-1 \
+  --since 5m \
+  --format short
+
+# Test health endpoint
+curl -s http://3.83.162.241:8000/health
+curl -s http://52.87.46.142:8000/health
+```
+
+### Database Migrations (Production)
+
+Run Alembic migrations via a one-off ECS Fargate task with a command override. This spins up a temporary container using the same image/secrets as the web service, runs the migration, and exits.
+
+```bash
+# 1. Get network config from the running web service
+aws ecs describe-services \
+  --cluster gapsense-prod \
+  --services gapsense-web \
+  --region us-east-1 \
+  --query 'services[0].networkConfiguration'
+
+# 2. Run migration as a one-off ECS task
+aws ecs run-task \
+  --cluster gapsense-prod \
+  --task-definition gapsense-web \
+  --launch-type FARGATE \
+  --network-configuration 'awsvpcConfiguration={subnets=[subnet-0ac74240c02834391],securityGroups=[sg-082576d47f78f2cf4],assignPublicIp=ENABLED}' \
+  --overrides '{"containerOverrides":[{"name":"gapsense-web","command":["alembic","upgrade","head"]}]}' \
+  --region us-east-1
+
+# 3. Monitor the task (get task ID from run-task output)
+aws ecs describe-tasks \
+  --cluster gapsense-prod \
+  --tasks <TASK_ID> \
+  --region us-east-1 \
+  --query 'tasks[0].{status:lastStatus,exitCode:containers[0].exitCode,reason:stoppedReason}'
+
+# 4. Verify in logs
+aws logs tail /ecs/gapsense-web \
+  --region us-east-1 \
+  --since 5m \
+  --format short | grep -i alembic
+```
+
+> **Note:** The migration task reuses the `gapsense-web` task definition, which already has the `DATABASE_URL` secret from AWS Secrets Manager. No need to pass credentials manually.
+
+### Production E2E Testing
+
+Run the E2E test against production from inside the local Docker container:
+
+```bash
+# Run production E2E test (pass env var with -e flag)
+docker compose exec \
+  -e E2E_BASE_URL=http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com \
+  web pytest tests/e2e/test_demo_flow_e2e.py::TestDemoFlowE2E::test_complete_demo_flow -xvs
+
+# Run local E2E test (no env var = uses ASGI transport)
+docker compose exec web pytest tests/e2e/test_demo_flow_e2e.py::TestDemoFlowE2E::test_complete_demo_flow -xvs
+```
+
+The production test:
+- Sends real HTTP requests to the ALB
+- Skips direct DB verification (polls dashboard instead)
+- Waits up to 120s for the worker to process the AI pipeline
+- Verifies the gap profile appears on the dashboard
+
+### Production URLs
+
+| Resource | URL |
+|----------|-----|
+| ALB | `http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com` |
+| Health | `http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com/health` |
+| Demo Dashboard | `http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com/demo/reports/<phone>` |
+
+### Secrets Management
+
+Secrets are stored in AWS Secrets Manager and injected into ECS tasks:
+
+| Secret | ARN Path |
+|--------|----------|
+| DATABASE_URL | `gapsense/prod/database` |
+| ANTHROPIC_API_KEY | `gapsense/prod/anthropic` |
+| GROK_API_KEY | `gapsense/prod/grok` |
+| TWILIO_* | `gapsense/prod/twilio` |
+
+```bash
+# List all production secrets
+aws secretsmanager list-secrets \
+  --region us-east-1 \
+  --query 'SecretList[?starts_with(Name, `gapsense/prod/`)].[Name]' \
+  --output table
+```
+
+### Infrastructure Setup (One-Time)
+
+```bash
+# Create S3 bucket for media
+aws s3api create-bucket \
+  --bucket gapsense-media-prod \
+  --region us-east-1
+
+# Enable versioning
+aws s3api put-bucket-versioning \
+  --bucket gapsense-media-prod \
+  --versioning-configuration Status=Enabled
+
+# Enable encryption
+aws s3api put-bucket-encryption \
+  --bucket gapsense-media-prod \
+  --server-side-encryption-configuration '{
+    "Rules": [{
+      "ApplyServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+      }
+    }]
+  }'
+
+# Create CloudWatch log groups
+aws logs create-log-group \
+  --log-group-name /ecs/gapsense-web \
+  --region us-east-1
+
+aws logs create-log-group \
+  --log-group-name /ecs/gapsense-worker \
+  --region us-east-1
+
+# List secrets (verify configuration)
+aws secretsmanager list-secrets \
+  --region us-east-1 \
+  --query 'SecretList[?starts_with(Name, `gapsense/prod/`)].[Name,ARN]' \
+  --output table
+```
+
+### Deployment Checklist
+
+Before deploying to production:
+
+1. ✅ **Test locally**: Run E2E tests with `docker compose`
+2. ✅ **Review changes**: Check `git diff` and `git status`
+3. ✅ **Build image**: Ensure `docker buildx build` succeeds
+4. ✅ **Push to ECR**: Verify image uploaded successfully
+5. ✅ **Deploy services**: Update both web and worker services
+6. ✅ **Monitor logs**: Watch for errors in first 2-3 minutes
+7. ✅ **Test endpoints**: Verify `/health` returns 200
+8. ✅ **Check RDS**: Ensure database connection works
+9. ✅ **Test WhatsApp**: Send test message to verify webhook
+10. ✅ **Monitor metrics**: Check CloudWatch for errors/performance
+
+### Rollback Procedure
+
+```bash
+# List recent task definition versions
+aws ecs list-task-definitions \
+  --family-prefix gapsense-web \
+  --sort DESC \
+  --max-items 5 \
+  --region us-east-1
+
+# Rollback to previous version
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-web \
+  --task-definition gapsense-web:2 \
+  --force-new-deployment \
+  --region us-east-1
+```
+
+---
+
 ## 📚 Key Documents
 
 ### Specifications (Source of Truth):

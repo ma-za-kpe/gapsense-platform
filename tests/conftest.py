@@ -94,20 +94,28 @@ async def db_session(async_engine) -> AsyncSession:
 
         # Seed default region and district for MVP teacher onboarding
         # This matches the production seed migration
+        # Uses unique names that won't conflict with test-created regions
         try:
             await session.execute(
                 text("""
                 INSERT INTO regions (id, name, code)
-                VALUES (1, 'Greater Accra', 'GAR')
+                VALUES (1, 'Default Seed Region', 'DSR')
                 ON CONFLICT (id) DO NOTHING;
             """)
             )
             await session.execute(
                 text("""
                 INSERT INTO districts (id, region_id, name, ges_district_code)
-                VALUES (1, 1, 'Accra Metropolitan', 'GAR-AM-001')
+                VALUES (1, 1, 'Default Seed District', 'DSR-DS-001')
                 ON CONFLICT (id) DO NOTHING;
             """)
+            )
+            # Advance sequences past seeded IDs to avoid collisions
+            await session.execute(
+                text("SELECT setval('regions_id_seq', GREATEST(nextval('regions_id_seq'), 2))")
+            )
+            await session.execute(
+                text("SELECT setval('districts_id_seq', GREATEST(nextval('districts_id_seq'), 2))")
             )
             await session.commit()
         except Exception:

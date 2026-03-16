@@ -1542,14 +1542,17 @@ class TeacherFlowExecutor:
             prompt_service = PromptService(settings=settings)
             guard_service = GuardService(ai_client=ai_client, prompt_service=prompt_service)
 
-            # Initialize WorkerService with all required dependencies
+            # Initialize WorkerService with session_factory (same pattern as production worker)
+            from gapsense.core.database import AsyncSessionLocal
+
             worker_service = WorkerService(
                 ai_client=ai_client,
                 media_service=media_service,
                 guard_service=guard_service,
                 prompt_service=prompt_service,
                 settings=settings,
-                db=self.db,
+                session_factory=AsyncSessionLocal,
+                max_concurrent=5,
             )
 
             # Inject appropriate notification service based on demo_mode

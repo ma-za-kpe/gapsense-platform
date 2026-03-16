@@ -130,7 +130,7 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
         PG_UUID(as_uuid=True), ForeignKey("prompt_versions.id"), nullable=True
     )
     model_used: Mapped[str | None] = mapped_column(
-        String(50), nullable=True, comment="e.g., 'claude-sonnet-4-5'"
+        String(50), nullable=True, comment="e.g., 'claude-sonnet-4-6'"
     )
     total_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     ai_reasoning_log: Mapped[dict[str, Any] | None] = mapped_column(

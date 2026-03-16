@@ -93,7 +93,7 @@ class PromptVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Configuration
     model_target: Mapped[str] = mapped_column(
-        String(50), default="claude-sonnet-4-5", comment="Which model this is optimized for"
+        String(50), default="claude-sonnet-4-6", comment="Which model this is optimized for"
     )
     temperature: Mapped[float] = mapped_column(default=0.3)
     max_tokens: Mapped[int] = mapped_column(Integer, default=2048)

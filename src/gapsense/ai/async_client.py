@@ -71,7 +71,7 @@ class AsyncAIClient:
         prompt_id: str,
         system: str,
         messages: list[dict[str, Any]],
-        model: str = "claude-sonnet-4-5-20250929",
+        model: str = "claude-sonnet-4-6",
         max_tokens: int = 2048,
         temperature: float = 0.3,
         json_mode: bool = False,
@@ -153,29 +153,7 @@ class AsyncAIClient:
 
                 json_parsed = None
                 if json_mode:
-                    try:
-                        json_parsed = json.loads(text)
-                    except json.JSONDecodeError:
-                        # Try stripping markdown code blocks (```json ... ```)
-                        import re
-
-                        stripped = re.sub(r"^```(?:json)?\s*\n?", "", text.strip())
-                        stripped = re.sub(r"\n?```\s*$", "", stripped)
-                        try:
-                            json_parsed = json.loads(stripped)
-                            logger.info(
-                                "json_parse_recovered",
-                                provider="anthropic",
-                                prompt_id=prompt_id,
-                                msg="Stripped markdown code blocks",
-                            )
-                        except json.JSONDecodeError:
-                            logger.warning(
-                                "json_parse_failed",
-                                provider="anthropic",
-                                prompt_id=prompt_id,
-                                text_preview=text[:200],
-                            )
+                    json_parsed = self._parse_json_response(text, prompt_id)
 
                 response = AIResponse(
                     text=text,
@@ -301,3 +279,91 @@ class AsyncAIClient:
             else:
                 result.append(msg)
         return result
+
+    @staticmethod
+    def _parse_json_response(text: str, prompt_id: str) -> dict[str, Any] | None:
+        """Parse JSON from AI response, handling markdown fences and truncation.
+
+        Strategies (in order):
+        1. Direct json.loads
+        2. Strip markdown code fences (```json ... ```)
+        3. Strip opening fence only (truncated response missing closing ```)
+        4. Attempt to repair truncated JSON by closing open brackets/braces
+        """
+        import re
+
+        # Strategy 1: Direct parse
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+        stripped = text.strip()
+
+        # Strategy 2: Strip complete markdown fences
+        fence_stripped = re.sub(r"^```(?:json)?\s*\n?", "", stripped)
+        fence_stripped = re.sub(r"\n?```\s*$", "", fence_stripped)
+        if fence_stripped != stripped:
+            try:
+                result = json.loads(fence_stripped)
+                logger.info(
+                    "json_parse_recovered",
+                    prompt_id=prompt_id,
+                    strategy="strip_fences",
+                )
+                return result
+            except json.JSONDecodeError:
+                pass
+            # Use fence_stripped for subsequent strategies
+            stripped = fence_stripped
+
+        # Strategy 3: Strip opening fence only (truncated — no closing ```)
+        if stripped.startswith("```"):
+            opening_stripped = re.sub(r"^```(?:json)?\s*\n?", "", stripped)
+            try:
+                result = json.loads(opening_stripped)
+                logger.info(
+                    "json_parse_recovered",
+                    prompt_id=prompt_id,
+                    strategy="strip_opening_fence",
+                )
+                return result
+            except json.JSONDecodeError:
+                stripped = opening_stripped
+
+        # Strategy 4: Repair truncated JSON by closing open brackets/braces
+        # This handles the case where max_tokens cut off the response mid-JSON
+        repaired = stripped.rstrip()
+        # Remove trailing comma if present (common truncation artifact)
+        repaired = re.sub(r",\s*$", "", repaired)
+        # Count open vs close brackets
+        open_braces = repaired.count("{") - repaired.count("}")
+        open_brackets = repaired.count("[") - repaired.count("]")
+        if open_braces > 0 or open_brackets > 0:
+            # Close any open strings (if truncated mid-string)
+            if repaired.count('"') % 2 != 0:
+                repaired += '"'
+            # Remove trailing incomplete key-value pair
+            repaired = re.sub(r',\s*"[^"]*"?\s*:?\s*"?[^"]*$', "", repaired)
+            # Close brackets and braces
+            repaired += "]" * open_brackets
+            repaired += "}" * open_braces
+            try:
+                result = json.loads(repaired)
+                logger.info(
+                    "json_parse_recovered",
+                    prompt_id=prompt_id,
+                    strategy="repair_truncated",
+                    added_braces=open_braces,
+                    added_brackets=open_brackets,
+                )
+                return result
+            except json.JSONDecodeError:
+                pass
+
+        logger.warning(
+            "json_parse_failed",
+            prompt_id=prompt_id,
+            text_preview=text[:200],
+        )
+        return None

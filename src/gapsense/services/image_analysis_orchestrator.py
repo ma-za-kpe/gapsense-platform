@@ -309,6 +309,8 @@ class ImageAnalysisOrchestrator:
             system=rendered.system_prompt,
             messages=[{"role": "user", "content": rendered.user_template}],
             model=rendered.model,
+            max_tokens=rendered.max_tokens,
+            temperature=rendered.temperature,
             json_mode=True,
             images=[
                 ImageContent(
@@ -367,7 +369,7 @@ class ImageAnalysisOrchestrator:
         except Exception as exc:
             # Cost logging failure must not abort the analysis pipeline.
             # Log and move on; the analysis result is more valuable than the cost row.
-            logger.error("ai_cost_log_failed", error=str(exc))
+            logger.warning("ai_cost_log_failed", error=str(exc))
             await self._db.rollback()
 
     # ------------------------------------------------------------------

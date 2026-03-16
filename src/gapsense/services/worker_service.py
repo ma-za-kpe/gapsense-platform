@@ -12,11 +12,16 @@ import json
 import os
 import time
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
 from aiobotocore.session import get_session
+from sqlalchemy import update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from gapsense.core.exceptions import PermanentError
+from gapsense.core.models.processing_ledger import ProcessingLedger
 from gapsense.engagement.whatsapp_client import WhatsAppClient
 
 logger = structlog.get_logger(__name__)
@@ -47,7 +52,7 @@ class WorkerService:
         guard_service: Any,
         prompt_service: Any,
         settings: Any,
-        db: Any = None,
+        session_factory: Any = None,
         max_concurrent: int = 5,
     ) -> None:
         self._ai_client = ai_client
@@ -55,7 +60,7 @@ class WorkerService:
         self._guard_service = guard_service
         self._prompt_service = prompt_service
         self._settings = settings
-        self._db = db
+        self._session_factory = session_factory
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._running = False
         self._session = get_session()
@@ -192,7 +197,47 @@ class WorkerService:
                     task_type=task.task_type,
                     message_id=task.message_id,
                 )
-                await self._route_task(task)
+                if self._session_factory:
+                    async with self._session_factory() as db:
+                        # Idempotency guard: INSERT ... ON CONFLICT DO NOTHING
+                        stmt = (
+                            pg_insert(ProcessingLedger)
+                            .values(
+                                sqs_message_id=task.message_id,
+                                task_type=task.task_type,
+                                student_id=task.payload.get("student_id"),
+                            )
+                            .on_conflict_do_nothing(constraint="uq_ledger_msg_task")
+                        )
+                        result = await db.execute(stmt)
+                        await db.commit()
+
+                        if result.rowcount == 0:
+                            # Duplicate — skip processing
+                            logger.warning(
+                                "duplicate_message_skipped",
+                                sqs_message_id=task.message_id,
+                            )
+                            await self._delete_message(task.receipt_handle)
+                            return
+
+                        await self._route_task(task, db=db)
+
+                        # Update ledger status to completed
+                        await db.execute(
+                            update(ProcessingLedger)
+                            .where(
+                                ProcessingLedger.sqs_message_id == task.message_id,
+                                ProcessingLedger.task_type == task.task_type,
+                            )
+                            .values(
+                                status="completed",
+                                completed_at=datetime.now(UTC),
+                            )
+                        )
+                        await db.commit()
+                else:
+                    await self._route_task(task)
                 # Delete message on success
                 await self._delete_message(task.receipt_handle)
                 latency_ms = (time.perf_counter() - start) * 1000
@@ -216,8 +261,11 @@ class WorkerService:
                 )
                 await self._handle_failure(task, exc)
 
-    async def _route_task(self, task: WorkerTask) -> None:
+    async def _route_task(self, task: WorkerTask, db: Any = None) -> None:
         """Route task to appropriate handler."""
+        if task.task_type not in TASK_TYPES:
+            raise ValueError(f"Unknown task type: {task.task_type}")
+
         handlers = {
             "tts_generate": self._handle_tts_generate,
             "image_analyze": self._handle_image_analyze,
@@ -227,38 +275,18 @@ class WorkerService:
         handler = handlers.get(task.task_type)
         if handler is None:
             raise ValueError(f"Unknown task type: {task.task_type}")
-        await handler(task)
+        await handler(task, db=db)
 
     # ------------------------------------------------------------------
     # Task handlers
     # ------------------------------------------------------------------
 
-    async def _handle_tts_generate(self, task: WorkerTask) -> None:
-        """TTS generation: invoke TTS, upload to S3 via MediaService."""
-        payload = task.payload
-        text_content = payload.get("text", "")
-        language = payload.get("language", "en")
-        country = payload.get("country", "GH")
-        student_id = payload.get("student_id", "")
+    async def _handle_tts_generate(self, task: WorkerTask, db: Any = None) -> None:
+        """TTS generation: not yet implemented."""
+        raise NotImplementedError("TTS generation is not yet implemented")
 
-        logger.info(
-            "tts_generate_start",
-            language=language,
-            country=country,
-            student_id=student_id,
-        )
-        # TTS_Service integration point — placeholder for actual TTS call
-        # audio_bytes = await tts_service.synthesize(text_content, language)
-        # s3_key = await self._media_service.upload(
-        #     audio_bytes, country=country, student_id=student_id,
-        #     media_type="audio", filename=f"tts_{language}.ogg",
-        #     content_type="audio/ogg",
-        # )
-        logger.info("tts_generate_complete", student_id=student_id)
-
-    async def _handle_image_analyze(self, task: WorkerTask) -> None:
+    async def _handle_image_analyze(self, task: WorkerTask, db: Any = None) -> None:
         """Delegate entirely to ImageAnalysisOrchestrator with its own DB session."""
-        from gapsense.core.database import AsyncSessionLocal
         from gapsense.services.image_analysis_orchestrator import ImageAnalysisOrchestrator
 
         # Log handler entry
@@ -270,10 +298,10 @@ class WorkerService:
             language=task.payload.get("language"),
         )
 
-        # Create a fresh DB session for this task (no shared session)
-        async with AsyncSessionLocal() as db_session:
+        # Use the per-task session provided by _process_message via session_factory
+        if db is not None:
             orchestrator = ImageAnalysisOrchestrator(
-                db=db_session,
+                db=db,
                 ai_client=self._ai_client,
                 media_service=self._media_service,
                 guard_service=self._guard_service,
@@ -281,13 +309,28 @@ class WorkerService:
                 worker_service=self,
             )
             await orchestrator.run(task.payload)
+        elif self._session_factory:
+            async with self._session_factory() as db_session:
+                orchestrator = ImageAnalysisOrchestrator(
+                    db=db_session,
+                    ai_client=self._ai_client,
+                    media_service=self._media_service,
+                    guard_service=self._guard_service,
+                    prompt_service=self._prompt_service,
+                    worker_service=self,
+                )
+                await orchestrator.run(task.payload)
+        else:
+            raise RuntimeError(
+                "image_analyze requires a database session but no session_factory is configured"
+            )
 
         logger.info(
             "image_analyze_handler_complete",
             student_id=task.payload.get("student_id"),
         )
 
-    async def _handle_scheduled_message(self, task: WorkerTask) -> None:
+    async def _handle_scheduled_message(self, task: WorkerTask, db: Any = None) -> None:
         """Scheduled message: pass through GuardService before delivery."""
         payload = task.payload
         message = payload.get("message", "")
@@ -315,33 +358,65 @@ class WorkerService:
                 violations=guard_result.violations,
             )
 
-    async def _handle_voice_transcribe(self, task: WorkerTask) -> None:
-        """Voice transcription: download audio, transcribe via STT."""
-        payload = task.payload
-        s3_key = payload.get("s3_key", "")
-        parent_id = payload.get("parent_id", "")
-
-        logger.info("voice_transcribe_start", s3_key=s3_key, parent_id=parent_id)
-
-        # Download audio from S3
-        audio_bytes = await self._media_service.download(s3_key)
-
-        # STT_Service integration point — placeholder for actual STT call
-        # transcript = await stt_service.transcribe(audio_bytes, language)
-        logger.info("voice_transcribe_complete", parent_id=parent_id)
+    async def _handle_voice_transcribe(self, task: WorkerTask, db: Any = None) -> None:
+        """Voice transcription: not yet implemented."""
+        raise NotImplementedError("Voice transcription is not yet implemented")
 
     # ------------------------------------------------------------------
     # Failure handling
     # ------------------------------------------------------------------
 
     async def _handle_failure(self, task: WorkerTask, error: Exception) -> None:
-        """Handle task failure: re-enqueue or move to DLQ."""
-        # Delete the original message first
-        if task.receipt_handle:
-            await self._delete_message(task.receipt_handle)
+        """Handle task failure: route PermanentError to DLQ immediately, retry others.
 
-        if task.retry_count < task.max_retries:
-            # Re-enqueue with incremented retry count and backoff
+        IMPORTANT: Send to requeue/DLQ BEFORE deleting original message.
+        If send fails, do NOT delete — let SQS redeliver after visibility timeout.
+        """
+        if isinstance(error, PermanentError):
+            # PermanentError → DLQ immediately, regardless of retry_count
+            try:
+                await self._move_to_dlq(task, error)
+                # Only delete after successful DLQ send
+                if task.receipt_handle:
+                    await self._delete_message(task.receipt_handle)
+                # Update ledger status to failed
+                if self._session_factory and task.message_id:
+                    try:
+                        async with self._session_factory() as db:
+                            await db.execute(
+                                update(ProcessingLedger)
+                                .where(
+                                    ProcessingLedger.sqs_message_id == task.message_id,
+                                    ProcessingLedger.task_type == task.task_type,
+                                )
+                                .values(status="failed")
+                            )
+                            await db.commit()
+                    except Exception as ledger_exc:
+                        logger.warning(
+                            "ledger_status_update_failed",
+                            sqs_message_id=task.message_id,
+                            error=str(ledger_exc),
+                        )
+                logger.error(
+                    "task_moved_to_dlq",
+                    task_type=task.task_type,
+                    retry_count=task.retry_count,
+                    error=str(error),
+                    error_type="PermanentError",
+                )
+            except Exception as send_exc:
+                # DLQ send failed — do NOT delete original message
+                # SQS will redeliver after visibility timeout
+                logger.error(
+                    "dlq_send_failed_message_preserved",
+                    task_type=task.task_type,
+                    retry_count=task.retry_count,
+                    original_error=str(error),
+                    send_error=str(send_exc),
+                )
+        elif task.retry_count < task.max_retries:
+            # RetryableError or other exception — retry with backoff
             new_task = WorkerTask(
                 task_type=task.task_type,
                 payload=task.payload,
@@ -349,22 +424,69 @@ class WorkerService:
                 max_retries=task.max_retries,
             )
             visibility_timeout = 2**task.retry_count * 30  # 30s, 60s, 120s
-            await self._requeue_with_backoff(new_task, visibility_timeout)
-            logger.info(
-                "task_requeued",
-                task_type=task.task_type,
-                retry_count=new_task.retry_count,
-                visibility_timeout=visibility_timeout,
-            )
+            try:
+                await self._requeue_with_backoff(new_task, visibility_timeout)
+                # Only delete after successful requeue
+                if task.receipt_handle:
+                    await self._delete_message(task.receipt_handle)
+                logger.info(
+                    "task_requeued",
+                    task_type=task.task_type,
+                    retry_count=new_task.retry_count,
+                    visibility_timeout=visibility_timeout,
+                )
+            except Exception as send_exc:
+                # Requeue failed — do NOT delete original message
+                # SQS will redeliver after visibility timeout
+                logger.error(
+                    "requeue_failed_message_preserved",
+                    task_type=task.task_type,
+                    retry_count=task.retry_count,
+                    original_error=str(error),
+                    send_error=str(send_exc),
+                )
         else:
-            # Move to DLQ
-            await self._move_to_dlq(task, error)
-            logger.error(
-                "task_moved_to_dlq",
-                task_type=task.task_type,
-                retry_count=task.retry_count,
-                error=str(error),
-            )
+            # RetryableError or other exception — max retries exhausted, move to DLQ
+            try:
+                await self._move_to_dlq(task, error)
+                # Only delete after successful DLQ send
+                if task.receipt_handle:
+                    await self._delete_message(task.receipt_handle)
+                # Update ledger status to failed
+                if self._session_factory and task.message_id:
+                    try:
+                        async with self._session_factory() as db:
+                            await db.execute(
+                                update(ProcessingLedger)
+                                .where(
+                                    ProcessingLedger.sqs_message_id == task.message_id,
+                                    ProcessingLedger.task_type == task.task_type,
+                                )
+                                .values(status="failed")
+                            )
+                            await db.commit()
+                    except Exception as ledger_exc:
+                        logger.warning(
+                            "ledger_status_update_failed",
+                            sqs_message_id=task.message_id,
+                            error=str(ledger_exc),
+                        )
+                logger.error(
+                    "task_moved_to_dlq",
+                    task_type=task.task_type,
+                    retry_count=task.retry_count,
+                    error=str(error),
+                )
+            except Exception as send_exc:
+                # DLQ send failed — do NOT delete original message
+                # SQS will redeliver after visibility timeout
+                logger.error(
+                    "dlq_send_failed_message_preserved",
+                    task_type=task.task_type,
+                    retry_count=task.retry_count,
+                    original_error=str(error),
+                    send_error=str(send_exc),
+                )
 
     async def _requeue_with_backoff(self, task: WorkerTask, visibility_timeout: int) -> None:
         """Re-enqueue task with visibility timeout for backoff."""
@@ -376,12 +498,15 @@ class WorkerService:
                 "max_retries": task.max_retries,
             }
         )
+        send_kwargs: dict[str, Any] = {
+            "QueueUrl": self._queue_url,
+            "MessageBody": body,
+            "DelaySeconds": min(visibility_timeout, 900),  # SQS max is 900s
+        }
+        if self._queue_url.endswith(".fifo"):
+            send_kwargs["MessageGroupId"] = task.task_type
         async with self._session.create_client(**self._client_kwargs()) as client:
-            await client.send_message(
-                QueueUrl=self._queue_url,
-                MessageBody=body,
-                DelaySeconds=min(visibility_timeout, 900),  # SQS max is 900s
-            )
+            await client.send_message(**send_kwargs)
 
     async def _move_to_dlq(self, task: WorkerTask, error: Exception) -> None:
         """Move failed task to dead-letter queue."""
@@ -398,11 +523,14 @@ class WorkerService:
                 "error": str(error),
             }
         )
+        send_kwargs: dict[str, Any] = {
+            "QueueUrl": self._dlq_url,
+            "MessageBody": body,
+        }
+        if self._dlq_url.endswith(".fifo"):
+            send_kwargs["MessageGroupId"] = task.task_type
         async with self._session.create_client(**self._client_kwargs()) as client:
-            await client.send_message(
-                QueueUrl=self._dlq_url,
-                MessageBody=body,
-            )
+            await client.send_message(**send_kwargs)
 
     async def _delete_message(self, receipt_handle: str | None) -> None:
         """Delete a processed message from the queue."""

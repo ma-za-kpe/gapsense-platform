@@ -18,6 +18,7 @@ from .curriculum import (
 )
 from .diagnostics import DiagnosticQuestion, DiagnosticSession, GapProfile
 from .engagement import ParentActivity, ParentInteraction
+from .processing_ledger import ProcessingLedger
 from .prompts import PromptCategory, PromptTestCase, PromptVersion
 from .schools import District, GESSchool, Region, School, SchoolInvitation
 from .students import Student
@@ -58,6 +59,8 @@ __all__ = [
     # Engagement
     "ParentInteraction",
     "ParentActivity",
+    # Processing Ledger
+    "ProcessingLedger",
     # Prompts
     "PromptCategory",
     "PromptVersion",

@@ -173,7 +173,7 @@ class PromptService:
             prompt_id=prompt_id,
             system_prompt=system_prompt,
             user_template=user_template,
-            model=prompt_data.get("model", "claude-sonnet-4-5"),
+            model=prompt_data.get("model", "claude-sonnet-4-6"),
             temperature=prompt_data.get("temperature", 0.3),
             max_tokens=prompt_data.get("max_tokens", 2048),
             country=config.country_code,
