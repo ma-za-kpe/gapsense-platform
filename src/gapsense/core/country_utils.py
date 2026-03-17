@@ -14,14 +14,14 @@ if TYPE_CHECKING:
 # Country code mapping
 # In future: read from database regions/districts table with country field
 _COUNTRY_DEFAULTS = {
-    "ghana": "ghana",
-    "GH": "ghana",
-    "uganda": "uganda",
-    "UG": "uganda",
-    "kenya": "kenya",
-    "KE": "kenya",
-    "nigeria": "nigeria",
-    "NG": "nigeria",
+    "ghana": "GH",
+    "GH": "GH",
+    "uganda": "UG",
+    "UG": "UG",
+    "kenya": "KE",
+    "KE": "KE",
+    "nigeria": "NG",
+    "NG": "NG",
 }
 
 
@@ -32,14 +32,14 @@ def get_country_from_student(student: Student | None) -> str:
         student: Student model with school relationship loaded
 
     Returns:
-        Country key (e.g., "ghana", "uganda")
+        Country ISO code (e.g., "GH", "UG")
 
     Notes:
-        For MVP: Returns "ghana" default
+        For MVP: Returns "GH" default
         For multi-country: Will query student.school.district.region.country
     """
     if not student:
-        return "ghana"  # MVP default
+        return "GH"  # MVP default
 
     # Future multi-country implementation:
     # if student.school and student.school.district:
@@ -48,7 +48,7 @@ def get_country_from_student(student: Student | None) -> str:
     #         return _COUNTRY_DEFAULTS.get(region.country, region.country.lower())
 
     # MVP: Default to Ghana
-    return "ghana"
+    return "GH"
 
 
 def get_country_from_teacher(teacher: Teacher | None) -> str:
@@ -58,10 +58,10 @@ def get_country_from_teacher(teacher: Teacher | None) -> str:
         teacher: Teacher model with school relationship loaded
 
     Returns:
-        Country key (e.g., "ghana", "uganda")
+        Country ISO code (e.g., "GH", "UG")
     """
     if not teacher:
-        return "ghana"  # MVP default
+        return "GH"  # MVP default
 
     # Future multi-country implementation:
     # if teacher.school and teacher.school.district:
@@ -70,7 +70,7 @@ def get_country_from_teacher(teacher: Teacher | None) -> str:
     #         return _COUNTRY_DEFAULTS.get(region.country, region.country.lower())
 
     # MVP: Default to Ghana
-    return "ghana"
+    return "GH"
 
 
 def get_country_from_parent(parent: Parent | None, student: Student | None) -> str:
@@ -81,7 +81,7 @@ def get_country_from_parent(parent: Parent | None, student: Student | None) -> s
         student: Optional linked student with school
 
     Returns:
-        Country key (e.g., "ghana", "uganda")
+        Country ISO code (e.g., "GH", "UG")
     """
     # Try to get from student's school first
     if student:
@@ -89,7 +89,7 @@ def get_country_from_parent(parent: Parent | None, student: Student | None) -> s
 
     # Future: Could add parent.country field or derive from phone prefix
     # For now, default to Ghana for MVP
-    return "ghana"
+    return "GH"
 
 
 def get_subject_from_teacher(teacher: Teacher | None, default: str = "mathematics") -> str:

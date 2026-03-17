@@ -6,7 +6,7 @@
 services:
   # --- PostgreSQL ---
   db:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     environment:
       POSTGRES_DB: gapsense
       POSTGRES_USER: gapsense
@@ -50,6 +50,7 @@ services:
       - S3_ENDPOINT_URL=http://localstack:4566
       - S3_MEDIA_BUCKET=gapsense-media-local
       - GROK_API_KEY=${GROK_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     ports:
       - "8000:8000"
     volumes:
@@ -94,6 +95,7 @@ services:
       - S3_ENDPOINT_URL=http://localstack:4566
       - S3_MEDIA_BUCKET=gapsense-media-local
       - GROK_API_KEY=${GROK_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests

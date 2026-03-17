@@ -23,7 +23,7 @@ class ImageAnalysisContext:
 
     # ── Resolved in Step 1: load_student_context ──────────────────────────
     student: Any = None  # ORM Student instance
-    country_key: str = ""  # normalised country key, e.g. "ghana"
+    country_key: str = ""  # ISO country code, e.g. "GH"
     subject: str = ""  # e.g. "mathematics"
     student_grade: str = ""  # e.g. "JHS1"
 
@@ -31,13 +31,21 @@ class ImageAnalysisContext:
     image_bytes: bytes = b""
     media_type: str = "image/jpeg"
 
-    # ── Resolved in Step 3: build_curriculum_graph ────────────────────────
+    # ── Resolved in Step 3: transcribe_image (NEW) ────────────────────────
+    transcription_text: str = ""
+    transcription_result: dict = field(default_factory=dict)
+
+    # ── Resolved in Step 4: build_curriculum_graph ────────────────────────
     curriculum_graph_json: str = ""
 
-    # ── Resolved in Step 4: render_prompt ─────────────────────────────────
+    # ── Resolved in Step 4: build_curriculum_graph (Phase 2) ─────────────
+    retrieval_metadata: dict[str, Any] = field(default_factory=dict)
+    image_description: str = ""
+
+    # ── Resolved in Step 5: render_prompt ─────────────────────────────────
     rendered_prompt: Any = None  # RenderedPrompt from PromptService
 
-    # ── Resolved in Step 5: call_ai ───────────────────────────────────────
+    # ── Resolved in Step 6: call_ai ───────────────────────────────────────
     ai_response: Any = None  # AIResponse from async_client
 
     # ── Metadata ──────────────────────────────────────────────────────────

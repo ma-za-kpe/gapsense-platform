@@ -55,6 +55,10 @@ class TestImageAnalysisContextInitialization:
         # Step 3 fields
         assert ctx.curriculum_graph_json == ""
 
+        # Step 3 Phase 2 fields
+        assert ctx.retrieval_metadata == {}
+        assert ctx.image_description == ""
+
         # Step 4 fields
         assert ctx.rendered_prompt is None
 
@@ -111,6 +115,82 @@ class TestImageAnalysisContextValidation:
         assert len(ctx.errors) == 2
 
 
+class TestImageAnalysisContextRetrievalFields:
+    """Test Phase 2 retrieval fields: retrieval_metadata and image_description."""
+
+    def _make_ctx(self) -> ImageAnalysisContext:
+        return ImageAnalysisContext(
+            s3_key="test/image.jpg",
+            student_id="123e4567-e89b-12d3-a456-426614174000",
+            country_code="GH",
+            language="en",
+            teacher_phone="+233501234567",
+        )
+
+    def test_retrieval_metadata_defaults_to_empty_dict(self):
+        """retrieval_metadata defaults to an empty dict."""
+        ctx = self._make_ctx()
+        assert ctx.retrieval_metadata == {}
+        assert isinstance(ctx.retrieval_metadata, dict)
+
+    def test_image_description_defaults_to_empty_string(self):
+        """image_description defaults to an empty string."""
+        ctx = self._make_ctx()
+        assert ctx.image_description == ""
+        assert isinstance(ctx.image_description, str)
+
+    def test_retrieval_metadata_is_independent_per_instance(self):
+        """Each context gets its own retrieval_metadata dict (no shared mutable default)."""
+        ctx1 = self._make_ctx()
+        ctx2 = self._make_ctx()
+        ctx1.retrieval_metadata["seed_node_ids"] = ["uuid1"]
+        assert ctx2.retrieval_metadata == {}
+
+    def test_retrieval_metadata_can_store_expected_keys(self):
+        """retrieval_metadata accepts the keys defined in the design."""
+        ctx = self._make_ctx()
+        ctx.retrieval_metadata = {
+            "seed_node_ids": ["uuid1", "uuid2"],
+            "prerequisite_node_ids": ["uuid3"],
+            "seed_node_codes": ["B4.1.3.1"],
+            "prerequisite_node_codes": ["B2.1.3.1"],
+            "total_nodes_injected": 3,
+            "query_text_preview": "Multi-digit multiplication...",
+            "fallback_reason": None,
+        }
+        assert ctx.retrieval_metadata["total_nodes_injected"] == 3
+        assert ctx.retrieval_metadata["fallback_reason"] is None
+
+    def test_image_description_can_be_set(self):
+        """image_description can be mutated to store query text."""
+        ctx = self._make_ctx()
+        ctx.image_description = "Student is working on fraction addition"
+        assert ctx.image_description == "Student is working on fraction addition"
+
+    def test_existing_fields_unaffected_by_new_fields(self):
+        """Adding retrieval fields does not change existing field defaults or behaviour."""
+        ctx = self._make_ctx()
+
+        # All pre-existing defaults still hold
+        assert ctx.student is None
+        assert ctx.country_key == ""
+        assert ctx.subject == ""
+        assert ctx.student_grade == ""
+        assert ctx.image_bytes == b""
+        assert ctx.media_type == "image/jpeg"
+        assert ctx.curriculum_graph_json == ""
+        assert ctx.rendered_prompt is None
+        assert ctx.ai_response is None
+        assert ctx.errors == []
+        assert ctx.is_valid is True
+
+        # Mutating new fields doesn't affect existing ones
+        ctx.retrieval_metadata["test"] = True
+        ctx.image_description = "test"
+        assert ctx.curriculum_graph_json == ""
+        assert ctx.is_valid is True
+
+
 class TestImageAnalysisContextStateMutation:
     """Test that context fields can be mutated through pipeline steps."""
 
@@ -126,12 +206,12 @@ class TestImageAnalysisContextStateMutation:
 
         # Simulate Step 1
         ctx.student = "mock_student_object"
-        ctx.country_key = "ghana"
+        ctx.country_key = "GH"
         ctx.subject = "mathematics"
         ctx.student_grade = "JHS1"
 
         assert ctx.student == "mock_student_object"
-        assert ctx.country_key == "ghana"
+        assert ctx.country_key == "GH"
         assert ctx.subject == "mathematics"
         assert ctx.student_grade == "JHS1"
 
@@ -209,7 +289,7 @@ class TestImageAnalysisContextStateMutation:
 
         # Simulate all steps populating fields
         ctx.student = "mock_student"
-        ctx.country_key = "ghana"
+        ctx.country_key = "GH"
         ctx.subject = "mathematics"
         ctx.student_grade = "JHS1"
         ctx.image_bytes = b"\x89PNG\r\n\x1a\n"
@@ -220,7 +300,7 @@ class TestImageAnalysisContextStateMutation:
 
         # All fields should be populated
         assert ctx.student == "mock_student"
-        assert ctx.country_key == "ghana"
+        assert ctx.country_key == "GH"
         assert ctx.subject == "mathematics"
         assert ctx.student_grade == "JHS1"
         assert ctx.image_bytes == b"\x89PNG\r\n\x1a\n"

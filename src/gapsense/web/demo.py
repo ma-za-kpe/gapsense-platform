@@ -330,6 +330,175 @@ async def get_teacher_info(
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
+@router.get("/api/reports/{teacher_phone}")
+async def get_teacher_reports_json(
+    teacher_phone: str,
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """Get teacher dashboard data (JSON API for Next.js)."""
+    try:
+        from datetime import datetime
+
+        from gapsense.core.models import CurriculumNode
+
+        teacher = await get_or_create_demo_teacher(db, teacher_phone)
+
+        # Get all students for this teacher
+        stmt = select(Student).where(Student.teacher_id == teacher.id).order_by(Student.first_name)
+        result = await db.execute(stmt)
+        students = result.scalars().all()
+
+        # Calculate stats
+        total_students = len(students)
+        today = datetime.utcnow().date()
+        scanned_today = 0
+        total_gaps = 0
+        high_priority = 0
+
+        # Get latest analysis
+        latest_analysis = None
+        latest_profile_stmt = (
+            select(GapProfile)
+            .where(GapProfile.student_id.in_([s.id for s in students]))
+            .where(GapProfile.is_current == True)
+            .where(GapProfile.source == "exercise_book")
+            .order_by(GapProfile.created_at.desc())
+            .limit(1)
+        )
+        latest_result = await db.execute(latest_profile_stmt)
+        latest_profile = latest_result.scalar_one_or_none()
+
+        if latest_profile:
+            # Get student for latest analysis
+            student_stmt = select(Student).where(Student.id == latest_profile.student_id)
+            student_result = await db.execute(student_stmt)
+            latest_student = student_result.scalar_one_or_none()
+
+            if latest_student:
+                # Get curriculum nodes for gaps
+                if latest_profile.gap_nodes:
+                    nodes_stmt = select(CurriculumNode).where(
+                        CurriculumNode.id.in_(latest_profile.gap_nodes)
+                    )
+                    nodes_result = await db.execute(nodes_stmt)
+                    gap_nodes = nodes_result.scalars().all()
+
+                    gaps_data = [
+                        {
+                            "code": node.code,
+                            "title": node.title,
+                            "severity": "high"
+                            if node.severity >= 4
+                            else ("medium" if node.severity >= 3 else "low"),
+                        }
+                        for node in gap_nodes
+                    ]
+                else:
+                    gaps_data = []
+
+                # Extract metadata safely
+                metadata_dict = {}
+                if latest_profile.analysis_metadata and isinstance(
+                    latest_profile.analysis_metadata, dict
+                ):
+                    metadata_dict = latest_profile.analysis_metadata
+
+                latest_analysis = {
+                    "student_name": latest_student.first_name or latest_student.full_name,
+                    "created_at": latest_profile.created_at.isoformat(),
+                    "errors": metadata_dict.get("errors", []),
+                    "patterns": metadata_dict.get("patterns", []),
+                    "focus_areas": metadata_dict.get("focus_areas", []),
+                    "gaps": gaps_data,
+                }
+
+        # Build students data with gap profiles
+        students_data = []
+        for student in students:
+            # Get current gap profile
+            profile_stmt = (
+                select(GapProfile)
+                .where(GapProfile.student_id == student.id)
+                .where(GapProfile.is_current == True)
+                .order_by(GapProfile.created_at.desc())
+                .limit(1)
+            )
+            profile_result = await db.execute(profile_stmt)
+            profile = profile_result.scalar_one_or_none()
+
+            gaps_data = []
+            scan_count = 0
+            metadata_dict = {}
+
+            if profile:
+                scan_count = 1
+                if profile.created_at.date() == today:
+                    scanned_today += 1
+
+                # Extract metadata safely
+                if profile.analysis_metadata and isinstance(profile.analysis_metadata, dict):
+                    metadata_dict = profile.analysis_metadata
+
+                if profile.gap_nodes:
+                    total_gaps += len(profile.gap_nodes)
+                    # Get node details
+                    nodes_stmt = select(CurriculumNode).where(
+                        CurriculumNode.id.in_(profile.gap_nodes)
+                    )
+                    nodes_result = await db.execute(nodes_stmt)
+                    nodes = nodes_result.scalars().all()
+
+                    for node in nodes:
+                        if node.severity >= 4:
+                            high_priority += 1
+                        gaps_data.append(
+                            {
+                                "code": node.code,
+                                "title": node.title,
+                                "severity": "high"
+                                if node.severity >= 4
+                                else ("medium" if node.severity >= 3 else "low"),
+                            }
+                        )
+
+            students_data.append(
+                {
+                    "id": str(student.id),
+                    "first_name": student.first_name or student.full_name or "Unknown",
+                    "grade": student.current_grade or "JHS1",
+                    "scan_count": scan_count,
+                    "last_diagnosed": profile.created_at.isoformat() if profile else None,
+                    "gaps": gaps_data,
+                    "errors": metadata_dict.get("errors", []),
+                    "patterns": metadata_dict.get("patterns", []),
+                    "focus_areas": metadata_dict.get("focus_areas", []),
+                }
+            )
+
+        return JSONResponse(
+            {
+                "success": True,
+                "teacher": {
+                    "name": f"{teacher.first_name or ''} {teacher.last_name or ''}".strip()
+                    or "Demo Teacher",
+                    "phone": teacher_phone,
+                },
+                "stats": {
+                    "total_students": total_students,
+                    "scanned_today": scanned_today,
+                    "total_gaps": total_gaps,
+                    "high_priority": high_priority,
+                },
+                "latest_analysis": latest_analysis,
+                "students": students_data,
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting teacher reports: {e}", exc_info=True)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
 @router.get("/reports/{teacher_phone}", response_class=HTMLResponse)
 async def teacher_reports_dashboard(
     request: Request,
@@ -500,6 +669,195 @@ async def teacher_reports_dashboard(
     except Exception as e:
         logger.error(f"Error loading teacher dashboard: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/reports/{teacher_phone}/student/{student_id}")
+async def get_student_report_json(
+    teacher_phone: str,
+    student_id: str,
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """Get student detailed report (JSON API for Next.js)."""
+    try:
+        import json
+        from datetime import datetime
+        from uuid import UUID
+
+        from sqlalchemy.orm import selectinload
+
+        from gapsense.core.models import CurriculumNode
+        from gapsense.core.models.ai_usage import AIUsageLog
+
+        teacher = await get_or_create_demo_teacher(db, teacher_phone)
+
+        # Get student with eager loading of school
+        stmt = (
+            select(Student)
+            .options(selectinload(Student.school))
+            .where(Student.id == UUID(student_id))
+        )
+        result = await db.execute(stmt)
+        student = result.scalar_one_or_none()
+
+        if not student:
+            return JSONResponse({"success": False, "error": "Student not found"}, status_code=404)
+
+        # Get current gap profile
+        profile_stmt = (
+            select(GapProfile)
+            .where(GapProfile.student_id == UUID(student_id))
+            .where(GapProfile.is_current == True)
+            .order_by(GapProfile.created_at.desc())
+            .limit(1)
+        )
+        profile_result = await db.execute(profile_stmt)
+        profile = profile_result.scalar_one_or_none()
+
+        if not profile:
+            return JSONResponse(
+                {"success": False, "error": "No analysis found for this student"},
+                status_code=404,
+            )
+
+        # Get AI usage log for this analysis
+        usage_stmt = (
+            select(AIUsageLog)
+            .where(AIUsageLog.student_id == UUID(student_id))
+            .order_by(AIUsageLog.created_at.desc())
+            .limit(1)
+        )
+        usage_result = await db.execute(usage_stmt)
+        ai_usage = usage_result.scalar_one_or_none()
+
+        # Get historical AI usage (last 5)
+        historical_stmt = (
+            select(AIUsageLog)
+            .where(AIUsageLog.student_id == UUID(student_id))
+            .order_by(AIUsageLog.created_at.desc())
+            .limit(5)
+        )
+        historical_result = await db.execute(historical_stmt)
+        historical_usage_logs = historical_result.scalars().all()
+
+        # Extract metadata
+        metadata_dict = {}
+        if profile.analysis_metadata and isinstance(profile.analysis_metadata, dict):
+            metadata_dict = profile.analysis_metadata
+
+        # Get gap nodes details with comprehensive curriculum information
+        gap_nodes_data = []
+        if profile.gap_nodes:
+            nodes_stmt = (
+                select(CurriculumNode)
+                .options(
+                    selectinload(CurriculumNode.strand), selectinload(CurriculumNode.sub_strand)
+                )
+                .where(CurriculumNode.id.in_(profile.gap_nodes))
+            )
+            nodes_result = await db.execute(nodes_stmt)
+            nodes = nodes_result.scalars().all()
+
+            for node in nodes:
+                gap_nodes_data.append(
+                    {
+                        "code": node.code,
+                        "title": node.title,
+                        "description": node.description,
+                        "severity": "high"
+                        if node.severity >= 4
+                        else ("medium" if node.severity >= 3 else "low"),
+                        "severity_numeric": node.severity,
+                        "severity_rationale": node.severity_rationale or "Not specified",
+                        "ghana_evidence": node.ghana_evidence or "No specific evidence documented",
+                        "grade": node.grade,
+                        "subject": node.subject,
+                        "level": node.level,
+                        "strand_name": node.strand.name if node.strand else "N/A",
+                        "strand_description": node.strand.description
+                        if node.strand and node.strand.description
+                        else "",
+                        "substrand_name": node.sub_strand.name if node.sub_strand else "N/A",
+                        "substrand_description": node.sub_strand.description
+                        if node.sub_strand and node.sub_strand.description
+                        else "",
+                        "questions_required": node.questions_required,
+                        "confidence_threshold": f"{node.confidence_threshold * 100:.0f}%",
+                        "population_status": node.population_status.capitalize(),
+                    }
+                )
+
+        # Get diagnosis count
+        diagnosis_count_stmt = select(GapProfile).where(GapProfile.student_id == UUID(student_id))
+        diagnosis_count_result = await db.execute(diagnosis_count_stmt)
+        diagnosis_count = len(diagnosis_count_result.scalars().all())
+
+        # Build report data
+        report_data = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "report_id": str(profile.id),
+            "student": {
+                "id": str(student.id),
+                "name": f"{student.first_name or ''} {student.full_name or ''}".strip()
+                or "Unknown",
+                "age": getattr(student, "age", None),
+                "gender": getattr(student, "gender", None),
+                "grade": student.current_grade or "N/A",
+                "school": student.school.name if student.school else "N/A",
+                "school_type": student.school.school_type if student.school else "N/A",
+                "home_language": getattr(student, "home_language", None),
+                "school_language": getattr(student, "school_language", "English"),
+                "diagnosis_count": diagnosis_count,
+            },
+            "ai_metadata": {
+                "analysis_id": str(ai_usage.id) if ai_usage else "N/A",
+                "timestamp": ai_usage.created_at.isoformat() if ai_usage else "N/A",
+                "provider": ai_usage.provider if ai_usage else "N/A",
+                "model": ai_usage.model if ai_usage else "N/A",
+                "prompt": ai_usage.prompt_id if ai_usage else "N/A",
+                "input_tokens": f"{ai_usage.input_tokens:,}" if ai_usage else "N/A",
+                "output_tokens": f"{ai_usage.output_tokens:,}" if ai_usage else "N/A",
+                "total_tokens": f"{(ai_usage.input_tokens + ai_usage.output_tokens):,}"
+                if ai_usage
+                else "N/A",
+                "latency_ms": f"{ai_usage.latency_ms:.2f}" if ai_usage else "N/A",
+                "latency_seconds": f"{(float(ai_usage.latency_ms) / 1000):.2f}"
+                if ai_usage
+                else "N/A",
+                "input_cost": f"{ai_usage.input_cost_usd:.6f}" if ai_usage else "0.000000",
+                "output_cost": f"{ai_usage.output_cost_usd:.6f}" if ai_usage else "0.000000",
+                "total_cost": f"{ai_usage.total_cost_usd:.6f}" if ai_usage else "0.000000",
+                "success": str(ai_usage.success) if ai_usage else "N/A",
+            },
+            "analysis": {
+                "topic": metadata_dict.get("topic", "Mathematics"),
+                "readable": metadata_dict.get("readable", True),
+                "confidence": metadata_dict.get("confidence", 0),
+                "student_approach": metadata_dict.get("student_approach", "Standard approach"),
+                "errors": metadata_dict.get("errors", []),
+                "patterns": metadata_dict.get("patterns", []),
+                "gap_nodes": gap_nodes_data,
+                "focus_areas": metadata_dict.get("focus_areas", []),
+                "reasoning": metadata_dict.get("reasoning", ""),
+            },
+            "historical_usage": [
+                {
+                    "timestamp": log.created_at.isoformat(),
+                    "model": log.model,
+                    "prompt": log.prompt_id,
+                    "cost": f"{log.total_cost_usd:.6f}",
+                    "latency_ms": f"{log.latency_ms:.0f}",
+                    "status": "Success" if log.success else "Failed",
+                }
+                for log in historical_usage_logs
+            ],
+            "raw_response": json.dumps(metadata_dict, indent=2),
+        }
+
+        return JSONResponse({"success": True, "report": report_data})
+
+    except Exception as e:
+        logger.error(f"Error getting student report: {e}", exc_info=True)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 @router.get("/reports/{teacher_phone}/student/{student_id}", response_class=HTMLResponse)

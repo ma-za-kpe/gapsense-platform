@@ -54,6 +54,13 @@ class Settings(BaseSettings):
     GROK_API_KEY: str = Field(default="", description="xAI Grok API key (fallback provider)")
 
     # ========================================================================
+    # EMBEDDING CONFIGURATION (Phase 2: Hybrid RAG Retrieval)
+    # ========================================================================
+
+    EMBEDDING_MODEL: Literal["openai", "minilm"] = "openai"
+    OPENAI_API_KEY: str = Field(default="", description="OpenAI API key for embeddings")
+
+    # ========================================================================
     # WHATSAPP PROVIDER
     # ========================================================================
 

@@ -1,13 +1,14 @@
 """
 Unit tests for ImageAnalysisOrchestrator.
 
-Tests the 6-step image analysis pipeline:
+Tests the 7-step image analysis pipeline:
 1. load_student_context
 2. fetch_image
-3. build_curriculum_graph
-4. render_prompt
-5. call_ai
-6. dispatch_results
+3. transcribe_image
+4. build_curriculum_graph
+5. render_prompt
+6. call_ai
+7. dispatch_results
 """
 
 from __future__ import annotations
@@ -75,7 +76,7 @@ def _make_mock_curriculum_node(node_id: str, code: str, title: str):
 
 
 def _make_rendered_prompt():
-    """Create a mock RenderedPrompt."""
+    """Create a mock RenderedPrompt for ANALYSIS-001."""
     return RenderedPrompt(
         prompt_id="ANALYSIS-001",
         system_prompt="You are an education AI.",
@@ -83,13 +84,27 @@ def _make_rendered_prompt():
         model="claude-sonnet-4-5-20250929",
         temperature=0.3,
         max_tokens=4096,
-        country="ghana",
+        country="GH",
+        language="en",
+    )
+
+
+def _make_transcription_rendered_prompt():
+    """Create a mock RenderedPrompt for TRANSCRIPTION-001."""
+    return RenderedPrompt(
+        prompt_id="TRANSCRIPTION-001",
+        system_prompt="Transcribe this student exercise book page.",
+        user_template=None,
+        model="claude-sonnet-4-6",
+        temperature=0.1,
+        max_tokens=2048,
+        country="GH",
         language="en",
     )
 
 
 def _make_ai_response(gap_node_ids: list[str] | None = None):
-    """Create a mock AIResponse."""
+    """Create a mock AIResponse for ANALYSIS-001."""
     return AIResponse(
         provider="anthropic",
         model="claude-sonnet-4-5-20250929",
@@ -101,6 +116,40 @@ def _make_ai_response(gap_node_ids: list[str] | None = None):
         json_parsed={
             "gap_node_ids": gap_node_ids or [],
             "confidence": 0.95,
+        },
+    )
+
+
+def _make_transcription_ai_response():
+    """Create a mock AIResponse for TRANSCRIPTION-001."""
+    return AIResponse(
+        provider="anthropic",
+        model="claude-sonnet-4-6",
+        prompt_id="TRANSCRIPTION-001",
+        input_tokens=800,
+        output_tokens=400,
+        latency_ms=1500.0,
+        text="Transcription complete",
+        json_parsed={
+            "layout": "portrait, single column",
+            "subject_detected": "mathematics",
+            "grade_detected": "JHS1",
+            "topic_detected": "fractions",
+            "teacher_marks_present": True,
+            "questions": [
+                {
+                    "question_number": "1",
+                    "question_text": "Add 1/3 + 1/4",
+                    "student_work": "1/3 + 1/4 = 2/7",
+                    "teacher_mark": "✗",
+                    "teacher_score": "",
+                    "has_diagram": False,
+                    "illegible_regions": "",
+                }
+            ],
+            "overall_legibility": "legible",
+            "handwriting_styles_detected": "print",
+            "ocr_notes": "",
         },
     )
 
@@ -186,7 +235,7 @@ class TestImageAnalysisOrchestratorStep1:
         # Assert
         assert ctx.student == mock_student
         assert ctx.student_grade == "JHS1"
-        assert ctx.country_key == "ghana"
+        assert ctx.country_key == "GH"
         assert ctx.subject == "mathematics"
 
     @pytest.mark.asyncio
@@ -292,7 +341,7 @@ class TestImageAnalysisOrchestratorStep3:
             language="en",
             teacher_phone="+233501234567",
         )
-        ctx.country_key = "ghana"
+        ctx.country_key = "GH"
         ctx.subject = "mathematics"
 
         # Act
@@ -306,20 +355,32 @@ class TestImageAnalysisOrchestratorStep3:
         assert "Algebra Basics" in ctx.curriculum_graph_json
 
     @pytest.mark.asyncio
-    async def test_logs_warning_when_limit_reached(self):
-        """Step 3 logs warning when hitting 100-node limit."""
+    async def test_fallback_when_no_embedding_service(self):
+        """Step 3 falls back to code-ordered SELECT when embedding_service is None."""
         # Arrange
         mock_db = AsyncMock()
         nodes = [
             _make_mock_curriculum_node(
                 f"323e4567-e89b-12d3-a456-42661417{i:04d}", f"B7.{i}.1", f"Topic {i}"
             )
-            for i in range(100)
+            for i in range(5)
         ]
 
-        mock_result = Mock()
-        mock_result.scalars.return_value.all.return_value = nodes
-        mock_db.execute.return_value = mock_result
+        # _code_ordered_indicators returns indicators with .node loaded
+        mock_indicator_result = Mock()
+        mock_indicators = []
+        for node in nodes:
+            ind = Mock()
+            ind.node = node
+            ind.node_id = node.id
+            mock_indicators.append(ind)
+        mock_indicator_result.scalars.return_value.all.return_value = mock_indicators
+
+        # Full node load
+        mock_node_result = Mock()
+        mock_node_result.scalars.return_value.all.return_value = nodes
+
+        mock_db.execute.side_effect = [mock_indicator_result, mock_node_result]
 
         orchestrator = ImageAnalysisOrchestrator(
             db=mock_db,
@@ -328,6 +389,7 @@ class TestImageAnalysisOrchestratorStep3:
             guard_service=Mock(),
             prompt_service=Mock(),
             worker_service=Mock(),
+            embedding_service=None,  # No embedding service → fallback
         )
 
         ctx = ImageAnalysisContext(
@@ -337,17 +399,15 @@ class TestImageAnalysisOrchestratorStep3:
             language="en",
             teacher_phone="+233501234567",
         )
-        ctx.country_key = "ghana"
+        ctx.country_key = "GH"
         ctx.subject = "mathematics"
 
-        # Act (with log capture to verify warning)
-        with patch("gapsense.services.image_analysis_orchestrator.logger") as mock_logger:
-            await orchestrator._build_curriculum_graph(ctx)
+        # Act
+        await orchestrator._build_curriculum_graph(ctx)
 
-            # Assert warning was logged
-            mock_logger.warning.assert_called_once()
-            call_args = mock_logger.warning.call_args
-            assert call_args[0][0] == "curriculum_node_limit_reached"
+        # Assert - fallback was used
+        assert ctx.retrieval_metadata.get("fallback_reason") == "embedding_service is None"
+        assert ctx.curriculum_graph_json != ""
 
 
 class TestImageAnalysisOrchestratorStep4:
@@ -381,7 +441,7 @@ class TestImageAnalysisOrchestratorStep4:
         )
         ctx.student = mock_student
         ctx.student_grade = "JHS1"
-        ctx.country_key = "ghana"
+        ctx.country_key = "GH"
         ctx.curriculum_graph_json = '{"nodes": []}'
 
         # Act
@@ -391,12 +451,17 @@ class TestImageAnalysisOrchestratorStep4:
         assert ctx.rendered_prompt == rendered
         mock_prompt_service.render_prompt.assert_called_once_with(
             "ANALYSIS-001",
-            country="ghana",
+            country="GH",
             extra_context={
                 "prerequisite_graph_json": '{"nodes": []}',
                 "current_grade": "JHS1",
                 "student_name": "Joshua",
                 "school_name": "Test School",
+                "total_nodes_injected": "0",
+                "seed_node_codes": "",
+                "prerequisite_node_codes": "",
+                "query_text_preview": "",
+                "transcript_section": "",
             },
         )
 
@@ -574,7 +639,7 @@ class TestImageAnalysisOrchestratorFullPipeline:
 
     @pytest.mark.asyncio
     async def test_full_pipeline_success(self):
-        """Full pipeline executes all 6 steps successfully."""
+        """Full pipeline executes all 7 steps successfully."""
         # Arrange - mock all dependencies
         mock_db = AsyncMock()
         mock_ai_client = AsyncMock()
@@ -586,26 +651,42 @@ class TestImageAnalysisOrchestratorFullPipeline:
         mock_student_result = Mock()
         mock_student_result.scalar_one_or_none.return_value = mock_student
 
-        # Step 3: Curriculum nodes
+        # Step 4: Curriculum nodes (fallback path - 2 DB calls)
         node = _make_mock_curriculum_node(
             "323e4567-e89b-12d3-a456-426614174000", "B7.1.1", "Number Operations"
         )
-        mock_curriculum_result = Mock()
-        mock_curriculum_result.scalars.return_value.all.return_value = [node]
+        # First call: _code_ordered_indicators
+        mock_indicator = Mock()
+        mock_indicator.node = node
+        mock_indicator.node_id = node.id
+        mock_indicator_result = Mock()
+        mock_indicator_result.scalars.return_value.all.return_value = [mock_indicator]
 
-        mock_db.execute.side_effect = [mock_student_result, mock_curriculum_result]
+        # Second call: full node load
+        mock_node_result = Mock()
+        mock_node_result.scalars.return_value.all.return_value = [node]
+
+        mock_db.execute.side_effect = [mock_student_result, mock_indicator_result, mock_node_result]
 
         # Step 2: Image fetch
         jpeg_bytes = b"\xff\xd8\xff\xe0" + b"\x00" * 100
         mock_media_service.download.return_value = jpeg_bytes
 
-        # Step 4: Prompt render
-        rendered = _make_rendered_prompt()
-        mock_prompt_service.render_prompt.return_value = rendered
+        # Step 3: Transcription + Step 5: Prompt render
+        transcription_rendered = _make_transcription_rendered_prompt()
+        analysis_rendered = _make_rendered_prompt()
+        mock_prompt_service.render_prompt.side_effect = [
+            transcription_rendered,  # Step 3: _transcribe_image
+            analysis_rendered,  # Step 5: _render_prompt
+        ]
 
-        # Step 5: AI call
+        # Step 3: Transcription AI + Step 6: Analysis AI
+        transcription_response = _make_transcription_ai_response()
         ai_response = _make_ai_response(gap_node_ids=["B7.1.1"])
-        mock_ai_client.generate.return_value = ai_response
+        mock_ai_client.generate.side_effect = [
+            transcription_response,  # Step 3: _transcribe_image
+            ai_response,  # Step 6: _call_ai
+        ]
 
         orchestrator = ImageAnalysisOrchestrator(
             db=mock_db,
@@ -614,6 +695,7 @@ class TestImageAnalysisOrchestratorFullPipeline:
             guard_service=Mock(),
             prompt_service=mock_prompt_service,
             worker_service=Mock(),
+            embedding_service=None,  # Fallback path
         )
 
         payload = {
@@ -634,8 +716,137 @@ class TestImageAnalysisOrchestratorFullPipeline:
             await orchestrator.run(payload)
 
             # Assert - all steps executed
-            assert mock_db.execute.await_count == 2  # Student + curriculum queries
+            assert mock_db.execute.await_count == 3  # Student + 2 curriculum queries (fallback)
             mock_media_service.download.assert_awaited_once()
-            mock_prompt_service.render_prompt.assert_called_once()
-            mock_ai_client.generate.assert_awaited_once()
+            assert (
+                mock_prompt_service.render_prompt.call_count == 2
+            )  # TRANSCRIPTION-001 + ANALYSIS-001
+            assert mock_ai_client.generate.await_count == 2  # Stage 1 + Stage 2
             mock_scanner.process_analysis_result.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# Tests for _format_transcript_for_prompt
+# ---------------------------------------------------------------------------
+
+
+class TestFormatTranscriptForPrompt:
+    """Test the _format_transcript_for_prompt helper method."""
+
+    def _make_orchestrator(self):
+        """Create an orchestrator with mocked dependencies for unit testing."""
+        return ImageAnalysisOrchestrator(
+            db=AsyncMock(),
+            ai_client=AsyncMock(),
+            media_service=AsyncMock(),
+            guard_service=Mock(),
+            prompt_service=Mock(),
+            worker_service=Mock(),
+            embedding_service=None,
+        )
+
+    def test_empty_dict_returns_empty_string(self):
+        orch = self._make_orchestrator()
+        assert orch._format_transcript_for_prompt({}) == ""
+
+    def test_none_like_falsy_returns_empty_string(self):
+        orch = self._make_orchestrator()
+        assert orch._format_transcript_for_prompt({}) == ""
+
+    def test_no_questions_key_returns_empty_string(self):
+        orch = self._make_orchestrator()
+        result = orch._format_transcript_for_prompt({"layout": "portrait"})
+        assert result == ""
+
+    def test_empty_questions_list_returns_empty_string(self):
+        orch = self._make_orchestrator()
+        result = orch._format_transcript_for_prompt({"questions": []})
+        assert result == ""
+
+    def test_basic_formatting(self):
+        orch = self._make_orchestrator()
+        transcription = {
+            "layout": "portrait, single column",
+            "topic_detected": "Fractions — addition of unlike fractions",
+            "overall_legibility": "mostly_legible",
+            "questions": [
+                {
+                    "question_number": "1",
+                    "question_text": "Add 1/3 + 1/4",
+                    "student_work": "1/3 + 1/4 = 2/7",
+                    "teacher_mark": "✗",
+                    "illegible_regions": "",
+                },
+                {
+                    "question_number": "2",
+                    "question_text": "Simplify 6/8",
+                    "student_work": "6/8 = 3/4",
+                    "teacher_mark": "✓",
+                    "illegible_regions": "",
+                },
+            ],
+        }
+        result = orch._format_transcript_for_prompt(transcription)
+
+        assert "Layout: portrait, single column" in result
+        assert "Topic: Fractions — addition of unlike fractions" in result
+        assert "Legibility: mostly_legible" in result
+        assert 'Q1: "Add 1/3 + 1/4"' in result
+        assert 'Student work: "1/3 + 1/4 = 2/7"' in result
+        assert "Teacher mark: ✗" in result
+        assert 'Q2: "Simplify 6/8"' in result
+        assert 'Student work: "6/8 = 3/4"' in result
+        assert "Teacher mark: ✓" in result
+
+    def test_missing_header_fields_omitted(self):
+        orch = self._make_orchestrator()
+        transcription = {
+            "questions": [
+                {
+                    "question_number": "1",
+                    "question_text": "What is 2+2?",
+                    "student_work": "4",
+                    "teacher_mark": "✓",
+                    "illegible_regions": "",
+                }
+            ],
+        }
+        result = orch._format_transcript_for_prompt(transcription)
+
+        assert "Layout:" not in result
+        assert "Topic:" not in result
+        assert "Legibility:" not in result
+        assert "Questions:" in result
+        assert 'Q1: "What is 2+2?"' in result
+
+    def test_illegible_regions_displayed(self):
+        orch = self._make_orchestrator()
+        transcription = {
+            "questions": [
+                {
+                    "question_number": "3",
+                    "question_text": "Solve for x",
+                    "student_work": "x = [illegible]",
+                    "teacher_mark": "",
+                    "illegible_regions": "bottom-right corner smudged",
+                }
+            ],
+        }
+        result = orch._format_transcript_for_prompt(transcription)
+
+        assert "Illegible regions: bottom-right corner smudged" in result
+        assert "Teacher mark: none" in result
+
+    def test_missing_question_number_shows_placeholder(self):
+        orch = self._make_orchestrator()
+        transcription = {
+            "questions": [
+                {
+                    "question_text": "Some question",
+                    "student_work": "Some answer",
+                }
+            ],
+        }
+        result = orch._format_transcript_for_prompt(transcription)
+
+        assert "Q?:" in result

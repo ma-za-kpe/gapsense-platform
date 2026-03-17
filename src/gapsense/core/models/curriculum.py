@@ -11,6 +11,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     ARRAY,
     CheckConstraint,
@@ -261,6 +262,10 @@ class CurriculumIndicator(Base, UUIDPrimaryKeyMixin):
     )
 
     created_at: Mapped[str] = mapped_column(String, nullable=False, server_default=text("NOW()"))
+
+    # Embedding columns (Phase 2: Hybrid RAG Retrieval)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)
+    embedding_model: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Relationships
     node: Mapped[CurriculumNode] = relationship(back_populates="indicators")

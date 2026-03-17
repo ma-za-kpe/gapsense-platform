@@ -43,3 +43,7 @@ class MediaDownloadError(RetryableError):
 
 class AIClientError(RetryableError):
     """AI API call failed (e.g. timeout, rate limit, transient error)."""
+
+
+class ConfigurationError(PermanentError):
+    """Application configuration is invalid or incomplete."""

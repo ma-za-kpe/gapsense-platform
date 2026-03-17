@@ -181,14 +181,8 @@ class ExerciseBookScanner:
 
         focus_areas = analysis.get("focus_areas", [])
 
-        # Store analysis metadata for dashboard
-        metadata = {
-            "errors": analysis.get("errors", []),
-            "patterns": analysis.get("patterns", []),
-            "focus_areas": focus_areas,
-            "image_quality": analysis.get("image_quality", "unknown"),
-            "confidence": analysis.get("confidence", 0.0),
-        }
+        # Store full AI analysis response for dashboard reporting
+        metadata = dict(analysis)
 
         result = await self.db.execute(
             select(GapProfile).where(

@@ -298,6 +298,15 @@ class WorkerService:
             language=task.payload.get("language"),
         )
 
+        # Construct EmbeddingService (None if config missing / not available)
+        embedding_service = None
+        try:
+            from gapsense.ai.embedding_service import EmbeddingService
+
+            embedding_service = EmbeddingService(self._settings)
+        except Exception:
+            logger.warning("embedding_service_unavailable", exc_info=True)
+
         # Use the per-task session provided by _process_message via session_factory
         if db is not None:
             orchestrator = ImageAnalysisOrchestrator(
@@ -307,6 +316,7 @@ class WorkerService:
                 guard_service=self._guard_service,
                 prompt_service=self._prompt_service,
                 worker_service=self,
+                embedding_service=embedding_service,
             )
             await orchestrator.run(task.payload)
         elif self._session_factory:
@@ -318,6 +328,7 @@ class WorkerService:
                     guard_service=self._guard_service,
                     prompt_service=self._prompt_service,
                     worker_service=self,
+                    embedding_service=embedding_service,
                 )
                 await orchestrator.run(task.payload)
         else:
