@@ -8,6 +8,8 @@ Uses the same backend services as the WhatsApp integration.
 from __future__ import annotations
 
 import logging
+from datetime import UTC
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
@@ -30,7 +32,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/demo", tags=["demo"])
 
 # Template setup
-from pathlib import Path
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -70,7 +71,9 @@ async def send_message(
         if button_id:
             # Button click - format as interactive message
             message_type = "interactive"
-            message_content: str | dict[str, Any] = {"button_reply": {"id": button_id, "title": message}}
+            message_content: str | dict[str, Any] = {
+                "button_reply": {"id": button_id, "title": message}
+            }
         else:
             # Regular text message
             message_type = "text"
@@ -296,20 +299,35 @@ async def get_teacher_info(
         teacher = await get_or_create_demo_teacher(db, teacher_phone)
 
         # Get student list
+        from datetime import datetime
+
         from gapsense.core.models import Student
 
         stmt = select(Student).where(Student.teacher_id == teacher.id).order_by(Student.first_name)
         result = await db.execute(stmt)
         students = result.scalars().all()
 
-        student_list = [
-            {
-                "id": str(student.id),
-                "name": student.first_name or student.full_name,
-                "grade": student.current_grade,
-            }
-            for student in students
-        ]
+        # Build student list with last analysis timestamp
+        student_list = []
+        for student in students:
+            # Get latest gap profile for this student
+            profile_result = await db.execute(
+                select(GapProfile)
+                .where(GapProfile.student_id == student.id)
+                .where(GapProfile.is_current == True)
+                .order_by(GapProfile.created_at.desc())
+                .limit(1)
+            )
+            profile = profile_result.scalar_one_or_none()
+
+            student_list.append(
+                {
+                    "id": str(student.id),
+                    "name": student.first_name or student.full_name,
+                    "grade": student.current_grade,
+                    "last_analysis_at": profile.created_at.isoformat() if profile else None,
+                }
+            )
 
         return JSONResponse(
             {
@@ -322,6 +340,7 @@ async def get_teacher_info(
                 },
                 "students": student_list,
                 "conversation_state": teacher.conversation_state,
+                "server_time": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -694,7 +713,7 @@ async def get_student_report_json(
         from gapsense.core.models import CurriculumNode
         from gapsense.core.models.ai_usage import AIUsageLog
 
-        teacher = await get_or_create_demo_teacher(db, teacher_phone)
+        _ = await get_or_create_demo_teacher(db, teacher_phone)  # Ensure teacher exists
 
         # Get student with eager loading of school
         stmt = (
@@ -876,7 +895,6 @@ async def student_detailed_report(
 ) -> HTMLResponse:
     """Comprehensive student detailed report with AI metadata and analysis."""
     try:
-        import json
         from datetime import datetime
         from uuid import UUID
 
@@ -885,7 +903,7 @@ async def student_detailed_report(
         from gapsense.core.models import CurriculumNode
         from gapsense.core.models.ai_usage import AIUsageLog
 
-        teacher = await get_or_create_demo_teacher(db, teacher_phone)
+        _ = await get_or_create_demo_teacher(db, teacher_phone)  # Ensure teacher exists
 
         # Get student with eager loading of school
         stmt = (
@@ -1033,7 +1051,10 @@ async def student_detailed_report(
                 "patterns": metadata_dict.get("patterns", []),
                 "gap_nodes": gap_nodes_data,
                 "focus_areas": metadata_dict.get("focus_areas", []),
-                "reasoning": metadata_dict.get("reasoning", ""),
+                "reasoning": metadata_dict.get("reasoning", "")
+                or metadata_dict.get("overall_pattern", ""),
+                "remediation_exercises": metadata_dict.get("remediation_exercises", []),
+                "problems_extracted": metadata_dict.get("problems_extracted", []),
             },
             "historical_usage": [
                 {
@@ -1046,7 +1067,20 @@ async def student_detailed_report(
                 }
                 for log in historical_usage_logs
             ],
-            "raw_response": json.dumps(metadata_dict, indent=2),
+            "raw_response": {
+                "topic": metadata_dict.get("topic", "Mathematics"),
+                "readable": metadata_dict.get("readable", True),
+                "confidence": metadata_dict.get("confidence", 0),
+                "student_approach": metadata_dict.get("student_approach", "Standard approach"),
+                "errors": metadata_dict.get("errors", []),
+                "patterns": metadata_dict.get("patterns", []),
+                "gap_nodes": gap_nodes_data,
+                "focus_areas": metadata_dict.get("focus_areas", []),
+                "reasoning": metadata_dict.get("reasoning", "")
+                or metadata_dict.get("overall_pattern", ""),
+                "remediation_exercises": metadata_dict.get("remediation_exercises", []),
+                "problems_extracted": metadata_dict.get("problems_extracted", []),
+            },
         }
 
         return templates.TemplateResponse(

@@ -757,9 +757,7 @@ class TeacherFlowExecutor:
             flag_modified(teacher, "conversation_state")
             await self.db.commit()
 
-            message = (
-                "No problem! Let's try again.\n\n" "Please send the list of student names again."
-            )
+            message = "No problem! Let's try again.\n\nPlease send the list of student names again."
             message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=message)
 
             return TeacherFlowResult(
@@ -841,7 +839,7 @@ class TeacherFlowExecutor:
 
             # Send completion message
             student_list_preview = "\n".join(
-                f"  {i+1}. {name}" for i, name in enumerate(created_students[:5])
+                f"  {i + 1}. {name}" for i, name in enumerate(created_students[:5])
             )
             if len(created_students) > 5:
                 student_list_preview += f"\n  ... and {len(created_students) - 5} more"
@@ -1507,7 +1505,7 @@ class TeacherFlowExecutor:
         # Send confirmation message
         confirmation = (
             f"✅ Analyzing {student.first_name}'s exercise book...\n\n"
-            "This will take about 30 seconds. I'll send the results shortly!"
+            "This will take about 1-2 minutes. I'll send the results shortly!"
         )
         message_id = await self.whatsapp.send_text_message(to=teacher.phone, text=confirmation)
 

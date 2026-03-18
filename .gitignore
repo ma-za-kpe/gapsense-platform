@@ -293,3 +293,6 @@ notes/
 # ============================================================================
 tests/e2e/test_demo_flow_e2e.py
 .vercel
+
+# Generated files
+vercel.json
