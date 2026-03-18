@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GapSense Analysis Report - {{ student_name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: #2C3E50;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            border-bottom: 3px solid #25D366;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #25D366;
+            font-size: 28px;
+            text-align: center;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .separator {
+            color: #25D366;
+            margin: 20px 0;
+            font-size: 12px;
+        }
+        .section {
+            margin: 25px 0;
+            padding: 20px;
+            background: #F8F9FA;
+            border-left: 4px solid #25D366;
+            border-radius: 8px;
+        }
+        .section-title {
+            color: #25D366;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .field {
+            margin: 8px 0;
+            padding-left: 10px;
+        }
+        .field-label {
+            color: #25D366;
+            display: inline-block;
+            width: 180px;
+            font-weight: 600;
+        }
+        .field-value {
+            color: #555;
+        }
+        .error-item {
+            background: #FFF9E6;
+            border-left: 4px solid #E8B923;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .error-number {
+            color: #E8B923;
+            font-weight: bold;
+        }
+        .error-type {
+            color: #25D366;
+            text-transform: uppercase;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .error-desc {
+            color: #555;
+            margin-top: 5px;
+        }
+        .pattern-list, .gap-list, .focus-list {
+            padding-left: 20px;
+        }
+        .pattern-list li, .gap-list li, .focus-list li {
+            margin: 8px 0;
+            color: #555;
+        }
+        .pattern-list li:before {
+            content: "• ";
+            color: #25D366;
+            font-weight: bold;
+        }
+        .gap-tag {
+            display: inline-block;
+            background: white;
+            color: #25D366;
+            padding: 8px 15px;
+            margin: 4px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #25D366;
+        }
+        .severity-high {
+            background: #fee;
+            color: #c00;
+            border-color: #c00;
+        }
+        .severity-medium {
+            background: #fef6e0;
+            color: #856404;
+            border-color: #856404;
+        }
+        .json-block {
+            background: #F8F9FA;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            border: 1px solid #dee2e6;
+        }
+        .success {
+            color: #25D366;
+            font-weight: 600;
+        }
+        .warning {
+            color: #E8B923;
+            font-weight: 600;
+        }
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .metadata-item {
+            background: #F8F9FA;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .back-button {
+            display: inline-block;
+            background: #25D366;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-button:hover {
+            background: #128C7E;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        }
+        .reasoning-box {
+            background: #F8F9FA;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+            border-left: 4px solid #E8B923;
+        }
+
+        /* Enhanced gap card styles */
+        .gap-card {
+            display: block;
+            margin: 12px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .gap-header {
+            padding: 15px;
+            background: white;
+            border-bottom: 2px solid #25D366;
+        }
+
+        .gap-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #2C3E50;
+        }
+
+        .gap-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .badge-code {
+            background: #F8F9FA;
+            color: #666;
+        }
+
+        .badge-severity {
+            background: #FFF9E6;
+            color: #856404;
+        }
+
+        .badge-grade {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .gap-details {
+            padding: 15px;
+            background: #FAFBFC;
+        }
+
+        .detail-block {
+            margin-bottom: 15px;
+        }
+
+        .detail-title {
+            font-weight: 600;
+            color: #25D366;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .detail-content {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .context-box {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #25D366;
+            margin-bottom: 15px;
+        }
+
+        .rationale-box {
+            padding: 12px;
+            background: #FFF9E6;
+            border-radius: 8px;
+            border-left: 3px solid #E8B923;
+            margin-bottom: 15px;
+        }
+
+        .evidence-box {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #E8B923;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .diagnostic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .diagnostic-item {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .diagnostic-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #25D366;
+        }
+
+        .diagnostic-label {
+            font-size: 11px;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 16px;
+                border-radius: 10px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .section-title {
+                font-size: 15px;
+            }
+
+            .field {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                padding-left: 0;
+            }
+
+            .field-label {
+                width: 100%;
+                font-size: 13px;
+            }
+
+            .field-value {
+                padding-left: 0;
+                font-size: 14px;
+            }
+
+            .metadata-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .section {
+                padding: 14px;
+                margin: 16px 0;
+            }
+
+            .back-button {
+                padding: 12px 18px;
+                font-size: 14px;
+            }
+
+            .error-item {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .json-block {
+                padding: 10px;
+                font-size: 11px;
+            }
+
+            /* Gap cards - mobile */
+            .gap-header {
+                padding: 12px;
+            }
+
+            .gap-title {
+                font-size: 16px;
+            }
+
+            .gap-badges {
+                gap: 6px;
+            }
+
+            .badge {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+
+            .gap-details {
+                padding: 12px;
+            }
+
+            .detail-title {
+                font-size: 12px;
+            }
+
+            .detail-content {
+                font-size: 13px;
+            }
+
+            .context-box, .rationale-box, .evidence-box {
+                padding: 10px;
+                font-size: 13px;
+            }
+
+            .diagnostic-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .diagnostic-value {
+                font-size: 18px;
+            }
+
+            .diagnostic-label {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/demo/reports/{{ teacher_phone }}" class="back-button">← Back to Dashboard</a>
+
+        <div class="header">
+            <div class="separator">================================================================================</div>
+            <h1>GAPSENSE EXERCISE BOOK ANALYSIS REPORT</h1>
+            <div class="separator">================================================================================</div>
+        </div>
+
+        <div class="field">
+            <span class="field-label">Generated:</span>
+            <span class="field-value">{{ report.timestamp }}</span>
+        </div>
+        <div class="field">
+            <span class="field-label">Report ID:</span>
+            <span class="field-value">{{ report.report_id }}</span>
+        </div>
+
+        <!-- STUDENT INFORMATION -->
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">STUDENT INFORMATION (Database)</div>
+            <div class="field">
+                <span class="field-label">Student ID:</span>
+                <span class="field-value">{{ report.student.id }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Name:</span>
+                <span class="field-value">{{ report.student.name }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Age:</span>
+                <span class="field-value">{{ report.student.age or 'N/A' }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Gender:</span>
+                <span class="field-value">{{ report.student.gender or 'N/A' }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Current Grade:</span>
+                <span class="field-value">{{ report.student.grade }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">School:</span>
+                <span class="field-value">{{ report.student.school }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">School Type:</span>
+                <span class="field-value">{{ report.student.school_type }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Home Language:</span>
+                <span class="field-value">{{ report.student.home_language or 'N/A' }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">School Language:</span>
+                <span class="field-value">{{ report.student.school_language }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Previous Diagnoses:</span>
+                <span class="field-value">{{ report.student.diagnosis_count }}</span>
+            </div>
+        </div>
+
+        <!-- AI ANALYSIS METADATA -->
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">AI ANALYSIS METADATA (Database)</div>
+            <div class="field">
+                <span class="field-label">Analysis ID:</span>
+                <span class="field-value">{{ report.ai_metadata.analysis_id }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Timestamp:</span>
+                <span class="field-value">{{ report.ai_metadata.timestamp }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Provider:</span>
+                <span class="field-value">{{ report.ai_metadata.provider }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Model:</span>
+                <span class="field-value">{{ report.ai_metadata.model }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Prompt:</span>
+                <span class="field-value">{{ report.ai_metadata.prompt }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Input Tokens:</span>
+                <span class="field-value">{{ report.ai_metadata.input_tokens }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Output Tokens:</span>
+                <span class="field-value">{{ report.ai_metadata.output_tokens }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Total Tokens:</span>
+                <span class="field-value">{{ report.ai_metadata.total_tokens }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Latency:</span>
+                <span class="field-value">{{ report.ai_metadata.latency_ms }}ms ({{ report.ai_metadata.latency_seconds }}s)</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Input Cost:</span>
+                <span class="field-value">${{ report.ai_metadata.input_cost }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Output Cost:</span>
+                <span class="field-value">${{ report.ai_metadata.output_cost }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Total Cost:</span>
+                <span class="field-value">${{ report.ai_metadata.total_cost }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Success:</span>
+                <span class="field-value success">{{ report.ai_metadata.success }}</span>
+            </div>
+        </div>
+
+        <!-- ANALYSIS RESULTS -->
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">ANALYSIS RESULTS</div>
+
+            <div class="field">
+                <span class="field-label">Topic:</span>
+                <span class="field-value">{{ report.analysis.topic }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Readable:</span>
+                <span class="field-value success">{{ report.analysis.readable }}</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Confidence:</span>
+                <span class="field-value">{{ report.analysis.confidence }}%</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Student Approach:</span>
+                <span class="field-value">{{ report.analysis.student_approach }}</span>
+            </div>
+
+            {% if report.analysis.errors %}
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 13px;">ERRORS IDENTIFIED:</div>
+                {% for error in report.analysis.errors %}
+                <div class="error-item">
+                    <div class="error-number">{{ loop.index }}. {{ error.error_type }}</div>
+                    <div class="error-desc">Line {{ error.line_number }}</div>
+                    <div class="error-desc">{{ error.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if report.analysis.patterns %}
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 13px;">ERROR PATTERNS:</div>
+                <ul class="pattern-list">
+                    {% for pattern in report.analysis.patterns %}
+                    <li>{{ pattern }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if report.analysis.gap_nodes %}
+            <div style="margin-top: 20px;">
+                <div class="section-title">📚 Knowledge Gaps Identified ({{ report.analysis.gap_nodes|length }} gaps)</div>
+                <div class="gap-list" style="list-style: none; padding: 0;">
+                    {% for gap in report.analysis.gap_nodes %}
+                    <div class="gap-card severity-{{ gap.severity }}">
+                        <div class="gap-header">
+                            <div class="gap-title">{{ loop.index }}. {{ gap.title }}</div>
+                            <div class="gap-badges">
+                                <span class="badge badge-code">📋 {{ gap.code }}</span>
+                                <span class="badge badge-severity">⚠️ Severity {{ gap.severity_numeric }}/5</span>
+                                <span class="badge badge-grade">🎓 {{ gap.grade }}</span>
+                            </div>
+                        </div>
+
+                        <div class="gap-details">
+                            <div class="detail-block">
+                                <div class="detail-title">📖 WHAT THE STUDENT SHOULD MASTER:</div>
+                                <div class="detail-content">{{ gap.description }}</div>
+                            </div>
+
+                            <div class="context-box">
+                                <div class="detail-title">🗂️ CURRICULUM CONTEXT:</div>
+                                <div class="detail-content">
+                                    <div><strong>Strand:</strong> {{ gap.strand_name }}</div>
+                                    <div><strong>Sub-strand:</strong> {{ gap.substrand_name }}</div>
+                                    <div><strong>Subject:</strong> {{ gap.subject|title }} | <strong>Level:</strong> {{ gap.level|title }}</div>
+                                </div>
+                            </div>
+
+                            {% if gap.severity_rationale != "Not specified" %}
+                            <div class="rationale-box">
+                                <div class="detail-title">💡 WHY THIS MATTERS:</div>
+                                <div class="detail-content">{{ gap.severity_rationale }}</div>
+                            </div>
+                            {% endif %}
+
+                            {% if gap.ghana_evidence != "No specific evidence documented" %}
+                            <div class="evidence-box">
+                                <div class="detail-title">🇬🇭 GHANA-SPECIFIC EVIDENCE:</div>
+                                <div class="detail-content">{{ gap.ghana_evidence }}</div>
+                            </div>
+                            {% endif %}
+
+                            <div class="diagnostic-grid">
+                                <div class="diagnostic-item">
+                                    <div class="diagnostic-value">{{ gap.questions_required }}</div>
+                                    <div class="diagnostic-label">Questions to Confirm</div>
+                                </div>
+                                <div class="diagnostic-item">
+                                    <div class="diagnostic-value">{{ gap.confidence_threshold }}</div>
+                                    <div class="diagnostic-label">Mastery Threshold</div>
+                                </div>
+                                <div class="diagnostic-item">
+                                    <div class="diagnostic-value">{{ gap.population_status }}</div>
+                                    <div class="diagnostic-label">Data Status</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if report.analysis.focus_areas %}
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 13px;">REMEDIATION FOCUS AREAS:</div>
+                <ul class="pattern-list">
+                    {% for area in report.analysis.focus_areas %}
+                    <li>{{ area }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if report.remediation_exercises and report.remediation_exercises|length > 0 %}
+            <div style="margin-top: 20px;">
+                <div class="section-title">✏️ TEACHER REMEDIATION EXERCISES ({{ report.remediation_exercises|length }} questions)</div>
+                <div style="background: #FFF9E6; padding: 15px; border-radius: 8px; border-left: 4px solid #E8B923; margin-bottom: 15px;">
+                    <div style="color: #856404; font-size: 14px; line-height: 1.6;">
+                        <strong>For Teachers:</strong> These practice questions target the specific misconceptions identified in this student's work. Use them in class or for homework to reinforce understanding.
+                    </div>
+                </div>
+                {% for exercise in report.remediation_exercises %}
+                <div style="background: white; padding: 18px; margin: 12px 0; border-radius: 12px; border: 1px solid #dee2e6;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <span style="background: #25D366; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Question {{ loop.index }}</span>
+                        <span style="background: #F8F9FA; color: #666; padding: 4px 12px; border-radius: 12px; font-size: 11px;">{{ exercise.gap_node_code }}</span>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: 600; color: #25D366; font-size: 13px; margin-bottom: 6px;">📝 QUESTION:</div>
+                        <div style="color: #2C3E50; font-size: 15px; line-height: 1.6;">{{ exercise.question }}</div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: 600; color: #25D366; font-size: 13px; margin-bottom: 6px;">✅ EXPECTED ANSWER:</div>
+                        <div style="color: #555; font-size: 14px; line-height: 1.6; background: #F8F9FA; padding: 12px; border-radius: 8px;">{{ exercise.expected_answer }}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #E8B923; font-size: 13px; margin-bottom: 6px;">💡 TEACHER NOTE:</div>
+                        <div style="color: #555; font-size: 14px; line-height: 1.6; font-style: italic;">{{ exercise.teacher_note }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if report.analysis.reasoning %}
+            <div style="margin-top: 20px;">
+                <div class="section-title" style="font-size: 13px;">AI REASONING:</div>
+                <div class="reasoning-box">{{ report.analysis.reasoning }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- HISTORICAL AI USAGE -->
+        {% if report.historical_usage %}
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">HISTORICAL AI USAGE (Last 5 analyses for this student)</div>
+            {% for usage in report.historical_usage %}
+            <div class="field">
+                <span class="field-label">{{ loop.index }}. {{ usage.timestamp }}</span>
+                <span class="field-value">| {{ usage.model }} | {{ usage.prompt }} | ${{ usage.cost }} | {{ usage.latency_ms }}ms | {{ usage.status }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- RAW AI RESPONSE -->
+        <div class="separator">================================================================================</div>
+        <div class="section">
+            <div class="section-title">RAW AI RESPONSE (JSON)</div>
+            <div class="json-block">
+                <pre>{{ report.raw_response }}</pre>
+            </div>
+        </div>
+
+        <div class="separator">================================================================================</div>
+        <div style="text-align: center; margin: 20px 0; color: #4ec9b0; font-weight: bold;">
+            END OF REPORT
+        </div>
+        <div class="separator">================================================================================</div>
+    </div>
+</body>
+</html>
