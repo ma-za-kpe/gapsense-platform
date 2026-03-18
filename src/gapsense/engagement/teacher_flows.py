@@ -1542,6 +1542,15 @@ class TeacherFlowExecutor:
             prompt_service = PromptService(settings=settings)
             guard_service = GuardService(ai_client=ai_client, prompt_service=prompt_service)
 
+            # Initialize RemediationEngine
+            from gapsense.engagement.remediation_engine import RemediationEngine
+
+            remediation_engine = RemediationEngine(
+                ai_client=ai_client,
+                prompt_service=prompt_service,
+                guard_service=guard_service,
+            )
+
             # Initialize WorkerService with session_factory (same pattern as production worker)
             from gapsense.core.database import AsyncSessionLocal
 
@@ -1574,6 +1583,7 @@ class TeacherFlowExecutor:
                 ai_client=ai_client,
                 prompt_service=prompt_service,
                 notification_service=notification_service,
+                remediation_engine=remediation_engine,
             )
 
             # Trigger analysis

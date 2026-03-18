@@ -292,3 +292,4 @@ notes/
 # E2E Tests (local only)
 # ============================================================================
 tests/e2e/test_demo_flow_e2e.py
+.vercel

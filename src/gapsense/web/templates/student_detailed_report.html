@@ -654,6 +654,37 @@
             </div>
             {% endif %}
 
+            {% if report.remediation_exercises and report.remediation_exercises|length > 0 %}
+            <div style="margin-top: 20px;">
+                <div class="section-title">✏️ TEACHER REMEDIATION EXERCISES ({{ report.remediation_exercises|length }} questions)</div>
+                <div style="background: #FFF9E6; padding: 15px; border-radius: 8px; border-left: 4px solid #E8B923; margin-bottom: 15px;">
+                    <div style="color: #856404; font-size: 14px; line-height: 1.6;">
+                        <strong>For Teachers:</strong> These practice questions target the specific misconceptions identified in this student's work. Use them in class or for homework to reinforce understanding.
+                    </div>
+                </div>
+                {% for exercise in report.remediation_exercises %}
+                <div style="background: white; padding: 18px; margin: 12px 0; border-radius: 12px; border: 1px solid #dee2e6;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <span style="background: #25D366; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Question {{ loop.index }}</span>
+                        <span style="background: #F8F9FA; color: #666; padding: 4px 12px; border-radius: 12px; font-size: 11px;">{{ exercise.gap_node_code }}</span>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: 600; color: #25D366; font-size: 13px; margin-bottom: 6px;">📝 QUESTION:</div>
+                        <div style="color: #2C3E50; font-size: 15px; line-height: 1.6;">{{ exercise.question }}</div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: 600; color: #25D366; font-size: 13px; margin-bottom: 6px;">✅ EXPECTED ANSWER:</div>
+                        <div style="color: #555; font-size: 14px; line-height: 1.6; background: #F8F9FA; padding: 12px; border-radius: 8px;">{{ exercise.expected_answer }}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #E8B923; font-size: 13px; margin-bottom: 6px;">💡 TEACHER NOTE:</div>
+                        <div style="color: #555; font-size: 14px; line-height: 1.6; font-style: italic;">{{ exercise.teacher_note }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             {% if report.analysis.reasoning %}
             <div style="margin-top: 20px;">
                 <div class="section-title" style="font-size: 13px;">AI REASONING:</div>

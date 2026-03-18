@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from gapsense.ai.async_client import AsyncAIClient
     from gapsense.ai.prompt_service import PromptService
     from gapsense.core.models import Student, Teacher
+    from gapsense.engagement.remediation_engine import RemediationEngine
     from gapsense.services.guard_service import GuardService
     from gapsense.services.media_service import MediaService
     from gapsense.services.worker_service import WorkerService
@@ -49,6 +50,7 @@ class ExerciseBookScanner:
         ai_client: AsyncAIClient,
         prompt_service: PromptService,
         notification_service: Any,  # NotificationService interface
+        remediation_engine: RemediationEngine,
     ) -> None:
         self.db = db
         self._media_service = media_service
@@ -57,6 +59,7 @@ class ExerciseBookScanner:
         self._ai_client = ai_client
         self._prompt_service = prompt_service
         self._notification_service = notification_service
+        self._remediation_engine = remediation_engine
 
     async def handle_image_message(
         self,
@@ -123,8 +126,8 @@ class ExerciseBookScanner:
         student_id: str,
         teacher_phone: str,
         analysis: dict[str, Any],
-        country: str = "GH",  # noqa: ARG002 - Part of API contract
-        language: str = "en",  # noqa: ARG002 - Part of API contract
+        country: str = "GH",
+        language: str = "en",
     ) -> None:
         """Process completed image analysis and update GapProfile.
 
@@ -179,8 +182,6 @@ class ExerciseBookScanner:
             )
             gap_nodes = [row[0] for row in nodes_result.fetchall()]
 
-        focus_areas = analysis.get("focus_areas", [])
-
         # Store full AI analysis response for dashboard reporting
         metadata = dict(analysis)
 
@@ -216,6 +217,52 @@ class ExerciseBookScanner:
             student_name=student_name,
             gap_nodes_count=len(gap_nodes),
         )
+
+        # Generate remediation exercises if gap nodes were identified
+        if gap_codes:
+            # Extract gap node details from analysis for remediation engine
+            gap_node_details = []
+            for code in gap_codes:
+                gap_node_details.append(
+                    {
+                        "code": code,
+                        "title": analysis.get("suspected_gaps_titles", {}).get(
+                            code, "Unknown concept"
+                        ),
+                        "error_patterns": analysis.get("overall_pattern", "Not specified"),
+                        "misconception": analysis.get("misconception", "Not specified"),
+                    }
+                )
+
+            # Generate remediation exercises
+            remediation_exercises = await self._remediation_engine.generate_exercises(
+                gap_nodes=gap_node_details,
+                student_grade=student.current_grade if student else "Unknown",
+                country=country.lower(),
+                language=language,
+            )
+
+            # Update GapProfile with remediation exercises
+            profile_to_update = existing if existing else profile
+            current_metadata = profile_to_update.analysis_metadata or {}
+            current_metadata["remediation_exercises"] = remediation_exercises
+            profile_to_update.analysis_metadata = current_metadata
+
+            await self.db.commit()
+
+            logger.info(
+                "remediation_exercises_generated",
+                student_id=student_id,
+                exercise_count=len(remediation_exercises),
+                gap_node_count=len(gap_codes),
+            )
+        else:
+            # No gap nodes — set remediation_exercises to empty array
+            profile_to_update = existing if existing else profile
+            current_metadata = profile_to_update.analysis_metadata or {}
+            current_metadata["remediation_exercises"] = []
+            profile_to_update.analysis_metadata = current_metadata
+            await self.db.commit()
 
         # Build dashboard URL and notify teacher
         from gapsense.config import settings

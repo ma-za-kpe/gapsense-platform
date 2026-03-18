@@ -482,6 +482,16 @@
                 </div>
             </div>
             {% endif %}
+
+            {% if latest_analysis.remediation_exercise_count and latest_analysis.remediation_exercise_count > 0 %}
+            <div class="report-section">
+                <h3>✏️ Practice Exercises Generated</h3>
+                <p style="color: #555; line-height: 1.6;">
+                    <strong>{{ latest_analysis.remediation_exercise_count }} classroom-ready practice questions</strong> have been generated to target the identified misconceptions.
+                    <a href="/demo/reports/{{ teacher_phone }}/student/{{ latest_analysis.student_id }}" style="color: #25D366; text-decoration: underline;">View exercises in full report →</a>
+                </p>
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 
@@ -497,6 +507,9 @@
                         Grade: {{ student.grade }} |
                         Scanned: {{ student.scan_count }} times |
                         Last diagnosis: {{ student.last_diagnosed or "Never" }}
+                        {% if student.remediation_exercise_count and student.remediation_exercise_count > 0 %}
+                        | <span style="color: #25D366; font-weight: 600;">✏️ {{ student.remediation_exercise_count }} exercises</span>
+                        {% endif %}
                     </div>
                     {% if student.gaps %}
                     <div class="gaps-summary">
