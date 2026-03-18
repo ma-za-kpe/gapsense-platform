@@ -8,9 +8,9 @@ scheduled messages, and voice transcription tasks.
 import asyncio
 import contextlib
 import os
-from typing import Any
 import signal
 import sys
+from typing import Any
 
 import structlog
 

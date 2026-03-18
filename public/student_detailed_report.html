@@ -744,24 +744,22 @@
                     displayValue = JSON.stringify(value, null, 2);
                 }
 
-                return `
-                    <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 10px; border-left: 4px solid #25D366;">
-                        <div style="font-weight: 600; color: #25D366; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                return `<div style="background: white; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #25D366;">
+                        <div style="font-weight: 600; color: #25D366; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
                             <span>${icon}</span>
                             <span>${title}</span>
                         </div>
-                        <div style="color: #555; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">
+                        <div style="color: #555; font-size: 14px; line-height: 1.5; word-break: break-word;">
                             ${displayValue}
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }
 
             let html = '';
 
             // Main analysis fields
             if (rawJson.topic) html += createCard('Topic Analyzed', rawJson.topic, '📚');
-            if (rawJson.confidence !== undefined) html += createCard('AI Confidence Level', `${rawJson.confidence}%`, '🎯');
+            if (rawJson.confidence !== undefined) html += createCard('AI Confidence Level', `${(rawJson.confidence * 100).toFixed(0)}%`, '🎯');
             if (rawJson.readable !== undefined) html += createCard('Work Readability', rawJson.readable ? '✅ Readable' : '⚠️ Needs Improvement', '👁️');
             if (rawJson.student_approach) html += createCard('Student\'s Approach', rawJson.student_approach, '💡');
             if (rawJson.reasoning) html += createCard('AI Reasoning', rawJson.reasoning, '🧠');
@@ -792,6 +790,33 @@
                     rawJson.focus_areas.map(f => `<li style="margin: 5px 0; color: #555;">${f}</li>`).join('') +
                     '</ul>';
                 html += createCard('Remediation Focus Areas', focusHtml, '🎯');
+            }
+
+            // Gap Nodes (Knowledge Gaps Detected)
+            if (rawJson.gap_nodes && rawJson.gap_nodes.length > 0) {
+                let gapsHtml = rawJson.gap_nodes.map((gap, idx) => `
+                    <div style="background: #FFF3E0; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 3px solid #FF9800;">
+                        <div style="font-weight: 600; color: #E65100;">${idx + 1}. ${gap.title || gap.code}</div>
+                        <div style="color: #666; font-size: 13px; margin-top: 4px;">${gap.description || ''}</div>
+                        <div style="display: flex; gap: 10px; margin-top: 6px; font-size: 12px;">
+                            <span style="background: #FFE0B2; padding: 4px 8px; border-radius: 4px;">Grade: ${gap.grade || 'N/A'}</span>
+                            <span style="background: ${gap.severity === 'high' ? '#FFCDD2' : gap.severity === 'medium' ? '#FFE0B2' : '#C8E6C9'}; padding: 4px 8px; border-radius: 4px;">Severity: ${gap.severity || 'N/A'}</span>
+                        </div>
+                    </div>
+                `).join('');
+                html += createCard('Knowledge Gaps Detected', gapsHtml, '🎯');
+            }
+
+            // Remediation Exercises
+            if (rawJson.remediation_exercises && rawJson.remediation_exercises.length > 0) {
+                let exercisesHtml = rawJson.remediation_exercises.map((ex, idx) => `
+                    <div style="background: #E8F5E9; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 3px solid #4CAF50;">
+                        <div style="font-weight: 600; color: #2E7D32; margin-bottom: 6px;">Exercise ${idx + 1}</div>
+                        <div style="color: #555; font-size: 14px; margin-bottom: 8px; font-style: italic;">${ex.question || ''}</div>
+                        ${ex.teacher_note ? `<div style="background: white; padding: 8px; border-radius: 6px; font-size: 13px; color: #666; margin-top: 6px;"><strong>Teacher Note:</strong> ${ex.teacher_note}</div>` : ''}
+                    </div>
+                `).join('');
+                html += createCard('Personalized Remediation Exercises', exercisesHtml, '📝');
             }
 
             container.innerHTML = html || '<p style="color: #888;">No additional details available.</p>';

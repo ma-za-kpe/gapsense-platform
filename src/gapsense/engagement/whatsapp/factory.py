@@ -67,7 +67,7 @@ class WhatsAppProviderFactory:
 
         else:
             raise ValueError(
-                f"Unknown WhatsApp provider: '{provider_type}'. " "Supported: 'meta', 'twilio'"
+                f"Unknown WhatsApp provider: '{provider_type}'. Supported: 'meta', 'twilio'"
             )
 
 

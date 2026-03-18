@@ -73,9 +73,7 @@ def handle_command(
 def _handle_restart() -> CommandResult:
     """Handle RESTART command - clear state and start fresh."""
     message = (
-        "🔄 Restarting...\n\n"
-        "Your progress has been cleared.\n\n"
-        "Send START to begin onboarding."
+        "🔄 Restarting...\n\nYour progress has been cleared.\n\nSend START to begin onboarding."
     )
     return CommandResult(handled=True, message=message, clear_state=True)
 
@@ -83,7 +81,7 @@ def _handle_restart() -> CommandResult:
 def _handle_cancel(has_active_flow: bool) -> CommandResult:
     """Handle CANCEL command - cancel current operation."""
     if not has_active_flow:
-        message = "Nothing to cancel right now.\n\n" "Send START if you'd like to begin onboarding."
+        message = "Nothing to cancel right now.\n\nSend START if you'd like to begin onboarding."
         return CommandResult(handled=True, message=message, clear_state=False)
 
     message = (
