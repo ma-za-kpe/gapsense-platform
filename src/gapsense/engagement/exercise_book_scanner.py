@@ -243,10 +243,14 @@ class ExerciseBookScanner:
             )
 
             # Update GapProfile with remediation exercises
+            from sqlalchemy.orm import attributes
+
             profile_to_update = existing if existing else profile
             current_metadata = profile_to_update.analysis_metadata or {}
             current_metadata["remediation_exercises"] = remediation_exercises
             profile_to_update.analysis_metadata = current_metadata
+            # Mark JSONB field as modified for SQLAlchemy change tracking
+            attributes.flag_modified(profile_to_update, "analysis_metadata")
 
             await self.db.commit()
 
@@ -258,10 +262,14 @@ class ExerciseBookScanner:
             )
         else:
             # No gap nodes — set remediation_exercises to empty array
+            from sqlalchemy.orm import attributes
+
             profile_to_update = existing if existing else profile
             current_metadata = profile_to_update.analysis_metadata or {}
             current_metadata["remediation_exercises"] = []
             profile_to_update.analysis_metadata = current_metadata
+            # Mark JSONB field as modified for SQLAlchemy change tracking
+            attributes.flag_modified(profile_to_update, "analysis_metadata")
             await self.db.commit()
 
         # Build dashboard URL and notify teacher
