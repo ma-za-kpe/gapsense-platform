@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
 from sqlalchemy import (
     CheckConstraint,
+    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -54,7 +55,7 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
             "channel IN ('whatsapp', 'web', 'app', 'sms', 'paper')", name="check_channel"
         ),
         CheckConstraint(
-            "status IN ('in_progress', 'completed', 'abandoned', 'timed_out')",
+            "status IN ('pending', 'in_progress', 'completed', 'abandoned', 'timed_out')",
             name="check_session_status",
         ),
         Index("idx_sessions_student", "student_id"),
@@ -63,7 +64,9 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
     )
 
     student_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("students.id"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("students.id", name="fk_diagnostic_sessions_student"),
+        nullable=False,
     )
 
     # Session context
@@ -79,9 +82,14 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
         String(20), default="in_progress", comment="in_progress, completed, abandoned, timed_out"
     )
     started_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("NOW()"), comment="Session start time"
+        nullable=False,
+        server_default=text("NOW()"),
+        comment="Session start time",
+        type_=DateTime(timezone=True),
     )
-    completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(
+        nullable=True, type_=DateTime(timezone=True)
+    )
 
     # Entry point
     entry_grade: Mapped[str] = mapped_column(
@@ -122,7 +130,7 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
         PG_UUID(as_uuid=True), ForeignKey("prompt_versions.id"), nullable=True
     )
     model_used: Mapped[str | None] = mapped_column(
-        String(50), nullable=True, comment="e.g., 'claude-sonnet-4-5'"
+        String(50), nullable=True, comment="e.g., 'claude-sonnet-4-6'"
     )
     total_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     ai_reasoning_log: Mapped[dict[str, Any] | None] = mapped_column(
@@ -202,8 +210,12 @@ class DiagnosticQuestion(Base, UUIDPrimaryKeyMixin):
         JSONB, nullable=True, comment="Detailed AI reasoning about the response"
     )
 
-    asked_at: Mapped[datetime] = mapped_column(nullable=False, server_default=text("NOW()"))
-    answered_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    asked_at: Mapped[datetime] = mapped_column(
+        nullable=False, server_default=text("NOW()"), type_=DateTime(timezone=True)
+    )
+    answered_at: Mapped[datetime | None] = mapped_column(
+        nullable=True, type_=DateTime(timezone=True)
+    )
 
     # Relationships
     session: Mapped[DiagnosticSession] = relationship(back_populates="questions")
@@ -222,13 +234,28 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
     __table_args__ = (
         Index("idx_gap_profiles_student", "student_id"),
         Index("idx_gap_profiles_current", "student_id", postgresql_where="is_current = TRUE"),
+        CheckConstraint(
+            "session_id IS NOT NULL OR (source != '' AND source != 'diagnostic')",
+            name="ck_gap_profiles_source_when_no_session",
+        ),
     )
 
     student_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("students.id"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("students.id", name="fk_gap_profiles_student"),
+        nullable=False,
     )
-    session_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("diagnostic_sessions.id"), nullable=False
+    session_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("diagnostic_sessions.id", name="fk_gap_profiles_session"),
+        nullable=True,
+    )
+
+    source: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="diagnostic",
+        comment="Origin: diagnostic, exercise_book, teacher_report, voice_coaching",
     )
 
     # Gap summary
@@ -278,6 +305,13 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
         nullable=True, comment="How confident we are in this profile (0.0-1.0)"
     )
 
+    # Exercise book analysis metadata (for dashboard display)
+    analysis_metadata: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        comment="Analysis metadata: errors, patterns, focus_areas, reasoning, etc.",
+    )
+
     is_current: Mapped[bool] = mapped_column(
         default=True, comment="Only one current profile per student"
     )
@@ -287,7 +321,7 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
     student: Mapped[Student] = relationship(
         foreign_keys=[student_id], back_populates="gap_profiles"
     )
-    session: Mapped[DiagnosticSession] = relationship(back_populates="gap_profile")
+    session: Mapped[DiagnosticSession | None] = relationship(back_populates="gap_profile")
     primary_gap: Mapped[CurriculumNode] = relationship(foreign_keys=[primary_gap_node])
     recommended_focus: Mapped[CurriculumNode] = relationship(foreign_keys=[recommended_focus_node])
     parent_activities: Mapped[list[ParentActivity]] = relationship(

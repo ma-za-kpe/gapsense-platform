@@ -17,10 +17,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
 
     # ========================================================================
@@ -31,44 +28,78 @@ class Settings(BaseSettings):
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     DEBUG: bool = False
 
+    APP_URL: str = Field(
+        default="http://localhost:8000",
+        description="Base URL for the application (used in WhatsApp links)",
+    )
+
     # ========================================================================
     # DATABASE
     # ========================================================================
 
     DATABASE_URL: str = Field(
         default="postgresql+asyncpg://gapsense:localdev@localhost:5432/gapsense",
-        description="PostgreSQL connection string (async)"
+        description="PostgreSQL connection string (async)",
     )
 
     # ========================================================================
-    # ANTHROPIC AI
+    # AI PROVIDERS
     # ========================================================================
 
-    ANTHROPIC_API_KEY: str = Field(
-        default="",
-        description="Anthropic API key for Claude"
-    )
+    ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
 
     ANTHROPIC_MAX_REQUESTS_PER_MINUTE: int = 50
     ANTHROPIC_MAX_CONCURRENT_REQUESTS: int = 10
 
+    GROK_API_KEY: str = Field(default="", description="xAI Grok API key (fallback provider)")
+
     # ========================================================================
-    # WHATSAPP CLOUD API
+    # EMBEDDING CONFIGURATION (Phase 2: Hybrid RAG Retrieval)
     # ========================================================================
 
-    WHATSAPP_API_TOKEN: str = Field(
-        default="",
-        description="WhatsApp Cloud API token"
+    EMBEDDING_MODEL: Literal["openai", "minilm"] = "openai"
+    OPENAI_API_KEY: str = Field(default="", description="OpenAI API key for embeddings")
+
+    # ========================================================================
+    # WHATSAPP PROVIDER
+    # ========================================================================
+
+    WHATSAPP_PROVIDER: str = Field(
+        default="meta",
+        description="WhatsApp provider: 'meta' (Cloud API) or 'twilio'",
     )
 
-    WHATSAPP_PHONE_NUMBER_ID: str = Field(
-        default="",
-        description="WhatsApp phone number ID"
-    )
+    @field_validator("WHATSAPP_PROVIDER")
+    @classmethod
+    def validate_whatsapp_provider(cls, v: str) -> str:
+        """Validate WhatsApp provider is either 'meta' or 'twilio'."""
+        if v not in ("meta", "twilio"):
+            raise ValueError(
+                f"WHATSAPP_PROVIDER must be 'meta' or 'twilio', got '{v}'. "
+                "Check your .env file or environment variables."
+            )
+        return v
+
+    # Meta WhatsApp Cloud API
+    WHATSAPP_API_TOKEN: str = Field(default="", description="WhatsApp Cloud API token")
+
+    WHATSAPP_PHONE_NUMBER_ID: str = Field(default="", description="WhatsApp phone number ID")
 
     WHATSAPP_VERIFY_TOKEN: str = Field(
-        default="local_verify_token",
-        description="WhatsApp webhook verification token"
+        default="local_verify_token", description="WhatsApp webhook verification token"
+    )
+
+    # Twilio WhatsApp API
+    TWILIO_ACCOUNT_SID: str = Field(default="", description="Twilio Account SID")
+    TWILIO_AUTH_TOKEN: str = Field(
+        default="", description="Twilio Auth Token (or leave empty if using API Key)"
+    )
+    TWILIO_API_KEY_SID: str = Field(
+        default="", description="Twilio API Key SID (optional, more secure than Auth Token)"
+    )
+    TWILIO_API_KEY_SECRET: str = Field(default="", description="Twilio API Key Secret")
+    TWILIO_WHATSAPP_NUMBER: str = Field(
+        default="", description="Twilio WhatsApp sender (e.g., whatsapp:+14155238886)"
     )
 
     # ========================================================================
@@ -81,7 +112,7 @@ class Settings(BaseSettings):
 
     SQS_QUEUE_URL: str = Field(
         default="http://localstack:4566/000000000000/gapsense-messages",
-        description="SQS FIFO queue URL"
+        description="SQS FIFO queue URL",
     )
 
     S3_MEDIA_BUCKET: str = "gapsense-media-local"
@@ -99,14 +130,20 @@ class Settings(BaseSettings):
 
     GAPSENSE_DATA_PATH: Path = Field(
         default=Path("../gapsense-data"),
-        description="Path to gapsense-data repo with proprietary IP"
+        description="Path to gapsense-data repo with proprietary IP",
     )
 
     @field_validator("GAPSENSE_DATA_PATH", mode="before")
     @classmethod
-    def validate_data_path(cls, v: str | Path) -> Path:
+    def validate_data_path(cls: type[Settings], v: str | Path) -> Path:
         """Convert string to Path and validate existence."""
+        import os
+
         path = Path(v) if isinstance(v, str) else v
+
+        # Skip validation in CI environment (gapsense-data repo not available)
+        if os.getenv("CI") == "true":
+            return path
 
         if not path.exists():
             raise ValueError(
@@ -114,10 +151,10 @@ class Settings(BaseSettings):
                 "Please set GAPSENSE_DATA_PATH to point to gapsense-data repo."
             )
 
-        if not (path / "curriculum").exists():
+        if not (path / "curricula").exists():
             raise ValueError(
-                f"GAPSENSE_DATA_PATH missing curriculum/ directory: {path.absolute()}\n"
-                "Expected structure: curriculum/, prompts/, business/"
+                f"GAPSENSE_DATA_PATH missing curricula/ directory: {path.absolute()}\n"
+                "Expected structure: curricula/, prompts/, cultural_context/, languages/"
             )
 
         return path
@@ -133,8 +170,25 @@ class Settings(BaseSettings):
 
     @property
     def prompt_library_path(self) -> Path:
-        """Path to latest prompt library JSON."""
-        return self.GAPSENSE_DATA_PATH / "prompts" / "gapsense_prompt_library_v1.1.json"
+        """Path to v2.0 multi-country prompt library JSON."""
+        return (
+            self.GAPSENSE_DATA_PATH / "prompts" / "gapsense_prompt_library_v2.0_multicountry.json"
+        )
+
+    @property
+    def curricula_base_path(self) -> Path:
+        """Multi-country curricula directory."""
+        return self.GAPSENSE_DATA_PATH / "curricula"
+
+    @property
+    def cultural_context_path(self) -> Path:
+        """Cultural context files directory."""
+        return self.GAPSENSE_DATA_PATH / "cultural_context"
+
+    @property
+    def languages_base_path(self) -> Path:
+        """L1 language files directory."""
+        return self.GAPSENSE_DATA_PATH / "languages"
 
     @property
     def is_production(self) -> bool:

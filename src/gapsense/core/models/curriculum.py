@@ -8,8 +8,10 @@ Based on docs/specs/gapsense_data_model.sql
 
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
+from pgvector.sqlalchemy import Vector  # type: ignore[import-not-found]
 from sqlalchemy import (
     ARRAY,
     CheckConstraint,
@@ -43,8 +45,8 @@ class CurriculumStrand(Base):
         String(7), nullable=True, comment="UI color code (#RRGGBB)"
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=text("NOW()"), comment="Creation timestamp"
+    created_at: Mapped[datetime] = mapped_column(
+        nullable=False, server_default=text("NOW()"), comment="Creation timestamp"
     )
 
     # Relationships
@@ -99,6 +101,13 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Index("idx_curriculum_nodes_grade", "grade"),
         Index("idx_curriculum_nodes_severity", "severity", postgresql_ops={"severity": "DESC"}),
         Index("idx_curriculum_nodes_code", "code"),
+        Index(
+            "idx_curriculum_nodes_country_subject_level_grade",
+            "country",
+            "subject",
+            "level",
+            "grade",
+        ),
     )
 
     code: Mapped[str] = mapped_column(
@@ -108,9 +117,21 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         String(5), nullable=False, comment="Grade level ('B1' through 'B9')"
     )
 
-    strand_id: Mapped[int] = mapped_column(ForeignKey("curriculum_strands.id"), nullable=False)
-    sub_strand_id: Mapped[int] = mapped_column(
-        ForeignKey("curriculum_sub_strands.id"), nullable=False
+    country: Mapped[str] = mapped_column(
+        String(5), nullable=False, default="GH", comment="ISO country code (GH, UG, KE, NG)"
+    )
+    subject: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="mathematics", comment="Subject name"
+    )
+    level: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="primary", comment="Education level"
+    )
+
+    strand_id: Mapped[int | None] = mapped_column(
+        ForeignKey("curriculum_strands.id"), nullable=True
+    )
+    sub_strand_id: Mapped[int | None] = mapped_column(
+        ForeignKey("curriculum_sub_strands.id"), nullable=True
     )
     content_standard_number: Mapped[int] = mapped_column(SmallInteger, nullable=False)
 
@@ -241,6 +262,10 @@ class CurriculumIndicator(Base, UUIDPrimaryKeyMixin):
     )
 
     created_at: Mapped[str] = mapped_column(String, nullable=False, server_default=text("NOW()"))
+
+    # Embedding columns (Phase 2: Hybrid RAG Retrieval)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)
+    embedding_model: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Relationships
     node: Mapped[CurriculumNode] = relationship(back_populates="indicators")

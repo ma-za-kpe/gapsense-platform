@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Grid System - Examples</title>
+    <link rel="stylesheet" href="../css/base/_variables.css">
+    <link rel="stylesheet" href="../css/base/_reset.css">
+    <link rel="stylesheet" href="../css/layouts/grid.css">
+    <style>
+        body {
+            padding: 40px 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #25D366;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #128C7E;
+            margin: 40px 0 20px 0;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+        h2:first-of-type {
+            border-top: none;
+            padding-top: 0;
+        }
+        .example-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            color: #333;
+            font-weight: 500;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .example-box--primary {
+            background: #25D366;
+            color: white;
+        }
+        .example-box--secondary {
+            background: #128C7E;
+            color: white;
+        }
+        .example-box--tertiary {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        pre {
+            background: #1a1a1a;
+            color: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 16px 0;
+        }
+        code {
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+        .description {
+            margin-bottom: 16px;
+            color: #666;
+        }
+        .feature-list {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+        .feature-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .feature-list li {
+            padding: 10px 0 10px 28px;
+            position: relative;
+        }
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10B981;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .breakpoint-indicator {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: #25D366;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-container">
+        <h1>📐 Responsive Grid System</h1>
+        <p class="description">Mobile-first, flexible grid layout system for GapSense platform</p>
+
+        <!-- Breakpoint Indicator -->
+        <div class="breakpoint-indicator">
+            <span class="hide-mobile hide-tablet hide-desktop">XS (<640px)</span>
+            <span class="show-mobile hide-tablet hide-desktop">Mobile (640px+)</span>
+            <span class="hide-mobile show-tablet hide-desktop">Tablet (768px+)</span>
+            <span class="hide-mobile hide-tablet show-desktop">Desktop (1024px+)</span>
+        </div>
+
+        <!-- Features -->
+        <div class="feature-list">
+            <h3 style="margin-top: 0; color: #25D366;">✨ Key Features</h3>
+            <ul>
+                <li><strong>Mobile-First</strong> - Base styles for mobile, progressively enhanced for larger screens</li>
+                <li><strong>Auto-Fit Grids</strong> - Automatically adjust columns based on available space</li>
+                <li><strong>Responsive Breakpoints</strong> - sm (640px), md (768px), lg (1024px), xl (1200px)</li>
+                <li><strong>Flexible Gaps</strong> - sm (8px), md (16px), lg (24px), xl (32px)</li>
+                <li><strong>Spanning Utilities</strong> - Span multiple columns at any breakpoint</li>
+                <li><strong>Alignment Control</strong> - Align and justify grid items</li>
+                <li><strong>Stack Layout</strong> - Vertical stacking with configurable gaps</li>
+                <li><strong>Accessibility</strong> - Focus states, reduced motion support</li>
+                <li><strong>Performance</strong> - Layout containment, hardware acceleration</li>
+                <li><strong>Print Optimized</strong> - Responsive layout for printing</li>
+            </ul>
+        </div>
+
+        <!-- Example 1: Auto-Fit Grid (Stats Cards) -->
+        <h2>1. Auto-Fit Grid (Stats Cards Pattern)</h2>
+        <p class="description">Most common for dashboard stats - columns automatically adjust based on available space. Minimum 250px per column.</p>
+        <pre><code>&lt;div class="grid grid--auto-fit grid--gap-lg"&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        <div class="grid grid--auto-fit grid--gap-lg">
+            <div class="example-box example-box--primary">👥 Total Students</div>
+            <div class="example-box example-box--primary">📸 Scanned Today</div>
+            <div class="example-box example-box--primary">🎯 Gaps Identified</div>
+            <div class="example-box example-box--primary">⚠️ High Priority</div>
+        </div>
+
+        <!-- Example 2: Responsive Grid (Manual Breakpoints) -->
+        <h2>2. Responsive Grid (Manual Breakpoints)</h2>
+        <p class="description">1 column on mobile, 2 on tablet, 3 on desktop, 4 on large desktop</p>
+        <pre><code>&lt;div class="grid grid--md-2 grid--lg-3 grid--xl-4"&gt;
+  &lt;div&gt;Item 1&lt;/div&gt;
+  &lt;div&gt;Item 2&lt;/div&gt;
+  &lt;div&gt;Item 3&lt;/div&gt;
+  &lt;div&gt;Item 4&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        <div class="grid grid--md-2 grid--lg-3 grid--xl-4 grid--gap-md">
+            <div class="example-box">Item 1</div>
+            <div class="example-box">Item 2</div>
+            <div class="example-box">Item 3</div>
+            <div class="example-box">Item 4</div>
+            <div class="example-box">Item 5</div>
+            <div class="example-box">Item 6</div>
+        </div>
+
+        <!-- Example 3: Stats Grid (Pre-configured) -->
+        <h2>3. Stats Grid (Pre-configured for Dashboard)</h2>
+        <p class="description">Purpose-built for teacher dashboard stats - optimized breakpoints and gaps</p>
+        <pre><code>&lt;div class="stats-grid"&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        <div class="stats-grid">
+            <div class="example-box example-box--secondary">Stat 1</div>
+            <div class="example-box example-box--secondary">Stat 2</div>
+            <div class="example-box example-box--secondary">Stat 3</div>
+            <div class="example-box example-box--secondary">Stat 4</div>
+        </div>
+
+        <!-- Example 4: Card Grid (Student List) -->
+        <h2>4. Card Grid (Student/Report Cards)</h2>
+        <p class="description">Single column on mobile/tablet, 2 columns on desktop</p>
+        <pre><code>&lt;div class="card-grid"&gt;
+  &lt;div class="student-card"&gt;...&lt;/div&gt;
+  &lt;div class="student-card"&gt;...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        <div class="card-grid">
+            <div class="example-box">Student Card 1</div>
+            <div class="example-box">Student Card 2</div>
+            <div class="example-box">Student Card 3</div>
+            <div class="example-box">Student Card 4</div>
+        </div>
+
+        <!-- Example 5: Spanning Items -->
+        <h2>5. Spanning Items (Full Width)</h2>
+        <p class="description">Make specific items span multiple columns or full width</p>
+        <pre><code>&lt;div class="grid grid--md-3 grid--gap-md"&gt;
+  &lt;div&gt;Item 1&lt;/div&gt;
+  &lt;div&gt;Item 2&lt;/div&gt;
+  &lt;div&gt;Item 3&lt;/div&gt;
+  &lt;div class="grid-item--span-full"&gt;Full Width Item&lt;/div&gt;
+  &lt;div class="grid-item--md-span-2"&gt;Spans 2 columns&lt;/div&gt;
+  &lt;div&gt;Item 6&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        <div class="grid grid--md-3 grid--gap-md">
+            <div class="example-box">Item 1</div>
+            <div class="example-box">Item 2</div>
+            <div class="example-box">Item 3</div>
+            <div class="example-box example-box--primary grid-item--span-full">Full Width Item</div>
+            <div class="example-box example-box--tertiary grid-item--md-span-2">Spans 2 columns (on tablet+)</div>
+            <div class="example-box">Item 6</div>
+        </div>
+
+        <!-- Example 6: Stack Layout (Vertical) -->
+        <h2>6. Stack Layout (Vertical Spacing)</h2>
+        <p class="description">Vertical layout with consistent spacing - perfect for sections</p>
+        <pre><code>&lt;div class="stack stack--lg"&gt;
+  &lt;div class="header"&gt;...&lt;/div&gt;
+  &lt;div class="stats-grid"&gt;...&lt;/div&gt;
+  &lt;div class="students-section"&gt;...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        <div class="stack stack--lg">
+            <div class="example-box">Header Section</div>
+            <div class="example-box">Stats Section</div>
+            <div class="example-box">Students Section</div>
+            <div class="example-box">Footer Section</div>
+        </div>
+
+        <!-- Example 7: Flex Layout (Horizontal) -->
+        <h2>7. Flex Layout (Horizontal with Wrapping)</h2>
+        <p class="description">Horizontal layout with wrapping - perfect for buttons, tags</p>
+        <pre><code>&lt;div class="flex flex--wrap flex--gap-md"&gt;
+  &lt;button&gt;Button 1&lt;/button&gt;
+  &lt;button&gt;Button 2&lt;/button&gt;
+  &lt;button&gt;Button 3&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+        <div class="flex flex--wrap flex--gap-md">
+            <div class="example-box" style="min-width: 120px;">Button 1</div>
+            <div class="example-box" style="min-width: 120px;">Button 2</div>
+            <div class="example-box" style="min-width: 120px;">Button 3</div>
+            <div class="example-box" style="min-width: 120px;">Button 4</div>
+            <div class="example-box" style="min-width: 120px;">Button 5</div>
+        </div>
+
+        <!-- Example 8: Gap Utilities -->
+        <h2>8. Gap Utilities (Spacing Control)</h2>
+        <p class="description">Control spacing between grid items with gap utilities</p>
+        <div style="display: grid; gap: 20px;">
+            <div>
+                <p><strong>Small Gap (8px)</strong></p>
+                <div class="grid grid--md-4 grid--gap-sm">
+                    <div class="example-box">1</div>
+                    <div class="example-box">2</div>
+                    <div class="example-box">3</div>
+                    <div class="example-box">4</div>
+                </div>
+            </div>
+            <div>
+                <p><strong>Medium Gap (16px) - Default</strong></p>
+                <div class="grid grid--md-4 grid--gap-md">
+                    <div class="example-box">1</div>
+                    <div class="example-box">2</div>
+                    <div class="example-box">3</div>
+                    <div class="example-box">4</div>
+                </div>
+            </div>
+            <div>
+                <p><strong>Large Gap (24px)</strong></p>
+                <div class="grid grid--md-4 grid--gap-lg">
+                    <div class="example-box">1</div>
+                    <div class="example-box">2</div>
+                    <div class="example-box">3</div>
+                    <div class="example-box">4</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example 9: Responsive Visibility -->
+        <h2>9. Responsive Visibility (Show/Hide at Breakpoints)</h2>
+        <p class="description">Show or hide elements at specific breakpoints</p>
+        <pre><code>&lt;div class="show-mobile"&gt;Only on mobile&lt;/div&gt;
+&lt;div class="show-tablet"&gt;Only on tablet&lt;/div&gt;
+&lt;div class="show-desktop"&gt;Only on desktop&lt;/div&gt;
+&lt;div class="hide-mobile"&gt;Hide on mobile&lt;/div&gt;</code></pre>
+        <div class="stack stack--md">
+            <div class="example-box example-box--primary show-mobile">📱 Visible on mobile only</div>
+            <div class="example-box example-box--secondary show-tablet">📱 Visible on tablet only</div>
+            <div class="example-box example-box--tertiary show-desktop">💻 Visible on desktop only</div>
+            <div class="example-box hide-mobile">Hidden on mobile</div>
+        </div>
+
+        <!-- Example 10: Real-World Dashboard Example -->
+        <h2>10. Real-World Dashboard Layout</h2>
+        <p class="description">Complete teacher dashboard layout using grid system</p>
+        <div class="stack stack--lg">
+            <div class="example-box example-box--primary">📊 Dashboard Header</div>
+            <div class="stats-grid">
+                <div class="example-box">👥 Total Students: 45</div>
+                <div class="example-box">📸 Scanned Today: 12</div>
+                <div class="example-box">🎯 Gaps: 23</div>
+                <div class="example-box">⚠️ High Priority: 7</div>
+            </div>
+            <div class="example-box example-box--secondary">📝 Latest Analysis Report</div>
+            <div class="card-grid">
+                <div class="example-box">Student Card 1</div>
+                <div class="example-box">Student Card 2</div>
+                <div class="example-box">Student Card 3</div>
+                <div class="example-box">Student Card 4</div>
+            </div>
+        </div>
+
+        <!-- Usage Guide -->
+        <h2>📖 Usage Guide</h2>
+        <div class="feature-list">
+            <h3 style="margin-top: 0; color: #25D366;">Common Patterns</h3>
+
+            <h4>Dashboard Stats (4 cards)</h4>
+            <pre><code>&lt;div class="stats-grid"&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+  &lt;div class="stat-card"&gt;...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+            <h4>Student List (single column with cards)</h4>
+            <pre><code>&lt;div class="card-grid card-grid--single"&gt;
+  &lt;div class="student-card"&gt;...&lt;/div&gt;
+  &lt;div class="student-card"&gt;...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+            <h4>Page Sections (vertical stack)</h4>
+            <pre><code>&lt;div class="stack stack--lg"&gt;
+  &lt;header class="reports-header"&gt;...&lt;/header&gt;
+  &lt;section class="stats-grid"&gt;...&lt;/section&gt;
+  &lt;section class="students-section"&gt;...&lt;/section&gt;
+&lt;/div&gt;</code></pre>
+
+            <h4>Gap Tags (wrapping flex)</h4>
+            <pre><code>&lt;div class="flex flex--wrap flex--gap-sm"&gt;
+  &lt;span class="gap-tag"&gt;ALG1.1&lt;/span&gt;
+  &lt;span class="gap-tag"&gt;ALG1.2&lt;/span&gt;
+  &lt;span class="gap-tag"&gt;ALG2.1&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+
+        <!-- Breakpoints -->
+        <h2>📐 Breakpoints Reference</h2>
+        <div class="feature-list">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e0e0e0;">
+                        <th style="text-align: left; padding: 12px 8px;">Breakpoint</th>
+                        <th style="text-align: left; padding: 12px 8px;">Min Width</th>
+                        <th style="text-align: left; padding: 12px 8px;">Device</th>
+                        <th style="text-align: left; padding: 12px 8px;">Prefix</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #f0f0f0;">
+                        <td style="padding: 10px 8px;"><strong>Base</strong></td>
+                        <td style="padding: 10px 8px;">320px</td>
+                        <td style="padding: 10px 8px;">Mobile (default)</td>
+                        <td style="padding: 10px 8px;">-</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f0f0f0;">
+                        <td style="padding: 10px 8px;"><strong>Small</strong></td>
+                        <td style="padding: 10px 8px;">640px</td>
+                        <td style="padding: 10px 8px;">Small tablets</td>
+                        <td style="padding: 10px 8px;">sm</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f0f0f0;">
+                        <td style="padding: 10px 8px;"><strong>Medium</strong></td>
+                        <td style="padding: 10px 8px;">768px</td>
+                        <td style="padding: 10px 8px;">Tablets</td>
+                        <td style="padding: 10px 8px;">md</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f0f0f0;">
+                        <td style="padding: 10px 8px;"><strong>Large</strong></td>
+                        <td style="padding: 10px 8px;">1024px</td>
+                        <td style="padding: 10px 8px;">Desktop</td>
+                        <td style="padding: 10px 8px;">lg</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 8px;"><strong>Extra Large</strong></td>
+                        <td style="padding: 10px 8px;">1200px</td>
+                        <td style="padding: 10px 8px;">Large desktop</td>
+                        <td style="padding: 10px 8px;">xl</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

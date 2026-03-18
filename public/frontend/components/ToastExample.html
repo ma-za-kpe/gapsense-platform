@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toast Component - Examples</title>
+    <link rel="stylesheet" href="../css/base/_variables.css">
+    <link rel="stylesheet" href="../css/base/_reset.css">
+    <link rel="stylesheet" href="../css/components/toast.css">
+    <style>
+        body {
+            padding: 40px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+        }
+        .example-section {
+            margin-bottom: 60px;
+            padding: 24px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .example-section h2 {
+            margin-top: 0;
+            color: #25D366;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .demo-button {
+            padding: 12px 24px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .demo-button:active {
+            transform: scale(0.95);
+        }
+        .demo-button.success {
+            background: #10B981;
+        }
+        .demo-button.error {
+            background: #EF4444;
+        }
+        .demo-button.warning {
+            background: #F59E0B;
+        }
+        .demo-button.info {
+            background: #3B82F6;
+        }
+        .demo-button.secondary {
+            background: #666;
+        }
+        .demo-container {
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+        pre {
+            background: #1a1a1a;
+            color: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        code {
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            padding-left: 28px;
+            position: relative;
+        }
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10B981;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Toast Notification Component - Mobile-Optimized</h1>
+    <p>Lightweight notification system for mobile devices with swipe-to-dismiss</p>
+
+    <!-- Example 1: Basic Toast Types -->
+    <div class="example-section">
+        <h2>1. Basic Toast Types</h2>
+        <p>Four variants: success, error, warning, and info</p>
+        <div class="button-group">
+            <button class="demo-button success" onclick="showSuccessToast()">Success Toast</button>
+            <button class="demo-button error" onclick="showErrorToast()">Error Toast</button>
+            <button class="demo-button warning" onclick="showWarningToast()">Warning Toast</button>
+            <button class="demo-button info" onclick="showInfoToast()">Info Toast</button>
+        </div>
+    </div>
+
+    <!-- Example 2: Toast Positions -->
+    <div class="example-section">
+        <h2>2. Toast Positions</h2>
+        <p>Top or bottom positioning (optimized for mobile safe areas)</p>
+        <div class="button-group">
+            <button class="demo-button" onclick="showTopToast()">Top Position</button>
+            <button class="demo-button" onclick="showBottomToast()">Bottom Position</button>
+        </div>
+    </div>
+
+    <!-- Example 3: Auto-Dismiss Duration -->
+    <div class="example-section">
+        <h2>3. Auto-Dismiss Duration</h2>
+        <p>Customize how long toasts stay visible (or make them persistent)</p>
+        <div class="button-group">
+            <button class="demo-button" onclick="showQuickToast()">Quick (2s)</button>
+            <button class="demo-button" onclick="showNormalToast()">Normal (4s)</button>
+            <button class="demo-button" onclick="showLongToast()">Long (8s)</button>
+            <button class="demo-button" onclick="showPersistentToast()">Persistent (manual dismiss)</button>
+        </div>
+    </div>
+
+    <!-- Example 4: Multiple Toasts -->
+    <div class="example-section">
+        <h2>4. Multiple Toasts (Stacking)</h2>
+        <p>Show multiple toasts at once - automatically manages max 3 toasts</p>
+        <div class="button-group">
+            <button class="demo-button" onclick="showMultipleToasts()">Show 5 Toasts</button>
+            <button class="demo-button secondary" onclick="clearToasts()">Clear All</button>
+        </div>
+    </div>
+
+    <!-- Example 5: Swipe to Dismiss -->
+    <div class="example-section">
+        <h2>5. Touch Gestures (Mobile)</h2>
+        <p><strong>Try on mobile:</strong> Swipe left/right to dismiss, or tap the × button</p>
+        <div class="button-group">
+            <button class="demo-button" onclick="showSwipeableToast()">Show Swipeable Toast</button>
+        </div>
+        <div class="demo-container">
+            <ul class="feature-list">
+                <li>Swipe left or right > 100px to dismiss</li>
+                <li>Tap × button to dismiss</li>
+                <li>Auto-dismiss after duration</li>
+                <li>Opacity fades during swipe</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Example 6: Programmatic Usage -->
+    <div class="example-section">
+        <h2>6. Programmatic Usage (JavaScript)</h2>
+        <pre><code>// Import the Toast module
+import { successToast, errorToast, warningToast, infoToast, showToast } from './components/Toast.js';
+
+// Show basic toasts
+successToast('Exercise book uploaded successfully!');
+errorToast('Failed to analyze image. Please try again.');
+warningToast('Network connection is unstable...');
+infoToast('Processing your image...');
+
+// Custom options
+showToast('Custom toast message', {
+  type: 'success',       // 'success', 'error', 'warning', 'info'
+  position: 'top',       // 'top' or 'bottom'
+  duration: 5000,        // milliseconds (0 = no auto-dismiss)
+  dismissible: true,     // show × button
+  icon: '🎉'             // custom icon
+});
+
+// Advanced: Get toast instance for control
+const toast = successToast('Uploading...', { duration: 0 });
+// Later: toast.hide();
+
+// Clear all toasts
+import { clearAllToasts } from './components/Toast.js';
+clearAllToasts();</code></pre>
+    </div>
+
+    <!-- Example 7: Real-World Use Cases -->
+    <div class="example-section">
+        <h2>7. Real-World GapSense Use Cases</h2>
+        <p>How toasts integrate with the GapSense platform</p>
+        <div class="button-group">
+            <button class="demo-button success" onclick="showUploadSuccess()">Image Upload Success</button>
+            <button class="demo-button error" onclick="showUploadError()">Image Upload Error</button>
+            <button class="demo-button warning" onclick="showNetworkWarning()">Network Warning</button>
+            <button class="demo-button info" onclick="showProcessingInfo()">Processing Status</button>
+        </div>
+    </div>
+
+    <!-- Example 8: Features -->
+    <div class="example-section">
+        <h2>8. Mobile Optimization Features</h2>
+        <ul class="feature-list">
+            <li><strong>Hardware-accelerated</strong> - Smooth 60fps animations</li>
+            <li><strong>Touch-friendly</strong> - 44px minimum touch targets</li>
+            <li><strong>Safe area support</strong> - Respects iPhone X+ notch/home indicator</li>
+            <li><strong>Swipe gestures</strong> - Natural mobile dismiss interaction</li>
+            <li><strong>Auto-stacking</strong> - Max 3 toasts, removes oldest automatically</li>
+            <li><strong>Reduced motion</strong> - Respects prefers-reduced-motion</li>
+            <li><strong>Dark mode</strong> - Automatic theme switching</li>
+            <li><strong>High contrast</strong> - Accessible for all users</li>
+            <li><strong>ARIA labels</strong> - Screen reader support</li>
+            <li><strong>Lightweight</strong> - ~3KB minified + gzipped</li>
+        </ul>
+    </div>
+
+    <script type="module">
+        import {
+            successToast,
+            errorToast,
+            warningToast,
+            infoToast,
+            showToast,
+            clearAllToasts
+        } from '../js/components/Toast.js';
+
+        // Make functions available to onclick handlers
+        window.showSuccessToast = () => {
+            successToast('Operation completed successfully!');
+        };
+
+        window.showErrorToast = () => {
+            errorToast('Something went wrong. Please try again.');
+        };
+
+        window.showWarningToast = () => {
+            warningToast('Your internet connection is unstable.');
+        };
+
+        window.showInfoToast = () => {
+            infoToast('Processing your request...');
+        };
+
+        window.showTopToast = () => {
+            showToast('This toast appears at the top!', { position: 'top' });
+        };
+
+        window.showBottomToast = () => {
+            showToast('This toast appears at the bottom!', { position: 'bottom' });
+        };
+
+        window.showQuickToast = () => {
+            infoToast('Quick toast (2s)', { duration: 2000 });
+        };
+
+        window.showNormalToast = () => {
+            infoToast('Normal toast (4s)', { duration: 4000 });
+        };
+
+        window.showLongToast = () => {
+            infoToast('Long toast (8s)', { duration: 8000 });
+        };
+
+        window.showPersistentToast = () => {
+            warningToast('Persistent toast - manually dismiss me!', { duration: 0 });
+        };
+
+        window.showMultipleToasts = () => {
+            successToast('Toast 1 - Success!');
+            setTimeout(() => errorToast('Toast 2 - Error!'), 200);
+            setTimeout(() => warningToast('Toast 3 - Warning!'), 400);
+            setTimeout(() => infoToast('Toast 4 - Info! (oldest toast removed)'), 600);
+            setTimeout(() => successToast('Toast 5 - Success! (oldest toast removed)'), 800);
+        };
+
+        window.clearToasts = () => {
+            clearAllToasts();
+        };
+
+        window.showSwipeableToast = () => {
+            showToast('👉 Swipe me left or right to dismiss!', {
+                type: 'info',
+                duration: 10000,
+                position: 'bottom'
+            });
+        };
+
+        // Real-world use cases
+        window.showUploadSuccess = () => {
+            successToast('✓ Exercise book uploaded successfully! Analyzing...');
+        };
+
+        window.showUploadError = () => {
+            errorToast('Failed to upload image. Check your internet connection and try again.');
+        };
+
+        window.showNetworkWarning = () => {
+            warningToast('⚠️ Slow network detected. This may take longer than usual...');
+        };
+
+        window.showProcessingInfo = () => {
+            infoToast('🔍 Analyzing exercise book... This may take 15-30 seconds.', { duration: 6000 });
+        };
+    </script>
+</body>
+</html>

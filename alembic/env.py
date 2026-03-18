@@ -14,14 +14,14 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Import all models to ensure they're registered with Base.metadata
 from gapsense.config import settings
-from gapsense.core.models import Base  # noqa: F401
-from gapsense.core.models.curriculum import *  # noqa: F401, F403
-from gapsense.core.models.diagnostics import *  # noqa: F401, F403
-from gapsense.core.models.engagement import *  # noqa: F401, F403
-from gapsense.core.models.prompts import *  # noqa: F401, F403
-from gapsense.core.models.schools import *  # noqa: F401, F403
-from gapsense.core.models.students import *  # noqa: F401, F403
-from gapsense.core.models.users import *  # noqa: F401, F403
+from gapsense.core.models import Base
+from gapsense.core.models.curriculum import *  # noqa: F403
+from gapsense.core.models.diagnostics import *  # noqa: F403
+from gapsense.core.models.engagement import *  # noqa: F403
+from gapsense.core.models.prompts import *  # noqa: F403
+from gapsense.core.models.schools import *  # noqa: F403
+from gapsense.core.models.students import *  # noqa: F403
+from gapsense.core.models.users import *  # noqa: F403
 
 # This is the Alembic Config object
 config = context.config
@@ -35,6 +35,14 @@ target_metadata = Base.metadata
 
 # Override sqlalchemy.url from settings
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
+
+def include_object(object, name, type_, reflected, compare_to):
+    """Filter objects to include in autogenerate comparisons.
+
+    Exclude idx_curriculum_nodes_severity due to Alembic bug with postgresql_ops.
+    """
+    return not (type_ == "index" and name == "idx_curriculum_nodes_severity")
 
 
 def run_migrations_offline() -> None:
@@ -56,6 +64,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -69,6 +78,7 @@ def do_run_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():

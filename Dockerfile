@@ -36,12 +36,14 @@ EXPOSE 8000
 # --- Production stage (optimized, no dev deps) ---
 FROM base AS production
 
-RUN poetry install --no-root --only main
+RUN poetry install --no-root --only main && \
+    pip install --no-cache-dir jinja2
 
 COPY src/ ./src/
 COPY data/ ./data/
-COPY migrations/ ./migrations/
+COPY alembic/ ./alembic/
 COPY alembic.ini .
+COPY scripts/ ./scripts/
 
 RUN poetry install --only main
 

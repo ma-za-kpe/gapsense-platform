@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TouchHandler - Examples</title>
+    <link rel="stylesheet" href="../css/base/_variables.css">
+    <link rel="stylesheet" href="../css/base/_reset.css">
+    <link rel="stylesheet" href="../css/components/touch.css">
+    <style>
+        body {
+            padding: 40px 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #25D366;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #128C7E;
+            margin: 30px 0 15px 0;
+            font-size: 18px;
+        }
+        .example-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .demo-button {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 8px 8px 8px 0;
+        }
+        .student-card-demo {
+            background: #f8f9ff;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 4px solid #25D366;
+            position: relative;
+        }
+        .event-log {
+            background: #1a1a1a;
+            color: #f5f5f5;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 16px;
+        }
+        .event-log-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #333;
+        }
+        .info-box {
+            background: #e8f5e9;
+            border-left: 4px solid #2e7d32;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            color: #2e7d32;
+            font-size: 13px;
+        }
+        .swipeable-demo-card {
+            position: relative;
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+        }
+        .feature-list li {
+            padding: 8px 0 8px 24px;
+            position: relative;
+        }
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10B981;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>📱 TouchHandler - Mobile Gestures</h1>
+    <p style="color: #666; margin-bottom: 20px;">Touch-optimized interactions for mobile devices (best viewed on mobile)</p>
+
+    <!-- Features -->
+    <div class="example-card">
+        <h3 style="margin-top: 0; color: #25D366;">✨ Supported Gestures</h3>
+        <ul class="feature-list">
+            <li><strong>Tap</strong> - Quick touch and release</li>
+            <li><strong>Long Press</strong> - Touch and hold for 500ms</li>
+            <li><strong>Swipe</strong> - Left, right, up, or down</li>
+            <li><strong>Pinch</strong> - Two-finger zoom gesture</li>
+            <li><strong>Drag</strong> - Move elements around</li>
+            <li><strong>Pull to Refresh</strong> - Pull down to reload</li>
+            <li><strong>Ripple Effect</strong> - Visual touch feedback</li>
+        </ul>
+    </div>
+
+    <!-- Example 1: Basic Gestures -->
+    <div class="example-card">
+        <h2>1. Basic Gestures (Tap, Long Press, Swipe)</h2>
+        <div class="info-box">
+            📱 Try: Tap, long press, or swipe in any direction on the box below
+        </div>
+        <div id="basic-gesture-target" class="student-card-demo" style="text-align: center; padding: 40px;">
+            👆 Touch me!
+        </div>
+        <div id="basic-event-log" class="event-log"></div>
+    </div>
+
+    <!-- Example 2: Swipeable Cards -->
+    <div class="example-card">
+        <h2>2. Swipeable Cards (Student Reports)</h2>
+        <div class="info-box">
+            👈👉 Swipe cards left or right to dismiss
+        </div>
+        <div id="swipeable-cards-container">
+            <div class="swipeable-demo-card" data-student="Alice">
+                <div style="font-weight: bold; margin-bottom: 4px;">Alice Johnson</div>
+                <div style="font-size: 13px; color: #666;">Grade: 8 | Gaps: 3 | Last scan: Today</div>
+            </div>
+            <div class="swipeable-demo-card" data-student="Bob">
+                <div style="font-weight: bold; margin-bottom: 4px;">Bob Smith</div>
+                <div style="font-size: 13px; color: #666;">Grade: 8 | Gaps: 5 | Last scan: Yesterday</div>
+            </div>
+            <div class="swipeable-demo-card" data-student="Charlie">
+                <div style="font-weight: bold; margin-bottom: 4px;">Charlie Brown</div>
+                <div style="font-size: 13px; color: #666;">Grade: 8 | Gaps: 2 | Last scan: 2 days ago</div>
+            </div>
+        </div>
+        <button class="demo-button" onclick="resetSwipeableCards()">Reset Cards</button>
+        <div id="swipe-event-log" class="event-log"></div>
+    </div>
+
+    <!-- Example 3: Pull to Refresh -->
+    <div class="example-card">
+        <h2>3. Pull to Refresh</h2>
+        <div class="info-box">
+            ⬇️ Pull down on the content area to refresh
+        </div>
+        <div id="pull-to-refresh-container" class="pull-to-refresh-container" style="height: 300px; overflow-y: auto; background: #f8f9ff; border-radius: 8px; padding: 16px;">
+            <div style="padding-top: 60px;">
+                <p><strong>Latest Reports</strong></p>
+                <div style="background: white; padding: 12px; border-radius: 6px; margin: 8px 0;">
+                    Alice Johnson - Analyzed 2 minutes ago
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 6px; margin: 8px 0;">
+                    Bob Smith - Analyzed 15 minutes ago
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 6px; margin: 8px 0;">
+                    Charlie Brown - Analyzed 1 hour ago
+                </div>
+            </div>
+        </div>
+        <div id="refresh-event-log" class="event-log"></div>
+    </div>
+
+    <!-- Example 4: Ripple Effect -->
+    <div class="example-card">
+        <h2>4. Ripple Effect (Visual Feedback)</h2>
+        <div class="info-box">
+            💧 Tap buttons to see ripple effect
+        </div>
+        <button id="ripple-btn-1" class="demo-button ripple">Tap for Ripple</button>
+        <button id="ripple-btn-2" class="demo-button ripple" style="background: #128C7E;">Another Button</button>
+        <button id="ripple-btn-3" class="demo-button ripple" style="background: #EF4444;">Delete Action</button>
+    </div>
+
+    <!-- Example 5: Programmatic Usage -->
+    <div class="example-card">
+        <h2>5. Programmatic API</h2>
+        <pre style="background: #1a1a1a; color: #f5f5f5; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px;">import TouchHandler, {
+  SwipeableCard,
+  PullToRefresh,
+  addRippleEffect
+} from './components/TouchHandler.js';
+
+// Basic TouchHandler
+const element = document.getElementById('myElement');
+const touchHandler = new TouchHandler(element, {
+  swipeThreshold: 50,
+  onSwipeLeft: (e) => console.log('Swiped left', e),
+  onSwipeRight: (e) => console.log('Swiped right', e),
+  onTap: (e) => console.log('Tapped', e),
+  onLongPress: (e) => console.log('Long press', e)
+});
+
+// Swipeable Card
+const card = new SwipeableCard(element, {
+  threshold: 100,
+  onSwipeLeft: () => deleteCard(),
+  onSwipeRight: () => archiveCard()
+});
+
+// Pull to Refresh
+const pullRefresh = new PullToRefresh(container, {
+  threshold: 80,
+  onRefresh: async () => {
+    await loadNewData();
+  }
+});
+
+// Ripple Effect
+const button = document.getElementById('myButton');
+addRippleEffect(button);
+
+// Cleanup
+touchHandler.destroy();
+card.destroy();
+pullRefresh.destroy();</pre>
+    </div>
+
+    <!-- Performance Benefits -->
+    <div class="example-card">
+        <h2>📊 Mobile UX Benefits</h2>
+        <ul class="feature-list">
+            <li><strong>Native-like feel:</strong> Smooth 60fps touch interactions</li>
+            <li><strong>Intuitive:</strong> Gestures match mobile OS patterns (iOS/Android)</li>
+            <li><strong>Accessible:</strong> 44x44px minimum touch targets (Apple HIG)</li>
+            <li><strong>Feedback:</strong> Visual ripples, haptic feedback ready</li>
+            <li><strong>Performant:</strong> Hardware-accelerated transforms</li>
+            <li><strong>Battery-friendly:</strong> Passive event listeners where possible</li>
+        </ul>
+    </div>
+
+    <script type="module">
+        import TouchHandler, { SwipeableCard, PullToRefresh, addRippleEffect } from '../js/components/TouchHandler.js';
+
+        // Utility: Log event
+        function logEvent(logId, message) {
+            const log = document.getElementById(logId);
+            const item = document.createElement('div');
+            item.className = 'event-log-item';
+            item.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.insertBefore(item, log.firstChild);
+
+            // Keep only last 10 events
+            while (log.children.length > 10) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        // Example 1: Basic Gestures
+        const basicTarget = document.getElementById('basic-gesture-target');
+        const basicTouchHandler = new TouchHandler(basicTarget, {
+            onTap: (e) => {
+                logEvent('basic-event-log', `✓ Tap detected at (${Math.round(e.x)}, ${Math.round(e.y)})`);
+                basicTarget.style.background = '#e8f5e9';
+                setTimeout(() => basicTarget.style.background = '#f8f9ff', 300);
+            },
+            onLongPress: (e) => {
+                logEvent('basic-event-log', `✓ Long press detected at (${Math.round(e.x)}, ${Math.round(e.y)})`);
+                basicTarget.style.background = '#fef6e0';
+                setTimeout(() => basicTarget.style.background = '#f8f9ff', 500);
+            },
+            onSwipeLeft: (e) => {
+                logEvent('basic-event-log', `← Swipe LEFT (distance: ${Math.round(e.distance)}px, velocity: ${e.velocity.toFixed(2)})`);
+                basicTarget.style.transform = 'translateX(-20px)';
+                setTimeout(() => basicTarget.style.transform = '', 300);
+            },
+            onSwipeRight: (e) => {
+                logEvent('basic-event-log', `→ Swipe RIGHT (distance: ${Math.round(e.distance)}px, velocity: ${e.velocity.toFixed(2)})`);
+                basicTarget.style.transform = 'translateX(20px)';
+                setTimeout(() => basicTarget.style.transform = '', 300);
+            },
+            onSwipeUp: (e) => {
+                logEvent('basic-event-log', `↑ Swipe UP (distance: ${Math.round(e.distance)}px)`);
+                basicTarget.style.transform = 'translateY(-20px)';
+                setTimeout(() => basicTarget.style.transform = '', 300);
+            },
+            onSwipeDown: (e) => {
+                logEvent('basic-event-log', `↓ Swipe DOWN (distance: ${Math.round(e.distance)}px)`);
+                basicTarget.style.transform = 'translateY(20px)';
+                setTimeout(() => basicTarget.style.transform = '', 300);
+            }
+        });
+
+        // Example 2: Swipeable Cards
+        let swipeableCards = [];
+
+        function initSwipeableCards() {
+            const cards = document.querySelectorAll('.swipeable-demo-card');
+            swipeableCards = Array.from(cards).map(card => {
+                const studentName = card.dataset.student;
+                return new SwipeableCard(card, {
+                    threshold: 100,
+                    onSwipeLeft: () => {
+                        logEvent('swipe-event-log', `← ${studentName}'s card swiped left (delete action)`);
+                        setTimeout(() => card.style.display = 'none', 300);
+                    },
+                    onSwipeRight: () => {
+                        logEvent('swipe-event-log', `→ ${studentName}'s card swiped right (archive action)`);
+                        setTimeout(() => card.style.display = 'none', 300);
+                    }
+                });
+            });
+        }
+
+        initSwipeableCards();
+
+        window.resetSwipeableCards = () => {
+            document.querySelectorAll('.swipeable-demo-card').forEach(card => {
+                card.style.display = '';
+                card.style.transform = '';
+                card.style.opacity = '1';
+            });
+            swipeableCards.forEach(card => card.reset());
+            logEvent('swipe-event-log', '🔄 Cards reset');
+        };
+
+        // Example 3: Pull to Refresh
+        const pullRefreshContainer = document.getElementById('pull-to-refresh-container');
+        const pullRefresh = new PullToRefresh(pullRefreshContainer, {
+            threshold: 80,
+            onRefresh: async () => {
+                logEvent('refresh-event-log', '🔄 Pull to refresh triggered - Loading new data...');
+
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                logEvent('refresh-event-log', '✓ New data loaded successfully');
+            }
+        });
+
+        // Example 4: Ripple Effect
+        const rippleButtons = document.querySelectorAll('.ripple');
+        rippleButtons.forEach(button => {
+            addRippleEffect(button);
+        });
+    </script>
+</body>
+</html>

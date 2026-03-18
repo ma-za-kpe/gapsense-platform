@@ -39,6 +39,11 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     # Identity (minimal)
+    full_name: Mapped[str | None] = mapped_column(
+        String(200),
+        nullable=True,
+        comment="Full name from teacher's class register (e.g., 'Kwame Mensah')",
+    )
     first_name: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
@@ -53,12 +58,17 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         String(5), nullable=False, comment="Enrolled grade (B1-B9)"
     )
     grade_as_of: Mapped[date] = mapped_column(
-        Date, nullable=False, server_default=text("CURRENT_DATE"), comment="When this grade was recorded"
+        Date,
+        nullable=False,
+        server_default=text("CURRENT_DATE"),
+        comment="When this grade was recorded",
     )
     teacher_id: Mapped[UUID | None] = mapped_column(ForeignKey("teachers.id"), nullable=True)
 
-    # Parent linkage
-    primary_parent_id: Mapped[UUID] = mapped_column(ForeignKey("parents.id"), nullable=False)
+    # Parent linkage (nullable until parent onboards and links)
+    primary_parent_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("parents.id"), nullable=True, comment="Linked when parent onboards"
+    )
     secondary_parent_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("parents.id"), nullable=True
     )
@@ -73,7 +83,9 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Diagnostic state
     latest_gap_profile_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("gap_profiles.id"), nullable=True, comment="FK to current gap profile"
+        ForeignKey("gap_profiles.id", name="fk_students_latest_gap_profile"),
+        nullable=True,
+        comment="FK to current gap profile",
     )
     diagnosis_count: Mapped[int] = mapped_column(Integer, default=0)
     first_diagnosed_at: Mapped[datetime | None] = mapped_column(nullable=True)
@@ -82,12 +94,12 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(default=True)
 
     # Relationships
-    school: Mapped[School] = relationship(back_populates="students")
-    teacher: Mapped[Teacher] = relationship(back_populates="students")
-    primary_parent: Mapped[Parent] = relationship(
+    school: Mapped[School | None] = relationship(back_populates="students")
+    teacher: Mapped[Teacher | None] = relationship(back_populates="students")
+    primary_parent: Mapped[Parent | None] = relationship(
         foreign_keys=[primary_parent_id], back_populates="primary_students"
     )
-    secondary_parent: Mapped[Parent] = relationship(
+    secondary_parent: Mapped[Parent | None] = relationship(
         foreign_keys=[secondary_parent_id], back_populates="secondary_students"
     )
     latest_gap_profile: Mapped[GapProfile] = relationship(
