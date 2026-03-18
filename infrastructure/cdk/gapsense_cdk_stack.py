@@ -162,6 +162,13 @@ class GapSenseStack(Stack):
             description="Anthropic Claude API key for GapSense AI inference",
         )
 
+        openai_secret = sm.Secret(
+            self,
+            "OpenAIAPIKey",
+            secret_name=f"gapsense/{env_name}/openai",
+            description="OpenAI API key for embedding generation",
+        )
+
         whatsapp_secret = sm.Secret(
             self,
             "WhatsAppSecrets",
@@ -204,6 +211,7 @@ class GapSenseStack(Stack):
         common_secrets = {
             "DATABASE_URL": ecs.Secret.from_secrets_manager(db_credentials, "connectionString"),
             "ANTHROPIC_API_KEY": ecs.Secret.from_secrets_manager(anthropic_secret),
+            "OPENAI_API_KEY": ecs.Secret.from_secrets_manager(openai_secret),
             "WHATSAPP_API_TOKEN": ecs.Secret.from_secrets_manager(whatsapp_secret, "api_token"),
             "WHATSAPP_PHONE_NUMBER_ID": ecs.Secret.from_secrets_manager(
                 whatsapp_secret, "phone_number_id"

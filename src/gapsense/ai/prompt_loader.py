@@ -173,7 +173,7 @@ class PromptLibrary:
         """
         prompt = self.get_prompt(prompt_id)
         return {
-            "model": prompt.get("model", "claude-sonnet-4-5"),
+            "model": prompt.get("model", "claude-sonnet-4-6"),
             "temperature": prompt.get("temperature", 0.3),
             "max_tokens": prompt.get("max_tokens", 2048),
         }

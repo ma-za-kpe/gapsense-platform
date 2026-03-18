@@ -14,14 +14,14 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Import all models to ensure they're registered with Base.metadata
 from gapsense.config import settings
-from gapsense.core.models import Base  # noqa: F401
-from gapsense.core.models.curriculum import *  # noqa: F401, F403
-from gapsense.core.models.diagnostics import *  # noqa: F401, F403
-from gapsense.core.models.engagement import *  # noqa: F401, F403
-from gapsense.core.models.prompts import *  # noqa: F401, F403
-from gapsense.core.models.schools import *  # noqa: F401, F403
-from gapsense.core.models.students import *  # noqa: F401, F403
-from gapsense.core.models.users import *  # noqa: F401, F403
+from gapsense.core.models import Base
+from gapsense.core.models.curriculum import *  # noqa: F403
+from gapsense.core.models.diagnostics import *  # noqa: F403
+from gapsense.core.models.engagement import *  # noqa: F403
+from gapsense.core.models.prompts import *  # noqa: F403
+from gapsense.core.models.schools import *  # noqa: F403
+from gapsense.core.models.students import *  # noqa: F403
+from gapsense.core.models.users import *  # noqa: F403
 
 # This is the Alembic Config object
 config = context.config

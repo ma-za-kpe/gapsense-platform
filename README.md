@@ -9,482 +9,1008 @@
 
 ---
 
-## Overview
+## 🎯 MVP Focus (Phase 1a — February 2026)
 
-GapSense identifies root learning gaps in Ghanaian primary and JHS students using AI-powered diagnostic reasoning, then engages parents via WhatsApp with dignity-preserving, evidence-based activities.
+**The Core Problem We're Solving:**
+JHS teachers inherit students with invisible primary-level gaps. A student struggling with fractions might actually have a P4 place-value gap. Teachers need to diagnose these gaps without adding another test.
 
-**The Problem:** 84% of Ghanaian children aged 7-14 lack foundational numeracy (UNICEF MICS 2023).
-
-**The Solution:** An AI that extracts diagnostic intelligence from existing artifacts (exercise books, classroom conversations) without adding another test.
-
----
-
-## Key Features
-
-- ✅ **Adaptive Diagnostic Engine** - Traces backward through prerequisite graph to find root gaps
-- ✅ **Exercise Book Analysis** - AI analyzes photos of student work for error patterns
-- ✅ **WhatsApp Parent Engagement** - Dignity-first messaging (Wolf/Aurino research-based)
-- ✅ **Teacher Conversation Partner** - Actionable insights, not just reports
-- ✅ **NaCCA-Aligned** - Ghana curriculum (35 nodes, 6 cascade failure paths)
-- ✅ **Multi-Language** - Twi, Ewe, Ga, Dagbani, English
+**Our Solution:**
+A WhatsApp-based AI that **analyzes photos of students' exercise books**, identifies error patterns, traces them to foundational gaps, and engages parents with targeted activities.
 
 ---
 
-## Architecture
+## 🚨 Current Status (February 16, 2026)
 
+**MVP Specification:** Teacher-initiated exercise book scanner + parent evening voice notes
+**Current Implementation:** 15% complete
+
+### ✅ What's Working:
+- WhatsApp webhook infrastructure
+- Parent onboarding flow (FLOW-ONBOARD: 7 steps)
+- Student record creation
+- Database schema (PostgreSQL)
+- AI prompt library (13 prompts in gapsense-data repo)
+- Opt-out flow (11+ keywords in 5 languages)
+
+### ❌ What's Missing (Core MVP Features):
+- **Exercise Book Scanner** (multimodal AI analysis) — THE CORE FEATURE
+- Teacher onboarding + class roster upload
+- Multimodal AI integration (Claude/Gemini vision)
+- Scheduled parent voice notes (6:30 PM daily in Twi)
+- Text-to-speech (Twi)
+- Speech-to-text (parent voice responses)
+- Teacher conversation partner
+- Weekly Gap Map
+
+**See:** [docs/mvp_specification_audit_CRITICAL.md](docs/mvp_specification_audit_CRITICAL.md) for full gap analysis
+
+---
+
+## 📖 The Actual MVP (from MVP Blueprint)
+
+### For Teachers:
 ```
-WhatsApp → API → SQS Queue → Worker → Claude AI → PostgreSQL
-                                   ↓
-                           GUARD-001 Compliance
-                                   ↓
-                              WhatsApp Send
+1. Teacher sends "START" → Registers class → Creates 42 student profiles
+2. Teacher sends photo of Kwame's exercise book
+3. AI analyzes handwriting → Identifies error patterns
+4. Returns: "Kwame errors on borrowing across place values (P4 gap).
+   Suggested micro-intervention: 3-min warm-up with GH₵ subtraction."
+5. Teacher asks: "I'm teaching fractions tomorrow. What should I worry about?"
+6. AI reasons across all diagnosed students → Suggests lesson adjustments
+```
+
+### For Parents:
+```
+1. Teacher shares GapSense number at PTA meeting
+2. Parent sends "START" → Links to existing student → Chooses language (Twi)
+3. Daily 6:30 PM: Parent receives Twi voice note with 3-minute activity
+   "Tonight: Ask Kwame to figure out 3 sachets of pure water at 50p each"
+4. Parent sends 👍 when done
+5. Parent sends voice note: "He got it but took too long, is that okay?"
+6. AI provides pedagogical coaching: "Perfect! Speed comes later..."
+```
+
+### Success Criteria (12-Week Pilot):
+1. **AI Diagnostic Works:** 75%+ concordance with expert teacher assessment
+2. **Humans Use It:** 7/10 teachers scan 2+/week, 60%+ parents respond to 3/5 prompts
+3. **Students Improve:** 0.15+ SD improvement on re-scan after 12 weeks
+
+**Scale:** 10 teachers, 100 parents, 400-500 students
+**Budget:** Under $700 for 12 weeks
+**Region:** Greater Accra
+**Subject:** JHS 1 Mathematics ONLY
+**Languages:** English + Twi ONLY
+
+---
+
+## 🏗️ Architecture
+
+**Current (Infrastructure Only):**
+```
+WhatsApp → Webhook → FlowExecutor → Database → WhatsApp
+```
+
+**Target MVP Architecture:**
+```
+WhatsApp → Image Upload → Claude Vision → Exercise Book Analysis
+                                        ↓
+                                   Gap Profile → Database
+                                        ↓
+                         6:30 PM → Activity Generator → Twi TTS → Parent Voice Note
+                                        ↓
+                         Parent Voice → Whisper STT → Micro-Coaching → Twi TTS
 ```
 
 **Stack:**
 - **Backend**: FastAPI (Python 3.12), async everywhere
-- **Database**: PostgreSQL 16 (RDS)
-- **AI**: Multi-provider (Anthropic Claude → xAI Grok → Rule-based)
-- **Queue**: AWS SQS FIFO
-- **Messaging**: WhatsApp Cloud API (direct)
-- **Infrastructure**: AWS (Cape Town region - 50ms to Ghana)
+- **Database**: PostgreSQL 16
+- **AI (Planned)**:
+  - Multimodal: Claude Sonnet 4.5 with vision OR Gemini Pro Vision
+  - Text: Claude Sonnet/Haiku for conversation
+  - TTS: Google Cloud TTS (Twi) or ElevenLabs
+  - STT: Whisper API
+- **Messaging**: WhatsApp Cloud API
+- **Infrastructure**: AWS (Cape Town region)
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
-gapsense-platform/
-├── src/gapsense/              # Application code
-│   ├── core/                  # Models, schemas, config
-│   ├── curriculum/            # Prerequisite graph, traversal
-│   ├── diagnostic/            # Diagnostic engine
-│   ├── engagement/            # Parent WhatsApp engagement
+gapsense/
+├── src/gapsense/
+│   ├── core/                  # Models, config
+│   ├── engagement/            # WhatsApp flows (ONBOARD, OPT-OUT)
 │   ├── webhooks/              # WhatsApp webhook handlers
-│   ├── teachers/              # Teacher reports
-│   ├── analytics/             # Aggregation
-│   └── ai/                    # Multi-provider AI (Anthropic, Grok, fallbacks)
-├── tests/                     # Test suite
-├── infrastructure/            # AWS CDK
-├── migrations/                # Alembic database migrations
-├── data/                      # Non-proprietary seed data
-└── docs/                      # Documentation
+│   ├── diagnostic/            # Diagnostic engine (partial)
+│   ├── ai/                    # AI client + prompt loader
+│   └── api/                   # REST API endpoints
+├── tests/                     # 268 tests (58% coverage)
+├── alembic/                   # Database migrations (6 versions)
+├── docs/                      # Documentation
+│   ├── mvp_specification_audit_CRITICAL.md    # Gap analysis
+│   └── mvp_user_flows_realistic_status.md     # Realistic flows
+└── scripts/                   # Utility scripts
 ```
 
-**Note:** Proprietary IP (prerequisite graph, prompts) lives in separate **gapsense-data** private repo.
+**Proprietary Data (Separate Repo):**
+```
+gapsense-data/
+├── prompts/                   # 13 AI prompts (COMPLETE)
+│   └── gapsense_prompt_library_v1.1.json
+├── curriculum/                # NaCCA prerequisite graph
+│   └── gapsense_prerequisite_graph_v1.2.json
+└── business/                  # Strategy docs
+    ├── GapSense_MVP_Blueprint.docx           # ← SOURCE OF TRUTH
+    └── GapSense_v2_AI_Native_Redesign.docx
+```
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-
 - Python 3.12+
-- Docker & Docker Compose
-- Poetry (Python dependency management)
-- Access to `gapsense-data` repo
+- PostgreSQL 16
+- Poetry
+- Access to `gapsense-data` private repo
 
-### Local Development
+### Setup
 
 ```bash
-# 1. Clone repos (platform + data)
-git clone https://github.com/ma-za-kpe/gapsense-platform.git
-cd gapsense-platform
+# 1. Clone repos
+git clone <gapsense-repo>
+cd gapsense
 
 # Clone data repo (sibling directory)
 cd ..
-git clone https://github.com/ma-za-kpe/gapsense-data.git  # Private repo
-cd gapsense-platform
+git clone <gapsense-data-repo>  # Private
+cd gapsense
 
-# 2. Run setup script
-./scripts/setup.sh
-# This will:
-# - Install Poetry if needed
-# - Install dependencies
-# - Create .env file
-# - Verify gapsense-data repo exists
-# - Install git hooks (pre-commit + pre-push) - IMPORTANT!
+# 2. Install dependencies
+poetry install
 
-# 3. Edit .env with your API keys
-nano .env
+# 3. Set up database
+createdb gapsense_dev
+poetry run alembic upgrade head
 
-# 4. Start services
-docker-compose up -d postgres
+# 4. Set environment variables
+cp .env.example .env
+# Edit .env with your credentials:
+# - DATABASE_URL
+# - ANTHROPIC_API_KEY (for AI)
+# - WHATSAPP_VERIFY_TOKEN
+# - WHATSAPP_PHONE_NUMBER_ID
+# - WHATSAPP_ACCESS_TOKEN
 
-# 5. Run migrations
-./scripts/migrate.sh up
-
-# 6. Load curriculum data
+# 5. Load curriculum data
+export GAPSENSE_DATA_PATH=../gapsense-data
 poetry run python scripts/load_curriculum.py
 
-# 7. Verify everything works (linting, tests, type checking)
-./scripts/verify.sh
+# 6. Run tests
+poetry run pytest
 
-# 8. Start development server
-./scripts/run_dev.sh
-
-# API will be available at:
-# - API: http://localhost:8000
-# - Docs: http://localhost:8000/docs
-# - Health: http://localhost:8000/health
+# 7. Start server
+poetry run uvicorn gapsense.main:app --reload
 ```
 
 ---
 
-## Development Workflow
+## 🎨 Frontend Development Guide
 
-### Running Tests
+### Overview
+
+The GapSense frontend is a **mobile-first, progressive web app** built with vanilla JavaScript and optimized for Ghana's 3G networks. All frontend code lives in `/public/` and is served statically by Vite.
+
+### Architecture
+
+```
+public/
+├── frontend/
+│   ├── css/
+│   │   ├── base/           # Variables, reset, typography
+│   │   ├── layouts/        # Page layouts (demo, dashboard)
+│   │   ├── components/     # Component-specific styles
+│   │   └── demo.css        # Main entry point
+│   ├── js/
+│   │   ├── constants.js    # Config (API URLs, polling settings)
+│   │   ├── state.js        # Global state management
+│   │   ├── api.js          # API client with adaptive polling
+│   │   ├── ui.js           # DOM manipulation
+│   │   ├── mobile.js       # Touch gestures, swipes
+│   │   ├── slides.js       # WhatsApp simulator slides
+│   │   ├── APIClient.js    # Robust HTTP client with retry
+│   │   └── components/     # Reusable components
+│   │       ├── Toast.js
+│   │       ├── LoadingSpinner.js
+│   │       └── TouchHandler.js
+│   ├── demo.html           # Main demo page
+│   ├── teacher_reports.html # Teacher dashboard
+│   ├── student_detailed_report.html # Student analysis
+│   └── sw.js               # Service Worker (offline PWA)
+├── index.html              # Landing page
+└── assets/                 # Images, fonts
+```
+
+### Tech Stack
+
+- **No Framework**: Vanilla JavaScript (ES6 modules)
+- **Build Tool**: Vite 5.0 (fast HMR, optimized builds)
+- **Styling**: Pure CSS with CSS custom properties
+- **Type Checking**: TypeScript (checkJs mode for gradual typing)
+- **Bundle Size**: <200KB target for 3G networks
+- **Offline**: Service Worker with cache-first strategy
+
+### Key Design Principles
+
+1. **Mobile-First**: All UI designed for 320px+ screens first
+2. **Touch-Optimized**: 44px+ touch targets, swipe gestures
+3. **Battery-Friendly**: Adaptive polling, pause when tab hidden
+4. **Offline-First**: Service Worker caches assets
+5. **3G-Optimized**: Lazy loading, code splitting, <200KB bundle
+6. **Accessibility**: ARIA labels, keyboard navigation, screen readers
+
+### Getting Started
+
+#### 1. Install Dependencies
 
 ```bash
-# All tests
+npm install
+```
+
+This installs:
+- `vite` - Build tool and dev server
+- `typescript` - Type checking for JS files
+- `@types/node` - Node.js type definitions
+- `terser` - JavaScript minifier
+
+#### 2. Development Server
+
+```bash
+npm run dev
+```
+
+- Opens `http://localhost:5173`
+- Hot Module Replacement (HMR) enabled
+- Auto-reloads on file changes
+
+#### 3. Type Checking
+
+```bash
+# Check types once
+npm run type-check
+
+# Watch mode (live type checking)
+npm run type-check:watch
+
+# Combined linting (JS + CSS + Types)
+npm run lint
+```
+
+#### 4. Build for Production
+
+```bash
+npm run build
+```
+
+Outputs to `/dist/`:
+- Minified JS (<15KB gzipped)
+- Optimized CSS
+- Code splitting per route
+- Source maps for debugging
+
+#### 5. Preview Production Build
+
+```bash
+npm run preview
+```
+
+Tests the production build locally before deploying.
+
+### Making Changes
+
+#### Adding a New Page
+
+1. **Create HTML file** in `/public/`
+   ```html
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <link rel="stylesheet" href="/frontend/css/demo.css">
+   </head>
+   <body>
+       <!-- Your content -->
+       <script type="module" src="/frontend/js/main.js"></script>
+   </body>
+   </html>
+   ```
+
+2. **Add route** in backend (`src/gapsense/web/demo.py`)
+   ```python
+   @router.get("/new-page", response_class=HTMLResponse)
+   async def new_page(request: Request):
+       return templates.TemplateResponse("new_page.html", {"request": request})
+   ```
+
+3. **Test locally**: Visit `http://localhost:5173/demo/new-page`
+
+#### Adding a New Component
+
+1. **Create JS module** in `/public/frontend/js/components/`
+   ```javascript
+   // MyComponent.js
+   export class MyComponent {
+       constructor(options) {
+           this.options = options;
+       }
+
+       render() {
+           // DOM creation
+       }
+   }
+   ```
+
+2. **Import in main.js**
+   ```javascript
+   import { MyComponent } from './components/MyComponent.js';
+
+   const myComp = new MyComponent({ /* options */ });
+   myComp.render();
+   ```
+
+3. **Add JSDoc types** for TypeScript checking
+   ```javascript
+   /**
+    * @typedef {Object} MyComponentOptions
+    * @property {string} title
+    * @property {boolean} isActive
+    */
+
+   /**
+    * @param {MyComponentOptions} options
+    */
+   constructor(options) { }
+   ```
+
+#### Modifying Styles
+
+1. **Find the right file**:
+   - Global variables: `/public/frontend/css/base/_variables.css`
+   - Layout: `/public/frontend/css/layouts/demo.css`
+   - Component: `/public/frontend/css/components/<name>.css`
+
+2. **Use CSS custom properties**:
+   ```css
+   :root {
+       --primary-color: #25D366;
+       --mobile-padding: 16px;
+   }
+
+   .my-element {
+       color: var(--primary-color);
+       padding: var(--mobile-padding);
+   }
+   ```
+
+3. **Mobile-first media queries**:
+   ```css
+   /* Mobile default */
+   .card {
+       padding: 16px;
+   }
+
+   /* Tablet and up */
+   @media (min-width: 768px) {
+       .card {
+           padding: 24px;
+       }
+   }
+   ```
+
+#### Updating API Endpoints
+
+1. **Edit constants** in `/public/frontend/js/constants.js`
+   ```javascript
+   export const API = {
+       MESSAGE: '/demo/api/message',
+       NEW_ENDPOINT: '/demo/api/new-endpoint'
+   };
+   ```
+
+2. **Add API function** in `/public/frontend/js/api.js`
+   ```javascript
+   export async function callNewEndpoint(data) {
+       const response = await fetch(API.NEW_ENDPOINT, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify(data)
+       });
+       return response.json();
+   }
+   ```
+
+3. **Create backend route** in `src/gapsense/web/demo.py`
+   ```python
+   @router.post("/api/new-endpoint")
+   async def new_endpoint(data: dict):
+       return {"success": True, "data": data}
+   ```
+
+### Mobile Optimizations
+
+#### Battery-Friendly Polling
+
+The app uses **adaptive polling** that saves battery:
+
+```javascript
+// constants.js
+export const POLLING = {
+    INITIAL_INTERVAL: 1000,    // Start fast (1s)
+    MAX_INTERVAL: 5000,        // Max 5s between polls
+    BACKOFF_MULTIPLIER: 1.5,   // Exponential backoff
+    PAUSE_WHEN_HIDDEN: true    // Pause when tab hidden
+};
+```
+
+**How it works**:
+- Starts at 1s for quick feedback
+- Backs off to 5s to save battery (1s → 1.5s → 2.25s → 3.38s → 5s)
+- **Pauses completely when tab is hidden** (Page Visibility API)
+- Saves ~70% battery vs fixed 2s polling
+
+#### Virtual Scrolling
+
+Long lists (50+ students) use **virtual scrolling**:
+
+```javascript
+// Only loads 15 students initially
+const BATCH_SIZE = 15;
+
+// Loads more as user scrolls (Intersection Observer)
+observer.observe(sentinel);
+```
+
+#### Lazy Loading Images
+
+```html
+<img loading="lazy" src="/assets/image.jpg" alt="...">
+```
+
+#### Code Splitting
+
+Vite automatically splits code per route:
+- `/demo` → `demo-[hash].js`
+- `/reports` → `reports-[hash].js`
+
+### Performance Budget
+
+- **Total Bundle**: <200KB (uncompressed)
+- **Gzipped**: ~15KB for demo page
+- **Time to Interactive**: <3s on 3G
+- **First Contentful Paint**: <2s on 3G
+
+Check bundle size:
+```bash
+npm run build
+ls -lh dist/assets/
+```
+
+### Service Worker (Offline Support)
+
+The Service Worker caches assets for offline use:
+
+```javascript
+// Update cache version to bust cache
+const CACHE_VERSION = 'gapsense-v1.0.5';
+
+// Assets cached on install
+const STATIC_ASSETS = [
+    '/',
+    '/demo.html',
+    '/frontend/css/demo.css',
+    '/frontend/js/main.js',
+    // ...
+];
+```
+
+**Strategy**:
+- **Static assets**: Cache-first
+- **API calls**: Network-first, fallback to cache
+- **Cache busting**: Update `CACHE_VERSION` on deploy
+
+### TypeScript Integration
+
+We use TypeScript for **type checking JavaScript** (not compilation):
+
+```javascript
+/**
+ * Upload image to server
+ * @param {File} file - Image file
+ * @param {string} phoneNumber - Teacher phone
+ * @returns {Promise<{success: boolean, report_id?: string}>}
+ */
+async function uploadImage(file, phoneNumber) {
+    // TypeScript checks types via JSDoc
+}
+```
+
+**Benefits**:
+- Type safety without converting to `.ts`
+- IntelliSense in VS Code
+- Catch errors before runtime
+
+See [TYPESCRIPT.md](TYPESCRIPT.md) for full guide.
+
+### Deployment
+
+#### Vercel (Current)
+
+```bash
+# Deploy to production
+vercel --prod
+```
+
+- Auto-deploys on `git push` to `main`
+- Preview deployments for PRs
+- CDN-backed (global edge network)
+
+#### Backend + Frontend Together
+
+The backend serves frontend files statically:
+
+```python
+# src/gapsense/main.py
+app.mount("/", StaticFiles(directory="public", html=True), name="public")
+```
+
+Both backend and frontend deploy together via Docker/ECS.
+
+### Testing
+
+#### Manual Testing Checklist
+
+- [ ] Test on real mobile devices (not just DevTools)
+- [ ] Test on 3G throttling (Chrome DevTools → Network)
+- [ ] Test offline (Service Worker)
+- [ ] Test swipe gestures on touch devices
+- [ ] Test adaptive polling (switch tabs)
+- [ ] Test virtual scrolling (50+ students)
+
+#### Browser Support
+
+- **iOS Safari** 14+ ✅
+- **Chrome Mobile** 90+ ✅
+- **Firefox Mobile** 90+ ✅
+- **Desktop** (fallback) ✅
+
+#### Accessibility Testing
+
+```bash
+# Run Lighthouse audit
+npm run lighthouse
+
+# Check ARIA labels
+# Use screen reader: VoiceOver (iOS), TalkBack (Android)
+```
+
+### Common Gotchas
+
+1. **Cache not updating?**
+   - Bump `CACHE_VERSION` in `sw.js`
+   - Hard refresh: Cmd+Shift+R (Mac) / Ctrl+Shift+R (Windows)
+
+2. **HMR not working?**
+   - Restart dev server: `npm run dev`
+   - Check browser console for errors
+
+3. **TypeScript errors?**
+   - Add JSDoc types to functions
+   - Use `@ts-ignore` for unavoidable errors
+
+4. **Bundle size too large?**
+   - Use dynamic imports: `const module = await import('./big-module.js')`
+   - Check bundle analyzer: `npm run analyze`
+
+5. **Mobile styles not applying?**
+   - Check viewport meta tag: `<meta name="viewport" content="width=device-width, initial-scale=1.0">`
+   - Use mobile-first media queries: `@media (min-width: 768px)`
+
+### Useful Commands
+
+```bash
+# Development
+npm run dev                  # Start dev server
+npm run type-check:watch     # Live type checking
+npm run lint                 # Check JS + CSS + types
+
+# Production
+npm run build                # Build for production
+npm run preview              # Test production build
+npm run analyze              # Bundle size visualizer
+
+# Deployment
+vercel --prod                # Deploy to Vercel production
+```
+
+### Resources
+
+- [Vite Guide](https://vitejs.dev/guide/)
+- [TypeScript + JSDoc](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html)
+- [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
+- [Mobile Web Best Practices](https://web.dev/mobile/)
+
+---
+
+## 📊 Development Status
+
+### Phase 1a MVP (Target: 8-10 weeks from now)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Infrastructure** | ✅ 75% | WhatsApp, DB, API working |
+| **Parent Onboarding** | ✅ 100% | FLOW-ONBOARD complete |
+| **Teacher Onboarding** | ❌ 0% | Not started |
+| **Exercise Book Scanner** | ❌ 0% | Core MVP feature missing |
+| **Multimodal AI** | ❌ 0% | Not integrated |
+| **Parent Voice Notes** | ❌ 0% | TTS not implemented |
+| **Voice Micro-Coaching** | ❌ 0% | STT not implemented |
+| **Teacher Conversation** | ❌ 0% | Not started |
+| **Scheduled Messaging** | ❌ 0% | Not implemented |
+
+**Overall: 15% complete toward MVP**
+
+**Next 8 weeks (to MVP):**
+- Week 1-2: NaCCA knowledge base + Exercise Book Analyzer prompt + test Twi TTS
+- Week 3-4: Multimodal AI integration + image upload
+- Week 5-6: Parent voice note system (TTS + activity generator)
+- Week 7-8: Teacher conversation partner + integration
+- Week 9-20: 12-week pilot measurement
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
 poetry run pytest
-
-# Unit tests only
-poetry run pytest tests/unit -v
-
-# Integration tests
-poetry run pytest tests/integration -v
 
 # With coverage
 poetry run pytest --cov=src/gapsense --cov-report=html
+
+# Run specific test
+poetry run pytest tests/unit/test_flow_executor.py -v
+
+# Integration tests only
+poetry run pytest tests/integration/ -v
 ```
 
-### Code Quality
-
-```bash
-# Format
-poetry run ruff format src/
-
-# Lint
-poetry run ruff check src/ --fix
-
-# Type check
-poetry run mypy src/gapsense --strict
-
-# Run all checks
-poetry run pre-commit run --all-files
-```
-
-### Git Hooks
-
-**Automated quality checks run on every commit and push.**
-
-> **⚠️ IMPORTANT:** Git hooks are installed automatically when you run `./scripts/setup.sh` (Step 2 of Quick Start). If you skip this step, you won't have the security and quality checks that protect the codebase.
-
-#### Setup (Automatic)
-
-Git hooks are installed automatically when you run `./scripts/setup.sh`.
-
-#### Manual Installation
-
-```bash
-# Install pre-commit hooks
-poetry run pre-commit install
-
-# Install pre-push hooks
-poetry run pre-commit install --hook-type pre-push
-```
-
-#### What Hooks Do
-
-**On Every Commit** (fast checks ~10 seconds):
-- ✅ **Poetry lock file check** (ensures poetry.lock matches pyproject.toml) - CRITICAL for CI/CD
-- ✅ Ruff linting (auto-fixes safe issues)
-- ✅ Ruff formatting
-- ✅ Trailing whitespace fix
-- ✅ YAML/JSON/TOML validation
-- ✅ **Detect secrets** (API keys, tokens, passwords)
-- ✅ **Private key detection** (SSH, PGP keys)
-- ✅ **Merge conflict markers**
-- ✅ **No direct commits to main branch**
-- ❌ **Block code smells** (FIXME, HACK, XXX, TEMP, WIP)
-- ⚠️  **Warn on TODOs** (encourages fixing, but allows commit)
-- 📋 **Coding standards checklist** (reminds you to check error handling, PII, type safety, etc.)
-
-**Before Every Push** (thorough checks ~45 seconds):
-- ✅ MyPy type checking (full project)
-- ✅ Pytest all tests with coverage (≥80% required)
-- ✅ Alembic migration check
-- ✅ **Bandit security scan** (CRITICAL for student data protection)
-- ✅ **Safety vulnerability check** (dependency vulnerabilities)
-- ✅ **Vulture dead code detection** (unused code)
-- ✅ **Deptry dependency analysis** (unused/missing dependencies)
-
-#### Testing Hooks Manually
-
-```bash
-# Test all hooks without committing
-./scripts/test_hooks.sh
-
-# Test specific hooks
-poetry run pre-commit run ruff --all-files                # Linting
-poetry run pre-commit run detect-secrets --all-files      # Secret detection
-poetry run pre-commit run mypy-full --all-files           # Type checking
-poetry run pre-commit run pytest-coverage --all-files     # Tests + coverage
-poetry run pre-commit run bandit --all-files              # Security scan
-poetry run pre-commit run safety --all-files              # Vulnerability check
-poetry run pre-commit run vulture --all-files             # Dead code detection
-poetry run pre-commit run deptry --all-files              # Dependency analysis
-```
-
-#### Troubleshooting Common Hook Failures
-
-**Poetry lock file out of sync:**
-```bash
-# Error: "pyproject.toml changed significantly since poetry.lock was last generated"
-# Fix: Regenerate lock file
-poetry lock --no-update
-
-# Or if you want to update dependencies:
-poetry lock
-
-# Then stage the updated lock file:
-git add poetry.lock
-```
-
-**Why this matters:** An outdated `poetry.lock` breaks CI/CD. The pre-commit hook catches this before you push.
-
-#### Bypassing Hooks (Use Sparingly)
-
-```bash
-# Skip pre-commit hooks (emergency only)
-git commit --no-verify -m "WIP: broken, will fix"
-
-# Skip specific hook
-SKIP=mypy git commit -m "Skip type checking"
-
-# Skip pre-push hooks (DANGEROUS)
-git push --no-verify
-```
-
-**When to use `--no-verify`:**
-- ✅ Emergency hotfix (production down)
-- ✅ Saving WIP at end of day
-- ❌ **NEVER** because "tests are annoying"
-- ❌ **NEVER** as regular practice
-
-#### Code Quality Markers (TODO/FIXME Policy)
-
-**BLOCKED** (commit fails):
-```python
-# FIXME: This is broken          ❌ Fix before commit
-# XXX: Dangerous hack            ❌ Remove or refactor
-# HACK: Temporary workaround     ❌ Implement properly
-# TEMP: Will remove later        ❌ Remove now
-# WIP: Work in progress          ❌ Complete or remove
-```
-
-**WARNED** (commit allowed, but strongly encouraged to fix):
-```python
-# TODO: Add rate limiting        ⚠️  Acceptable, but fix soon
-# TODO(maku): Optimize query     ✅ Better - has owner
-# TODO(maku): Add caching [#123] ✅ Best - has owner + ticket
-```
-
-**Why this matters:**
-- FIXME/HACK = broken code that shouldn't be committed
-- TODO = future work (acceptable but accumulates debt)
-- Loud warnings encourage fixing TODOs before they're forgotten
-
-### Database Migrations
-
-```bash
-# Helper script (recommended)
-./scripts/migrate.sh create "description"  # Create migration
-./scripts/migrate.sh up                    # Apply migrations
-./scripts/migrate.sh down                  # Rollback one
-./scripts/migrate.sh status                # Check status
-./scripts/migrate.sh history               # View history
-./scripts/migrate.sh reset                 # DANGER: Reset all
-
-# Direct Alembic commands (if needed)
-poetry run alembic revision --autogenerate -m "description"
-poetry run alembic upgrade head
-poetry run alembic downgrade -1
-```
-
-### Performance Tracing & Visualization
-
-**Viztracer** - Interactive execution flow visualization
-
-```bash
-# Trace a specific test (recommended)
-./scripts/trace.sh test tests/integration/test_diagnostic_flow.py
-
-# Trace curriculum loading
-./scripts/trace.sh script scripts/load_curriculum.py
-
-# Trace FastAPI server (make requests while running)
-./scripts/trace.sh server
-
-# View trace in browser
-./scripts/trace.sh view traces/test_trace_20260214_120000.json
-
-# List available traces
-./scripts/trace.sh list
-```
-
-**What you'll see:**
-- Function call timeline (which functions, in what order)
-- Execution timing (find bottlenecks)
-- Async task switching (FastAPI concurrency)
-- Database query timing
-- Claude API call duration
-- Prerequisite graph traversal patterns
-
-**Interactive viewer features:**
-- Zoom into specific time ranges
-- Filter by module/function
-- Flamegraph view (aggregate time spent)
-- Search for specific function calls
-
-### Verification & Quality Checks
-
-**Run all checks before committing:**
-
-```bash
-./scripts/verify.sh
-```
-
-This comprehensive script runs:
-- ✅ **Ruff Linter** - Code quality checks
-- ✅ **Ruff Formatter** - Code formatting verification
-- ✅ **MyPy Type Checker** - Static type checking
-- ✅ **Pytest Unit Tests** - Full test suite with coverage
-- ✅ **Alembic Migration Check** - Database migration verification
-- ✅ **Import Check** - Verifies all modules import correctly
-
-**All checks must pass (green) before pushing code.**
+**Current Coverage:**
+- Overall: 58%
+- flow_executor.py: 72%
+- whatsapp.py: 67%
 
 ---
 
-## API Documentation
+## 🚢 Production Deployment
 
-Once running, visit:
-- **Interactive docs**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **Health check**: http://localhost:8000/v1/health
+### Prerequisites
+- AWS CLI configured with `gapsense-prod` profile
+- Docker with buildx support
+- ECR repository: `607415053998.dkr.ecr.us-east-1.amazonaws.com/gapsense-web`
+- ECS cluster: `gapsense-prod` (us-east-1)
 
----
-
-## Key Modules
-
-### Diagnostic Engine (`src/gapsense/diagnostic/`)
-Orchestrates adaptive diagnostic sessions using Claude AI and the prerequisite graph.
-
-**Key algorithms:**
-- Backward tracing (B5 failure → test B4 → B2 → find root gap)
-- Cascade detection (55% of students: Place Value Collapse)
-- Confidence scoring (≥0.80 required for diagnosis)
-
-### Parent Engagement (`src/gapsense/engagement/`)
-WhatsApp messaging with Wolf/Aurino compliance.
-
-**Non-negotiable constraints:**
-- Strength-first framing
-- No deficit language ("behind", "struggling", "failing")
-- 3-minute activities, household materials only
-- GUARD-001 validation at temp=0.0
-
-### AI Service (`src/gapsense/ai/`)
-Multi-provider AI integration with automatic fallback for resilience.
-
-**AI Provider Fallback Chain:**
-1. **Anthropic Claude** (Primary) - Sonnet 4.5 / Haiku 4.5 with prompt caching (90% cost reduction)
-2. **xAI Grok** (Fallback) - Grok Beta via OpenAI-compatible API
-3. **Rule-based** (Final Fallback) - Deterministic algorithms when all AI providers fail
-
-**Key Features:**
-- Automatic provider failover (no downtime if primary provider is unavailable)
-- Unified client interface (`AIClient`) - one API for all providers
-- Graceful degradation to rule-based analysis if all AI providers fail
-- Logging to track which provider handled each request
-
-**13 prompts:**
-- DIAG-001/002/003: Diagnostic reasoning
-- PARENT-001/002/003: Parent messaging
-- GUARD-001: Compliance validation (blocking)
-- ANALYSIS-001/002: Exercise book, voice notes
-- TEACHER-001/002/003: Reports, conversation
-
-**Configuration:**
-Set API keys in `.env`:
-```bash
-ANTHROPIC_API_KEY=sk-ant-your-key-here  # Primary provider
-GROK_API_KEY=xai-your-key-here           # Fallback provider (optional)
-```
-
-If neither API key is set, system automatically uses rule-based fallbacks.
-
----
-
-## Deployment
-
-Deployed via AWS CDK to Cape Town region (af-south-1).
+### Build and Push Docker Image
 
 ```bash
-cd infrastructure/cdk
-cdk deploy --all
+# 1. Login to ECR
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin \
+  607415053998.dkr.ecr.us-east-1.amazonaws.com
+
+# 2. Build for production (linux/amd64 platform)
+docker buildx build \
+  --platform linux/amd64 \
+  --target production \
+  -t gapsense-web:latest \
+  -t 607415053998.dkr.ecr.us-east-1.amazonaws.com/gapsense-web:latest \
+  --load .
+
+# 3. Push to ECR
+docker push 607415053998.dkr.ecr.us-east-1.amazonaws.com/gapsense-web:latest
 ```
 
-**Infrastructure:**
-- Fargate (web + worker services)
-- RDS PostgreSQL 16
-- SQS FIFO queues
-- S3 (media storage)
-- Cognito (auth)
-- ALB (load balancing)
+### Deploy to ECS
+
+#### Option 1: Force New Deployment (Most Common)
+```bash
+# Deploy web service
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-web \
+  --force-new-deployment \
+  --region us-east-1
+
+# Deploy worker service
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-worker \
+  --force-new-deployment \
+  --region us-east-1
+```
+
+#### Option 2: Update Task Definition First
+```bash
+# Register new task definitions
+aws ecs register-task-definition \
+  --cli-input-json file:///tmp/ecs-task-web.json \
+  --region us-east-1 \
+  --query 'taskDefinition.[family,taskDefinitionArn,status]' \
+  --output table
+
+aws ecs register-task-definition \
+  --cli-input-json file:///tmp/ecs-task-worker.json \
+  --region us-east-1 \
+  --query 'taskDefinition.[family,taskDefinitionArn,status]' \
+  --output table
+
+# Update services with specific task definition version
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-web \
+  --task-definition gapsense-web:3 \
+  --force-new-deployment \
+  --region us-east-1
+
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-worker \
+  --task-definition gapsense-worker:3 \
+  --force-new-deployment \
+  --region us-east-1
+```
+
+### Monitoring and Verification
+
+```bash
+# Check service status
+aws ecs describe-services \
+  --cluster gapsense-prod \
+  --services gapsense-web gapsense-worker \
+  --region us-east-1 \
+  --query 'services[*].[serviceName,runningCount,desiredCount,deployments[0].rolloutState]' \
+  --output table
+
+# Monitor web logs (real-time)
+aws logs tail /ecs/gapsense-web \
+  --region us-east-1 \
+  --follow \
+  --format short
+
+# Monitor worker logs (real-time)
+aws logs tail /ecs/gapsense-worker \
+  --region us-east-1 \
+  --follow \
+  --format short
+
+# Check recent logs (last 5 minutes)
+aws logs tail /ecs/gapsense-web \
+  --region us-east-1 \
+  --since 5m \
+  --format short
+
+# Test health endpoint
+curl -s http://3.83.162.241:8000/health
+curl -s http://52.87.46.142:8000/health
+```
+
+### Database Migrations (Production)
+
+Run Alembic migrations via a one-off ECS Fargate task with a command override. This spins up a temporary container using the same image/secrets as the web service, runs the migration, and exits.
+
+```bash
+# 1. Get network config from the running web service
+aws ecs describe-services \
+  --cluster gapsense-prod \
+  --services gapsense-web \
+  --region us-east-1 \
+  --query 'services[0].networkConfiguration'
+
+# 2. Run migration as a one-off ECS task
+aws ecs run-task \
+  --cluster gapsense-prod \
+  --task-definition gapsense-web \
+  --launch-type FARGATE \
+  --network-configuration 'awsvpcConfiguration={subnets=[subnet-0ac74240c02834391],securityGroups=[sg-082576d47f78f2cf4],assignPublicIp=ENABLED}' \
+  --overrides '{"containerOverrides":[{"name":"gapsense-web","command":["alembic","upgrade","head"]}]}' \
+  --region us-east-1
+
+# 3. Monitor the task (get task ID from run-task output)
+aws ecs describe-tasks \
+  --cluster gapsense-prod \
+  --tasks <TASK_ID> \
+  --region us-east-1 \
+  --query 'tasks[0].{status:lastStatus,exitCode:containers[0].exitCode,reason:stoppedReason}'
+
+# 4. Verify in logs
+aws logs tail /ecs/gapsense-web \
+  --region us-east-1 \
+  --since 5m \
+  --format short | grep -i alembic
+```
+
+> **Note:** The migration task reuses the `gapsense-web` task definition, which already has the `DATABASE_URL` secret from AWS Secrets Manager. No need to pass credentials manually.
+
+### Production E2E Testing
+
+Run the E2E test against production from inside the local Docker container:
+
+```bash
+# Run production E2E test (pass env var with -e flag)
+docker compose exec \
+  -e E2E_BASE_URL=http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com \
+  web pytest tests/e2e/test_demo_flow_e2e.py::TestDemoFlowE2E::test_complete_demo_flow -xvs
+
+# Run local E2E test (no env var = uses ASGI transport)
+docker compose exec web pytest tests/e2e/test_demo_flow_e2e.py::TestDemoFlowE2E::test_complete_demo_flow -xvs
+```
+
+The production test:
+- Sends real HTTP requests to the ALB
+- Skips direct DB verification (polls dashboard instead)
+- Waits up to 120s for the worker to process the AI pipeline
+- Verifies the gap profile appears on the dashboard
+
+### Production URLs
+
+| Resource | URL |
+|----------|-----|
+| ALB | `http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com` |
+| Health | `http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com/health` |
+| Demo Dashboard | `http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com/demo/reports/<phone>` |
+
+### Secrets Management
+
+Secrets are stored in AWS Secrets Manager and injected into ECS tasks:
+
+| Secret | ARN Path |
+|--------|----------|
+| DATABASE_URL | `gapsense/prod/database` |
+| ANTHROPIC_API_KEY | `gapsense/prod/anthropic` |
+| GROK_API_KEY | `gapsense/prod/grok` |
+| TWILIO_* | `gapsense/prod/twilio` |
+
+```bash
+# List all production secrets
+aws secretsmanager list-secrets \
+  --region us-east-1 \
+  --query 'SecretList[?starts_with(Name, `gapsense/prod/`)].[Name]' \
+  --output table
+```
+
+### Infrastructure Setup (One-Time)
+
+```bash
+# Create S3 bucket for media
+aws s3api create-bucket \
+  --bucket gapsense-media-prod \
+  --region us-east-1
+
+# Enable versioning
+aws s3api put-bucket-versioning \
+  --bucket gapsense-media-prod \
+  --versioning-configuration Status=Enabled
+
+# Enable encryption
+aws s3api put-bucket-encryption \
+  --bucket gapsense-media-prod \
+  --server-side-encryption-configuration '{
+    "Rules": [{
+      "ApplyServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+      }
+    }]
+  }'
+
+# Create CloudWatch log groups
+aws logs create-log-group \
+  --log-group-name /ecs/gapsense-web \
+  --region us-east-1
+
+aws logs create-log-group \
+  --log-group-name /ecs/gapsense-worker \
+  --region us-east-1
+
+# List secrets (verify configuration)
+aws secretsmanager list-secrets \
+  --region us-east-1 \
+  --query 'SecretList[?starts_with(Name, `gapsense/prod/`)].[Name,ARN]' \
+  --output table
+```
+
+### Deployment Checklist
+
+Before deploying to production:
+
+1. ✅ **Test locally**: Run E2E tests with `docker compose`
+2. ✅ **Review changes**: Check `git diff` and `git status`
+3. ✅ **Build image**: Ensure `docker buildx build` succeeds
+4. ✅ **Push to ECR**: Verify image uploaded successfully
+5. ✅ **Deploy services**: Update both web and worker services
+6. ✅ **Monitor logs**: Watch for errors in first 2-3 minutes
+7. ✅ **Test endpoints**: Verify `/health` returns 200
+8. ✅ **Check RDS**: Ensure database connection works
+9. ✅ **Test WhatsApp**: Send test message to verify webhook
+10. ✅ **Monitor metrics**: Check CloudWatch for errors/performance
+
+### Rollback Procedure
+
+```bash
+# List recent task definition versions
+aws ecs list-task-definitions \
+  --family-prefix gapsense-web \
+  --sort DESC \
+  --max-items 5 \
+  --region us-east-1
+
+# Rollback to previous version
+aws ecs update-service \
+  --cluster gapsense-prod \
+  --service gapsense-web \
+  --task-definition gapsense-web:2 \
+  --force-new-deployment \
+  --region us-east-1
+```
 
 ---
 
-## Security & Privacy
+## 📚 Key Documents
 
-**Ghana Data Protection Act Compliance:**
-- ✅ Minimal data collection (no last names, addresses, IDs)
-- ✅ Encryption at rest (RDS, S3) and in transit (TLS 1.3)
-- ✅ No PII in logs
-- ✅ Right to deletion
-- ✅ 2-year retention, then anonymize
+### Specifications (Source of Truth):
+- **[GapSense_MVP_Blueprint.docx](../gapsense-data/business/GapSense_MVP_Blueprint.docx)** — The actual MVP (8 weeks, $700)
+- **[gapsense_prompt_library_v1.1.json](../gapsense-data/prompts/)** — All 13 AI prompts
+- **[gapsense_prerequisite_graph_v1.2.json](../gapsense-data/curriculum/)** — NaCCA curriculum
 
-**Proprietary IP Protection:**
-- Separate `gapsense-data` repo (private)
-- Pre-commit hooks block sensitive files
-- Aggressive .gitignore
+### Current Status:
+- **[mvp_specification_audit_CRITICAL.md](docs/mvp_specification_audit_CRITICAL.md)** — Gap analysis
+- **[mvp_user_flows_realistic_status.md](docs/mvp_user_flows_realistic_status.md)** — Real-world flows
 
----
-
-## Contributing
-
-This is proprietary software. Internal team only.
-
-**Code standards:**
-- Follow `CODING_STANDARDS.md`
-- Test critical paths (GUARD-001, graph traversal)
-- Type hints on all functions (MyPy strict)
-- Semantic commits
+### Architecture:
+- **[ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)** — System design
+- **[gapsense_adr.md](docs/architecture/gapsense_adr.md)** — Architecture decisions
 
 ---
 
-## License
+## 🎯 MVP Success Metrics
 
-Proprietary - Licensed to ViztaEdu under GapSense Partnership Agreement.
+From MVP Blueprint, Section 6:
 
----
+**Question 1: Does the AI diagnostic work?**
+- Metric: 75%+ concordance between AI and expert teacher on root cause identification
+- Test: 100 exercise book scans validated by expert teachers
 
-## Support
+**Question 2: Do humans use it?**
+- Teachers: 7/10 complete 2+ scans/week for 8+ of 12 weeks
+- Parents: 60%+ respond to 3+ of 5 weekly prompts after month 1
+- Wolf/Aurino: Parents with no formal education engage at 40%+ of overall rate
 
-- **Documentation**: `docs/`
-- **Issues**: Internal tracker
-- **Contact**: maku@gapsense.app
-
----
-
-## Acknowledgments
-
-- **UNICEF StartUp Lab Cohort 6** - Technical validation & pilot funding
-- **ViztaEdu** - Partnership & distribution
-- **NaCCA** - Ghana curriculum standards
-- **Wolf & Aurino (2020)** - Evidence-based parent engagement research
+**Question 3: Do students improve?**
+- Metric: 0.15+ standard deviation improvement on re-scan after 12 weeks
+- Stronger signal: Students with active parent engagement improve more
 
 ---
 
-**Built for Ghana. Powered by AI. Grounded in dignity.**
+## 📝 License
+
+Proprietary. © 2026 GapSense. All rights reserved.
+
+---
+
+## 🤝 Contributing
+
+This is a private project. Contact the team for access.
+
+---
+
+**Last Updated:** February 16, 2026
+**MVP Target:** April 2026 (8-10 weeks from now)

@@ -1,7 +1,7 @@
 -- ============================================================================
 -- GAPSENSE DATA MODEL v1.0
 -- PostgreSQL Schema for AI-Powered Foundational Learning Diagnostic Platform
--- 
+--
 -- Author: Maku Mazakpe
 -- Date: 2026-02-13
 -- License: Proprietary IP — Licensed to ViztaEdu under GapSense Partnership
@@ -57,24 +57,24 @@ CREATE TABLE curriculum_nodes (
     strand_id       INT NOT NULL REFERENCES curriculum_strands(id),
     sub_strand_id   INT NOT NULL REFERENCES curriculum_sub_strands(id),
     content_standard_number SMALLINT NOT NULL,
-    
+
     title           VARCHAR(300) NOT NULL,        -- Human-readable title
     description     TEXT NOT NULL,                 -- Full description of what mastery looks like
-    
+
     severity        SMALLINT NOT NULL CHECK (severity BETWEEN 1 AND 5),
     severity_rationale TEXT,                       -- Why this severity rating
-    
+
     -- Diagnostic configuration
     questions_required SMALLINT DEFAULT 2,         -- Min questions to confirm mastery/gap
     confidence_threshold DECIMAL(3,2) DEFAULT 0.80,
-    
+
     -- Ghana-specific evidence
     ghana_evidence  TEXT,                          -- EGMA/NEA data, research citations
-    
+
     -- Status tracking
-    population_status VARCHAR(20) DEFAULT 'skeleton' 
+    population_status VARCHAR(20) DEFAULT 'skeleton'
         CHECK (population_status IN ('skeleton', 'partial', 'full', 'validated')),
-    
+
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -106,11 +106,11 @@ CREATE TABLE curriculum_indicators (
     node_id         UUID NOT NULL REFERENCES curriculum_nodes(id) ON DELETE CASCADE,
     indicator_code  VARCHAR(25) NOT NULL UNIQUE,   -- e.g., 'B1.1.1.1.1'
     title           VARCHAR(300) NOT NULL,
-    
+
     -- Diagnostic integration
     diagnostic_question_type VARCHAR(30),           -- 'oral_counting', 'computation', 'word_problem', etc.
     diagnostic_prompt_example TEXT,                  -- Example diagnostic question
-    
+
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -178,17 +178,17 @@ CREATE TABLE schools (
     school_type     VARCHAR(20) DEFAULT 'primary'
         CHECK (school_type IN ('primary', 'jhs', 'combined', 'private')),
     ges_school_code VARCHAR(30),
-    
+
     -- Contact
     phone           VARCHAR(20),
     location_lat    DECIMAL(10,7),
     location_lng    DECIMAL(10,7),
-    
+
     -- Metadata
     total_enrollment INT,
     language_of_instruction VARCHAR(30) DEFAULT 'English',  -- Primary LOI
     dominant_l1     VARCHAR(30),                              -- Most common mother tongue
-    
+
     is_active       BOOLEAN DEFAULT TRUE,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
@@ -197,20 +197,20 @@ CREATE TABLE schools (
 CREATE TABLE teachers (
     id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     school_id       UUID NOT NULL REFERENCES schools(id),
-    
+
     first_name      VARCHAR(100) NOT NULL,
     last_name       VARCHAR(100) NOT NULL,
     phone           VARCHAR(20) NOT NULL,              -- WhatsApp number
     phone_verified  BOOLEAN DEFAULT FALSE,
-    
+
     grade_taught    VARCHAR(5),                         -- Current grade (B1-B9)
     subjects        VARCHAR(100)[],                     -- Array of subjects
-    
+
     -- GapSense engagement
     onboarded_at    TIMESTAMPTZ,
     last_active_at  TIMESTAMPTZ,
     total_students_diagnosed INT DEFAULT 0,
-    
+
     is_active       BOOLEAN DEFAULT TRUE,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
@@ -218,33 +218,33 @@ CREATE TABLE teachers (
 
 CREATE TABLE parents (
     id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    
+
     -- Minimal required info (dignity-first: don't ask for more than needed)
     phone           VARCHAR(20) NOT NULL UNIQUE,       -- WhatsApp number (primary identifier)
     phone_verified  BOOLEAN DEFAULT FALSE,
     preferred_name  VARCHAR(100),                       -- How they want to be addressed
-    
+
     -- Language (critical for engagement)
     preferred_language VARCHAR(30) DEFAULT 'en',        -- ISO code or 'tw', 'ee', 'ga', 'dag'
     literacy_level  VARCHAR(20),                         -- 'literate', 'semi_literate', 'non_literate'
         -- Determines message complexity; NEVER shared externally
-    
+
     -- Location
     district_id     INT REFERENCES districts(id),
     community       VARCHAR(200),
-    
+
     -- Engagement tracking
     onboarded_at    TIMESTAMPTZ,
     last_interaction_at TIMESTAMPTZ,
     total_interactions INT DEFAULT 0,
     engagement_score DECIMAL(4,2),                       -- Rolling engagement metric
-    
+
     -- Wolf/Aurino compliance
     opted_in        BOOLEAN DEFAULT FALSE,              -- Explicit WhatsApp opt-in
     opted_in_at     TIMESTAMPTZ,
     opted_out       BOOLEAN DEFAULT FALSE,
     opted_out_at    TIMESTAMPTZ,
-    
+
     is_active       BOOLEAN DEFAULT TRUE,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
@@ -254,33 +254,33 @@ CREATE INDEX idx_parents_phone ON parents(phone);
 
 CREATE TABLE students (
     id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    
+
     -- Identity (minimal, dignity-first)
     first_name      VARCHAR(100) NOT NULL,
     -- No last name required (some parents may not want to share)
     age             SMALLINT,                            -- Approximate age
     gender          VARCHAR(10) CHECK (gender IN ('male', 'female', 'other', NULL)),
-    
+
     -- Academic context
     school_id       UUID REFERENCES schools(id),
     current_grade   VARCHAR(5) NOT NULL,                 -- B1-B9
     grade_as_of     DATE DEFAULT CURRENT_DATE,           -- When this grade was recorded
     teacher_id      UUID REFERENCES teachers(id),
-    
+
     -- Parent linkage
     primary_parent_id UUID NOT NULL REFERENCES parents(id),
     secondary_parent_id UUID REFERENCES parents(id),
-    
+
     -- Language context (critical for diagnosis)
     home_language   VARCHAR(30),                          -- L1 spoken at home
     school_language VARCHAR(30) DEFAULT 'English',        -- LOI at school
-    
+
     -- Diagnostic state
     latest_gap_profile_id UUID,                          -- FK added after gap_profiles table
     diagnosis_count INT DEFAULT 0,
     first_diagnosed_at TIMESTAMPTZ,
     last_diagnosed_at TIMESTAMPTZ,
-    
+
     is_active       BOOLEAN DEFAULT TRUE,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
@@ -299,41 +299,41 @@ CREATE TABLE diagnostic_sessions (
     -- Each time a student is assessed
     id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     student_id      UUID NOT NULL REFERENCES students(id),
-    
+
     -- Session context
     initiated_by    VARCHAR(20) NOT NULL                  -- 'parent', 'teacher', 'system'
         CHECK (initiated_by IN ('parent', 'teacher', 'system', 'self')),
     channel         VARCHAR(20) DEFAULT 'whatsapp'
         CHECK (channel IN ('whatsapp', 'web', 'app', 'sms', 'paper')),
-    
+
     -- Session state
     status          VARCHAR(20) DEFAULT 'in_progress'
         CHECK (status IN ('in_progress', 'completed', 'abandoned', 'timed_out')),
     started_at      TIMESTAMPTZ DEFAULT NOW(),
     completed_at    TIMESTAMPTZ,
-    
+
     -- Entry point
     entry_grade     VARCHAR(5) NOT NULL,                  -- Grade level started at
     entry_node_id   UUID REFERENCES curriculum_nodes(id), -- First node tested
-    
+
     -- Results
     total_questions INT DEFAULT 0,
     correct_answers INT DEFAULT 0,
     nodes_tested    UUID[] DEFAULT '{}',                   -- Array of tested node IDs
     nodes_mastered  UUID[] DEFAULT '{}',
     nodes_gap       UUID[] DEFAULT '{}',
-    
+
     -- Root cause identified
     root_gap_node_id UUID REFERENCES curriculum_nodes(id),
     root_gap_confidence DECIMAL(3,2),                     -- 0.0-1.0
     cascade_path_id INT REFERENCES cascade_paths(id),     -- Which cascade pattern matched
-    
+
     -- AI metadata
     prompt_version_id UUID,                                -- FK to prompt_versions
     model_used      VARCHAR(50),                           -- e.g., 'claude-sonnet-4-5'
     total_tokens    INT,
     ai_reasoning_log JSONB,                                -- Full chain-of-thought (encrypted at rest)
-    
+
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -345,29 +345,29 @@ CREATE TABLE diagnostic_questions (
     -- Individual questions within a session
     id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     session_id      UUID NOT NULL REFERENCES diagnostic_sessions(id) ON DELETE CASCADE,
-    
+
     -- Question context
     question_order  SMALLINT NOT NULL,                    -- Order within session
     node_id         UUID NOT NULL REFERENCES curriculum_nodes(id),
     indicator_id    UUID REFERENCES curriculum_indicators(id),
-    
+
     -- Question content
     question_text   TEXT NOT NULL,                         -- The actual question asked
     question_type   VARCHAR(30) NOT NULL,                  -- 'multiple_choice', 'free_response', 'image', 'voice'
     question_media_url TEXT,                               -- Image/audio if applicable
     expected_answer TEXT,
-    
+
     -- Response
     student_response TEXT,
     response_media_url TEXT,                               -- Photo of exercise book, voice note
     is_correct      BOOLEAN,
     response_time_seconds INT,                             -- How long student took
-    
+
     -- AI analysis
     error_pattern_detected VARCHAR(100),                   -- Which error pattern matched
     misconception_id VARCHAR(30) REFERENCES curriculum_misconceptions(id),
     ai_analysis     JSONB,                                 -- Detailed AI reasoning about the response
-    
+
     asked_at        TIMESTAMPTZ DEFAULT NOW(),
     answered_at     TIMESTAMPTZ
 );
@@ -380,26 +380,26 @@ CREATE TABLE gap_profiles (
     id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     student_id      UUID NOT NULL REFERENCES students(id),
     session_id      UUID NOT NULL REFERENCES diagnostic_sessions(id),
-    
+
     -- Gap summary
     mastered_nodes  UUID[] NOT NULL DEFAULT '{}',         -- Nodes confirmed mastered
     gap_nodes       UUID[] NOT NULL DEFAULT '{}',         -- Nodes with confirmed gaps
     uncertain_nodes UUID[] NOT NULL DEFAULT '{}',         -- Need more data
-    
+
     -- Root cause analysis
     primary_gap_node UUID REFERENCES curriculum_nodes(id),  -- The deepest root gap
     primary_cascade VARCHAR(100),                            -- Which cascade path
     secondary_gaps  UUID[] DEFAULT '{}',                     -- Additional gap roots
-    
+
     -- Actionable output
     recommended_focus_node UUID REFERENCES curriculum_nodes(id), -- What to work on FIRST
     recommended_activity TEXT,                                    -- Specific activity for parent
     estimated_grade_level VARCHAR(5),                             -- Functional grade level
     grade_gap       SMALLINT,                                    -- Difference from enrolled grade
-    
+
     -- Confidence
     overall_confidence DECIMAL(3,2),                       -- How confident we are in this profile
-    
+
     is_current      BOOLEAN DEFAULT TRUE,                  -- Only one current profile per student
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -408,7 +408,7 @@ CREATE INDEX idx_gap_profiles_student ON gap_profiles(student_id);
 CREATE INDEX idx_gap_profiles_current ON gap_profiles(student_id) WHERE is_current = TRUE;
 
 -- Add FK from students to gap_profiles
-ALTER TABLE students ADD CONSTRAINT fk_latest_gap_profile 
+ALTER TABLE students ADD CONSTRAINT fk_latest_gap_profile
     FOREIGN KEY (latest_gap_profile_id) REFERENCES gap_profiles(id);
 
 
@@ -422,32 +422,32 @@ CREATE TABLE parent_interactions (
     id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     parent_id       UUID NOT NULL REFERENCES parents(id),
     student_id      UUID REFERENCES students(id),
-    
+
     -- Message metadata
     direction       VARCHAR(10) NOT NULL CHECK (direction IN ('inbound', 'outbound')),
     channel         VARCHAR(20) DEFAULT 'whatsapp',
     wa_message_id   VARCHAR(100),                          -- WhatsApp message ID for tracking
-    
+
     -- Content
     message_type    VARCHAR(20) NOT NULL,                   -- 'text', 'image', 'voice', 'button', 'list', 'template'
     interaction_purpose VARCHAR(30) NOT NULL,               -- 'diagnostic', 'activity', 'check_in', 'onboarding', 'feedback', 'reminder'
-    
+
     message_content TEXT,                                   -- Actual message text (encrypted at rest)
     media_url       TEXT,                                   -- Media attachment URL
     template_name   VARCHAR(100),                           -- WhatsApp template name if applicable
-    
+
     -- Language
     language_used   VARCHAR(30),                            -- Language this message was in
-    
+
     -- AI processing
     ai_generated    BOOLEAN DEFAULT FALSE,
     prompt_version_id UUID,
     sentiment_score DECIMAL(3,2),                           -- -1.0 to 1.0
-    
+
     -- Status
     delivery_status VARCHAR(20) DEFAULT 'sent'
         CHECK (delivery_status IN ('queued', 'sent', 'delivered', 'read', 'failed')),
-    
+
     sent_at         TIMESTAMPTZ DEFAULT NOW(),
     delivered_at    TIMESTAMPTZ,
     read_at         TIMESTAMPTZ
@@ -463,23 +463,23 @@ CREATE TABLE parent_activities (
     parent_id       UUID NOT NULL REFERENCES parents(id),
     student_id      UUID NOT NULL REFERENCES students(id),
     gap_profile_id  UUID REFERENCES gap_profiles(id),
-    
+
     -- Activity details
     focus_node_id   UUID NOT NULL REFERENCES curriculum_nodes(id),
     activity_title  VARCHAR(200) NOT NULL,
     activity_description TEXT NOT NULL,                      -- The 3-minute activity
     materials_needed TEXT,                                   -- What parent needs (bottle caps, paper, etc.)
     estimated_minutes SMALLINT DEFAULT 3,
-    
+
     -- Language
     language        VARCHAR(30) NOT NULL,
-    
+
     -- Tracking
     sent_at         TIMESTAMPTZ DEFAULT NOW(),
     started_at      TIMESTAMPTZ,                            -- Parent confirmed they started
     completed_at    TIMESTAMPTZ,                            -- Parent confirmed completion
     parent_feedback TEXT,                                    -- Optional feedback from parent
-    
+
     -- Effectiveness
     follow_up_session_id UUID REFERENCES diagnostic_sessions(id),
     skill_improved  BOOLEAN                                 -- Did follow-up show improvement?
@@ -503,40 +503,40 @@ CREATE TABLE prompt_categories (
 CREATE TABLE prompt_versions (
     id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     category_id     INT NOT NULL REFERENCES prompt_categories(id),
-    
+
     -- Version tracking
     version         VARCHAR(20) NOT NULL,                   -- Semantic versioning: '1.0.0'
     name            VARCHAR(200) NOT NULL,                  -- e.g., 'Diagnostic Reasoning Prompt v2'
-    
+
     -- Prompt content
     system_prompt   TEXT NOT NULL,                           -- The actual system prompt
     user_template   TEXT,                                    -- Template for user messages (with {{placeholders}})
     output_schema   JSONB,                                   -- Expected output format
-    
+
     -- Configuration
     model_target    VARCHAR(50) DEFAULT 'claude-sonnet-4-5', -- Which model this is optimized for
     temperature     DECIMAL(3,2) DEFAULT 0.3,
     max_tokens      INT DEFAULT 2048,
-    
+
     -- Quality tracking
     test_cases_passed INT DEFAULT 0,
     test_cases_total INT DEFAULT 0,
     accuracy_score  DECIMAL(4,2),                            -- % accuracy on test cases
-    
+
     -- Lifecycle
     status          VARCHAR(20) DEFAULT 'draft'
         CHECK (status IN ('draft', 'testing', 'active', 'deprecated')),
     activated_at    TIMESTAMPTZ,
     deprecated_at   TIMESTAMPTZ,
     deprecated_reason TEXT,
-    
+
     -- Metadata
     created_by      VARCHAR(100),
     changelog       TEXT,
-    
+
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW(),
-    
+
     UNIQUE (category_id, version)
 );
 
@@ -546,17 +546,17 @@ CREATE TABLE prompt_test_cases (
     -- Test scenarios for validating prompts
     id              UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     prompt_version_id UUID NOT NULL REFERENCES prompt_versions(id) ON DELETE CASCADE,
-    
+
     -- Test input
     test_name       VARCHAR(200) NOT NULL,
     test_input      JSONB NOT NULL,                          -- Simulated input data
     expected_output JSONB NOT NULL,                           -- What the prompt should produce
-    
+
     -- Test results
     actual_output   JSONB,
     passed          BOOLEAN,
     notes           TEXT,
-    
+
     last_run_at     TIMESTAMPTZ,
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -571,10 +571,10 @@ CREATE TABLE school_analytics (
     id              SERIAL PRIMARY KEY,
     school_id       UUID NOT NULL REFERENCES schools(id),
     period          DATE NOT NULL,                           -- Month start date
-    
+
     total_students_diagnosed INT DEFAULT 0,
     total_sessions  INT DEFAULT 0,
-    
+
     -- Gap distribution
     top_gap_node_1  UUID REFERENCES curriculum_nodes(id),
     top_gap_node_1_count INT,
@@ -582,21 +582,21 @@ CREATE TABLE school_analytics (
     top_gap_node_2_count INT,
     top_gap_node_3  UUID REFERENCES curriculum_nodes(id),
     top_gap_node_3_count INT,
-    
+
     -- Cascade distribution
     pct_place_value_cascade DECIMAL(5,2),
     pct_fraction_cascade DECIMAL(5,2),
     pct_subtraction_cascade DECIMAL(5,2),
     pct_multiplicative_cascade DECIMAL(5,2),
-    
+
     -- Engagement
     avg_parent_engagement_score DECIMAL(4,2),
     pct_activities_completed DECIMAL(5,2),
     pct_skills_improved DECIMAL(5,2),
-    
+
     -- Grade level
     avg_grade_gap   DECIMAL(3,1),                            -- Average gap between enrolled and functional grade
-    
+
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (school_id, period)
 );
@@ -605,13 +605,13 @@ CREATE TABLE district_analytics (
     id              SERIAL PRIMARY KEY,
     district_id     INT NOT NULL REFERENCES districts(id),
     period          DATE NOT NULL,
-    
+
     total_schools_active INT DEFAULT 0,
     total_students_diagnosed INT DEFAULT 0,
     avg_grade_gap   DECIMAL(3,1),
-    
+
     top_gap_nodes   UUID[],                                  -- Most common gaps across district
-    
+
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (district_id, period)
 );
@@ -673,7 +673,7 @@ INSERT INTO curriculum_strands (strand_number, name, color_hex, description) VAL
 -- ============================================================================
 
 INSERT INTO system_config (key, value, description) VALUES
-('diagnostic.priority_screening_nodes', 
+('diagnostic.priority_screening_nodes',
  '["B2.1.1.1", "B1.1.2.2", "B2.1.2.2", "B2.1.3.1", "B3.1.3.1", "B4.1.3.1"]',
  'These 6 nodes sit at the roots of the 4 critical cascade paths. Test FIRST for any child regardless of grade.');
 
@@ -684,7 +684,7 @@ INSERT INTO system_config (key, value, description) VALUES
 
 -- View: Student's current gap profile with human-readable info
 CREATE VIEW v_student_gap_summary AS
-SELECT 
+SELECT
     s.id AS student_id,
     s.first_name,
     s.current_grade,
@@ -710,7 +710,7 @@ WHERE s.is_active = TRUE;
 
 -- View: School-level gap distribution
 CREATE VIEW v_school_gap_distribution AS
-SELECT 
+SELECT
     sc.id AS school_id,
     sc.name AS school_name,
     s.current_grade,

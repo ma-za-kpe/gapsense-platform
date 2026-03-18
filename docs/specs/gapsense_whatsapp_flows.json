@@ -18,7 +18,7 @@
 
   "templates": {
     "description": "WhatsApp message templates requiring Meta pre-approval. These initiate conversations or re-engage after 24h window.",
-    
+
     "TMPL-ONBOARD-001": {
       "name": "gapsense_welcome",
       "language": "en",
