@@ -2,31 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Mobile Viewport - Optimized for iPhone X+ and modern devices -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-
-    <!-- Theme Color - WhatsApp green for mobile browsers -->
-    <meta name="theme-color" content="#25D366">
-    <meta name="msapplication-TileColor" content="#25D366">
 
     <!-- Primary Meta Tags -->
     <title>GapSense - Live Demo | AI Learning Gap Diagnostics</title>
     <meta name="title" content="GapSense - Live Demo | AI Learning Gap Diagnostics">
-    <meta name="description" content="Try GapSense live! Upload a student exercise book photo and see AI analyze math gaps in 8 seconds. Built for UNICEF StartUp Lab Cohort 6.">
+    <meta name="description" content="Try GapSense live! Upload a student exercise book photo and see AI analyze math gaps + generate remediation exercises in ~60 seconds. Built for UNICEF StartUp Lab Cohort 6.">
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com/demo">
     <meta property="og:title" content="GapSense - Live Demo | AI Learning Gap Diagnostics">
-    <meta property="og:description" content="Try GapSense live! Upload a student exercise book photo and see AI analyze math gaps in 8 seconds. Built for UNICEF StartUp Lab Cohort 6.">
+    <meta property="og:description" content="Try GapSense live! Upload a student exercise book photo and see AI analyze math gaps + generate remediation exercises in ~60 seconds. Built for UNICEF StartUp Lab Cohort 6.">
     <meta property="og:site_name" content="GapSense">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com/demo">
     <meta property="twitter:title" content="GapSense - Live Demo | AI Learning Gap Diagnostics">
-    <meta property="twitter:description" content="Try GapSense live! Upload a student exercise book photo and see AI analyze math gaps in 8 seconds. Built for UNICEF StartUp Lab Cohort 6.">
+    <meta property="twitter:description" content="Try GapSense live! Upload a student exercise book photo and see AI analyze math gaps + generate remediation exercises in ~60 seconds. Built for UNICEF StartUp Lab Cohort 6.">
 
     <!-- Mobile Web App -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -34,36 +29,1216 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="GapSense Demo">
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <!-- PWA Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
-    <link rel="apple-touch-icon" href="/icon-192.png">
+        /* ===== ACCESSIBILITY STYLES ===== */
 
-    <link rel="stylesheet" href="/frontend/css/demo.css">
+        /* Screen reader only text */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Skip to main content link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #25D366;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 0 0 4px 0;
+            z-index: 100000;
+            transition: top 0.3s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
+        /* Enhanced focus styles for keyboard navigation */
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible {
+            outline: 3px solid #25D366;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.2);
+        }
+
+        /* Reduced motion for users who prefer it */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            button, .quick-btn, .icon-btn {
+                border: 2px solid currentColor;
+            }
+        }
+
+        /* ===== MOBILE HAMBURGER NAVIGATION ===== */
+        .mobile-nav {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10000;
+            display: none;
+        }
+
+        .hamburger-btn {
+            width: 48px;
+            height: 48px;
+            background: #25D366;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 5px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn:hover {
+            background: #128C7E;
+            transform: scale(1.05);
+        }
+
+        .hamburger-btn span {
+            width: 24px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(7px, 7px);
+        }
+
+        .hamburger-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        .nav-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            padding: 80px 20px 20px;
+            overflow-y: auto;
+            z-index: 9999;
+        }
+
+        .nav-menu.active {
+            transform: translateX(0);
+        }
+
+        .nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 9998;
+        }
+
+        .nav-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .nav-menu-item {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .nav-menu-item:hover {
+            background: #E8F5E9;
+            color: #25D366;
+            transform: translateX(5px);
+        }
+
+        .nav-menu-item.active {
+            background: #25D366;
+            color: white;
+        }
+
+        .nav-menu-divider {
+            height: 1px;
+            background: #eee;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-nav {
+                display: block;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #F8F9FA 0%, #E8F5E9 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Two-column layout */
+        .demo-wrapper {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+            height: calc(100vh - 40px);
+            margin: 0 auto;
+        }
+
+        /* Phone container (left column) */
+        .phone-container {
+            width: 420px;
+            min-width: 380px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Slideshow container (right column) */
+        .slideshow-container {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slideshow-header {
+            padding: 20px;
+            border-bottom: 1px solid #e4e6eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slideshow-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #25D366;
+        }
+
+        .expand-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: #F8F9FA;
+            color: #25D366;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+        }
+
+        .expand-btn:hover {
+            background: #25D366;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .slides-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #F8F9FA;
+        }
+
+        .slides-track {
+            display: flex;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        /* Typography System */
+        .slide h1 {
+            font-size: 42px;
+            font-weight: 700;
+            color: #25D366;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .slide h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #25D366;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+
+        .slide h3 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #25D366;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .slide .stat {
+            font-size: 64px;
+            font-weight: 700;
+            color: #E8B923;
+            margin: 20px 0;
+            line-height: 1;
+        }
+
+        .slide p {
+            font-size: 17px;
+            color: #34495E;
+            line-height: 1.7;
+            max-width: 700px;
+            margin: 0 auto 12px;
+        }
+
+        .slide .caption {
+            font-size: 14px;
+            color: #7F8C8D;
+            line-height: 1.5;
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        .slide .highlight {
+            font-size: 19px;
+            font-weight: 600;
+            color: #E8B923;
+        }
+
+        .slide ul {
+            text-align: left;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .slide ul li {
+            font-size: 17px;
+            color: #34495E;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+
+        /* Visual Cards for Grid Layouts */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 24px;
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s;
+            border: 1px solid #E8F5E9;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(37, 211, 102, 0.15);
+            border-color: #25D366;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #25D366;
+        }
+
+        .card-body {
+            font-size: 15px;
+            color: #34495E;
+            line-height: 1.6;
+        }
+
+        /* Number Pills */
+        .number-pill {
+            display: inline-block;
+            background: #E8B923;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* Section Spacing */
+        .section {
+            margin-top: 32px;
+        }
+
+        .section-small {
+            margin-top: 24px;
+        }
+
+        /* Navigation buttons */
+        .slide-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(37, 211, 102, 0.9);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .slide-nav:hover {
+            background: #25D366;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .slide-nav.prev {
+            left: 20px;
+        }
+
+        .slide-nav.next {
+            right: 20px;
+        }
+
+        /* Slide controls footer */
+        .slide-controls {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e4e6eb;
+            background: white;
+        }
+
+        .slide-dots {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #D0D5DD;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 4px;
+        }
+
+        .dot.active {
+            background: #E8B923;
+            width: 40px;
+            border-radius: 8px;
+        }
+
+        .slide-counter {
+            font-size: 14px;
+            color: #667781;
+            font-weight: 500;
+        }
+
+        /* Fullscreen modal */
+        .fullscreen-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fullscreen-modal.show {
+            display: flex;
+        }
+
+        .fullscreen-content {
+            width: 90%;
+            height: 90%;
+            background: white;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fullscreen-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 10;
+            transition: all 0.2s;
+        }
+
+        .fullscreen-close:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(1.1);
+        }
+
+        /* WhatsApp UI styles (from original) */
+        .header {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: #f0f2f5;
+            border-bottom: 1px solid #e4e6eb;
+            overflow-x: auto;
+        }
+
+        .quick-btn {
+            background: white;
+            border: 1px solid #25D366;
+            color: #25D366;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            min-height: 44px;
+        }
+
+        .quick-btn:hover {
+            background: #25D366;
+            color: white;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #e5ddd5;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4ccc4' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.received .message-bubble {
+            background: white;
+            border-bottom-left-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.sent .message-bubble {
+            background: #dcf8c6;
+            border-bottom-right-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #667781;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .input-area {
+            background: #f0f2f5;
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            background: white;
+            border-radius: 24px;
+            padding: 8px 12px;
+        }
+
+        #messageInput {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            resize: none;
+            max-height: 100px;
+            font-family: inherit;
+        }
+
+        .icon-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: #25D366;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 18px;
+        }
+
+        .icon-btn:hover {
+            background: #128C7E;
+            transform: scale(1.05);
+        }
+
+        .icon-btn.secondary {
+            background: #667781;
+        }
+
+        .icon-btn.secondary:hover {
+            background: #54656f;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 14px;
+            background: white;
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        .typing-indicator.show {
+            display: flex;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667781;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .whatsapp-button {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            margin: 6px 0;
+            background: #ffffff;
+            border: 1px solid #25D366;
+            border-radius: 8px;
+            color: #25D366;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .whatsapp-button:hover {
+            background: #25D366;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+        }
+
+        .button-container {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .demo-wrapper {
+                flex-direction: column;
+                height: auto;
+                max-height: none;
+            }
+
+            .phone-container {
+                max-width: 100%;
+                height: 600px;
+            }
+
+            .slideshow-container {
+                height: 500px;
+            }
+        }
+
+        /* Tablet responsiveness */
+        @media (max-width: 1024px) {
+            body {
+                padding: 10px;
+            }
+
+            .demo-wrapper {
+                flex-direction: column;
+                height: auto;
+                gap: 15px;
+            }
+
+            .phone-container {
+                width: 100%;
+                min-width: 100%;
+                height: 600px;
+            }
+
+            .slideshow-container {
+                height: 500px;
+            }
+
+            #messageInput {
+                font-size: 16px;
+            }
+
+            .slide {
+                padding: 40px 24px;
+            }
+
+            .slide h1 {
+                font-size: 32px !important;
+                margin-bottom: 16px !important;
+            }
+
+            .slide h2 {
+                font-size: 24px !important;
+            }
+
+            .slide h3 {
+                font-size: 18px !important;
+            }
+
+            .slide .stat {
+                font-size: 48px !important;
+                margin: 16px 0 !important;
+            }
+
+            .slide p {
+                font-size: 15px !important;
+            }
+
+            .slide .highlight {
+                font-size: 17px !important;
+            }
+
+            .slide ul li {
+                font-size: 15px !important;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .slide-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .slide-nav.prev {
+                left: 10px;
+            }
+
+            .slide-nav.next {
+                right: 10px;
+            }
+
+            .number-pill {
+                font-size: 16px !important;
+                padding: 3px 10px !important;
+            }
+        }
+
+        /* Mobile responsiveness */
+        /* ===== MOBILE PORTRAIT OPTIMIZATION (640px and below) ===== */
+        @media (max-width: 640px) {
+            body {
+                padding: 5px;
+                /* Prevent overscroll bounce on iOS */
+                overscroll-behavior: contain;
+            }
+
+            .phone-container {
+                /* Use viewport height for better mobile fit */
+                height: calc(100vh - 10px);
+                min-height: 500px;
+                max-height: 700px;
+                border-radius: 15px;
+            }
+
+            /* iOS Safe Area Support */
+            .header {
+                padding-top: max(12px, env(safe-area-inset-top));
+            }
+
+            .input-area {
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+            }
+
+            /* Prevent iOS zoom on input focus */
+            #messageInput {
+                font-size: 16px !important; /* iOS won't zoom if >=16px */
+            }
+
+            /* Better touch scrolling */
+            .messages {
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: contain;
+            }
+
+            /* Optimize message bubbles for narrow screens */
+            .message-bubble {
+                max-width: 90%;
+                word-break: break-word;
+                overflow-wrap: break-word;
+            }
+
+            /* Make quick actions scrollable on small screens */
+            .quick-actions {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none; /* IE/Edge */
+            }
+
+            .quick-actions::-webkit-scrollbar {
+                display: none; /* Chrome/Safari */
+            }
+
+            .quick-btn {
+                flex: 0 0 auto;
+                min-width: 80px;
+                white-space: nowrap;
+            }
+
+            .slideshow-container {
+                height: 450px;
+                border-radius: 15px;
+            }
+
+            .slide {
+                padding: 24px 16px !important;
+                text-align: center !important;
+            }
+
+            /* Force all divs in slides to center */
+            .slide div {
+                text-align: center !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+
+            /* Force all paragraphs to center */
+            .slide p {
+                text-align: center !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+
+            .slide h1 {
+                font-size: 24px !important;
+                margin-bottom: 12px !important;
+                text-align: center !important;
+            }
+
+            .slide h2 {
+                font-size: 20px !important;
+                margin-bottom: 12px !important;
+                text-align: center !important;
+            }
+
+            .slide h3 {
+                font-size: 16px !important;
+                margin-bottom: 10px !important;
+                text-align: center !important;
+            }
+
+            .slide .stat {
+                font-size: 36px !important;
+                margin: 12px 0 !important;
+                text-align: center !important;
+            }
+
+            .slide p {
+                font-size: 14px !important;
+                line-height: 1.5 !important;
+                margin-bottom: 8px !important;
+            }
+
+            .slide .caption {
+                font-size: 12px !important;
+                text-align: center !important;
+            }
+
+            .slide .highlight {
+                font-size: 15px !important;
+                text-align: center !important;
+            }
+
+            .slide ul {
+                margin: 12px auto !important;
+                text-align: left !important;
+                display: inline-block !important;
+            }
+
+            .slide ul li {
+                font-size: 14px !important;
+                margin-bottom: 6px !important;
+                text-align: left !important;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+                margin-top: 16px !important;
+            }
+
+            .card {
+                padding: 14px !important;
+                text-align: left !important;
+            }
+
+            .card-title {
+                font-size: 16px !important;
+            }
+
+            .card-body {
+                font-size: 13px !important;
+            }
+
+            .card-body p {
+                font-size: 13px !important;
+            }
+
+            .slide-nav {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+
+            .slide-nav.prev {
+                left: 8px;
+            }
+
+            .slide-nav.next {
+                right: 8px;
+            }
+
+            .number-pill {
+                font-size: 14px !important;
+                padding: 3px 8px !important;
+            }
+
+            /* Override ALL inline flex styles to stack and center */
+            .slide div[style] {
+                display: block !important;
+                text-align: center !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
+
+            /* Keep grids as grids but make them single column */
+            .card-grid {
+                display: grid !important;
+            }
+
+            /* Reduce internal padding */
+            .slide div[style*="padding"] {
+                padding: 12px !important;
+            }
+
+            /* Make margins reasonable */
+            .slide div[style*="margin"] {
+                margin-top: 8px !important;
+                margin-bottom: 8px !important;
+            }
+
+            .slideshow-header {
+                padding: 12px;
+            }
+
+            .slideshow-title {
+                font-size: 16px;
+            }
+
+            .expand-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+
+            .slide-controls {
+                padding: 12px;
+            }
+
+            .slide-counter {
+                font-size: 12px;
+            }
+
+            .dot {
+                width: 12px;
+                height: 12px;
+            }
+
+            .dot.active {
+                width: 28px;
+            }
+        }
+
+        /* Extra small mobile */
+        @media (max-width: 380px) {
+            .slideshow-container {
+                height: 400px;
+            }
+
+            .slide {
+                padding: 20px 12px !important;
+            }
+
+            .slide h1 {
+                font-size: 20px !important;
+            }
+
+            .slide h2 {
+                font-size: 18px !important;
+            }
+
+            .slide .stat {
+                font-size: 28px !important;
+            }
+
+            .slide p {
+                font-size: 13px !important;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="demo-wrapper">
+    <!-- Skip to main content link for keyboard navigation -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Mobile Hamburger Navigation -->
+    <div class="mobile-nav">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+
+    <!-- Navigation Overlay -->
+    <div class="nav-overlay" id="navOverlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Navigation Menu -->
+    <nav class="nav-menu" id="navMenu" role="navigation" aria-label="Main navigation">
+        <a href="/" class="nav-menu-item">
+            🏠 Home
+        </a>
+        <a href="/demo" class="nav-menu-item active">
+            🎮 Live Demo
+        </a>
+        <div class="nav-menu-divider"></div>
+        <a href="/demo/reports/+233501234567" class="nav-menu-item">
+            📊 Teacher Dashboard
+        </a>
+        <div class="nav-menu-divider"></div>
+        <a href="https://github.com/anthropics/claude-code" class="nav-menu-item" target="_blank" rel="noopener">
+            📖 Documentation
+        </a>
+        <a href="https://claude.com" class="nav-menu-item" target="_blank" rel="noopener">
+            💬 Get Help
+        </a>
+    </nav>
+
+    <div class="demo-wrapper" role="main" id="main-content">
         <!-- Phone Container (Left) -->
-        <div class="phone-container">
-            <div class="header">
+        <div class="phone-container" role="region" aria-label="GapSense chat interface">
+            <div class="header" role="banner">
                 <div>
                     <div class="header-title">🎓 GapSense Teacher</div>
                     <div class="header-subtitle">AI Teaching Assistant</div>
                 </div>
-                <div class="status-badge" id="statusBadge">Demo Mode</div>
+                <div class="status-badge" id="statusBadge" aria-live="polite" aria-atomic="true">Demo Mode</div>
             </div>
 
-            <div class="quick-actions">
-                <button class="quick-btn" onclick="sendQuickMessage('/STATUS')">📊 Status</button>
-                <button class="quick-btn" onclick="sendQuickMessage('/GAPS')">📍 Gaps</button>
-                <button class="quick-btn" onclick="openReports()">📑 Reports</button>
-                <button class="quick-btn" onclick="sendQuickMessage('START')">🚀 Start</button>
-            </div>
+            <nav class="quick-actions" aria-label="Quick actions">
+                <button class="quick-btn" onclick="sendQuickMessage('/STATUS')" aria-label="Check status">📊 Status</button>
+                <button class="quick-btn" onclick="sendQuickMessage('/GAPS')" aria-label="View knowledge gaps">📍 Gaps</button>
+                <button class="quick-btn" onclick="openReports()" aria-label="Open reports">📑 Reports</button>
+                <button class="quick-btn" onclick="sendQuickMessage('START')" aria-label="Start onboarding">🚀 Start</button>
+            </nav>
 
-            <div class="messages" id="messages">
+            <div class="messages" id="messages" role="log" aria-live="polite" aria-atomic="false" aria-relevant="additions">
                 <div class="message received">
                     <div>
                         <div class="message-bubble">
@@ -76,39 +1251,45 @@
                 </div>
             </div>
 
-            <div class="input-area">
+            <div class="input-area" role="form" aria-label="Message input">
                 <div class="input-wrapper">
-                    <input type="file" id="imageInput" accept="image/*" capture="environment" style="display: none" onchange="handleImageSelect()">
-                    <button class="icon-btn secondary" onclick="document.getElementById('imageInput').click()">
+                    <label for="imageInput" class="sr-only">Upload student exercise book photo</label>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none" onchange="handleImageSelect()" aria-describedby="imageInputDesc">
+                    <span id="imageInputDesc" class="sr-only">Accepts image files. Click attach button to select.</span>
+                    <button class="icon-btn secondary" onclick="document.getElementById('imageInput').click()" aria-label="Attach image">
                         📎
                     </button>
+                    <label for="messageInput" class="sr-only">Type your message</label>
                     <textarea
                         id="messageInput"
                         placeholder="Type a message..."
                         rows="1"
                         onkeydown="handleKeyDown(event)"
+                        aria-label="Message text"
+                        aria-describedby="messageInputDesc"
                     ></textarea>
+                    <span id="messageInputDesc" class="sr-only">Press Enter to send, Shift+Enter for new line</span>
                 </div>
-                <button class="icon-btn" onclick="sendMessage()">
+                <button class="icon-btn" onclick="sendMessage()" aria-label="Send message">
                     ➤
                 </button>
             </div>
         </div>
 
         <!-- Slideshow Container (Right) -->
-        <div class="slideshow-container">
+        <div class="slideshow-container" role="region" aria-label="Product presentation slideshow" aria-roledescription="carousel">
             <div class="slideshow-header">
-                <div class="slideshow-title">How GapSense Works</div>
-                <button class="expand-btn" onclick="openFullscreen()" title="Expand to fullscreen">
+                <h2 class="slideshow-title" id="slideshowTitle">How GapSense Works</h2>
+                <button class="expand-btn" onclick="openFullscreen()" aria-label="View slideshow in fullscreen mode">
                     ⛶
                 </button>
             </div>
 
-            <div class="slides-area" id="slidesArea">
-                <button class="slide-nav prev" onclick="changeSlide(-1)">‹</button>
-                <button class="slide-nav next" onclick="changeSlide(1)">›</button>
+            <div class="slides-area" id="slidesArea" aria-live="polite" aria-atomic="true">
+                <button class="slide-nav prev" onclick="changeSlide(-1)" aria-label="Previous slide" aria-controls="slidesTrack">‹</button>
+                <button class="slide-nav next" onclick="changeSlide(1)" aria-label="Next slide" aria-controls="slidesTrack">›</button>
 
-                <div class="slides-track" id="slidesTrack">
+                <div class="slides-track" id="slidesTrack" role="group" aria-roledescription="slide" aria-label="Slide content">
                     <!-- Slide 1: Cover -->
                     <div class="slide">
                         <h1 style="font-size: 56px; margin-bottom: 16px;">GapSense</h1>
@@ -186,15 +1367,15 @@
                             <div>
                                 <p style="font-size: 40px;">🤖</p>
                                 <p style="font-size: 14px; font-weight: 600;">AI Analyzes</p>
-                                <p style="font-size: 12px;">Ghana curriculum</p>
-                                <p style="font-size: 12px; color: #E8B923;">8 seconds</p>
+                                <p style="font-size: 12px;">Image + Gaps</p>
+                                <p style="font-size: 12px; color: #E8B923;">~50 seconds</p>
                             </div>
                             <p style="font-size: 30px; color: #25D366;">→</p>
                             <div>
-                                <p style="font-size: 40px;">📊</p>
-                                <p style="font-size: 14px; font-weight: 600;">Report Generated</p>
-                                <p style="font-size: 12px;">Gap profile</p>
-                                <p style="font-size: 12px; color: #E8B923;">Instant</p>
+                                <p style="font-size: 40px;">📝</p>
+                                <p style="font-size: 14px; font-weight: 600;">Exercises Generated</p>
+                                <p style="font-size: 12px;">3-5 per gap</p>
+                                <p style="font-size: 12px; color: #E8B923;">~20 seconds</p>
                             </div>
                         </div>
                         <p style="font-size: 14px; margin-top: 20px;">✅ No app download  |  ✅ Works offline  |  ✅ Local languages  |  ✅ Free for public schools</p>
@@ -211,12 +1392,12 @@
 
                             <div style="display: flex; gap: 32px; margin-bottom: 24px;">
                                 <div style="flex: 1; text-align: center; background: rgba(37, 211, 102, 0.1); padding: 16px; border-radius: 8px;">
-                                    <div class="stat" style="font-size: 48px; margin: 0;">7.97s</div>
-                                    <p style="font-size: 14px; margin: 8px 0 0;">Analysis time</p>
+                                    <div class="stat" style="font-size: 48px; margin: 0;">~50s</div>
+                                    <p style="font-size: 14px; margin: 8px 0 0;">Full pipeline time</p>
                                 </div>
                                 <div style="flex: 1; text-align: center; background: rgba(232, 185, 35, 0.1); padding: 16px; border-radius: 8px;">
-                                    <div class="stat" style="font-size: 48px; margin: 0;">$0.006</div>
-                                    <p style="font-size: 14px; margin: 8px 0 0;">Cost per image</p>
+                                    <div class="stat" style="font-size: 48px; margin: 0;">$0.05</div>
+                                    <p style="font-size: 14px; margin: 8px 0 0;">Cost per student</p>
                                 </div>
                             </div>
 
@@ -421,12 +1602,12 @@
     </div>
 
     <!-- Fullscreen Modal -->
-    <div class="fullscreen-modal" id="fullscreenModal">
+    <div class="fullscreen-modal" id="fullscreenModal" role="dialog" aria-modal="true" aria-labelledby="slideshowTitle" aria-hidden="true">
         <div class="fullscreen-content">
-            <button class="fullscreen-close" onclick="closeFullscreen()">✕</button>
+            <button class="fullscreen-close" onclick="closeFullscreen()" aria-label="Close fullscreen view">✕</button>
             <div class="slides-area" style="height: 100%;">
-                <button class="slide-nav prev" onclick="changeSlide(-1)">‹</button>
-                <button class="slide-nav next" onclick="changeSlide(1)">›</button>
+                <button class="slide-nav prev" onclick="changeSlide(-1)" aria-label="Previous slide">‹</button>
+                <button class="slide-nav next" onclick="changeSlide(1)" aria-label="Next slide">›</button>
 
                 <div class="slides-track" id="fullscreenSlidesTrack" style="height: 100%;">
                     <!-- Slide 1: Cover -->
@@ -506,15 +1687,15 @@
                             <div>
                                 <p style="font-size: 40px;">🤖</p>
                                 <p style="font-size: 14px; font-weight: 600;">AI Analyzes</p>
-                                <p style="font-size: 12px;">Ghana curriculum</p>
-                                <p style="font-size: 12px; color: #E8B923;">8 seconds</p>
+                                <p style="font-size: 12px;">Image + Gaps</p>
+                                <p style="font-size: 12px; color: #E8B923;">~50 seconds</p>
                             </div>
                             <p style="font-size: 30px; color: #25D366;">→</p>
                             <div>
-                                <p style="font-size: 40px;">📊</p>
-                                <p style="font-size: 14px; font-weight: 600;">Report Generated</p>
-                                <p style="font-size: 12px;">Gap profile</p>
-                                <p style="font-size: 12px; color: #E8B923;">Instant</p>
+                                <p style="font-size: 40px;">📝</p>
+                                <p style="font-size: 14px; font-weight: 600;">Exercises Generated</p>
+                                <p style="font-size: 12px;">3-5 per gap</p>
+                                <p style="font-size: 12px; color: #E8B923;">~20 seconds</p>
                             </div>
                         </div>
                         <p style="font-size: 14px; margin-top: 20px;">✅ No app download  |  ✅ Works offline  |  ✅ Local languages  |  ✅ Free for public schools</p>
@@ -531,12 +1712,12 @@
 
                             <div style="display: flex; gap: 32px; margin-bottom: 24px;">
                                 <div style="flex: 1; text-align: center; background: rgba(37, 211, 102, 0.1); padding: 16px; border-radius: 8px;">
-                                    <div class="stat" style="font-size: 48px; margin: 0;">7.97s</div>
-                                    <p style="font-size: 14px; margin: 8px 0 0;">Analysis time</p>
+                                    <div class="stat" style="font-size: 48px; margin: 0;">~50s</div>
+                                    <p style="font-size: 14px; margin: 8px 0 0;">Full pipeline time</p>
                                 </div>
                                 <div style="flex: 1; text-align: center; background: rgba(232, 185, 35, 0.1); padding: 16px; border-radius: 8px;">
-                                    <div class="stat" style="font-size: 48px; margin: 0;">$0.006</div>
-                                    <p style="font-size: 14px; margin: 8px 0 0;">Cost per image</p>
+                                    <div class="stat" style="font-size: 48px; margin: 0;">$0.05</div>
+                                    <p style="font-size: 14px; margin: 8px 0 0;">Cost per student</p>
                                 </div>
                             </div>
 
@@ -739,6 +1920,483 @@
         </div>
     </div>
 
-    <script type="module" src="/frontend/js/main.js"></script>
+    <script>
+        const TEACHER_PHONE = '+233501234567';
+        const TOTAL_SLIDES = 12;
+        let currentSlide = 0;
+
+        // Mobile Navigation Menu Toggle
+        function toggleMobileMenu() {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const navMenu = document.getElementById('navMenu');
+            const navOverlay = document.getElementById('navOverlay');
+
+            hamburgerBtn.classList.toggle('active');
+            navMenu.classList.toggle('active');
+            navOverlay.classList.toggle('active');
+
+            // Update ARIA attributes
+            const isExpanded = hamburgerBtn.classList.contains('active');
+            hamburgerBtn.setAttribute('aria-expanded', isExpanded);
+
+            // Prevent body scroll when menu is open
+            if (isExpanded) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Close menu when clicking menu items
+        document.addEventListener('DOMContentLoaded', function() {
+            const navMenuItems = document.querySelectorAll('.nav-menu-item');
+            navMenuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // Don't close for external links
+                    if (!this.hasAttribute('target')) {
+                        toggleMobileMenu();
+                    }
+                });
+            });
+
+            // Close menu on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const navMenu = document.getElementById('navMenu');
+                    if (navMenu.classList.contains('active')) {
+                        toggleMobileMenu();
+                    }
+                }
+            });
+
+            // Add click handler to hamburger button
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', toggleMobileMenu);
+            }
+        });
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        // Initialize slide dots
+        function initSlideDots() {
+            const dotsContainer = document.getElementById('slideDots');
+            const fullscreenDotsContainer = document.getElementById('fullscreenSlideDots');
+
+            for (let i = 0; i < TOTAL_SLIDES; i++) {
+                // Main dots
+                const dot = document.createElement('div');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => goToSlide(i);
+                dotsContainer.appendChild(dot);
+
+                // Fullscreen dots
+                const fsDot = document.createElement('div');
+                fsDot.className = 'dot' + (i === 0 ? ' active' : '');
+                fsDot.onclick = () => goToSlide(i);
+                fullscreenDotsContainer.appendChild(fsDot);
+            }
+        }
+
+        function changeSlide(direction) {
+            currentSlide += direction;
+            if (currentSlide < 0) currentSlide = TOTAL_SLIDES - 1;
+            if (currentSlide >= TOTAL_SLIDES) currentSlide = 0;
+            updateSlides();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlides();
+        }
+
+        function updateSlides() {
+            const track = document.getElementById('slidesTrack');
+            const fsTrack = document.getElementById('fullscreenSlidesTrack');
+            const offset = -currentSlide * 100;
+
+            track.style.transform = `translateX(${offset}%)`;
+            fsTrack.style.transform = `translateX(${offset}%)`;
+
+            // Update dots
+            document.querySelectorAll('.dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+
+            // Update counter
+            document.getElementById('slideCounter').textContent = `${currentSlide + 1}/${TOTAL_SLIDES}`;
+            document.getElementById('fullscreenSlideCounter').textContent = `${currentSlide + 1}/${TOTAL_SLIDES}`;
+        }
+
+        // Swipe gestures
+        function handleTouchStart(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }
+
+        function handleTouchEnd(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchEndX < touchStartX - swipeThreshold) {
+                changeSlide(1); // Swipe left
+            }
+            if (touchEndX > touchStartX + swipeThreshold) {
+                changeSlide(-1); // Swipe right
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Escape') closeFullscreen();
+        });
+
+        // Fullscreen controls
+        function openFullscreen() {
+            document.getElementById('fullscreenModal').classList.add('show');
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenModal').classList.remove('show');
+        }
+
+        // Add touch listeners to slides
+        document.querySelectorAll('.slides-area').forEach(area => {
+            area.addEventListener('touchstart', handleTouchStart, false);
+            area.addEventListener('touchend', handleTouchEnd, false);
+        });
+
+        // Initialize
+        initSlideDots();
+
+        // WhatsApp demo functions (from original)
+        function addMessage(text, isSent = false) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+            const { messageText, buttons } = parseButtonsFromMessage(text);
+            let bubbleContent = messageText.replace(/\n/g, '<br>');
+
+            if (buttons.length > 0 && !isSent) {
+                bubbleContent += '<div class="button-container">';
+                buttons.forEach(button => {
+                    bubbleContent += `
+                        <button class="whatsapp-button" onclick="sendButtonClick('${escapeHtml(button.text)}', '${button.id}')">
+                            ${escapeHtml(button.text)}
+                        </button>
+                    `;
+                });
+                bubbleContent += '</div>';
+            }
+
+            messageDiv.innerHTML = `
+                <div>
+                    <div class="message-bubble">${bubbleContent}</div>
+                    <div class="message-time">${timeStr}</div>
+                </div>
+            `;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function parseButtonsFromMessage(text) {
+            const lines = text.split('\n');
+            const buttons = [];
+            const messageLines = [];
+
+            for (const line of lines) {
+                if (line.trim().startsWith('• ')) {
+                    const buttonText = line.trim().substring(2);
+                    const buttonId = mapButtonTextToId(buttonText);
+                    buttons.push({ text: buttonText, id: buttonId });
+                } else {
+                    messageLines.push(line);
+                }
+            }
+
+            return { messageText: messageLines.join('\n').trim(), buttons: buttons };
+        }
+
+        function mapButtonTextToId(buttonText) {
+            const lowerText = buttonText.toLowerCase();
+            if (lowerText.includes('yes')) return 'confirm_yes';
+            if (lowerText.includes('no')) return 'confirm_no';
+            return buttonText.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function sendButtonClick(buttonText, buttonId) {
+            addMessage(buttonText, true);
+            showTyping();
+
+            try {
+                const formData = new FormData();
+                formData.append('message', buttonText);
+                formData.append('button_id', buttonId);
+                formData.append('teacher_phone', TEACHER_PHONE);
+
+                const response = await fetch('/demo/api/message', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                hideTyping();
+
+                if (data.success && data.response) {
+                    addMessage(data.response);
+                    if (data.response.includes("Analyzing") && data.response.includes("exercise book")) {
+                        startPollingForCompletion();
+                    }
+                } else {
+                    addMessage(`❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage(`❌ Error: ${error.message}`);
+            }
+        }
+
+        function showTyping() {
+            const messagesDiv = document.getElementById('messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message received';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div>
+                    <div class="typing-indicator show">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typingDiv = document.getElementById('typing-indicator');
+            if (typingDiv) typingDiv.remove();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            input.value = '';
+            showTyping();
+
+            try {
+                const formData = new FormData();
+                formData.append('message', message);
+                formData.append('teacher_phone', TEACHER_PHONE);
+
+                const response = await fetch('/demo/api/message', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                hideTyping();
+
+                if (data.success && data.response) {
+                    addMessage(data.response);
+                    if (data.response.includes("Analyzing") && data.response.includes("exercise book")) {
+                        startPollingForCompletion();
+                    }
+                } else {
+                    addMessage(`❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage(`❌ Error: ${error.message}`);
+            }
+        }
+
+        let analysisPollingInterval = null;
+        let initialAnalysisTimestamp = null;
+
+        async function checkAnalysisStatus() {
+            try {
+                const response = await fetch(`/demo/reports/${TEACHER_PHONE}`);
+                const html = await response.text();
+
+                // Check 1: Gap tags count
+                const gapMatches = html.match(/gap-tag/g);
+                const gapCount = gapMatches ? gapMatches.length : 0;
+
+                // Check 2: "Latest Analysis" section exists (indicates analysis completed)
+                const hasLatestAnalysis = html.includes('Latest Analysis:');
+
+                // Check 3: Error count in latest analysis
+                const errorMatch = html.match(/❌ Errors Found \((\d+)\)/);
+                const errorCount = errorMatch ? parseInt(errorMatch[1]) : 0;
+
+                // Check 4: Extract timestamp from "Latest Analysis" section to detect new analysis
+                // Match specifically the timestamp after "Latest Analysis:" to avoid matching student cards
+                const timestampMatch = html.match(/Latest Analysis:.*?Scanned: ([^<]+)</s);
+                const timestamp = timestampMatch ? timestampMatch[1] : null;
+
+                return {
+                    completed: hasLatestAnalysis,
+                    gapCount: gapCount,
+                    errorCount: errorCount,
+                    hasIssues: gapCount > 0 || errorCount > 0,
+                    timestamp: timestamp
+                };
+            } catch (e) {
+                return { completed: false, gapCount: 0, errorCount: 0, hasIssues: false, timestamp: null };
+            }
+        }
+
+        async function startPollingForCompletion() {
+            const initialStatus = await checkAnalysisStatus();
+            initialAnalysisTimestamp = initialStatus.timestamp;
+
+            let attempts = 0;
+            const maxAttempts = 30;
+
+            analysisPollingInterval = setInterval(async () => {
+                attempts++;
+                const status = await checkAnalysisStatus();
+
+                // Check if a NEW analysis completed (timestamp changed OR analysis just appeared)
+                const isNewAnalysis = status.completed && (
+                    !initialAnalysisTimestamp ||
+                    status.timestamp !== initialAnalysisTimestamp
+                );
+
+                if (isNewAnalysis) {
+                    clearInterval(analysisPollingInterval);
+
+                    const dashboardUrl = `/demo/reports/${TEACHER_PHONE}`;
+                    const dashboardLink = `
+                        <div style="margin-top: 10px; padding: 12px; background: #25D366; border-radius: 10px; text-align: center;">
+                            <a href="${dashboardUrl}" target="_blank" style="color: white; text-decoration: none; font-weight: bold; display: block;">
+                                📊 VIEW FULL REPORT
+                            </a>
+                        </div>
+                    `;
+
+                    // Show contextual message based on findings
+                    if (status.gapCount > 0) {
+                        addMessage(`✅ Analysis complete! ${status.gapCount} learning gap${status.gapCount > 1 ? 's' : ''} identified.`);
+                    } else if (status.errorCount > 0) {
+                        addMessage(`⚠️ Analysis complete! Errors found. Check report for recommendations.`);
+                    } else {
+                        addMessage(`✅ Analysis complete! No issues found - excellent work!`);
+                    }
+
+                    addMessage(dashboardLink);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(analysisPollingInterval);
+                    addMessage("⏱️ Analysis is taking longer than expected. Please check back in a moment.");
+
+                    // Still provide dashboard link even on timeout
+                    const dashboardUrl = `/demo/reports/${TEACHER_PHONE}`;
+                    const dashboardLink = `
+                        <div style="margin-top: 10px; padding: 12px; background: #FFA500; border-radius: 10px; text-align: center;">
+                            <a href="${dashboardUrl}" target="_blank" style="color: white; text-decoration: none; font-weight: bold; display: block;">
+                                📊 CHECK DASHBOARD
+                            </a>
+                        </div>
+                    `;
+                    addMessage(dashboardLink);
+                }
+            }, 2000);
+        }
+
+        async function sendQuickMessage(message) {
+            document.getElementById('messageInput').value = message;
+            await sendMessage();
+        }
+
+        function openReports() {
+            const reportsUrl = `/demo/reports/${encodeURIComponent(TEACHER_PHONE)}`;
+            window.open(reportsUrl, '_blank');
+        }
+
+        async function handleImageSelect() {
+            const input = document.getElementById('imageInput');
+            const file = input.files[0];
+            if (!file) return;
+
+            addMessage(`📸 Uploading: ${file.name}`, true);
+            showTyping();
+
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('teacher_phone', TEACHER_PHONE);
+
+                const response = await fetch('/demo/api/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                hideTyping();
+
+                if (data.success && data.response) {
+                    addMessage(data.response);
+                    if (data.response.includes("Analyzing")) {
+                        startPollingForCompletion();
+                    }
+                } else {
+                    addMessage(`❌ Upload error: ${data.error}`);
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage(`❌ Error: ${error.message}`);
+            }
+
+            input.value = '';
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Auto-resize textarea
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Initialize demo
+        async function initDemo() {
+            try {
+                const response = await fetch(`/demo/api/teacher-info?teacher_phone=${TEACHER_PHONE}`);
+                const info = await response.json();
+                if (info.teacher.onboarded) {
+                    document.getElementById('statusBadge').textContent = '✅ Onboarded';
+                }
+            } catch (error) {
+                console.error('Error loading teacher info:', error);
+            }
+        }
+
+        initDemo();
+    </script>
 </body>
 </html>
