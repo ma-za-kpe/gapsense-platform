@@ -3,7 +3,7 @@
  * All API calls, image upload, polling, and teacher info
  */
 
-import { API, FILE_LIMITS, TEACHER_PHONE, POLLING } from './constants.js';
+import { API, FILE_LIMITS, TEACHER_PHONE, POLLING, ANALYSIS_STAGES, WAIT_MESSAGES } from './constants.js';
 import { addMessage, showTyping, hideTyping } from './ui.js';
 import {
   analysisPollingInterval,
@@ -141,6 +141,91 @@ export async function handleImageSelect() {
 }
 
 /**
+ * Check teacher info including last analysis timestamp
+ * @returns {Promise<{success: boolean, students: Array, server_time: string}>}
+ */
+export async function checkTeacherInfo() {
+  try {
+    const data = await apiClient.get(`${API.TEACHER_INFO}?teacher_phone=${encodeURIComponent(TEACHER_PHONE)}`);
+    return data;
+  } catch (e) {
+    console.error('Error checking teacher info:', e);
+    return { success: false, students: [], server_time: new Date().toISOString() };
+  }
+}
+
+/**
+ * Get current analysis stage based on elapsed time
+ * @param {number} elapsedSeconds - Seconds since analysis started
+ * @returns {{step: number, time: number, progress: number, name: string, icon: string}}
+ */
+function getProgressStage(elapsedSeconds) {
+  // Find the current stage based on elapsed time
+  for (let i = ANALYSIS_STAGES.length - 1; i >= 0; i--) {
+    if (elapsedSeconds >= ANALYSIS_STAGES[i].time) {
+      return ANALYSIS_STAGES[i];
+    }
+  }
+  return ANALYSIS_STAGES[0];
+}
+
+/**
+ * Update progress UI in chat
+ * @param {number} progress - Progress percentage (0-100)
+ * @param {string} message - Stage message
+ * @param {string} icon - Stage icon
+ * @param {number} elapsed - Elapsed seconds
+ * @param {string} [tip] - Optional educational tip
+ */
+function updateProgressUI(progress, message, icon, elapsed, tip = null) {
+  // Find or create progress indicator
+  let progressDiv = document.getElementById('analysis-progress');
+
+  if (!progressDiv) {
+    // Create progress indicator for first time
+    const messagesDiv = document.getElementById('messages');
+    progressDiv = document.createElement('div');
+    progressDiv.className = 'message received';
+    progressDiv.id = 'analysis-progress';
+    messagesDiv.appendChild(progressDiv);
+  }
+
+  // Update content with progress bar
+  const tipHtml = tip ? `<div style="font-size: 12px; color: #666; margin-top: 10px; padding: 8px; background: #F0F8FF; border-radius: 6px;">${tip}</div>` : '';
+
+  progressDiv.innerHTML = `
+    <div style="min-width: 200px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <span style="font-size: 20px;">${icon}</span>
+        <span style="font-weight: 500;">${message}</span>
+      </div>
+      <div style="background: #E0E0E0; height: 8px; border-radius: 10px; overflow: hidden; margin-bottom: 6px;">
+        <div style="background: linear-gradient(90deg, #25D366 0%, #128C7E 100%); height: 100%; width: ${progress}%; transition: width 0.5s ease;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666;">
+        <span>${progress}%</span>
+        <span>⏱️ ${elapsed}s</span>
+      </div>
+      ${tipHtml}
+    </div>
+  `;
+
+  // Scroll to bottom
+  const messagesDiv = document.getElementById('messages');
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+/**
+ * Remove progress indicator
+ */
+function removeProgressUI() {
+  const progressDiv = document.getElementById('analysis-progress');
+  if (progressDiv) {
+    progressDiv.remove();
+  }
+}
+
+/**
  * Check analysis status by parsing the reports page
  * @returns {Promise<{completed: boolean, gapCount: number, errorCount: number, hasIssues: boolean, timestamp: string|null}>}
  */
@@ -176,23 +261,36 @@ export async function checkAnalysisStatus() {
 }
 
 /**
- * Start adaptive polling for analysis completion
+ * Start adaptive polling for analysis completion with progress tracking
  * Battery-friendly: starts fast (1s), backs off to 5s, pauses when tab hidden
+ * Shows real-time progress based on analysis pipeline stages
  */
 export async function startPollingForCompletion() {
-  const initialStatus = await checkAnalysisStatus();
-  setInitialAnalysisTimestamp(initialStatus.timestamp);
+  // Get initial teacher info to capture starting state
+  const initialInfo = await checkTeacherInfo();
+  if (!initialInfo.success) {
+    addMessage("❌ Error starting analysis tracking");
+    return;
+  }
+
+  // Record start time and initial analysis timestamps
+  const startTime = Date.now();
+  const initialAnalysisTimestamps = {};
+  initialInfo.students.forEach(student => {
+    initialAnalysisTimestamps[student.id] = student.last_analysis_at;
+  });
 
   let attempts = 0;
   let currentInterval = POLLING.INITIAL_INTERVAL;
   let isPageVisible = !document.hidden;
   let timeoutId = null;
+  let messageRotationIndex = 0;
+  let lastTipUpdate = 0;
 
   // Monitor page visibility to pause polling when hidden (saves battery)
   const visibilityHandler = () => {
     isPageVisible = !document.hidden;
     if (isPageVisible && timeoutId === null) {
-      // Resume polling when page becomes visible
       scheduleNextPoll();
     }
   };
@@ -209,16 +307,32 @@ export async function startPollingForCompletion() {
     }
 
     attempts++;
-    const status = await checkAnalysisStatus();
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
 
-    // Check if a NEW analysis completed
-    const isNewAnalysis = status.completed && (
-      !initialAnalysisTimestamp ||
-      status.timestamp !== initialAnalysisTimestamp
-    );
+    // Check for completion
+    const info = await checkTeacherInfo();
+    let newAnalysisFound = false;
 
-    if (isNewAnalysis) {
+    if (info.success) {
+      // Check if any student has a new analysis
+      for (const student of info.students) {
+        const initial = initialAnalysisTimestamps[student.id];
+        const current = student.last_analysis_at;
+
+        if (current && current !== initial) {
+          newAnalysisFound = true;
+          break;
+        }
+      }
+    }
+
+    if (newAnalysisFound) {
+      // Analysis complete!
       cleanup();
+      removeProgressUI();
+
+      // Get final results from reports page
+      const status = await checkAnalysisStatus();
 
       const dashboardUrl = `${API.REPORTS}/${TEACHER_PHONE}`;
       const dashboardLink = `
@@ -240,7 +354,9 @@ export async function startPollingForCompletion() {
 
       addMessage(dashboardLink);
     } else if (attempts >= POLLING.MAX_ATTEMPTS) {
+      // Timeout
       cleanup();
+      removeProgressUI();
       addMessage("⏱️ Analysis is taking longer than expected. Please check back in a moment.");
 
       const dashboardUrl = `${API.REPORTS}/${TEACHER_PHONE}`;
@@ -253,6 +369,19 @@ export async function startPollingForCompletion() {
       `;
       addMessage(dashboardLink);
     } else {
+      // Update progress UI
+      const stage = getProgressStage(elapsed);
+
+      // Rotate tip message every 8 seconds
+      let tip = null;
+      if (elapsed - lastTipUpdate >= 8) {
+        tip = WAIT_MESSAGES[messageRotationIndex % WAIT_MESSAGES.length];
+        messageRotationIndex++;
+        lastTipUpdate = elapsed;
+      }
+
+      updateProgressUI(stage.progress, stage.name, stage.icon, elapsed, tip);
+
       // Adaptive backoff: increase interval for battery savings
       currentInterval = Math.min(
         currentInterval * POLLING.BACKOFF_MULTIPLIER,
@@ -277,8 +406,8 @@ export async function startPollingForCompletion() {
   // Store cleanup function for external cancellation
   setAnalysisPollingInterval({ stop: cleanup });
 
-  // Start first poll
-  scheduleNextPoll();
+  // Start first poll immediately
+  poll();
 }
 
 /**

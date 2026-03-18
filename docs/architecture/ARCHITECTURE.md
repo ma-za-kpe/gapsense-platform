@@ -178,11 +178,17 @@ alembic = "^1.14"
 anthropic = "^0.43"
 ```
 **Models (ADR-005):**
-- **Sonnet 4.5**: Diagnostic reasoning (DIAG-001/002/003, ANALYSIS-001)
-- **Haiku 4.5**: Parent messages (PARENT-001/002/003), compliance (GUARD-001)
+- **Sonnet 4.6** (**Production**, March 2026): Vision analysis (ANALYSIS-001), Exercise generation (REMEDIATION-001)
+- **Haiku 4.5** (Planned): Parent messages (PARENT-001/002/003), compliance (GUARD-001)
 
-**Cost:** ~$20-30/month at MVP scale (500 sessions + 1,500 messages)
-**Optimization:** Prompt caching → 90% cost reduction on cached tokens
+**Production Costs (March 2026):**
+- Per-student analysis: $0.052-0.090 (ANALYSIS-001 + REMEDIATION-001)
+- 800 students pilot: ~$52-72 total (well within $700 budget)
+- See `.kiro/specs/teacher-remediation-exercises/design.md` for detailed breakdown
+
+**Optimization:**
+- Prompt caching → 90% cost reduction (designed, not yet implemented)
+- TRANSCRIPTION-001 path available for cost/speed tradeoff ($0.052 vs $0.090)
 
 #### **Data Validation**
 ```toml
@@ -261,10 +267,16 @@ factory-boy = "^3.3"  # Test data factories
 
 ### 3.1 Region & Availability
 
-**Primary Region:** `af-south-1` (Cape Town)
+**Primary Region:** `us-east-1` (North Virginia) ⚠️
 
-**Rationale:**
-- Lowest latency to Ghana (~50ms vs 150ms+ from Europe)
+**Note:** Production is currently deployed to **us-east-1**, not the planned af-south-1 (Cape Town).
+
+**Current Latency:** ~150-200ms to Ghana (vs target 50ms from af-south-1)
+
+**Planned Migration:** af-south-1 (Cape Town) for lower latency
+
+**Rationale for Cape Town (when migrated):**
+- Lowest latency to Ghana (~50ms vs 150ms+ from us-east-1)
 - UNICEF/World Bank projects commonly use AWS
 - Multi-AZ support for production
 
@@ -577,6 +589,8 @@ log_groups = [
 
 ### 3.10 Cost Summary
 
+⚠️ **Note:** These are estimated costs. For actual AI costs based on production data, see `.kiro/specs/teacher-remediation-exercises/design.md`
+
 | Service | Staging | Production |
 |---------|---------|------------|
 | **NAT Gateway** | $32 | $64 |
@@ -588,13 +602,22 @@ log_groups = [
 | **Secrets Manager** | $1 | $2 |
 | **CloudWatch** | $1 | $4 |
 | **TOTAL AWS** | **$76** | **$156** |
-| **+ Anthropic AI** | +$20 | +$30 |
+| **+ Anthropic AI** | See production metrics ↓ | See production metrics ↓ |
 | **+ WhatsApp** | +$0 | +$5 |
-| **GRAND TOTAL** | **$96** | **$191** |
 
-**With Optimizations (see Cost Optimization doc):**
-- Staging: $96 → **$50** (48% reduction)
-- Production: $191 → **$120** (37% reduction)
+**Anthropic AI Costs (Production, March 2026):**
+- Per-student analysis: $0.052-0.090 (ANALYSIS-001 + REMEDIATION-001)
+- 800 students pilot: ~$52-72 total over 12 weeks
+- Monthly at scale: TBD based on usage patterns
+
+**Total Monthly (Estimated):**
+- Staging: $76 (AWS only, minimal AI usage)
+- Production: $156 (AWS) + $50-100 (AI at pilot scale) = **~$200-250/month**
+
+**With Optimizations (planned):**
+- Prompt caching → Save ~$10-20/month on AI
+- VPC Endpoints → Save ~$10/month on AWS
+- TRANSCRIPTION-001 path → Faster/cheaper option available
 
 ---
 
@@ -891,24 +914,28 @@ ON ai_usage_metrics(date_trunc('month', timestamp));
 
 **13 Prompts (see gapsense-data repo):**
 
-| Prompt ID | Model | Purpose | Temp | Max Tokens |
-|-----------|-------|---------|------|------------|
-| **DIAG-001** | Sonnet 4.5 | Select diagnostic entry node | 0.3 | 500 |
-| **DIAG-002** | Sonnet 4.5 | Analyze student response | 0.2 | 800 |
-| **DIAG-003** | Sonnet 4.5 | Generate gap profile | 0.3 | 1500 |
-| **PARENT-001** | Haiku 4.5 | Generate parent activity | 0.7 | 600 |
-| **PARENT-002** | Haiku 4.5 | Check-in message | 0.8 | 300 |
-| **PARENT-003** | Haiku 4.5 | Re-engagement message | 0.8 | 300 |
-| **GUARD-001** | Haiku 4.5 | Compliance validation (blocking) | 0.0 | 100 |
-| **ANALYSIS-001** | Sonnet 4.5 | Exercise book photo analysis | 0.3 | 1000 |
-| **ANALYSIS-002** | Haiku 4.5 | Voice note transcription analysis | 0.5 | 400 |
-| **TEACHER-001** | Sonnet 4.5 | Class-level gap report | 0.3 | 2000 |
-| **TEACHER-002** | Sonnet 4.5 | Individual student brief | 0.2 | 1200 |
-| **TEACHER-003** | Haiku 4.5 | Quick student question answer | 0.7 | 500 |
+| Prompt ID | Model | Purpose | Temp | Max Tokens | Status |
+|-----------|-------|---------|------|------------|--------|
+| **DIAG-001** | Sonnet 4.6 | Select diagnostic entry node | 0.3 | 500 | Planned |
+| **DIAG-002** | Sonnet 4.6 | Analyze student response | 0.2 | 800 | Planned |
+| **DIAG-003** | Sonnet 4.6 | Generate gap profile | 0.3 | 1500 | Planned |
+| **PARENT-001** | Haiku 4.5 | Generate parent activity | 0.7 | 600 | Planned |
+| **PARENT-002** | Haiku 4.5 | Check-in message | 0.8 | 300 | Planned |
+| **PARENT-003** | Haiku 4.5 | Re-engagement message | 0.8 | 300 | Planned |
+| **GUARD-001** | Haiku 4.5 | Compliance validation (blocking) | 0.0 | 100 | Implemented |
+| **ANALYSIS-001** | Sonnet 4.6 | Exercise book photo analysis | 0.3 | 4096 | ✅ **Production** |
+| **TRANSCRIPTION-001** | Sonnet 4.6 | OCR-first analysis (faster) | 0.3 | 4096 | ✅ **Production** |
+| **REMEDIATION-001** | Sonnet 4.6 | Generate remediation exercises | 0.4 | 2500 | ✅ **Production** |
+| **ANALYSIS-002** | Haiku 4.5 | Voice note transcription analysis | 0.5 | 400 | Planned |
+| **TEACHER-001** | Sonnet 4.6 | Class-level gap report | 0.3 | 2000 | Planned |
+| **TEACHER-002** | Sonnet 4.6 | Individual student brief | 0.2 | 1200 | Planned |
+| **TEACHER-003** | Haiku 4.5 | Quick student question answer | 0.7 | 500 | Planned |
 
 ### 6.2 Prompt Caching Strategy
 
-**Cache System Prompt + Graph Context:**
+⚠️ **Status:** Designed but not yet implemented in production code
+
+**Planned Implementation - Cache System Prompt + Graph Context:**
 ```python
 messages = [
     {
@@ -933,14 +960,17 @@ messages = [
 ]
 ```
 
-**Savings:**
+**Expected Savings (when implemented):**
 - System prompt: ~2,000 tokens
 - Graph context: ~2,000 tokens
 - **Total cacheable: 4,000 tokens**
 - Cache read cost: $0.30 per 1M tokens (vs $3.00 uncached)
 - **90% cost reduction** on cached portion
+- **Estimated savings:** ~$0.01-0.02 per analysis
 
 **Cache TTL:** 5 minutes (Anthropic default)
+
+**Current State:** No caching implemented - costs are higher than these estimates suggest
 
 ### 6.3 Model Selection Logic
 
@@ -1129,24 +1159,27 @@ class StudentCreate(BaseModel):
 
 ## 8. COST ARCHITECTURE
 
-See **COST_OPTIMIZATION_STRATEGY.md** for full details.
-
 **Summary:**
-- **Current:** $96/month (staging), $191/month (production)
-- **Optimized:** $50/month (staging), $120/month (production)
-- **Savings:** 48% (staging), 37% (production)
+- **Current AWS:** ~$76/month (staging), ~$156/month (production)
+- **Current AI:** Minimal (staging), ~$50-100/month at pilot scale (production)
+- **Total Production:** ~$200-250/month
+
+For detailed AI cost breakdown with production metrics, see:
+- `.kiro/specs/teacher-remediation-exercises/design.md` (Section: Cost Analysis)
 
 **Biggest Cost Drivers:**
 1. NAT Gateway: 40% of AWS bill
-2. RDS: 17% of AWS bill
-3. Fargate: 26% of AWS bill
+2. Fargate: 26% of AWS bill
+3. RDS: 17% of AWS bill
 4. ALB: 17% of AWS bill
+5. AI Costs: Variable, ~$0.05-0.09 per student analysis
 
-**Optimization Strategies:**
-- VPC Endpoints → Save $10/month
-- NAT Instance (staging) → Save $28/month
-- RDS off-hours scaling → Save $4/month
-- Aggressive AI prompt caching → Save $10/month
+**Optimization Strategies (Planned):**
+- VPC Endpoints → Save ~$10/month on data transfer
+- NAT Instance (staging) → Save ~$28/month
+- RDS off-hours scaling → Save ~$4/month
+- AI prompt caching (when implemented) → Save ~$10-20/month
+- TRANSCRIPTION-001 path → Faster/cheaper analysis option
 
 ---
 
@@ -1162,9 +1195,11 @@ See **COST_OPTIMIZATION_STRATEGY.md** for full details.
 
 ### 9.2 CI/CD Pipeline (GitHub Actions)
 
-**On Pull Request:**
+⚠️ **Status:** Planned, not yet implemented. Current deployment is **manual**.
+
+**Planned - On Pull Request:**
 ```yaml
-# .github/workflows/ci.yml
+# .github/workflows/ci.yml (not yet created)
 - Ruff lint
 - Ruff format check
 - MyPy type check
@@ -1172,24 +1207,26 @@ See **COST_OPTIMIZATION_STRATEGY.md** for full details.
 - Coverage report (must be ≥ 80%)
 ```
 
-**On Merge to Main:**
+**Planned - On Merge to Main:**
 ```yaml
-# .github/workflows/deploy-staging.yml
+# .github/workflows/deploy-staging.yml (not yet created)
 - Build Docker image
 - Push to ECR
 - Deploy to Staging via CDK
 - Run smoke tests
 ```
 
-**On Release Tag:**
+**Planned - On Release Tag:**
 ```yaml
-# .github/workflows/deploy-prod.yml
+# .github/workflows/deploy-prod.yml (not yet created)
 - Build Docker image
 - Push to ECR
 - Deploy to Production via CDK
 - Run smoke tests
 - Notify team
 ```
+
+**Current Deployment Process:** See README.md (Production Deployment section) for manual deployment commands
 
 ### 9.3 Deployment Process
 
@@ -1287,11 +1324,13 @@ fields @timestamp
 
 ### 10.2 Metrics (Custom CloudWatch)
 
-**Publish from Application:**
+⚠️ **Status:** Planned, not yet implemented
+
+**Planned Implementation - Publish from Application:**
 ```python
 import boto3
 
-cloudwatch = boto3.client('cloudwatch', region_name='af-south-1')
+cloudwatch = boto3.client('cloudwatch', region_name='us-east-1')  # Current region
 
 async def publish_metric(name: str, value: float, unit: str = 'None'):
     """Publish custom metric to CloudWatch."""
@@ -1307,11 +1346,13 @@ async def publish_metric(name: str, value: float, unit: str = 'None'):
         ]
     )
 
-# Usage:
+# Planned usage:
 await publish_metric('diagnostic.session.duration', duration, 'Seconds')
 await publish_metric('diagnostic.confidence.mean', confidence, 'None')
 await publish_metric('ai.prompt.latency', latency, 'Milliseconds')
 ```
+
+**Current State:** Metrics tracked in database (`ai_usage_logs` table) but not published to CloudWatch
 
 ### 10.3 Health Checks
 
@@ -1420,6 +1461,38 @@ COGNITO_CLIENT_ID=xxx
 # Data repo
 GAPSENSE_DATA_PATH=../gapsense-data
 ```
+
+---
+
+## CHANGELOG
+
+### Version 1.1.0 (2026-03-18)
+
+**Major Updates:**
+- ✅ Updated implementation status from 15% to 65%
+- ✅ Corrected AWS region: us-east-1 (was incorrectly listed as af-south-1)
+- ✅ Updated AI model: Claude Sonnet 4.6 (was 4.5)
+- ✅ Marked 6 major features as implemented (were listed as "missing"):
+  - Multimodal AI integration (ANALYSIS-001, REMEDIATION-001)
+  - Exercise book scanner
+  - SQS queue + worker architecture
+  - Teacher web dashboard
+  - AWS Fargate deployment
+- ✅ Updated AI costs with production metrics ($0.052-0.090 per student)
+- ✅ Added status warnings to planned/unimplemented sections:
+  - Prompt caching (designed, not implemented)
+  - CI/CD pipelines (manual deployment currently)
+  - Custom CloudWatch metrics (planned)
+- ✅ Added document status section linking to current production docs
+- ✅ Updated latency expectations (150-200ms actual vs 50ms planned)
+
+**Production Deployment Details:**
+For current infrastructure and deployment commands, see:
+- README.md (Production Deployment section)
+- `.kiro/specs/teacher-remediation-exercises/design.md` (AI cost analysis)
+
+### Version 1.0.0 (2026-02-16)
+- Initial architecture specification (planning document)
 
 ---
 

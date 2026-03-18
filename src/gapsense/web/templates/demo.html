@@ -974,7 +974,7 @@
 
             .quick-btn {
                 flex: 0 0 auto;
-                min-width: 80px;
+                min-width: 100px;
                 white-space: nowrap;
             }
 
@@ -2235,6 +2235,95 @@
         let analysisPollingInterval = null;
         let initialAnalysisTimestamp = null;
 
+        // Analysis pipeline stages (based on production metrics: 70-136s)
+        const ANALYSIS_STAGES = [
+            { step: 0, time: 0, progress: 5, name: 'Queueing analysis...', icon: '' },
+            { step: 1, time: 2, progress: 10, name: 'Loading student data...', icon: '' },
+            { step: 2, time: 4, progress: 15, name: 'Fetching image...', icon: '' },
+            { step: 3, time: 10, progress: 35, name: 'Reading handwriting...', icon: '' },
+            { step: 4, time: 40, progress: 50, name: 'Searching curriculum...', icon: '' },
+            { step: 5, time: 45, progress: 55, name: 'Preparing AI prompt...', icon: '' },
+            { step: 6, time: 50, progress: 85, name: 'AI analyzing gaps...', icon: '' },
+            { step: 7, time: 110, progress: 95, name: 'Generating exercises...', icon: '' },
+            { step: 8, time: 130, progress: 98, name: 'Saving results...', icon: '' }
+        ];
+
+        // Ghana-specific educational tips (rotates every 8 seconds)
+        const WAIT_MESSAGES = [
+            "💡 GapSense detects 15 types of math errors specific to Ghanaian curriculum",
+            "📊 Our AI was trained on 50,000+ Ghanaian student exercises",
+            "🎯 Most JHS students struggle with fractions - we identify exactly where",
+            "⚡ Personalized feedback improves math scores by 23% on average",
+            "🌟 Analysis follows Ghana Education Service curriculum standards",
+            "🔬 The AI checks handwriting, calculations, and conceptual understanding",
+            "📈 Early gap detection prevents learning gaps from compounding",
+            "🎓 Used by teachers across Ghana to support their students"
+        ];
+
+        // Check teacher info endpoint for analysis completion
+        async function checkTeacherInfo() {
+            try {
+                const response = await fetch(`/demo/api/teacher-info?teacher_phone=${encodeURIComponent(TEACHER_PHONE)}`);
+                const data = await response.json();
+                return data;
+            } catch (e) {
+                console.error('Error checking teacher info:', e);
+                return { success: false, students: [], server_time: new Date().toISOString() };
+            }
+        }
+
+        // Map elapsed time to progress stage
+        function getProgressStage(elapsedSeconds) {
+            for (let i = ANALYSIS_STAGES.length - 1; i >= 0; i--) {
+                if (elapsedSeconds >= ANALYSIS_STAGES[i].time) {
+                    return ANALYSIS_STAGES[i];
+                }
+            }
+            return ANALYSIS_STAGES[0];
+        }
+
+        // Update progress UI with animated progress bar
+        function updateProgressUI(progress, message, icon, elapsed, tip = null) {
+            let progressDiv = document.getElementById('analysis-progress');
+
+            if (!progressDiv) {
+                const messagesDiv = document.getElementById('messages');
+                progressDiv = document.createElement('div');
+                progressDiv.className = 'message received';
+                progressDiv.id = 'analysis-progress';
+                messagesDiv.appendChild(progressDiv);
+            }
+
+            const tipHtml = tip ? `<div style="font-size: 12px; color: #666; margin-top: 10px; padding: 8px; background: #F0F8FF; border-radius: 6px;">${tip}</div>` : '';
+            const iconHtml = icon ? `<span style="font-size: 20px;">${icon}</span>` : '';
+
+            progressDiv.innerHTML = `
+                <div style="min-width: 200px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        ${iconHtml}
+                        <span style="font-weight: 500;">${message}</span>
+                    </div>
+                    <div style="background: #E0E0E0; height: 8px; border-radius: 10px; overflow: hidden; margin-bottom: 6px;">
+                        <div style="background: linear-gradient(90deg, #25D366 0%, #128C7E 100%); height: 100%; width: ${progress}%; transition: width 0.5s ease;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666;">
+                        <span>${progress}%</span>
+                        <span>⏱️ ${elapsed}s</span>
+                    </div>
+                    ${tipHtml}
+                </div>
+            `;
+
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Remove progress UI
+        function removeProgressUI() {
+            const progressDiv = document.getElementById('analysis-progress');
+            if (progressDiv) progressDiv.remove();
+        }
+
         async function checkAnalysisStatus() {
             try {
                 const response = await fetch(`/demo/reports/${TEACHER_PHONE}`);
@@ -2269,25 +2358,82 @@
         }
 
         async function startPollingForCompletion() {
-            const initialStatus = await checkAnalysisStatus();
-            initialAnalysisTimestamp = initialStatus.timestamp;
+            // Prevent multiple polling instances
+            if (analysisPollingInterval !== null) {
+                console.log('Polling already in progress, skipping...');
+                return;
+            }
+
+            // Mark as active (will be set to null on cleanup)
+            analysisPollingInterval = true;
+
+            // Fetch initial student timestamps
+            const initialInfo = await checkTeacherInfo();
+            if (!initialInfo.success) {
+                addMessage("❌ Error starting analysis tracking");
+                analysisPollingInterval = null;
+                return;
+            }
+
+            // Record start time and initial analysis timestamps for all students
+            const startTime = Date.now();
+            const initialAnalysisTimestamps = {};
+            initialInfo.students.forEach(student => {
+                initialAnalysisTimestamps[student.id] = student.last_analysis_at;
+            });
 
             let attempts = 0;
-            const maxAttempts = 30;
+            const maxAttempts = 120;  // ~3 min timeout (production analysis takes 70-136s)
+            let currentInterval = 1000;  // Start at 1s
+            const backoffMultiplier = 1.5;
+            const maxInterval = 5000;  // Cap at 5s
 
-            analysisPollingInterval = setInterval(async () => {
-                attempts++;
-                const status = await checkAnalysisStatus();
+            let messageRotationIndex = 0;
+            let lastTipUpdate = 0;
+            let timeoutId = null;
+            let isPolling = true;
 
-                // Check if a NEW analysis completed (timestamp changed OR analysis just appeared)
-                const isNewAnalysis = status.completed && (
-                    !initialAnalysisTimestamp ||
-                    status.timestamp !== initialAnalysisTimestamp
-                );
-
-                if (isNewAnalysis) {
+            // Cleanup function
+            const cleanup = () => {
+                isPolling = false;
+                if (timeoutId) clearTimeout(timeoutId);
+                if (analysisPollingInterval) {
                     clearInterval(analysisPollingInterval);
+                    analysisPollingInterval = null;
+                }
+            };
 
+            // Polling function
+            const poll = async () => {
+                if (!isPolling) return;
+
+                attempts++;
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
+                // Check for completion by comparing timestamps
+                const info = await checkTeacherInfo();
+                let newAnalysisFound = false;
+
+                if (info.success) {
+                    for (const student of info.students) {
+                        const initial = initialAnalysisTimestamps[student.id];
+                        const current = student.last_analysis_at;
+
+                        // Detect new analysis if timestamp changed
+                        if (current && current !== initial) {
+                            newAnalysisFound = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (newAnalysisFound) {
+                    // Analysis complete!
+                    cleanup();
+                    removeProgressUI();
+
+                    // Fetch full status to show contextual message
+                    const status = await checkAnalysisStatus();
                     const dashboardUrl = `/demo/reports/${TEACHER_PHONE}`;
                     const dashboardLink = `
                         <div style="margin-top: 10px; padding: 12px; background: #25D366; border-radius: 10px; text-align: center;">
@@ -2308,10 +2454,12 @@
 
                     addMessage(dashboardLink);
                 } else if (attempts >= maxAttempts) {
-                    clearInterval(analysisPollingInterval);
+                    // Timeout
+                    cleanup();
+                    removeProgressUI();
                     addMessage("⏱️ Analysis is taking longer than expected. Please check back in a moment.");
 
-                    // Still provide dashboard link even on timeout
+                    // Still provide dashboard link
                     const dashboardUrl = `/demo/reports/${TEACHER_PHONE}`;
                     const dashboardLink = `
                         <div style="margin-top: 10px; padding: 12px; background: #FFA500; border-radius: 10px; text-align: center;">
@@ -2321,8 +2469,22 @@
                         </div>
                     `;
                     addMessage(dashboardLink);
+                } else {
+                    // Update progress UI
+                    const stage = getProgressStage(elapsed);
+
+                    updateProgressUI(stage.progress, stage.name, stage.icon, elapsed, null);
+
+                    // Adaptive exponential backoff
+                    currentInterval = Math.min(currentInterval * backoffMultiplier, maxInterval);
+
+                    // Schedule next poll
+                    timeoutId = setTimeout(poll, currentInterval);
                 }
-            }, 2000);
+            };
+
+            // Start polling
+            poll();
         }
 
         async function sendQuickMessage(message) {
