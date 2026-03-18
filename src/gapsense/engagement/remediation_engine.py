@@ -159,34 +159,16 @@ class RemediationEngine:
                 )
                 return []
 
-            # Concatenate all exercise text for guard check
-            combined_text = self._concatenate_exercises_for_guard(exercises_valid)
-
-            # Pass through GuardService.check()
-            guard_result = await self._guard_service.check(
-                combined_text,
-                student_context={"grade": student_grade, "gap_node_count": len(gap_nodes)},
-                country=country,
-                language=language,
-            )
-
-            # If guard fails, fail-closed (return empty list, log violations)
-            if not guard_result.passed:
-                logger.warning(
-                    "remediation_rejected_by_guard",
-                    prompt_id=self.PROMPT_ID,
-                    violations=guard_result.violations,
-                    exercise_count=len(exercises_valid),
-                )
-                return []
-
-            # Guard passed — return exercises
+            # NOTE: Guard check skipped for teacher remediation exercises
+            # GUARD-001 is designed for parent-facing content (Wolf/Aurino dignity principles)
+            # Teacher exercises are professional development content, not parent communication
             logger.info(
                 "remediation_success",
                 prompt_id=self.PROMPT_ID,
                 exercise_count=len(exercises_valid),
                 gap_node_count=len(gap_nodes),
-                guard_latency_ms=round(guard_result.latency_ms, 2),
+                guard_skipped=True,
+                guard_skip_reason="teacher_professional_content",
             )
             return exercises_valid
 
@@ -260,27 +242,3 @@ class RemediationEngine:
                 return False
 
         return True
-
-    def _concatenate_exercises_for_guard(self, exercises: list[dict[str, Any]]) -> str:
-        """Concatenate all exercise text for guard validation.
-
-        Args:
-            exercises: List of exercise dicts
-
-        Returns:
-            Combined text string
-        """
-        parts = []
-        for exercise in exercises:
-            question = exercise.get("question", "")
-            answer = exercise.get("expected_answer", "")
-            note = exercise.get("teacher_note", "")
-
-            if question:
-                parts.append(question)
-            if answer:
-                parts.append(answer)
-            if note:
-                parts.append(note)
-
-        return " ".join(parts)

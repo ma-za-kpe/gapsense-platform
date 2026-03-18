@@ -11,6 +11,7 @@ import {
   setAnalysisPollingInterval,
   setInitialAnalysisTimestamp
 } from './state.js';
+import { apiClient, APIError } from './APIClient.js';
 
 /**
  * Send a text message to the WhatsApp API
@@ -29,12 +30,7 @@ export async function sendMessage() {
     formData.append('message', message);
     formData.append('teacher_phone', TEACHER_PHONE);
 
-    const response = await fetch(API.MESSAGE, {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await response.json();
+    const data = await apiClient.post(API.MESSAGE, formData);
     hideTyping();
 
     if (data.success && data.response) {
@@ -47,7 +43,10 @@ export async function sendMessage() {
     }
   } catch (error) {
     hideTyping();
-    addMessage(`❌ Error: ${error.message}`);
+    const errorMessage = error instanceof APIError
+      ? error.getUserMessage()
+      : `❌ Error: ${error.message}`;
+    addMessage(errorMessage);
   }
 }
 
@@ -75,12 +74,7 @@ export async function sendButtonClick(buttonText, buttonId) {
     formData.append('button_id', buttonId);
     formData.append('teacher_phone', TEACHER_PHONE);
 
-    const response = await fetch(API.MESSAGE, {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await response.json();
+    const data = await apiClient.post(API.MESSAGE, formData);
     hideTyping();
 
     if (data.success && data.response) {
@@ -93,7 +87,10 @@ export async function sendButtonClick(buttonText, buttonId) {
     }
   } catch (error) {
     hideTyping();
-    addMessage(`❌ Error: ${error.message}`);
+    const errorMessage = error instanceof APIError
+      ? error.getUserMessage()
+      : `❌ Error: ${error.message}`;
+    addMessage(errorMessage);
   }
 }
 
@@ -121,12 +118,7 @@ export async function handleImageSelect() {
     formData.append('image', file);
     formData.append('teacher_phone', TEACHER_PHONE);
 
-    const response = await fetch(API.UPLOAD_IMAGE, {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await response.json();
+    const data = await apiClient.post(API.UPLOAD_IMAGE, formData);
     hideTyping();
 
     if (data.success && data.response) {
@@ -139,7 +131,10 @@ export async function handleImageSelect() {
     }
   } catch (error) {
     hideTyping();
-    addMessage(`❌ Error: ${error.message}`);
+    const errorMessage = error instanceof APIError
+      ? error.getUserMessage()
+      : `❌ Error: ${error.message}`;
+    addMessage(errorMessage);
   }
 
   input.value = '';
@@ -151,8 +146,7 @@ export async function handleImageSelect() {
  */
 export async function checkAnalysisStatus() {
   try {
-    const response = await fetch(`${API.REPORTS}/${TEACHER_PHONE}`);
-    const html = await response.text();
+    const html = await apiClient.get(`${API.REPORTS}/${TEACHER_PHONE}`, { json: false });
 
     // Check 1: Gap tags count
     const gapMatches = html.match(/gap-tag/g);
@@ -255,8 +249,7 @@ export function openReports() {
  */
 export async function initDemo() {
   try {
-    const response = await fetch(`${API.TEACHER_INFO}?teacher_phone=${TEACHER_PHONE}`);
-    const info = await response.json();
+    const info = await apiClient.get(`${API.TEACHER_INFO}?teacher_phone=${TEACHER_PHONE}`);
     if (info.teacher && info.teacher.onboarded) {
       document.getElementById('statusBadge').textContent = '✅ Onboarded';
     }
