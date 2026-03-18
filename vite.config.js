@@ -47,7 +47,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'public/index.html'),
-        demo: resolve(__dirname, 'public/demo.html')
+        demo: resolve(__dirname, 'public/demo.html'),
+        developer: resolve(__dirname, 'public/developer.html')
       },
       output: {
         // Manual chunks for better caching

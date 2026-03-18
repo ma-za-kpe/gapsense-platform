@@ -36,6 +36,7 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Index("idx_students_parent", "primary_parent_id"),
         Index("idx_students_school", "school_id"),
         Index("idx_students_grade", "current_grade"),
+        Index("idx_students_grade_canonical", "grade_canonical"),  # Phase 4: for curriculum queries
     )
 
     # Identity (minimal)
@@ -56,6 +57,11 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     school_id: Mapped[UUID | None] = mapped_column(ForeignKey("schools.id"), nullable=True)
     current_grade: Mapped[str] = mapped_column(
         String(5), nullable=False, comment="Enrolled grade (B1-B9)"
+    )
+    grade_canonical: Mapped[str | None] = mapped_column(
+        String(16),
+        nullable=True,
+        comment="Phase 4: Canonical curriculum format (e.g., 'B7' from 'JHS1')",
     )
     grade_as_of: Mapped[date] = mapped_column(
         Date,

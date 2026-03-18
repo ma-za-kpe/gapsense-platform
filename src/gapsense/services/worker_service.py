@@ -164,7 +164,7 @@ class WorkerService:
         await asyncio.gather(*tasks, return_exceptions=True)
 
     async def _process_message(self, msg: dict[str, Any]) -> None:
-        """Process a single SQS message with concurrency control."""
+        """Process a single SQS message with concurrency control and heartbeat."""
         async with self._semaphore:
             body = json.loads(msg.get("Body", "{}"))
             task = WorkerTask(
@@ -189,6 +189,23 @@ class WorkerService:
                 payload_keys=list(task.payload.keys()),
                 payload_summary=payload_summary,
             )
+
+            # Start heartbeat to prevent SQS redelivery during long processing
+            # Phase 4: Heartbeat every 45s, extending visibility by 90s
+            heartbeat_task = None
+            if task.receipt_handle:
+                heartbeat_task = asyncio.create_task(
+                    self._heartbeat_loop(
+                        receipt_handle=task.receipt_handle,
+                        interval=45,
+                        extension=90,
+                    )
+                )
+                logger.debug(
+                    "heartbeat_started",
+                    task_type=task.task_type,
+                    message_id=task.message_id,
+                )
 
             start = time.perf_counter()
             try:
@@ -260,6 +277,19 @@ class WorkerService:
                     exc_info=True,
                 )
                 await self._handle_failure(task, exc)
+            finally:
+                # Stop heartbeat when task completes (success or failure)
+                if heartbeat_task:
+                    heartbeat_task.cancel()
+                    try:
+                        await heartbeat_task
+                    except asyncio.CancelledError:
+                        pass
+                    logger.debug(
+                        "heartbeat_stopped",
+                        task_type=task.task_type,
+                        message_id=task.message_id,
+                    )
 
     async def _route_task(self, task: WorkerTask, db: Any = None) -> None:
         """Route task to appropriate handler."""
@@ -555,3 +585,60 @@ class WorkerService:
                 )
         except Exception as exc:
             logger.warning("message_delete_failed", error=str(exc))
+
+    # ------------------------------------------------------------------
+    # SQS Visibility Timeout Heartbeat (Phase 4)
+    # ------------------------------------------------------------------
+
+    async def _extend_visibility_timeout(
+        self,
+        receipt_handle: str,
+        extension_seconds: int = 90,
+    ) -> None:
+        """Extend SQS message visibility to prevent redelivery during long processing.
+
+        Args:
+            receipt_handle: SQS message receipt handle
+            extension_seconds: How long to extend visibility (default 90s)
+        """
+        try:
+            async with self._session.create_client(**self._client_kwargs()) as client:
+                await client.change_message_visibility(
+                    QueueUrl=self._queue_url,
+                    ReceiptHandle=receipt_handle,
+                    VisibilityTimeout=extension_seconds,
+                )
+            logger.debug(
+                "visibility_timeout_extended",
+                extension_seconds=extension_seconds,
+            )
+        except Exception as exc:
+            logger.warning(
+                "visibility_timeout_extension_failed",
+                error=str(exc),
+                exc_info=True,
+            )
+
+    async def _heartbeat_loop(
+        self,
+        receipt_handle: str,
+        interval: int,
+        extension: int,
+    ) -> None:
+        """Periodic visibility timeout extension heartbeat.
+
+        Runs in background during long-running task processing. Cancelled when task completes.
+
+        Args:
+            receipt_handle: SQS message receipt handle
+            interval: Seconds between heartbeat extensions
+            extension: Visibility timeout extension amount in seconds
+        """
+        try:
+            while True:
+                await asyncio.sleep(interval)
+                await self._extend_visibility_timeout(receipt_handle, extension)
+        except asyncio.CancelledError:
+            # Normal shutdown when task completes
+            logger.debug("heartbeat_cancelled")
+            raise

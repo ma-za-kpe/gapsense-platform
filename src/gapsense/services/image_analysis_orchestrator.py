@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import structlog
-import tiktoken  # type: ignore[import-not-found]
+import tiktoken
 from sqlalchemy import select, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import selectinload
@@ -33,6 +33,7 @@ from gapsense.core.country_utils import get_country_from_student, get_subject_fr
 from gapsense.core.models import AIUsageLog, Student
 from gapsense.core.models.curriculum import CurriculumIndicator, CurriculumNode
 from gapsense.services.image_analysis_context import ImageAnalysisContext
+from gapsense.worker.metrics import emit_analysis_metrics, emit_vector_search_fallback
 
 if TYPE_CHECKING:
     from gapsense.ai.embedding_service import EmbeddingService
@@ -161,6 +162,10 @@ class ImageAnalysisOrchestrator:
                 total_latency_ms=total_latency_ms,
                 success=True,
             )
+
+            # Phase 4: Emit structured metrics for operational dashboards
+            emit_analysis_metrics(ctx, success=True, latency_ms=total_latency_ms)
+
         except Exception as exc:
             total_latency_ms = round((time.perf_counter() - pipeline_start) * 1000, 2)
             logger.error(
@@ -171,6 +176,10 @@ class ImageAnalysisOrchestrator:
                 error_type=type(exc).__name__,
                 exc_info=True,
             )
+
+            # Phase 4: Emit metrics for failures too (for dashboard tracking)
+            emit_analysis_metrics(ctx, success=False, latency_ms=total_latency_ms)
+
             raise
 
     # ------------------------------------------------------------------
@@ -178,7 +187,12 @@ class ImageAnalysisOrchestrator:
     # ------------------------------------------------------------------
 
     async def _load_student_context(self, ctx: ImageAnalysisContext) -> None:
-        """Load student row and derive country / subject / grade."""
+        """Load student row and derive country / subject / grade.
+
+        Phase 4: Normalizes student grade to canonical format for precise RAG retrieval.
+        """
+        from gapsense.core.grade_utils import normalise_grade
+
         result = await self._db.execute(
             select(Student)
             .where(Student.id == UUID(ctx.student_id))
@@ -192,9 +206,36 @@ class ImageAnalysisOrchestrator:
             raise ValueError(f"Student {ctx.student_id} not found")
 
         ctx.student = student
-        ctx.student_grade = student.current_grade
         ctx.country_key = get_country_from_student(student)
         ctx.subject = get_subject_from_teacher(student.teacher, default="mathematics")
+
+        # Phase 4: Normalize grade to canonical format (e.g., "JHS1" → "B7")
+        raw_grade = student.current_grade
+        canonical_grade = normalise_grade(raw_grade, ctx.country_key)
+
+        if canonical_grade:
+            ctx.student_grade = canonical_grade
+
+            # Update student.grade_canonical if it's different (backfill on-the-fly)
+            if student.grade_canonical != canonical_grade:
+                student.grade_canonical = canonical_grade
+                await self._db.flush()
+                logger.info(
+                    "grade_canonicalized",
+                    student_id=ctx.student_id,
+                    raw_grade=raw_grade,
+                    canonical_grade=canonical_grade,
+                )
+        else:
+            # Fallback: use raw grade if normalization fails
+            ctx.student_grade = raw_grade
+            logger.warning(
+                "grade_normalization_failed",
+                student_id=ctx.student_id,
+                raw_grade=raw_grade,
+                country=ctx.country_key,
+                message="Using raw grade for curriculum retrieval",
+            )
 
         logger.info(
             "student_context_loaded",
@@ -334,8 +375,10 @@ class ImageAnalysisOrchestrator:
             await self._fallback_curriculum_graph(ctx, f"embed call failed: {exc}")
             return
 
-        # Step 3: Vector search
-        indicators = await self._vector_search(query_vector, ctx.country_key, ctx.subject)
+        # Step 3: Vector search with grade filter (Phase 4)
+        indicators = await self._vector_search(
+            query_vector, ctx.country_key, ctx.subject, grade=ctx.student_grade
+        )
 
         # Check if we fell back (indicators from fallback have no embeddings)
         if not indicators:
@@ -498,22 +541,42 @@ class ImageAnalysisOrchestrator:
         query_vector: list[float],
         country: str,
         subject: str,
+        grade: str | None = None,
         top_k: int = 15,
     ) -> list[CurriculumIndicator]:
         """Cosine similarity search against embedded indicators.
 
+        Phase 4: Now accepts optional grade for precise curriculum filtering.
+        Uses adjacent_grades() to include nearby grades (radius=1) to avoid
+        over-filtering while maintaining relevance.
+
         Returns top_k indicators with their CurriculumNode relationships loaded.
         Falls back to code-ordered SELECT on zero results or OperationalError.
         """
+        from gapsense.core.grade_utils import adjacent_grades
+
         try:
+            # Build WHERE clause with optional grade filter
+            where_conditions = [
+                CurriculumNode.country == country,
+                CurriculumNode.subject == subject,
+                CurriculumIndicator.embedding.isnot(None),
+            ]
+
+            # Phase 4: Add grade filter with adjacent grades (radius=1)
+            if grade:
+                target_grades = adjacent_grades(grade, country, radius=1)
+                where_conditions.append(CurriculumNode.grade.in_(target_grades))
+                logger.debug(
+                    "vector_search_grade_filter",
+                    grade=grade,
+                    target_grades=target_grades,
+                )
+
             result = await self._db.execute(
                 select(CurriculumIndicator)
                 .join(CurriculumNode, CurriculumIndicator.node_id == CurriculumNode.id)
-                .where(
-                    CurriculumNode.country == country,
-                    CurriculumNode.subject == subject,
-                    CurriculumIndicator.embedding.isnot(None),
-                )
+                .where(*where_conditions)
                 .order_by(CurriculumIndicator.embedding.cosine_distance(query_vector))
                 .limit(top_k)
                 .options(selectinload(CurriculumIndicator.node))
@@ -525,9 +588,12 @@ class ImageAnalysisOrchestrator:
                     "vector_search_zero_results",
                     country=country,
                     subject=subject,
+                    grade=grade,
                     message="No embeddings found. Has the embedding job been run?",
                 )
-                return await self._code_ordered_indicators(country, subject)
+                # Phase 4: Emit metric to track embedding job staleness
+                emit_vector_search_fallback(country, subject, grade, reason="no_embeddings")
+                return await self._code_ordered_indicators(country, subject, grade=grade)
 
             return list(indicators)
 
@@ -536,21 +602,36 @@ class ImageAnalysisOrchestrator:
                 "vector_search_operational_error",
                 country=country,
                 subject=subject,
+                grade=grade,
                 error=str(exc),
             )
-            return await self._code_ordered_indicators(country, subject)
+            # Phase 4: Emit metric to track database errors affecting vector search
+            emit_vector_search_fallback(country, subject, grade, reason="db_error")
+            return await self._code_ordered_indicators(country, subject, grade=grade)
 
     async def _code_ordered_indicators(
-        self, country: str, subject: str, limit: int = 20
+        self, country: str, subject: str, grade: str | None = None, limit: int = 20
     ) -> list[CurriculumIndicator]:
-        """Code-ordered SELECT of indicators joined to nodes for fallback."""
+        """Code-ordered SELECT of indicators joined to nodes for fallback.
+
+        Phase 4: Now accepts optional grade for precise curriculum filtering.
+        """
+        from gapsense.core.grade_utils import adjacent_grades
+
+        where_conditions = [
+            CurriculumNode.country == country,
+            CurriculumNode.subject == subject,
+        ]
+
+        # Phase 4: Add grade filter with adjacent grades (radius=1)
+        if grade:
+            target_grades = adjacent_grades(grade, country, radius=1)
+            where_conditions.append(CurriculumNode.grade.in_(target_grades))
+
         result = await self._db.execute(
             select(CurriculumIndicator)
             .join(CurriculumNode, CurriculumIndicator.node_id == CurriculumNode.id)
-            .where(
-                CurriculumNode.country == country,
-                CurriculumNode.subject == subject,
-            )
+            .where(*where_conditions)
             .order_by(CurriculumNode.code)
             .limit(limit)
             .options(selectinload(CurriculumIndicator.node))
