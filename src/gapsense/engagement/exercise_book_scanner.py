@@ -293,7 +293,7 @@ class ExerciseBookScanner:
 
     @staticmethod
     def _build_teacher_summary(
-        student_name: str, errors: list[dict], patterns: list[str], focus_areas: list[str]
+        student_name: str, errors: list[dict[str, Any]], patterns: list[str], focus_areas: list[str]
     ) -> str:
         """Build a human-readable summary for the teacher."""
         lines = [f"✅ {student_name}'s Exercise Book Analysis Complete\n"]

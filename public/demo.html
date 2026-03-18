@@ -1251,12 +1251,12 @@
                 </div>
             </div>
 
-            <div class="input-area" role="form" aria-label="Message input">
+            <form class="input-area" role="form" aria-label="Message input" onsubmit="handleFormSubmit(event)">
                 <div class="input-wrapper">
                     <label for="imageInput" class="sr-only">Upload student exercise book photo</label>
                     <input type="file" id="imageInput" accept="image/*" style="display: none" onchange="handleImageSelect()" aria-describedby="imageInputDesc">
                     <span id="imageInputDesc" class="sr-only">Accepts image files. Click attach button to select.</span>
-                    <button class="icon-btn secondary" onclick="document.getElementById('imageInput').click()" aria-label="Attach image">
+                    <button type="button" class="icon-btn secondary" onclick="document.getElementById('imageInput').click()" aria-label="Attach image">
                         📎
                     </button>
                     <label for="messageInput" class="sr-only">Type your message</label>
@@ -1264,16 +1264,17 @@
                         id="messageInput"
                         placeholder="Type a message..."
                         rows="1"
+                        enterkeyhint="send"
                         onkeydown="handleKeyDown(event)"
                         aria-label="Message text"
                         aria-describedby="messageInputDesc"
                     ></textarea>
                     <span id="messageInputDesc" class="sr-only">Press Enter to send, Shift+Enter for new line</span>
                 </div>
-                <button class="icon-btn" onclick="sendMessage()" aria-label="Send message">
+                <button type="submit" class="icon-btn" aria-label="Send message">
                     ➤
                 </button>
-            </div>
+            </form>
         </div>
 
         <!-- Slideshow Container (Right) -->
@@ -2375,6 +2376,11 @@
                 event.preventDefault();
                 sendMessage();
             }
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            sendMessage();
         }
 
         // Auto-resize textarea

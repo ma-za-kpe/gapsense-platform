@@ -182,7 +182,7 @@ class VoiceMicroCoaching:
             if not guard_result.passed:
                 logger.warning(
                     "coaching_blocked_by_guard",
-                    violations=guard_result.violations,
+                    extra={"violations": guard_result.violations},
                 )
                 return CoachingResult(
                     success=False,
@@ -194,7 +194,7 @@ class VoiceMicroCoaching:
             # Send to parent
             from sqlalchemy import select
 
-            from gapsense.core.models.students import Parent as ParentModel
+            from gapsense.core.models import Parent as ParentModel
 
             result = await self.db.execute(
                 select(ParentModel).where(ParentModel.id == UUID(parent_id))
@@ -253,16 +253,16 @@ class VoiceMicroCoaching:
             result = await self.db.execute(
                 select(ParentInteraction)
                 .where(ParentInteraction.parent_id == parent_id)
-                .order_by(ParentInteraction.created_at.desc())
+                .order_by(ParentInteraction.sent_at.desc())
                 .limit(1)
             )
             interaction = result.scalar_one_or_none()
 
             if interaction:
-                interaction.voice_transcript = transcript
+                interaction.voice_transcript = transcript  # type: ignore[attr-defined]
                 if sentiment is not None:
                     interaction.sentiment_score = sentiment
-                interaction.coaching_response = coaching_response
+                interaction.coaching_response = coaching_response  # type: ignore[attr-defined]
                 await self.db.commit()
         except Exception as e:
             logger.warning(f"Failed to update interaction: {e}")

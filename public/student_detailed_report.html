@@ -407,6 +407,7 @@
                 font-size: 10px;
             }
         }
+
     </style>
 </head>
 <body>
@@ -707,13 +708,14 @@
         </div>
         {% endif %}
 
-        <!-- RAW AI RESPONSE -->
+        <!-- AI ANALYSIS DETAILS (Formatted for Teachers) -->
         <div class="separator">================================================================================</div>
         <div class="section">
-            <div class="section-title">RAW AI RESPONSE (JSON)</div>
-            <div class="json-block">
-                <pre>{{ report.raw_response }}</pre>
+            <div class="section-title" style="display: flex; align-items: center; gap: 10px;">
+                🤖 AI Analysis Details
+                <span style="background: #E8F5E9; color: #2E7D32; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">Teacher-Friendly View</span>
             </div>
+            <div id="aiAnalysisDetails" style="margin-top: 15px;"></div>
         </div>
 
         <div class="separator">================================================================================</div>
@@ -722,5 +724,81 @@
         </div>
         <div class="separator">================================================================================</div>
     </div>
+
+    <script>
+        // Beautify JSON for teachers
+        function renderAIAnalysis() {
+            const rawJson = {{ report.raw_response | tojson | safe }};
+            const container = document.getElementById('aiAnalysisDetails');
+
+            if (!rawJson || typeof rawJson !== 'object') {
+                container.innerHTML = '<p style="color: #888;">No analysis data available.</p>';
+                return;
+            }
+
+            function createCard(title, value, icon = '📊') {
+                if (value === null || value === undefined || value === '') return '';
+
+                let displayValue = value;
+                if (typeof value === 'object') {
+                    displayValue = JSON.stringify(value, null, 2);
+                }
+
+                return `
+                    <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 10px; border-left: 4px solid #25D366;">
+                        <div style="font-weight: 600; color: #25D366; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                            <span>${icon}</span>
+                            <span>${title}</span>
+                        </div>
+                        <div style="color: #555; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">
+                            ${displayValue}
+                        </div>
+                    </div>
+                `;
+            }
+
+            let html = '';
+
+            // Main analysis fields
+            if (rawJson.topic) html += createCard('Topic Analyzed', rawJson.topic, '📚');
+            if (rawJson.confidence !== undefined) html += createCard('AI Confidence Level', `${rawJson.confidence}%`, '🎯');
+            if (rawJson.readable !== undefined) html += createCard('Work Readability', rawJson.readable ? '✅ Readable' : '⚠️ Needs Improvement', '👁️');
+            if (rawJson.student_approach) html += createCard('Student\'s Approach', rawJson.student_approach, '💡');
+            if (rawJson.reasoning) html += createCard('AI Reasoning', rawJson.reasoning, '🧠');
+
+            // Errors
+            if (rawJson.errors && rawJson.errors.length > 0) {
+                let errorsHtml = rawJson.errors.map((err, idx) => `
+                    <div style="background: #FFF9E6; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 3px solid #E8B923;">
+                        <div style="font-weight: 600; color: #856404;">${idx + 1}. ${err.error_type || 'Error'}</div>
+                        <div style="color: #666; font-size: 13px; margin-top: 4px;">${err.description || ''}</div>
+                        ${err.line_number ? `<div style="color: #888; font-size: 12px; margin-top: 2px;">Line ${err.line_number}</div>` : ''}
+                    </div>
+                `).join('');
+                html += createCard('Errors Found', errorsHtml, '❌');
+            }
+
+            // Patterns
+            if (rawJson.patterns && rawJson.patterns.length > 0) {
+                let patternsHtml = '<ul style="margin: 0; padding-left: 20px;">' +
+                    rawJson.patterns.map(p => `<li style="margin: 5px 0; color: #555;">${p}</li>`).join('') +
+                    '</ul>';
+                html += createCard('Error Patterns', patternsHtml, '🔍');
+            }
+
+            // Focus areas
+            if (rawJson.focus_areas && rawJson.focus_areas.length > 0) {
+                let focusHtml = '<ul style="margin: 0; padding-left: 20px;">' +
+                    rawJson.focus_areas.map(f => `<li style="margin: 5px 0; color: #555;">${f}</li>`).join('') +
+                    '</ul>';
+                html += createCard('Remediation Focus Areas', focusHtml, '🎯');
+            }
+
+            container.innerHTML = html || '<p style="color: #888;">No additional details available.</p>';
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', renderAIAnalysis);
+    </script>
 </body>
 </html>

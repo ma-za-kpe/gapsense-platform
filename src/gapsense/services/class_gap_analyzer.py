@@ -111,7 +111,7 @@ class ClassGapAnalyzer:
             last_scan_date = max(p.created_at for p in profiles)
 
         # Get common gaps
-        common_gaps = await self._get_common_gaps(profiles)
+        common_gaps = await self._get_common_gaps(list(profiles))
 
         # Calculate improvement (compare to 1 week ago)
         improvement = await self._calculate_improvement(teacher_id)
@@ -364,4 +364,4 @@ class ClassGapAnalyzer:
         )
         profiles = profiles_result.scalars().all()
 
-        return await self._get_common_gaps(profiles)
+        return await self._get_common_gaps(list(profiles))

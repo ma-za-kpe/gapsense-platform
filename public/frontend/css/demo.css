@@ -12,10 +12,15 @@
 
 /* ========== LAYOUT ========== */
 @import './layouts/demo.css';
+@import './layouts/grid.css';
 
 /* ========== COMPONENTS ========== */
 @import './components/slides.css';
 @import './components/whatsapp.css';
+@import './components/loading-spinner.css';
+@import './components/toast.css';
+@import './components/lazy-image.css';
+@import './components/touch.css';
 
 /* ========== UTILITY CLASSES ========== */
 

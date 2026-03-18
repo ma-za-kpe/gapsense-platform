@@ -33,7 +33,7 @@ class ImageAnalysisContext:
 
     # ── Resolved in Step 3: transcribe_image (NEW) ────────────────────────
     transcription_text: str = ""
-    transcription_result: dict = field(default_factory=dict)
+    transcription_result: dict[str, Any] = field(default_factory=dict)
 
     # ── Resolved in Step 4: build_curriculum_graph ────────────────────────
     curriculum_graph_json: str = ""

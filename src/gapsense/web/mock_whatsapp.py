@@ -12,7 +12,7 @@ from typing import Any
 class MockWhatsAppClient:
     """Mock WhatsApp client that captures messages instead of sending them."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.messages: list[dict[str, Any]] = []
         self.last_message: str | None = None
 
@@ -179,7 +179,7 @@ class MockWhatsAppClient:
         """Get the last message text that was captured."""
         return self.last_message
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all captured messages."""
         self.messages = []
         self.last_message = None

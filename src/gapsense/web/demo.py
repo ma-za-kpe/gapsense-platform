@@ -8,7 +8,7 @@ Uses the same backend services as the WhatsApp integration.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -37,7 +37,7 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @router.get("", response_class=HTMLResponse)
-async def demo_page(request: Request):
+async def demo_page(request: Request) -> HTMLResponse:
     """Render the teacher demo interface."""
     return templates.TemplateResponse("demo.html", {"request": request})
 
@@ -70,7 +70,7 @@ async def send_message(
         if button_id:
             # Button click - format as interactive message
             message_type = "interactive"
-            message_content = {"button_reply": {"id": button_id, "title": message}}
+            message_content: str | dict[str, Any] = {"button_reply": {"id": button_id, "title": message}}
         else:
             # Regular text message
             message_type = "text"
@@ -252,7 +252,7 @@ async def get_student_report(
             select(Student)
             .where(Student.teacher_id == teacher.id)
             .where(Student.first_name.ilike(f"%{student_name}%"))
-            .where(Student.deleted_at.is_(None))
+            .where(Student.deleted_at.is_(None))  # type: ignore[attr-defined]
         )
         result = await db.execute(stmt)
         student = result.scalar_one_or_none()
@@ -986,7 +986,7 @@ async def student_detailed_report(
         diagnosis_count = len(diagnosis_count_result.scalars().all())
 
         # Build report data
-        report_data = {
+        report_data: dict[str, Any] = {
             "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
             "report_id": str(profile.id),
             "student": {
@@ -1065,7 +1065,7 @@ async def student_detailed_report(
 
 
 @router.get("/curriculum", response_class=HTMLResponse)
-async def curriculum_explorer(request: Request):
+async def curriculum_explorer(request: Request) -> HTMLResponse:
     """Curriculum explorer page - interactive Ghana curriculum browser."""
     return templates.TemplateResponse("curriculum.html", {"request": request})
 
@@ -1091,7 +1091,7 @@ async def get_curriculum_data(
         nodes = result.scalars().all()
 
         # Group by grade
-        by_grade = {}
+        by_grade: dict[str, list[dict[str, Any]]] = {}
         total_count = 0
 
         for node in nodes:

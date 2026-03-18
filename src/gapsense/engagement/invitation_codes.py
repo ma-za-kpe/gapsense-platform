@@ -10,6 +10,7 @@ import re
 import secrets
 import string
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 
@@ -64,7 +65,7 @@ def generate_school_code_prefix(school_name: str, max_length: int = 8) -> str:
     return code[:max_length]
 
 
-async def generate_invitation_code(school_name: str, db, max_retries: int = 10) -> str:
+async def generate_invitation_code(school_name: str, db: Any, max_retries: int = 10) -> str:
     """Generate unique invitation code for school.
 
     Args:

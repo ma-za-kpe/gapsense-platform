@@ -3,7 +3,7 @@
  * Offline support and caching for Ghana's unreliable networks
  */
 
-const CACHE_VERSION = 'gapsense-v1.0.0';
+const CACHE_VERSION = 'gapsense-v1.0.9';
 const CACHE_NAME = `${CACHE_VERSION}`;
 
 // Assets to cache immediately on install
@@ -156,8 +156,10 @@ self.addEventListener('fetch', (event) => {
       .then((networkResponse) => {
         // Cache successful responses
         if (networkResponse && networkResponse.status === 200) {
+          // Clone before using the response
+          const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, networkResponse.clone());
+            cache.put(request, responseToCache);
           });
         }
         return networkResponse;

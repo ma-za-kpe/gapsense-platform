@@ -1,29 +1,46 @@
 # GapSense Platform Architecture
 **Complete Technical Architecture & Stack Specification**
 
-Version: 1.0.0 | Author: Maku Mazakpe | Date: 2026-02-16 (Updated)
+Version: 1.1.0 | Author: Maku Mazakpe | Date: 2026-03-18 (Updated)
+
+---
+
+## ⚠️ DOCUMENT STATUS
+
+This document describes both **implemented** and **planned** architecture. For current production deployment details, see:
+- **Production Infrastructure**: README.md (Deployment section)
+- **AI Pipeline Costs**: `.kiro/specs/teacher-remediation-exercises/design.md`
+- **Database Schema**: `alembic/versions/`
 
 ---
 
 ## 🚨 Architecture Status
 
-**This document describes the TARGET architecture**, not the current implementation.
+**Current Implementation (65%):**
+- ✅ AWS ECS Fargate deployment (**us-east-1**, not af-south-1)
+- ✅ RDS PostgreSQL 16 (production database)
+- ✅ S3 media storage (`gapsense-media-prod`)
+- ✅ SQS async worker queue
+- ✅ Multimodal AI integration (Claude Sonnet 4.6 Vision)
+- ✅ Exercise book scanner with image analysis (ANALYSIS-001)
+- ✅ Remediation exercise generator (REMEDIATION-001)
+- ✅ Teacher web dashboard (`/demo/reports/`)
+- ✅ FastAPI async backend
+- ✅ PostgreSQL database schema (production RDS)
+- ✅ Student/Parent/Teacher/GapProfile models
 
-**Current Implementation (15%):**
-- ✅ WhatsApp webhook infrastructure
-- ✅ PostgreSQL database schema (6 migrations)
-- ✅ FastAPI backend (async)
-- ✅ Parent onboarding flow
-- ✅ Student/Parent/Teacher models
+**In Progress (25%):**
+- 🔄 WhatsApp webhook integration for exercise book scanner (infrastructure exists, not connected)
+- 🔄 Parent engagement flows (onboarding partial)
+- 🔄 Scheduled messaging system
+- 🔄 CI/CD pipelines (manual deployment currently)
 
-**Missing (85%):**
-- ❌ Multimodal AI integration (Claude/Gemini vision)
-- ❌ Exercise book scanner
-- ❌ SQS queue + worker architecture
-- ❌ Scheduled messaging system
-- ❌ TTS/STT integration
-- ❌ Teacher web dashboard
-- ❌ AWS Fargate deployment
+**Planned (10%):**
+- ❌ TTS/STT integration (voice features)
+- ❌ Prompt caching optimization (designed, not implemented)
+- ❌ Custom CloudWatch metrics (designed, not implemented)
+- ❌ Migration to af-south-1 region (currently us-east-1)
+- ❌ Parent onboarding flow completion
 
 See [mvp_specification_audit_CRITICAL.md](../mvp_specification_audit_CRITICAL.md) for detailed gap analysis.
 

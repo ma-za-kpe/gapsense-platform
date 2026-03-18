@@ -14,7 +14,7 @@ import time
 from typing import Any
 
 import structlog
-from aiobotocore.session import get_session
+from aiobotocore.session import get_session  # type: ignore[import-untyped]
 
 logger = structlog.get_logger(__name__)
 
@@ -199,7 +199,7 @@ class MediaService:
                 Params={"Bucket": self._bucket, "Key": s3_key},
                 ExpiresIn=expiry_seconds,
             )
-        return url
+        return url  # type: ignore[no-any-return]
 
     async def generate_upload_url(
         self, s3_key: str, content_type: str, expiry_seconds: int = 900
@@ -224,7 +224,7 @@ class MediaService:
                 },
                 ExpiresIn=expiry_seconds,
             )
-        return url
+        return url  # type: ignore[no-any-return]
 
     async def download(self, s3_key: str) -> bytes:
         """Download file bytes from S3.
@@ -239,7 +239,7 @@ class MediaService:
             response = await client.get_object(Bucket=self._bucket, Key=s3_key)
             async with response["Body"] as stream:
                 data = await stream.read()
-        return data
+        return data  # type: ignore[no-any-return]
 
     async def verify_connectivity(self) -> bool:
         """Health check: verify S3 bucket is accessible.

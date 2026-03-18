@@ -1743,10 +1743,10 @@ class FlowExecutor:
 
             activity_delivery = ParentActivityDelivery(
                 db=self.db,
-                ai_client=AsyncAIClient(),
-                prompt_service=PromptService(),
-                guard_service=GuardService(),
-                worker_service=WorkerService(),
+                ai_client=AsyncAIClient(),  # type: ignore[call-arg]
+                prompt_service=PromptService(),  # type: ignore[call-arg]
+                guard_service=GuardService(),  # type: ignore[call-arg]
+                worker_service=WorkerService(),  # type: ignore[call-arg]
             )
 
             from gapsense.core.country_utils import get_country_from_parent

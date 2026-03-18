@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import structlog
-from aiobotocore.session import get_session
+from aiobotocore.session import get_session  # type: ignore[import-untyped]
 from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
@@ -140,7 +140,7 @@ class WorkerService:
             resp = await client.send_message(**send_kwargs)
         msg_id = resp.get("MessageId", "")
         logger.info("task_enqueued", task_type=task.task_type, message_id=msg_id)
-        return msg_id
+        return msg_id  # type: ignore[no-any-return]
 
     # ------------------------------------------------------------------
     # Polling

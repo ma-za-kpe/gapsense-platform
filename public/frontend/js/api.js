@@ -176,26 +176,49 @@ export async function checkAnalysisStatus() {
 }
 
 /**
- * Start polling for analysis completion (battery-friendly 2s interval)
+ * Start adaptive polling for analysis completion
+ * Battery-friendly: starts fast (1s), backs off to 5s, pauses when tab hidden
  */
 export async function startPollingForCompletion() {
   const initialStatus = await checkAnalysisStatus();
   setInitialAnalysisTimestamp(initialStatus.timestamp);
 
   let attempts = 0;
+  let currentInterval = POLLING.INITIAL_INTERVAL;
+  let isPageVisible = !document.hidden;
+  let timeoutId = null;
 
-  const pollingInterval = setInterval(async () => {
+  // Monitor page visibility to pause polling when hidden (saves battery)
+  const visibilityHandler = () => {
+    isPageVisible = !document.hidden;
+    if (isPageVisible && timeoutId === null) {
+      // Resume polling when page becomes visible
+      scheduleNextPoll();
+    }
+  };
+
+  if (POLLING.PAUSE_WHEN_HIDDEN) {
+    document.addEventListener('visibilitychange', visibilityHandler);
+  }
+
+  const poll = async () => {
+    // Skip polling if page is hidden and battery saving is enabled
+    if (!isPageVisible && POLLING.PAUSE_WHEN_HIDDEN) {
+      scheduleNextPoll();
+      return;
+    }
+
     attempts++;
     const status = await checkAnalysisStatus();
 
-    // Check if a NEW analysis completed (timestamp changed OR analysis just appeared)
+    // Check if a NEW analysis completed
     const isNewAnalysis = status.completed && (
       !initialAnalysisTimestamp ||
       status.timestamp !== initialAnalysisTimestamp
     );
 
     if (isNewAnalysis) {
-      clearInterval(pollingInterval);
+      cleanup();
 
       const dashboardUrl = `${API.REPORTS}/${TEACHER_PHONE}`;
       const dashboardLink = `
@@ -217,10 +240,9 @@ export async function startPollingForCompletion() {
 
       addMessage(dashboardLink);
     } else if (attempts >= POLLING.MAX_ATTEMPTS) {
-      clearInterval(pollingInterval);
+      cleanup();
       addMessage("⏱️ Analysis is taking longer than expected. Please check back in a moment.");
 
-      // Still provide dashboard link even on timeout
       const dashboardUrl = `${API.REPORTS}/${TEACHER_PHONE}`;
       const dashboardLink = `
         <div style="margin-top: 10px; padding: 12px; background: #FFA500; border-radius: 10px; text-align: center;">
@@ -230,10 +252,33 @@ export async function startPollingForCompletion() {
         </div>
       `;
       addMessage(dashboardLink);
+    } else {
+      // Adaptive backoff: increase interval for battery savings
+      currentInterval = Math.min(
+        currentInterval * POLLING.BACKOFF_MULTIPLIER,
+        POLLING.MAX_INTERVAL
+      );
+      scheduleNextPoll();
     }
-  }, POLLING.INTERVAL);
+  };
 
-  setAnalysisPollingInterval(pollingInterval);
+  const scheduleNextPoll = () => {
+    timeoutId = setTimeout(poll, currentInterval);
+  };
+
+  const cleanup = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    document.removeEventListener('visibilitychange', visibilityHandler);
+  };
+
+  // Store cleanup function for external cancellation
+  setAnalysisPollingInterval({ stop: cleanup });
+
+  // Start first poll
+  scheduleNextPoll();
 }
 
 /**

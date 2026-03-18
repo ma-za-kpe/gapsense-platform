@@ -4,6 +4,9 @@
  * Mobile-first, ES6 modular architecture
  */
 
+// Import CSS (Vite will inject it as <style> tags)
+import '../css/demo.css';
+
 import { initSlideDots } from './slides.js';
 import { initTouchListeners, initKeyboardNavigation } from './mobile.js';
 import { initDemo, handleKeyDown } from './api.js';

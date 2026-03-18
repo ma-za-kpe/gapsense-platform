@@ -1,0 +1,408 @@
+/**
+ * LazyImage Component Styles - Mobile-Optimized
+ * Progressive image loading with blur-up effect
+ */
+
+/* ========== BASE IMAGE STYLES ========== */
+
+.lazy-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+
+  /* Prevent layout shift */
+  aspect-ratio: attr(width) / attr(height);
+
+  /* Performance */
+  will-change: opacity, filter;
+  transition: opacity 400ms ease-in-out, filter 400ms ease-in-out;
+
+  /* Accessibility */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ========== PLACEHOLDER STATE ========== */
+
+.lazy-image--placeholder {
+  filter: blur(20px);
+  opacity: 0.6;
+  transform: scale(1.05); /* Slightly larger to hide blur edges */
+
+  /* Animation hint for GPU */
+  transform: scale(1.05) translateZ(0);
+  -webkit-transform: scale(1.05) translateZ(0);
+}
+
+/* ========== LOADED STATE ========== */
+
+.lazy-image--loaded {
+  filter: none;
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ========== ERROR STATE ========== */
+
+.lazy-image--error {
+  background: #f0f0f0;
+  border: 2px dashed #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: #999;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.lazy-image--error::after {
+  content: '⚠️ Image failed to load';
+  display: block;
+  text-align: center;
+}
+
+/* ========== CONTAINER STYLES ========== */
+
+.lazy-image-container {
+  position: relative;
+  overflow: hidden;
+  background: #f5f5f5;
+
+  /* Prevent layout shift */
+  display: block;
+}
+
+/* Maintain aspect ratio */
+.lazy-image-container--16x9 {
+  aspect-ratio: 16 / 9;
+}
+
+.lazy-image-container--4x3 {
+  aspect-ratio: 4 / 3;
+}
+
+.lazy-image-container--1x1 {
+  aspect-ratio: 1 / 1;
+}
+
+.lazy-image-container--3x2 {
+  aspect-ratio: 3 / 2;
+}
+
+/* Image fills container */
+.lazy-image-container .lazy-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ========== LOADING SPINNER ========== */
+
+.lazy-image-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #25D366;
+  border-radius: 50%;
+  animation: lazy-image-spin 0.8s linear infinite;
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 300ms ease;
+}
+
+/* Hide spinner when loaded */
+.lazy-image-container:has(.lazy-image--loaded)::before {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes lazy-image-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========== OBJECT FIT UTILITIES ========== */
+
+.lazy-image--cover {
+  object-fit: cover;
+}
+
+.lazy-image--contain {
+  object-fit: contain;
+}
+
+.lazy-image--fill {
+  object-fit: fill;
+}
+
+.lazy-image--scale-down {
+  object-fit: scale-down;
+}
+
+/* ========== ROUNDED VARIANTS ========== */
+
+.lazy-image--rounded {
+  border-radius: 8px;
+}
+
+.lazy-image--rounded-lg {
+  border-radius: 12px;
+}
+
+.lazy-image--circle {
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+/* ========== EXERCISE BOOK IMAGE (Specific to GapSense) ========== */
+
+.exercise-book-image {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+
+.exercise-book-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  cursor: zoom-in;
+}
+
+@media (max-width: 767px) {
+  .exercise-book-image {
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .exercise-book-image:hover {
+    transform: none; /* Disable hover effect on mobile */
+  }
+}
+
+/* ========== THUMBNAIL GRID ========== */
+
+.lazy-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .lazy-image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lazy-image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+}
+
+.lazy-image-grid .lazy-image {
+  border-radius: 8px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 200ms ease;
+}
+
+.lazy-image-grid .lazy-image:hover {
+  transform: scale(1.05);
+}
+
+/* ========== PROGRESSIVE BLUR-UP EFFECT ========== */
+
+/* Low-quality placeholder with blur */
+.lazy-image-progressive {
+  position: relative;
+}
+
+.lazy-image-progressive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: inherit;
+  filter: blur(20px);
+  transform: scale(1.1);
+  z-index: -1;
+}
+
+/* ========== ACCESSIBILITY ========== */
+
+/* Focus styles for keyboard navigation */
+.lazy-image:focus-visible {
+  outline: 3px solid var(--color-primary, #25D366);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .lazy-image,
+  .lazy-image--placeholder,
+  .lazy-image--loaded,
+  .exercise-book-image {
+    transition: none;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .lazy-image-container::before {
+    animation: none;
+  }
+}
+
+/* ========== DARK MODE SUPPORT ========== */
+
+@media (prefers-color-scheme: dark) {
+  .lazy-image-container {
+    background: #2a2a2a;
+  }
+
+  .lazy-image--error {
+    background: #1a1a1a;
+    border-color: #444;
+    color: #cccccc;
+  }
+
+  .lazy-image-container::before {
+    border-color: #444;
+    border-top-color: #25D366;
+  }
+}
+
+/* ========== HIGH CONTRAST MODE ========== */
+
+@media (prefers-contrast: high) {
+  .lazy-image {
+    border: 1px solid currentColor;
+  }
+
+  .lazy-image--error {
+    border: 2px solid currentColor;
+  }
+}
+
+/* ========== PRINT STYLES ========== */
+
+@media print {
+  .lazy-image {
+    page-break-inside: avoid;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  .lazy-image-container::before {
+    display: none; /* Hide loading spinner */
+  }
+
+  .exercise-book-image {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}
+
+/* ========== SKELETON LOADER (Alternative to Spinner) ========== */
+
+.lazy-image-skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0%,
+    #f8f8f8 50%,
+    #f0f0f0 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Hide shimmer when loaded */
+.lazy-image-container:has(.lazy-image--loaded) .lazy-image-skeleton {
+  animation: none;
+  background: transparent;
+}
+
+/* ========== PERFORMANCE OPTIMIZATIONS ========== */
+
+/* GPU layer promotion */
+.lazy-image {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Contain layout repaints */
+.lazy-image-container {
+  contain: layout style;
+}
+
+/* Optimize animations */
+@supports (content-visibility: auto) {
+  .lazy-image-container {
+    content-visibility: auto;
+  }
+}
+
+/* ========== USAGE EXAMPLES ========== */
+
+/*
+Example 1: Basic Lazy Image
+<div class="lazy-image-container lazy-image-container--16x9">
+  <img class="lazy-image"
+       data-src="image.jpg"
+       alt="Description"
+       loading="lazy">
+</div>
+
+Example 2: Exercise Book Image
+<img class="lazy-image exercise-book-image"
+     data-src="exercise-book.jpg"
+     data-srcset="exercise-book-320.jpg 320w, exercise-book-640.jpg 640w, exercise-book-1024.jpg 1024w"
+     data-sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
+     alt="Student exercise book">
+
+Example 3: Thumbnail Grid
+<div class="lazy-image-grid">
+  <img class="lazy-image" data-src="thumb1.jpg" alt="Thumbnail 1">
+  <img class="lazy-image" data-src="thumb2.jpg" alt="Thumbnail 2">
+  <img class="lazy-image" data-src="thumb3.jpg" alt="Thumbnail 3">
+</div>
+
+Example 4: Avatar (Circle)
+<img class="lazy-image lazy-image--circle"
+     data-src="avatar.jpg"
+     alt="User avatar"
+     width="100"
+     height="100">
+*/

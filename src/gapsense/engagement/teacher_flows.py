@@ -71,6 +71,7 @@ class TeacherFlowExecutor:
         self.captured_response: str | None = None
 
         # In demo mode, use mock client that captures messages
+        self.whatsapp: Any
         if demo_mode:
             from gapsense.web.mock_whatsapp import MockWhatsAppClient
 
@@ -1570,6 +1571,7 @@ class TeacherFlowExecutor:
                 WhatsAppNotificationService,
             )
 
+            notification_service: Any
             if self.demo_mode:
                 notification_service = DemoNotificationService()
             else:

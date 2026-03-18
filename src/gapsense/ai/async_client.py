@@ -141,13 +141,14 @@ class AsyncAIClient:
                         max_tokens=max_tokens,
                         temperature=temperature,
                         system=effective_system,
-                        messages=effective_messages,
+                        messages=effective_messages,  # type: ignore[arg-type]
                     ),
                     timeout=self._timeout_seconds,
                 )
                 latency_ms = (time.perf_counter() - start) * 1000
 
-                text = raw.content[0].text if raw.content else ""
+                first_block = raw.content[0]
+                text = first_block.text if hasattr(first_block, "text") else ""
                 input_tokens = raw.usage.input_tokens
                 output_tokens = raw.usage.output_tokens
 
@@ -294,7 +295,7 @@ class AsyncAIClient:
 
         # Strategy 1: Direct parse
         try:
-            return json.loads(text)
+            return json.loads(text)  # type: ignore[no-any-return]
         except json.JSONDecodeError:
             pass
 
@@ -311,7 +312,7 @@ class AsyncAIClient:
                     prompt_id=prompt_id,
                     strategy="strip_fences",
                 )
-                return result
+                return result  # type: ignore[no-any-return]
             except json.JSONDecodeError:
                 pass
             # Use fence_stripped for subsequent strategies
@@ -327,7 +328,7 @@ class AsyncAIClient:
                     prompt_id=prompt_id,
                     strategy="strip_opening_fence",
                 )
-                return result
+                return result  # type: ignore[no-any-return]
             except json.JSONDecodeError:
                 stripped = opening_stripped
 
@@ -357,7 +358,7 @@ class AsyncAIClient:
                     added_braces=open_braces,
                     added_brackets=open_brackets,
                 )
-                return result
+                return result  # type: ignore[no-any-return]
             except json.JSONDecodeError:
                 pass
 

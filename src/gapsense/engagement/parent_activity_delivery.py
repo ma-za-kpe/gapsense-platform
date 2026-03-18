@@ -129,7 +129,7 @@ class ParentActivityDelivery:
             if not guard_result.passed:
                 logger.warning(
                     "activity_blocked_by_guard",
-                    violations=guard_result.violations,
+                    extra={"violations": guard_result.violations},
                 )
                 return ActivityDeliveryResult(
                     success=False,

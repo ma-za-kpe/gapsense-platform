@@ -438,7 +438,7 @@ async def _handle_teacher_image(
         stmt = (
             select(Student)
             .where(Student.teacher_id == teacher.id)
-            .order_by(Student.created_at.desc())  # type: ignore[attr-defined]
+            .order_by(Student.created_at.desc())
             .limit(1)
         )
         result = await db.execute(stmt)
@@ -463,13 +463,19 @@ async def _handle_teacher_image(
             guard_service=guard_service,
             prompt_service=prompt_service,
             settings=settings,
-            db=db,
         )
 
         # Initialize WhatsApp notification service for production
         from gapsense.services.notification_service import WhatsAppNotificationService
 
         whatsapp_notifier = WhatsAppNotificationService(whatsapp_client=client)
+
+        # Import remediation engine
+        from gapsense.remediation.auto_recommendation_engine import (  # type: ignore[import-untyped]
+            AutoRecommendationEngine,
+        )
+
+        remediation_engine = AutoRecommendationEngine(db=db)
 
         scanner = ExerciseBookScanner(
             db=db,
@@ -479,25 +485,28 @@ async def _handle_teacher_image(
             ai_client=ai_client,
             prompt_service=prompt_service,
             notification_service=whatsapp_notifier,
+            remediation_engine=remediation_engine,
         )
 
         # Process image
-        result = await scanner.handle_image_message(
+        from gapsense.engagement.exercise_book_scanner import ScanResult
+
+        scan_result: ScanResult = await scanner.handle_image_message(
             teacher=teacher,
             student=student,
             image_bytes=image_bytes,
             filename=f"exercise_book_{media_id[:8]}.jpg",
             content_type=mime_type,
-            country=teacher.school.district.region.country_code if teacher.school else "GH",
+            country=teacher.school.district.region.country_code if teacher.school else "GH",  # type: ignore[attr-defined]
         )
 
-        if result.success:
-            logger.info(f"Exercise book scan queued: {result.s3_key} for student {student.id}")
+        if scan_result.success:
+            logger.info(f"Exercise book scan queued: {scan_result.s3_key} for student {student.id}")
         else:
-            logger.error(f"Exercise book scan failed: {result.error}")
+            logger.error(f"Exercise book scan failed: {scan_result.error}")
             await client.send_text_message(
                 to=teacher.phone,
-                text=f"⚠️ Failed to process exercise book: {result.error}",
+                text=f"⚠️ Failed to process exercise book: {scan_result.error}",
             )
 
     except Exception as e:
@@ -599,7 +608,7 @@ async def _handle_parent_voice(
         stmt = (
             select(Student)
             .where(Student.primary_parent_id == parent.id)
-            .order_by(Student.created_at.desc())  # type: ignore[attr-defined]
+            .order_by(Student.created_at.desc())
             .limit(1)
         )
         result = await db.execute(stmt)
@@ -624,7 +633,6 @@ async def _handle_parent_voice(
             guard_service=guard_service,
             prompt_service=prompt_service,
             settings=settings,
-            db=db,
         )
 
         coaching = VoiceMicroCoaching(
@@ -638,8 +646,9 @@ async def _handle_parent_voice(
 
         # Process voice message
         from gapsense.core.country_utils import get_country_from_parent
+        from gapsense.engagement.voice_micro_coaching import CoachingResult
 
-        result = await coaching.handle_voice_message(
+        coaching_result: CoachingResult = await coaching.handle_voice_message(
             parent=parent,
             student=student,
             audio_bytes=audio_bytes,
@@ -649,13 +658,13 @@ async def _handle_parent_voice(
             language=parent.preferred_language or "en",
         )
 
-        if result.success:
+        if coaching_result.success:
             logger.info(f"Voice coaching queued for parent {parent.phone}")
         else:
-            logger.error(f"Voice coaching failed: {result.error}")
+            logger.error(f"Voice coaching failed: {coaching_result.error}")
             await client.send_text_message(
                 to=parent.phone,
-                text=f"⚠️ Failed to process voice message: {result.error}",
+                text=f"⚠️ Failed to process voice message: {coaching_result.error}",
             )
 
     except Exception as e:

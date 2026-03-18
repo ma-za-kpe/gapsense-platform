@@ -11,11 +11,13 @@ Backend is fixed at construction time and never switches during lifetime.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import structlog
 
 if TYPE_CHECKING:
+    import openai
+
     from gapsense.config import Settings
 
 logger = structlog.get_logger(__name__)
@@ -63,10 +65,10 @@ class EmbeddingService:
                     "for local development."
                 )
             self._openai_api_key = settings.OPENAI_API_KEY
-            self._openai_client: openai.AsyncOpenAI | None = None
+            self._openai_client: Any = None
         else:
             # MiniLM backend - lazy load the model
-            self._minilm_model: SentenceTransformer | None = None
+            self._minilm_model: Any = None
 
     @property
     def model_name(self) -> str:
@@ -86,7 +88,7 @@ class EmbeddingService:
             return self.OPENAI_DIMENSIONS
         return self.MINILM_DIMENSIONS
 
-    def _get_openai_client(self) -> openai.AsyncOpenAI:
+    def _get_openai_client(self) -> Any:
         """Lazy-initialize and return the OpenAI async client."""
         if self._openai_client is None:
             import openai
@@ -94,10 +96,10 @@ class EmbeddingService:
             self._openai_client = openai.AsyncOpenAI(api_key=self._openai_api_key)
         return self._openai_client
 
-    def _get_minilm_model(self) -> SentenceTransformer:
+    def _get_minilm_model(self) -> Any:
         """Lazy-initialize and return the MiniLM model."""
         if self._minilm_model is None:
-            from sentence_transformers import SentenceTransformer
+            from sentence_transformers import SentenceTransformer  # type: ignore[import-not-found]
 
             self._minilm_model = SentenceTransformer("all-MiniLM-L6-v2")
         return self._minilm_model
@@ -211,7 +213,7 @@ class EmbeddingService:
             None,
             lambda: model.encode(texts, convert_to_numpy=True).tolist(),
         )
-        return embeddings
+        return embeddings  # type: ignore[no-any-return]
 
     @staticmethod
     def build_indicator_chunk(

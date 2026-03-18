@@ -50,6 +50,9 @@
             padding: 25px;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
         }
         .stat-card .label {
             color: #888;
@@ -67,6 +70,38 @@
             font-size: 48px;
             margin-bottom: 10px;
         }
+        /* Collapsible stat card details (hidden by default on mobile) */
+        .stat-card-details {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            display: none;
+        }
+        .stat-card.expanded .stat-card-details {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+        .stat-card-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 20px;
+            transition: transform 0.3s;
+            display: none;
+        }
+        .stat-card.expanded .stat-card-toggle {
+            transform: rotate(180deg);
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
         .students-section {
             background: white;
             padding: 30px;
@@ -81,6 +116,20 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+        /* Virtual scrolling for mobile performance */
+        .student-card.lazy-hidden {
+            display: none;
+        }
+        .students-loader {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 14px;
+            display: none;
+        }
+        .students-loader.active {
+            display: block;
         }
         .student-card {
             background: #f8f9ff;
@@ -276,10 +325,63 @@
 
             .stat-card {
                 padding: 20px;
+                padding-right: 50px; /* Space for toggle icon */
             }
 
             .stat-card .value {
                 font-size: 32px;
+            }
+
+            /* Show toggle icon on mobile */
+            .stat-card-toggle {
+                display: block;
+            }
+
+            /* Compact stat cards on mobile by default */
+            .stat-card:not(.expanded) .icon {
+                display: inline-block;
+                font-size: 32px;
+                margin-right: 10px;
+                margin-bottom: 0;
+                vertical-align: middle;
+            }
+
+            .stat-card:not(.expanded) .label {
+                display: inline-block;
+                vertical-align: middle;
+                margin-bottom: 0;
+                font-size: 12px;
+            }
+
+            .stat-card:not(.expanded) .value {
+                display: inline-block;
+                vertical-align: middle;
+                font-size: 28px;
+                margin-left: 10px;
+            }
+
+            /* Expanded state shows full details */
+            .stat-card.expanded {
+                background: #f8fff8;
+                box-shadow: 0 8px 20px rgba(37, 211, 102, 0.2);
+            }
+
+            .stat-card.expanded .icon {
+                display: block;
+                font-size: 48px;
+                margin-bottom: 10px;
+            }
+
+            .stat-card.expanded .label {
+                display: block;
+                margin-bottom: 8px;
+                font-size: 14px;
+            }
+
+            .stat-card.expanded .value {
+                display: block;
+                font-size: 36px;
+                margin-left: 0;
             }
 
             /* Typography scaling */
@@ -409,25 +511,41 @@
 
         <!-- Stats Overview -->
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" onclick="toggleStatCard(this)" role="button" tabindex="0" aria-expanded="false" aria-label="Total students metric">
+                <span class="stat-card-toggle" aria-hidden="true">▼</span>
                 <div class="icon">👥</div>
                 <div class="label">Total Students</div>
                 <div class="value">{{ stats.total_students }}</div>
+                <div class="stat-card-details">
+                    <p style="font-size: 14px; color: #666; margin: 5px 0;">Active students in your class who have been onboarded to GapSense.</p>
+                </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="toggleStatCard(this)" role="button" tabindex="0" aria-expanded="false" aria-label="Scanned today metric">
+                <span class="stat-card-toggle" aria-hidden="true">▼</span>
                 <div class="icon">📸</div>
                 <div class="label">Scanned Today</div>
                 <div class="value">{{ stats.scanned_today }}</div>
+                <div class="stat-card-details">
+                    <p style="font-size: 14px; color: #666; margin: 5px 0;">Exercise books scanned and analyzed in the last 24 hours.</p>
+                </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="toggleStatCard(this)" role="button" tabindex="0" aria-expanded="false" aria-label="Gaps identified metric">
+                <span class="stat-card-toggle" aria-hidden="true">▼</span>
                 <div class="icon">🎯</div>
                 <div class="label">Gaps Identified</div>
                 <div class="value">{{ stats.total_gaps }}</div>
+                <div class="stat-card-details">
+                    <p style="font-size: 14px; color: #666; margin: 5px 0;">Total knowledge gaps detected across all students.</p>
+                </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="toggleStatCard(this)" role="button" tabindex="0" aria-expanded="false" aria-label="High priority gaps metric">
+                <span class="stat-card-toggle" aria-hidden="true">▼</span>
                 <div class="icon">⚠️</div>
                 <div class="label">High Priority</div>
                 <div class="value">{{ stats.high_priority }}</div>
+                <div class="stat-card-details">
+                    <p style="font-size: 14px; color: #666; margin: 5px 0;">Critical gaps requiring immediate attention and remediation.</p>
+                </div>
             </div>
         </div>
 
@@ -593,6 +711,7 @@
     </div>
 
     <script>
+        // Toggle student card expansion
         function toggleStudent(card) {
             // Toggle expanded class
             card.classList.toggle('expanded');
@@ -602,6 +721,114 @@
             if (details) {
                 details.classList.toggle('show');
             }
+        }
+
+        // Toggle stat card expansion (mobile only)
+        function toggleStatCard(card) {
+            // Only collapse on mobile (<= 768px)
+            if (window.innerWidth > 768) {
+                return;
+            }
+
+            // Toggle expanded class
+            const isExpanded = card.classList.toggle('expanded');
+
+            // Update ARIA attribute
+            card.setAttribute('aria-expanded', isExpanded);
+
+            // Announce to screen readers
+            const label = card.querySelector('.label').textContent;
+            if (isExpanded) {
+                card.setAttribute('aria-label', `${label} - Expanded. Tap to collapse.`);
+            } else {
+                card.setAttribute('aria-label', `${label} - Collapsed. Tap to expand for details.`);
+            }
+        }
+
+        // Add keyboard support for stat cards
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleStatCard(this);
+                    }
+                });
+            });
+
+            // Virtual scrolling for student list (mobile optimization)
+            initVirtualScrolling();
+        });
+
+        function initVirtualScrolling() {
+            // Only enable on mobile for performance
+            if (window.innerWidth > 768) {
+                return;
+            }
+
+            const studentCards = Array.from(document.querySelectorAll('.student-card'));
+            const BATCH_SIZE = 15; // Show 15 students initially, load more as needed
+            let currentlyVisible = 0;
+
+            // Hide all students initially except first batch
+            studentCards.forEach((card, index) => {
+                if (index >= BATCH_SIZE) {
+                    card.classList.add('lazy-hidden');
+                } else {
+                    currentlyVisible++;
+                }
+            });
+
+            // If all students fit in first batch, no need for lazy loading
+            if (studentCards.length <= BATCH_SIZE) {
+                return;
+            }
+
+            // Create loading indicator
+            const studentsSection = document.querySelector('.students-section');
+            const loader = document.createElement('div');
+            loader.className = 'students-loader';
+            loader.textContent = '📚 Loading more students...';
+            studentsSection.appendChild(loader);
+
+            // Create sentinel element to trigger loading
+            const sentinel = document.createElement('div');
+            sentinel.style.height = '1px';
+            studentsSection.appendChild(sentinel);
+
+            // Intersection Observer for lazy loading
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && currentlyVisible < studentCards.length) {
+                        // Show loader
+                        loader.classList.add('active');
+
+                        // Load next batch after short delay (simulate loading)
+                        setTimeout(() => {
+                            const nextBatch = studentCards.slice(currentlyVisible, currentlyVisible + BATCH_SIZE);
+                            nextBatch.forEach(card => {
+                                card.classList.remove('lazy-hidden');
+                            });
+                            currentlyVisible += nextBatch.length;
+
+                            // Hide loader
+                            loader.classList.remove('active');
+
+                            // If all loaded, hide sentinel
+                            if (currentlyVisible >= studentCards.length) {
+                                sentinel.style.display = 'none';
+                                loader.style.display = 'none';
+                            }
+                        }, 300);
+                    }
+                });
+            }, {
+                root: null,
+                rootMargin: '100px', // Start loading 100px before sentinel is visible
+                threshold: 0
+            });
+
+            observer.observe(sentinel);
         }
     </script>
 </body>

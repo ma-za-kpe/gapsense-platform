@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pgvector.sqlalchemy import Vector
+from pgvector.sqlalchemy import Vector  # type: ignore[import-untyped]
 from sqlalchemy import (
     ARRAY,
     CheckConstraint,

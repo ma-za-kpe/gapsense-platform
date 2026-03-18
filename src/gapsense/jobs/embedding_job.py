@@ -13,6 +13,7 @@ import argparse
 import asyncio
 import time
 from dataclasses import dataclass
+from typing import Any
 
 import structlog
 from sqlalchemy import func, select, text
@@ -47,7 +48,7 @@ async def run_embedding_job(
     subject: str,
     force_refresh: bool = False,
     *,
-    session_factory=None,
+    session_factory: Any = None,
     embedding_service: EmbeddingService | None = None,
 ) -> EmbeddingJobResult:
     """Generate and store embeddings for all curriculum indicators.
@@ -251,7 +252,7 @@ IVFFLAT_MIN_VECTORS = 100
 IVFFLAT_INDEX_NAME = "idx_curriculum_indicators_embedding"
 
 
-async def _maybe_create_ivfflat_index(session, country: str, subject: str) -> None:
+async def _maybe_create_ivfflat_index(session: Any, country: str, subject: str) -> None:
     """Create IVFFlat index if enough non-null embeddings exist.
 
     Checks count of non-null embeddings for the country/subject.

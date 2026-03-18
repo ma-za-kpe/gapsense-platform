@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import structlog
 from sqlalchemy import select
@@ -137,7 +138,7 @@ class CurriculumLoader:
 
         return country_summary
 
-    def _read_country_config(self, country_dir: Path) -> dict:
+    def _read_country_config(self, country_dir: Path) -> dict[Any, Any]:
         """Read country_config.json for active levels and subjects."""
         config_path = country_dir / "country_config.json"
         if not config_path.exists():
@@ -145,7 +146,7 @@ class CurriculumLoader:
             return {}
         try:
             with open(config_path) as f:
-                return json.load(f)
+                return json.load(f)  # type: ignore[no-any-return]
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning("country_config_read_error", path=str(config_path), error=str(exc))
             return {}
@@ -208,7 +209,7 @@ class CurriculumLoader:
     async def _upsert_node(
         self,
         code: str,
-        node_data: dict,
+        node_data: dict[str, Any],
         country: str,
         level: str,
         subject: str,

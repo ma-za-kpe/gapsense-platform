@@ -78,7 +78,7 @@ class TeacherConversationPartner:
         3. Format for WhatsApp with TEACHER-003
         """
         try:
-            teacher_id = str(teacher.id)
+            teacher_id: str = str(teacher.id)
             history = self._get_or_create_history(teacher_id)
             history.add_turn("user", message)
 
@@ -197,9 +197,9 @@ class TeacherConversationPartner:
             top_gaps = sorted(all_gaps.items(), key=lambda x: x[1], reverse=True)[:5]
 
             lines = [f"Class: {total_students} students with gap profiles"]
-            for gap_id, count in top_gaps:
+            for gap_id_str, count in top_gaps:
                 pct = round(count / total_students * 100)
-                lines.append(f"  Gap {gap_id}: {count}/{total_students} ({pct}%)")
+                lines.append(f"  Gap {gap_id_str}: {count}/{total_students} ({pct}%)")
 
             return "\n".join(lines)
 

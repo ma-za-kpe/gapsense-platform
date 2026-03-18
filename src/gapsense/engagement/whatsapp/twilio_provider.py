@@ -242,7 +242,7 @@ class TwilioWhatsAppProvider(WhatsAppProvider):
                         "status": response_data.get("status"),
                     },
                 )
-                return message_sid
+                return message_sid  # type: ignore[no-any-return]
 
         except httpx.HTTPError as e:
             logger.error(f"HTTP error sending Twilio template: {e}")
@@ -345,7 +345,7 @@ class TwilioWhatsAppProvider(WhatsAppProvider):
                     f"Twilio message sent: {message_sid}",
                     extra={"to": to, "status": response_data.get("status")},
                 )
-                return message_sid
+                return message_sid  # type: ignore[no-any-return]
 
         except httpx.HTTPError as e:
             logger.error(f"HTTP error sending Twilio message: {e}")

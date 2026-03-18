@@ -709,7 +709,7 @@ class ImageAnalysisOrchestrator:
     # Transcript formatting helper
     # ------------------------------------------------------------------
 
-    def _format_transcript_for_prompt(self, transcription_result: dict) -> str:
+    def _format_transcript_for_prompt(self, transcription_result: dict[str, Any]) -> str:
         """Format a transcription result dict into a human-readable text block.
 
         Returns an empty string when the result is empty or contains no questions.
@@ -909,6 +909,7 @@ class ImageAnalysisOrchestrator:
             ctx.teacher_phone.endswith(pattern) for pattern in test_patterns
         )
 
+        notification_service: Any
         if is_demo:
             notification_service = DemoNotificationService()
             logger.info("using_demo_notification_service", teacher_phone=ctx.teacher_phone)

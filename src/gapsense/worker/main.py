@@ -8,6 +8,7 @@ scheduled messages, and voice transcription tasks.
 import asyncio
 import contextlib
 import os
+from typing import Any
 import signal
 import sys
 
@@ -112,7 +113,7 @@ async def main() -> None:
         # Setup graceful shutdown
         shutdown_event = asyncio.Event()
 
-        def signal_handler(sig, _frame):
+        def signal_handler(sig: int, _frame: Any) -> None:
             """Handle shutdown signals."""
             logger.info("shutdown_signal_received", signal=sig)
             shutdown_event.set()

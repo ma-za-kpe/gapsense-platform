@@ -36,6 +36,195 @@
             box-sizing: border-box;
         }
 
+        /* ===== ACCESSIBILITY STYLES ===== */
+
+        /* Screen reader only text */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Skip to main content link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #25D366;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 0 0 4px 0;
+            z-index: 100000;
+            transition: top 0.3s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
+        /* Enhanced focus styles for keyboard navigation */
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible {
+            outline: 3px solid #25D366;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.2);
+        }
+
+        /* Reduced motion for users who prefer it */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            button, .quick-btn, .icon-btn {
+                border: 2px solid currentColor;
+            }
+        }
+
+        /* ===== MOBILE HAMBURGER NAVIGATION ===== */
+        .mobile-nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: none;
+        }
+
+        .hamburger-btn {
+            width: 48px;
+            height: 48px;
+            background: rgba(37, 211, 102, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 5px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn:hover {
+            background: rgba(37, 211, 102, 0.3);
+            transform: scale(1.05);
+        }
+
+        .hamburger-btn span {
+            width: 24px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(7px, 7px);
+        }
+
+        .hamburger-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        .nav-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            padding: 80px 20px 20px;
+            overflow-y: auto;
+            z-index: 9999;
+        }
+
+        .nav-menu.active {
+            transform: translateX(0);
+        }
+
+        .nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 9998;
+        }
+
+        .nav-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .nav-menu-item {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .nav-menu-item:hover {
+            background: #E8F5E9;
+            color: #25D366;
+            transform: translateX(5px);
+        }
+
+        .nav-menu-item.active {
+            background: #25D366;
+            color: white;
+        }
+
+        .nav-menu-divider {
+            height: 1px;
+            background: #eee;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-nav {
+                display: block;
+            }
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #F8F9FA 0%, #E8F5E9 100%);
@@ -728,14 +917,65 @@
         }
 
         /* Mobile responsiveness */
+        /* ===== MOBILE PORTRAIT OPTIMIZATION (640px and below) ===== */
         @media (max-width: 640px) {
             body {
                 padding: 5px;
+                /* Prevent overscroll bounce on iOS */
+                overscroll-behavior: contain;
             }
 
             .phone-container {
-                height: 500px;
+                /* Use viewport height for better mobile fit */
+                height: calc(100vh - 10px);
+                min-height: 500px;
+                max-height: 700px;
                 border-radius: 15px;
+            }
+
+            /* iOS Safe Area Support */
+            .header {
+                padding-top: max(12px, env(safe-area-inset-top));
+            }
+
+            .input-area {
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+            }
+
+            /* Prevent iOS zoom on input focus */
+            #messageInput {
+                font-size: 16px !important; /* iOS won't zoom if >=16px */
+            }
+
+            /* Better touch scrolling */
+            .messages {
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: contain;
+            }
+
+            /* Optimize message bubbles for narrow screens */
+            .message-bubble {
+                max-width: 90%;
+                word-break: break-word;
+                overflow-wrap: break-word;
+            }
+
+            /* Make quick actions scrollable on small screens */
+            .quick-actions {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none; /* IE/Edge */
+            }
+
+            .quick-actions::-webkit-scrollbar {
+                display: none; /* Chrome/Safari */
+            }
+
+            .quick-btn {
+                flex: 0 0 auto;
+                min-width: 80px;
+                white-space: nowrap;
             }
 
             .slideshow-container {
@@ -945,25 +1185,61 @@
     </style>
 </head>
 <body>
-    <div class="demo-wrapper">
+    <!-- Skip to main content link for keyboard navigation -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Mobile Hamburger Navigation -->
+    <div class="mobile-nav">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+
+    <!-- Navigation Overlay -->
+    <div class="nav-overlay" id="navOverlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Navigation Menu -->
+    <nav class="nav-menu" id="navMenu" role="navigation" aria-label="Main navigation">
+        <a href="/" class="nav-menu-item">
+            🏠 Home
+        </a>
+        <a href="/demo" class="nav-menu-item active">
+            🎮 Live Demo
+        </a>
+        <div class="nav-menu-divider"></div>
+        <a href="/demo/reports/+233501234567" class="nav-menu-item">
+            📊 Teacher Dashboard
+        </a>
+        <div class="nav-menu-divider"></div>
+        <a href="https://github.com/anthropics/claude-code" class="nav-menu-item" target="_blank" rel="noopener">
+            📖 Documentation
+        </a>
+        <a href="https://claude.com" class="nav-menu-item" target="_blank" rel="noopener">
+            💬 Get Help
+        </a>
+    </nav>
+
+    <div class="demo-wrapper" role="main" id="main-content">
         <!-- Phone Container (Left) -->
-        <div class="phone-container">
-            <div class="header">
+        <div class="phone-container" role="region" aria-label="GapSense chat interface">
+            <div class="header" role="banner">
                 <div>
                     <div class="header-title">🎓 GapSense Teacher</div>
                     <div class="header-subtitle">AI Teaching Assistant</div>
                 </div>
-                <div class="status-badge" id="statusBadge">Demo Mode</div>
+                <div class="status-badge" id="statusBadge" aria-live="polite" aria-atomic="true">Demo Mode</div>
             </div>
 
-            <div class="quick-actions">
-                <button class="quick-btn" onclick="sendQuickMessage('/STATUS')">📊 Status</button>
-                <button class="quick-btn" onclick="sendQuickMessage('/GAPS')">📍 Gaps</button>
-                <button class="quick-btn" onclick="openReports()">📑 Reports</button>
-                <button class="quick-btn" onclick="sendQuickMessage('START')">🚀 Start</button>
-            </div>
+            <nav class="quick-actions" aria-label="Quick actions">
+                <button class="quick-btn" onclick="sendQuickMessage('/STATUS')" aria-label="Check status">📊 Status</button>
+                <button class="quick-btn" onclick="sendQuickMessage('/GAPS')" aria-label="View knowledge gaps">📍 Gaps</button>
+                <button class="quick-btn" onclick="openReports()" aria-label="Open reports">📑 Reports</button>
+                <button class="quick-btn" onclick="sendQuickMessage('START')" aria-label="Start onboarding">🚀 Start</button>
+            </nav>
 
-            <div class="messages" id="messages">
+            <div class="messages" id="messages" role="log" aria-live="polite" aria-atomic="false" aria-relevant="additions">
                 <div class="message received">
                     <div>
                         <div class="message-bubble">
@@ -976,39 +1252,46 @@
                 </div>
             </div>
 
-            <div class="input-area">
+            <form class="input-area" role="form" aria-label="Message input" onsubmit="handleFormSubmit(event)">
                 <div class="input-wrapper">
-                    <input type="file" id="imageInput" accept="image/*" style="display: none" onchange="handleImageSelect()">
-                    <button class="icon-btn secondary" onclick="document.getElementById('imageInput').click()">
+                    <label for="imageInput" class="sr-only">Upload student exercise book photo</label>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none" onchange="handleImageSelect()" aria-describedby="imageInputDesc">
+                    <span id="imageInputDesc" class="sr-only">Accepts image files. Click attach button to select.</span>
+                    <button type="button" class="icon-btn secondary" onclick="document.getElementById('imageInput').click()" aria-label="Attach image">
                         📎
                     </button>
+                    <label for="messageInput" class="sr-only">Type your message</label>
                     <textarea
                         id="messageInput"
                         placeholder="Type a message..."
                         rows="1"
+                        enterkeyhint="send"
                         onkeydown="handleKeyDown(event)"
+                        aria-label="Message text"
+                        aria-describedby="messageInputDesc"
                     ></textarea>
+                    <span id="messageInputDesc" class="sr-only">Press Enter to send, Shift+Enter for new line</span>
                 </div>
-                <button class="icon-btn" onclick="sendMessage()">
+                <button type="submit" class="icon-btn" aria-label="Send message">
                     ➤
                 </button>
-            </div>
+            </form>
         </div>
 
         <!-- Slideshow Container (Right) -->
-        <div class="slideshow-container">
+        <div class="slideshow-container" role="region" aria-label="Product presentation slideshow" aria-roledescription="carousel">
             <div class="slideshow-header">
-                <div class="slideshow-title">How GapSense Works</div>
-                <button class="expand-btn" onclick="openFullscreen()" title="Expand to fullscreen">
+                <h2 class="slideshow-title" id="slideshowTitle">How GapSense Works</h2>
+                <button class="expand-btn" onclick="openFullscreen()" aria-label="View slideshow in fullscreen mode">
                     ⛶
                 </button>
             </div>
 
-            <div class="slides-area" id="slidesArea">
-                <button class="slide-nav prev" onclick="changeSlide(-1)">‹</button>
-                <button class="slide-nav next" onclick="changeSlide(1)">›</button>
+            <div class="slides-area" id="slidesArea" aria-live="polite" aria-atomic="true">
+                <button class="slide-nav prev" onclick="changeSlide(-1)" aria-label="Previous slide" aria-controls="slidesTrack">‹</button>
+                <button class="slide-nav next" onclick="changeSlide(1)" aria-label="Next slide" aria-controls="slidesTrack">›</button>
 
-                <div class="slides-track" id="slidesTrack">
+                <div class="slides-track" id="slidesTrack" role="group" aria-roledescription="slide" aria-label="Slide content">
                     <!-- Slide 1: Cover -->
                     <div class="slide">
                         <h1 style="font-size: 56px; margin-bottom: 16px;">GapSense</h1>
@@ -1321,12 +1604,12 @@
     </div>
 
     <!-- Fullscreen Modal -->
-    <div class="fullscreen-modal" id="fullscreenModal">
+    <div class="fullscreen-modal" id="fullscreenModal" role="dialog" aria-modal="true" aria-labelledby="slideshowTitle" aria-hidden="true">
         <div class="fullscreen-content">
-            <button class="fullscreen-close" onclick="closeFullscreen()">✕</button>
+            <button class="fullscreen-close" onclick="closeFullscreen()" aria-label="Close fullscreen view">✕</button>
             <div class="slides-area" style="height: 100%;">
-                <button class="slide-nav prev" onclick="changeSlide(-1)">‹</button>
-                <button class="slide-nav next" onclick="changeSlide(1)">›</button>
+                <button class="slide-nav prev" onclick="changeSlide(-1)" aria-label="Previous slide">‹</button>
+                <button class="slide-nav next" onclick="changeSlide(1)" aria-label="Next slide">›</button>
 
                 <div class="slides-track" id="fullscreenSlidesTrack" style="height: 100%;">
                     <!-- Slide 1: Cover -->
@@ -1643,6 +1926,57 @@
         const TEACHER_PHONE = '+233501234567';
         const TOTAL_SLIDES = 12;
         let currentSlide = 0;
+
+        // Mobile Navigation Menu Toggle
+        function toggleMobileMenu() {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const navMenu = document.getElementById('navMenu');
+            const navOverlay = document.getElementById('navOverlay');
+
+            hamburgerBtn.classList.toggle('active');
+            navMenu.classList.toggle('active');
+            navOverlay.classList.toggle('active');
+
+            // Update ARIA attributes
+            const isExpanded = hamburgerBtn.classList.contains('active');
+            hamburgerBtn.setAttribute('aria-expanded', isExpanded);
+
+            // Prevent body scroll when menu is open
+            if (isExpanded) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Close menu when clicking menu items
+        document.addEventListener('DOMContentLoaded', function() {
+            const navMenuItems = document.querySelectorAll('.nav-menu-item');
+            navMenuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // Don't close for external links
+                    if (!this.hasAttribute('target')) {
+                        toggleMobileMenu();
+                    }
+                });
+            });
+
+            // Close menu on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const navMenu = document.getElementById('navMenu');
+                    if (navMenu.classList.contains('active')) {
+                        toggleMobileMenu();
+                    }
+                }
+            });
+
+            // Add click handler to hamburger button
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', toggleMobileMenu);
+            }
+        });
         let touchStartX = 0;
         let touchEndX = 0;
 
@@ -2043,6 +2377,11 @@
                 event.preventDefault();
                 sendMessage();
             }
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            sendMessage();
         }
 
         // Auto-resize textarea
