@@ -471,7 +471,7 @@ async def _handle_teacher_image(
         whatsapp_notifier = WhatsAppNotificationService(whatsapp_client=client)
 
         # Import remediation engine
-        from gapsense.remediation.auto_recommendation_engine import (  # type: ignore[import-untyped]
+        from gapsense.remediation.auto_recommendation_engine import (  # type: ignore[import-not-found]
             AutoRecommendationEngine,
         )
 
@@ -518,8 +518,8 @@ async def _handle_teacher_image(
                 to=teacher.phone,
                 text="⚠️ Sorry, we encountered an error processing your image. Please try again.",
             )
-        except Exception:
-            pass  # Don't fail if error message fails
+        except Exception as e:
+            logger.warning("error_notification_failed", teacher_phone=teacher.phone, error=str(e))
 
 
 async def _handle_teacher_conversation(teacher: Teacher, message: str, db: AsyncSession) -> None:
@@ -676,5 +676,5 @@ async def _handle_parent_voice(
                 to=parent.phone,
                 text="⚠️ Sorry, we encountered an error processing your voice message. Please try again.",
             )
-        except Exception:
-            pass  # Don't fail if error message fails
+        except Exception as e:
+            logger.warning("error_notification_failed", parent_phone=parent.phone, error=str(e))

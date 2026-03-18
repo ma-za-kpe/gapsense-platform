@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import structlog
-import tiktoken
+import tiktoken  # type: ignore[import-not-found]
 from sqlalchemy import select, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import selectinload
