@@ -9,7 +9,12 @@
     "model_target": "claude-sonnet-4-6",
     "fallback_model": "claude-haiku-4-5-20251001",
     "total_prompts": 7,
-    "supported_countries": ["ghana", "uganda", "kenya", "nigeria"],
+    "supported_countries": [
+      "ghana",
+      "uganda",
+      "kenya",
+      "nigeria"
+    ],
     "design_principles": [
       "Wolf/Aurino evidence-based: NEVER generic messages. ALWAYS specific, actionable, dignity-preserving.",
       "Strength-first framing: Always lead with what the child CAN do before identifying gaps.",
@@ -28,7 +33,6 @@
       "Created country-specific cultural context templates"
     ]
   },
-
   "country_config": {
     "ghana": {
       "curriculum_authority": "NaCCA",
@@ -45,16 +49,68 @@
         "minor": "pesewa",
         "minor_plural": "pesewas"
       },
-      "common_foods": ["kenkey", "banku", "fufu", "mangoes", "oranges", "groundnuts", "plantain", "cassava"],
-      "common_names": ["Kofi", "Kwame", "Ama", "Akosua", "Esi", "Yaw", "Abena", "Kwesi"],
-      "geographic_contexts": ["Accra", "Kumasi", "Tamale", "Northern Region", "Ashanti Region", "Greater Accra"],
+      "common_foods": [
+        "kenkey",
+        "banku",
+        "fufu",
+        "mangoes",
+        "oranges",
+        "groundnuts",
+        "plantain",
+        "cassava"
+      ],
+      "common_names": [
+        "Kofi",
+        "Kwame",
+        "Ama",
+        "Akosua",
+        "Esi",
+        "Yaw",
+        "Abena",
+        "Kwesi"
+      ],
+      "geographic_contexts": [
+        "Accra",
+        "Kumasi",
+        "Tamale",
+        "Northern Region",
+        "Ashanti Region",
+        "Greater Accra"
+      ],
       "exam_system": "WASSCE",
       "languages": {
         "official": "English",
-        "major_local": ["Twi/Akan", "Ewe", "Ga", "Dagbani", "Hausa", "Fante"],
-        "l1_codes": ["tw", "ee", "ga", "dag", "hau", "fat"]
+        "major_local": [
+          "Twi/Akan",
+          "Ewe",
+          "Ga",
+          "Dagbani",
+          "Hausa",
+          "Fante"
+        ],
+        "l1_codes": [
+          "tw",
+          "ee",
+          "ga",
+          "dag",
+          "hau",
+          "fat"
+        ]
       },
-      "household_materials": ["bottle caps", "stones", "sticks", "coins (cedis/pesewas)", "beans", "rice", "paper", "pencil", "chalk", "rope", "cups", "bowls"],
+      "household_materials": [
+        "bottle caps",
+        "stones",
+        "sticks",
+        "coins (cedis/pesewas)",
+        "beans",
+        "rice",
+        "paper",
+        "pencil",
+        "chalk",
+        "rope",
+        "cups",
+        "bowls"
+      ],
       "classroom_context": {
         "typical_class_size": "40-60 students",
         "typical_resources": "chalkboard, paper, minimal supplies",
@@ -62,7 +118,6 @@
         "language_medium": "English L2 instruction"
       }
     },
-
     "uganda": {
       "curriculum_authority": "NCDC",
       "curriculum_name": "Thematic Curriculum (Primary) / National Curriculum (Secondary)",
@@ -78,16 +133,68 @@
         "minor": null,
         "minor_plural": null
       },
-      "common_foods": ["matoke", "posho", "beans", "cassava", "sweet potatoes", "mangoes", "jackfruit", "maize"],
-      "common_names": ["Akullo", "Okello", "Akello", "Omara", "Atim", "Ojok", "Amongi", "Odongo"],
-      "geographic_contexts": ["Kampala", "Gulu", "Mbarara", "Central Region", "Northern Region", "Western Region"],
+      "common_foods": [
+        "matoke",
+        "posho",
+        "beans",
+        "cassava",
+        "sweet potatoes",
+        "mangoes",
+        "jackfruit",
+        "maize"
+      ],
+      "common_names": [
+        "Akullo",
+        "Okello",
+        "Akello",
+        "Omara",
+        "Atim",
+        "Ojok",
+        "Amongi",
+        "Odongo"
+      ],
+      "geographic_contexts": [
+        "Kampala",
+        "Gulu",
+        "Mbarara",
+        "Central Region",
+        "Northern Region",
+        "Western Region"
+      ],
       "exam_system": "UNEB (Uganda National Examinations Board)",
       "languages": {
         "official": "English",
-        "major_local": ["Luganda", "Acholi", "Lango", "Ateso", "Runyankole", "Lugisu"],
-        "l1_codes": ["lg", "ach", "laj", "teo", "nyn", "lgb"]
+        "major_local": [
+          "Luganda",
+          "Acholi",
+          "Lango",
+          "Ateso",
+          "Runyankole",
+          "Lugisu"
+        ],
+        "l1_codes": [
+          "lg",
+          "ach",
+          "laj",
+          "teo",
+          "nyn",
+          "lgb"
+        ]
       },
-      "household_materials": ["bottle caps", "stones", "sticks", "coins (shillings)", "beans", "maize kernels", "paper", "pencil", "charcoal", "rope", "cups", "jerry cans"],
+      "household_materials": [
+        "bottle caps",
+        "stones",
+        "sticks",
+        "coins (shillings)",
+        "beans",
+        "maize kernels",
+        "paper",
+        "pencil",
+        "charcoal",
+        "rope",
+        "cups",
+        "jerry cans"
+      ],
       "classroom_context": {
         "typical_class_size": "50-70 students",
         "typical_resources": "chalkboard, limited paper supplies",
@@ -95,7 +202,6 @@
         "language_medium": "English L2 instruction, thematic learning"
       }
     },
-
     "kenya": {
       "curriculum_authority": "KICD",
       "curriculum_name": "Competency-Based Curriculum (CBC)",
@@ -111,16 +217,70 @@
         "minor": null,
         "minor_plural": null
       },
-      "common_foods": ["ugali", "sukuma wiki", "chapati", "githeri", "mandazi", "mangoes", "bananas", "maize"],
-      "common_names": ["Wanjiku", "Kamau", "Achieng", "Omondi", "Njeri", "Mwangi", "Chebet", "Kipchoge"],
-      "geographic_contexts": ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Central Kenya", "Rift Valley", "Coast"],
+      "common_foods": [
+        "ugali",
+        "sukuma wiki",
+        "chapati",
+        "githeri",
+        "mandazi",
+        "mangoes",
+        "bananas",
+        "maize"
+      ],
+      "common_names": [
+        "Wanjiku",
+        "Kamau",
+        "Achieng",
+        "Omondi",
+        "Njeri",
+        "Mwangi",
+        "Chebet",
+        "Kipchoge"
+      ],
+      "geographic_contexts": [
+        "Nairobi",
+        "Mombasa",
+        "Kisumu",
+        "Nakuru",
+        "Central Kenya",
+        "Rift Valley",
+        "Coast"
+      ],
       "exam_system": "KNEC (Kenya National Examinations Council)",
       "languages": {
-        "official": ["English", "Swahili"],
-        "major_local": ["Kikuyu", "Luo", "Kalenjin", "Kamba", "Luhya"],
-        "l1_codes": ["ki", "luo", "kln", "kam", "luy"]
+        "official": [
+          "English",
+          "Swahili"
+        ],
+        "major_local": [
+          "Kikuyu",
+          "Luo",
+          "Kalenjin",
+          "Kamba",
+          "Luhya"
+        ],
+        "l1_codes": [
+          "ki",
+          "luo",
+          "kln",
+          "kam",
+          "luy"
+        ]
       },
-      "household_materials": ["bottle caps", "stones", "sticks", "coins (shillings)", "beans", "maize", "paper", "pencil", "charcoal", "rope", "cups", "water containers"],
+      "household_materials": [
+        "bottle caps",
+        "stones",
+        "sticks",
+        "coins (shillings)",
+        "beans",
+        "maize",
+        "paper",
+        "pencil",
+        "charcoal",
+        "rope",
+        "cups",
+        "water containers"
+      ],
       "classroom_context": {
         "typical_class_size": "35-50 students",
         "typical_resources": "chalkboard/whiteboard, exercise books",
@@ -128,7 +288,6 @@
         "language_medium": "Bilingual English/Swahili"
       }
     },
-
     "nigeria": {
       "curriculum_authority": "NERDC",
       "curriculum_name": "Nigerian National Curriculum (UBE)",
@@ -144,16 +303,64 @@
         "minor": "kobo",
         "minor_plural": "kobo"
       },
-      "common_foods": ["jollof rice", "fufu", "egusi soup", "moi moi", "akara", "plantain", "yam", "beans"],
-      "common_names": ["Chidi", "Amina", "Ngozi", "Emeka", "Fatima", "Adebayo", "Zainab", "Oluwaseun"],
-      "geographic_contexts": ["Lagos", "Abuja", "Kano", "Port Harcourt", "Southwest Nigeria", "Northern Nigeria"],
+      "common_foods": [
+        "jollof rice",
+        "fufu",
+        "egusi soup",
+        "moi moi",
+        "akara",
+        "plantain",
+        "yam",
+        "beans"
+      ],
+      "common_names": [
+        "Chidi",
+        "Amina",
+        "Ngozi",
+        "Emeka",
+        "Fatima",
+        "Adebayo",
+        "Zainab",
+        "Oluwaseun"
+      ],
+      "geographic_contexts": [
+        "Lagos",
+        "Abuja",
+        "Kano",
+        "Port Harcourt",
+        "Southwest Nigeria",
+        "Northern Nigeria"
+      ],
       "exam_system": "WAEC/NECO",
       "languages": {
         "official": "English",
-        "major_local": ["Hausa", "Yoruba", "Igbo", "Pidgin"],
-        "l1_codes": ["ha", "yo", "ig", "pcm"]
+        "major_local": [
+          "Hausa",
+          "Yoruba",
+          "Igbo",
+          "Pidgin"
+        ],
+        "l1_codes": [
+          "ha",
+          "yo",
+          "ig",
+          "pcm"
+        ]
       },
-      "household_materials": ["bottle caps", "stones", "sticks", "coins (naira/kobo)", "beans", "rice", "paper", "pencil", "chalk", "rope", "cups", "bowls"],
+      "household_materials": [
+        "bottle caps",
+        "stones",
+        "sticks",
+        "coins (naira/kobo)",
+        "beans",
+        "rice",
+        "paper",
+        "pencil",
+        "chalk",
+        "rope",
+        "cups",
+        "bowls"
+      ],
       "classroom_context": {
         "typical_class_size": "45-80 students",
         "typical_resources": "chalkboard, limited supplies",
@@ -162,7 +369,6 @@
       }
     }
   },
-
   "categories": {
     "diagnostic": "Prompts that power the adaptive diagnostic engine (DIAG-001, DIAG-002, DIAG-003)",
     "parent_engagement": "Prompts for WhatsApp-based parent communication (PARENT-001, PARENT-002, PARENT-003)",
@@ -171,7 +377,6 @@
     "analysis": "Prompts for interpreting student work and voice notes (ANALYSIS-001, ANALYSIS-002, TRANSCRIPTION-001)",
     "guardrail": "Compliance validation prompts (GUARD-001)"
   },
-
   "global_rules": {
     "description": "Prepended to EVERY prompt. Non-negotiable constraints. Country-specific elements injected via {{country_config}}.",
     "wolf_aurino_principles": [
@@ -203,7 +408,6 @@
       "All reasoning chains logged in ai_reasoning_log for audit."
     ]
   },
-
   "prompts": {
     "DIAG-001": {
       "id": "DIAG-001",
@@ -227,7 +431,6 @@
         "cascade_paths_for_country"
       ]
     },
-
     "PARENT-001": {
       "id": "PARENT-001",
       "name": "Activity Delivery Message - Multi-Country",
@@ -247,7 +450,6 @@
         "household_materials"
       ]
     },
-
     "ACT-001": {
       "id": "ACT-001",
       "name": "Remediation Activity Generator - Multi-Country",
@@ -270,7 +472,6 @@
         "electricity_context"
       ]
     },
-
     "TEACHER-003": {
       "id": "TEACHER-003",
       "name": "Teacher Diagnostic Conversation Partner - Multi-Country",
@@ -294,7 +495,6 @@
         "typical_resources"
       ]
     },
-
     "ANALYSIS-001": {
       "id": "ANALYSIS-001",
       "name": "Exercise Book Image Analysis - Multi-Country",
@@ -304,7 +504,7 @@
       "description": "Analyzes photo of student exercise book. Extracts work, identifies errors, maps to curriculum prerequisite graph.",
       "model": "claude-sonnet-4-6",
       "temperature": 0.2,
-      "max_tokens": 1536,
+      "max_tokens": 4096,
       "system_prompt": "You are GapSense Exercise Book Analyzer. Analyze a photo of student's mathematics exercise book from {{country}} using {{curriculum_authority}} {{curriculum_name}}.\n\n## ANALYSIS PROCESS\n1. EXTRACT: Read all mathematical work visible. Transcribe problems and student answers.\n2. IDENTIFY: Mark each problem as correct/incorrect.\n3. ANALYZE: For incorrect answers — identify specific error pattern and explain WHY.\n4. MAP: Match errors to specific nodes in the {{curriculum_authority}} prerequisite graph provided.\n5. RECOMMEND: Suggest diagnostic path to pursue.\n\n## VISUAL ANALYSIS RULES\nPay attention to:\n- Carrying/regrouping marks (indicates place value understanding)\n- Multi-digit alignment (reveals place value mastery)\n- Fraction notation (¾ vs 3/4 vs '3 4' — notation vs. concept confusion)\n- Scratch work/crossing out (reveals student's thinking process)\n- Language: Work may include {{language_medium}} and L1 mix\n- Two-page spreads: Treat as a single continuous workspace and analyse both pages together\n- Multiple handwriting styles: Identify and separately attribute work from distinct handwriting styles when detected\n- Scattered/non-linear layouts: Group related work items before analysis when content is scattered across the page\n- Partially readable content: Explicitly flag content that is partially readable and report a confidence level for any analysis derived from it\n\n## TRANSCRIPT USAGE\nIf a STAGE 1 TRANSCRIPTION section is provided, use it as the primary source of student work. Use the attached image as a fallback for unclear transcript regions or diagram interpretation.\n\n## CRITICAL ANTI-HALLUCINATION RULES\n1. If image is unclear/illegible, say so explicitly. DO NOT guess.\n2. **CRITICAL:** You MUST ONLY use curriculum codes that appear in the PREREQUISITE GRAPH provided below. DO NOT invent, extrapolate, or modify codes.\n3. If you cannot find an exact match in the prerequisite graph for an error pattern, return the closest matching code OR return empty array [] for gap_node_ids.\n4. NEVER create codes like \"B7.1.2.1\" if only \"B7.1.1.1\" and \"B7.1.4.1\" exist in the graph.\n5. Distinguish LANGUAGE barriers from MATHEMATICAL errors.\n6. For multi-problem images, analyze ALL visible work systematically.\n7. Include confidence score (0-1) for each identified pattern.\n\n## CURRICULUM CODE VALIDATION\nBefore adding ANY code to gap_node_ids or suspected_gaps:\n1. Check if the EXACT code exists in the prerequisite graph provided\n2. If not found, use the closest ancestor node from the graph\n3. If still not found, leave the array empty rather than inventing codes\n\n## FEW-SHOT EXAMPLE\nBelow is a complete worked example showing the expected reasoning chain for a Ghana Basic 7 Pythagoras exercise book analysis.\n\n### Input Context\nCountry: Ghana\nCurriculum: NaCCA Standards-Based Curriculum\nStudent: Kwame, Grade B7, Subject: Mathematics\nPrerequisite graph nodes available: B7.2.1.1 (Understanding right triangles), B7.2.1.2 (Pythagorean theorem application), B7.1.3.1 (Multiplication of whole numbers), B7.1.4.1 (Squares and square roots), B6.1.3.2 (Multi-digit multiplication)\n\n### Visual Observation\nThe exercise book page shows three Pythagorean theorem problems. The student's handwriting is clear. Each problem shows a right triangle diagram with two known sides and one unknown side labelled with a question mark.\n\nProblem 1: Right triangle with legs 3 cm and 4 cm. Student wrote: 3² + 4² = 9 + 16 = 25, √25 = 5 cm. Answer circled: 5 cm.\nProblem 2: Right triangle with hypotenuse 13 cm and one leg 5 cm. Student wrote: 13² + 5² = 169 + 25 = 194, √194 = 13.9 cm.\nProblem 3: Right triangle with legs 6 cm and 8 cm. Student wrote: 6² + 8² = 36 + 64 = 100, √100 = 10 cm. Answer circled: 10 cm.\n\n### Error Identification\nProblem 1: Correct. Student correctly applied a² + b² = c² to find the hypotenuse.\nProblem 2: Incorrect. The student added the hypotenuse squared and the leg squared (13² + 5²) instead of subtracting (13² - 5² = 169 - 25 = 144, √144 = 12 cm). This reveals a misconception: the student applies the formula as addition in all cases, not recognising that finding a leg requires rearranging to c² - a² = b².\nProblem 3: Correct. Student correctly applied a² + b² = c².\n\n### Curriculum Node Mapping\n- Problem 2 error maps to B7.2.1.2 (Pythagorean theorem application). The student can compute squares and square roots correctly (B7.1.4.1 is intact) but does not rearrange the theorem when solving for a leg rather than the hypotenuse.\n- Note on B7.1.3.1: The student's multiplication is accurate in all three problems (9+16, 169+25, 36+64 all computed correctly), so B7.1.3.1 is not a gap.\n\n### Ambiguous Node Handling\nThe error in Problem 2 could also relate to algebraic rearrangement skills. However, the prerequisite graph provided does not contain a specific node for algebraic manipulation at the B7 level. Rather than guessing a code, I note: UNCERTAIN — the rearrangement gap may trace to an algebraic reasoning prerequisite not present in the current graph. I will leave this as a note in overall_pattern and only include B7.2.1.2 in gap_node_ids since that is the only confirmed match in the graph.\n\n### Expected Output\n{\n  \"image_quality\": \"clear\",\n  \"problems_extracted\": [\n    {\"problem\": \"Find hypotenuse: legs 3 cm and 4 cm\", \"student_answer\": \"5 cm\", \"correct_answer\": \"5 cm\", \"is_correct\": true, \"error_pattern\": null, \"related_node\": \"B7.2.1.2\", \"related_misconception\": null, \"confidence\": 0.95},\n    {\"problem\": \"Find leg: hypotenuse 13 cm, leg 5 cm\", \"student_answer\": \"13.9 cm\", \"correct_answer\": \"12 cm\", \"is_correct\": false, \"error_pattern\": \"Applied a² + b² = c² without rearranging to find a missing leg; used addition instead of subtraction from hypotenuse squared\", \"related_node\": \"B7.2.1.2\", \"related_misconception\": \"Believes Pythagorean formula is always addition regardless of which side is unknown\", \"confidence\": 0.92},\n    {\"problem\": \"Find hypotenuse: legs 6 cm and 8 cm\", \"student_answer\": \"10 cm\", \"correct_answer\": \"10 cm\", \"is_correct\": true, \"error_pattern\": null, \"related_node\": \"B7.2.1.2\", \"related_misconception\": null, \"confidence\": 0.95}\n  ],\n  \"overall_pattern\": \"Student demonstrates solid computation skills (squares, square roots, addition) and correctly applies Pythagorean theorem when finding the hypotenuse. However, the student does not rearrange the formula when solving for a leg, indicating a conceptual gap in theorem rearrangement. Note: an algebraic rearrangement prerequisite may be involved but no matching node exists in the current graph — this uncertainty is flagged rather than guessed.\",\n  \"gap_node_ids\": [\"B7.2.1.2\"],\n  \"suspected_gaps\": [\"B7.2.1.2\"],\n  \"recommended_diagnostic_path\": \"Test B7.2.1.2 with two more problems requiring leg calculation to confirm the rearrangement gap. If confirmed, trace backward to B7.1.4.1 to verify square root extraction is solid, then check if the student can rearrange simpler equations.\",\n  \"language_barrier_detected\": false,\n  \"confidence\": 0.90\n}\n\n## COUNTRY CONTEXT: {{country}}\n- Curriculum: {{curriculum_authority}} {{curriculum_name}}\n- Language medium: {{language_medium}}\n- Grade structure: {{grade_structure}}\n\n## OUTPUT FORMAT\nYou MUST respond with ONLY a JSON object. No markdown code blocks, no explanation before or after. Just the raw JSON matching the schema below.\n\nRequired JSON schema:\n{\n  \"image_quality\": \"clear\" | \"partially_readable\" | \"poor\",\n  \"problems_extracted\": [{\"problem\": string, \"student_answer\": string, \"correct_answer\": string, \"is_correct\": boolean, \"error_pattern\": string|null, \"related_node\": string|null, \"related_misconception\": string|null, \"confidence\": number}],\n  \"overall_pattern\": string,\n  \"gap_node_ids\": [\"ONLY codes from prerequisite graph - array can be empty if no matches\"],\n  \"suspected_gaps\": [\"node codes from graph only\"],\n  \"recommended_diagnostic_path\": string,\n  \"language_barrier_detected\": boolean,\n  \"confidence\": number,\n  \"retrieval_metadata\": object|null (optional, default null — reserved for Phase 2 retrieval-augmented curriculum lookup),\n  \"transcription_attempt\": object|null (optional, default null — reserved for Phase 3 OCR transcription data)\n}",
       "user_template": "## COUNTRY CONTEXT\nCountry: {{country}}\nCurriculum: {{curriculum_authority}} {{curriculum_name}}\n\n## STUDENT CONTEXT\n- Name: {{student_first_name}}\n- Enrolled Grade: {{current_grade}}\n- Subject: {{subject}}\n- Home Language: {{home_language}}\n- School Language: {{school_language}}\n\n## STAGE 1 TRANSCRIPTION\n{{transcript_section}}\n\n<!-- Retrieval: {{total_nodes_injected}} nodes injected -->\n<!-- Semantic match: {{seed_node_codes}} -->\n<!-- Graph walk: {{prerequisite_node_codes}} -->\n<!-- Query: {{query_text_preview}} -->\n## PREREQUISITE GRAPH\n{{prerequisite_graph_json}}\n\n## IMAGE\n[Exercise book photo attached]\n\n## TASK\nAnalyze the exercise book photo. Extract all visible work, identify error patterns, map to curriculum nodes, and recommend diagnostic follow-up.",
       "required_country_params": [
@@ -329,8 +529,12 @@
           }
         ],
         "overall_pattern": "string",
-        "gap_node_ids": ["node codes from prerequisite graph ONLY - can be empty"],
-        "suspected_gaps": ["node codes from prerequisite graph ONLY - can be empty"],
+        "gap_node_ids": [
+          "node codes from prerequisite graph ONLY - can be empty"
+        ],
+        "suspected_gaps": [
+          "node codes from prerequisite graph ONLY - can be empty"
+        ],
         "recommended_diagnostic_path": "string",
         "language_barrier_detected": "boolean",
         "confidence": "number 0-1",
@@ -338,7 +542,6 @@
         "transcription_attempt": "object|null (optional, default null — reserved for Phase 3 OCR transcription data)"
       }
     },
-
     "GUARD-001": {
       "id": "GUARD-001",
       "name": "Output Safety & Compliance Guard - Multi-Country",
@@ -356,7 +559,6 @@
         "household_materials"
       ]
     },
-
     "TRANSCRIPTION-001": {
       "id": "TRANSCRIPTION-001",
       "name": "Exercise Book OCR Transcription",
@@ -371,10 +573,8 @@
       "user_template": null
     }
   },
-
   "language_templates": {
     "description": "Multi-country language support. Each country has parallel structure.",
-
     "ghana": {
       "greeting": {
         "en": "Hello {{name}}! 👋",
@@ -402,7 +602,6 @@
         }
       }
     },
-
     "uganda": {
       "greeting": {
         "en": "Hello {{name}}! 👋",
@@ -432,7 +631,6 @@
         }
       }
     },
-
     "kenya": {
       "greeting": {
         "en": "Hello {{name}}! 👋",
@@ -462,7 +660,6 @@
         }
       }
     },
-
     "nigeria": {
       "greeting": {
         "en": "Hello {{name}}! 👋",
@@ -502,7 +699,6 @@
       }
     }
   },
-
   "usage_notes": {
     "country_selection": "Every API call must include 'country' parameter: 'ghana', 'uganda', 'kenya', or 'nigeria'",
     "config_injection": "System automatically injects country_config parameters into prompts based on country parameter",
@@ -510,10 +706,25 @@
     "language_detection": "Auto-detect parent's L1 from phone number prefix or explicit language selection",
     "fallback": "If country-specific L1 template unavailable, fall back to English with simple sentences"
   },
-
   "model_allocation": {
     "description": "Sonnet for accuracy-critical tasks, Haiku for speed/cost-critical at scale. Same across all countries.",
-    "sonnet": ["DIAG-001", "DIAG-002", "DIAG-003", "TEACHER-001", "TEACHER-002", "TEACHER-003", "ACT-001", "ANALYSIS-001", "GUARD-001", "TRANSCRIPTION-001"],
-    "haiku": ["PARENT-001", "PARENT-002", "PARENT-003", "ANALYSIS-002"]
+    "sonnet": [
+      "DIAG-001",
+      "DIAG-002",
+      "DIAG-003",
+      "TEACHER-001",
+      "TEACHER-002",
+      "TEACHER-003",
+      "ACT-001",
+      "ANALYSIS-001",
+      "GUARD-001",
+      "TRANSCRIPTION-001"
+    ],
+    "haiku": [
+      "PARENT-001",
+      "PARENT-002",
+      "PARENT-003",
+      "ANALYSIS-002"
+    ]
   }
 }

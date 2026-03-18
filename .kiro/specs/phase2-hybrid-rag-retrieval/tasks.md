@@ -1,0 +1,205 @@
+# Implementation Plan: Phase 2 — Hybrid RAG Retrieval
+
+## Overview
+
+Replace the brute-force `_build_curriculum_graph` in `ImageAnalysisOrchestrator` with a hybrid retrieval pipeline: pgvector cosine similarity search + recursive CTE prerequisite walk. Implementation follows dependency order: migration → EmbeddingService → embedding job → context extensions → orchestrator methods → WorkerService wiring → template update.
+
+## Tasks
+
+- [x] 1. Alembic migration: pgvector extension + embedding columns
+  - [x] 1.1 Create Alembic migration file with `CREATE EXTENSION IF NOT EXISTS vector`, add `embedding` column (`Vector(1536)`, nullable) and `embedding_model` column (`String(50)`, nullable) to `curriculum_indicators`
+    - Downgrade drops both columns but does NOT drop the vector extension
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.6_
+  - [x] 1.2 Update `CurriculumIndicator` ORM model with `embedding: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)` and `embedding_model: Mapped[str | None] = mapped_column(String(50), nullable=True)`
+    - Import `pgvector.sqlalchemy.Vector`
+    - _Requirements: 1.5_
+  - [x] 1.3 Add `EMBEDDING_MODEL` and `OPENAI_API_KEY` settings to `gapsense/src/gapsense/config.py`
+    - `EMBEDDING_MODEL: Literal["openai", "minilm"] = "openai"`
+    - `OPENAI_API_KEY: str = Field(default="", description="OpenAI API key for embeddings")`
+    - _Requirements: 3.1_
+
+- [x] 2. Implement EmbeddingService
+  - [x] 2.1 Create `gapsense/src/gapsense/ai/embedding_service.py` with `EmbeddingService` class
+    - Constructor takes `Settings`, fixes backend at construction time based on `EMBEDDING_MODEL`
+    - Raise `ConfigurationError` if backend is `openai` and `OPENAI_API_KEY` is empty
+    - Implement `model_name` property returning `"openai-text-embedding-3-small"` or `"minilm-all-MiniLM-L6-v2"`
+    - Implement `dimensions` property returning 1536 or 384
+    - _Requirements: 3.1, 3.2, 3.7, 3.8_
+  - [x] 2.2 Implement `embed(text: str) -> list[float]` and `embed_batch(texts: list[str]) -> list[list[float]]`
+    - OpenAI calls batched in groups of 100
+    - Exponential backoff retry up to 3 attempts on rate-limit errors
+    - _Requirements: 3.3, 3.4, 3.6_
+  - [x] 2.3 Implement `build_indicator_chunk` static method
+    - Format: `"Curriculum node: {node_code} — {node_title}\nIndicator: {indicator_code} — {indicator_title}\nCommon errors: {ep1}; {ep2}; {ep3}"`
+    - _Requirements: 3.5_
+  - [x] 2.4 Write property test: Indicator chunk deterministic format
+    - **Property 2: Indicator chunk deterministic format**
+    - Use `hypothesis` with `st.text()` for codes/titles, `st.lists(st.text())` for error patterns
+    - Verify output matches template format and is deterministic (same inputs → same output)
+    - **Validates: Requirements 3.5**
+  - [x] 2.5 Write unit tests for EmbeddingService construction and error handling
+    - OpenAI backend without API key raises `ConfigurationError`
+    - MiniLM backend constructs without API key
+    - Rate limit retry: mock 2x 429 then success → returns vector
+    - File: `gapsense/tests/unit/test_embedding_service.py`
+    - _Requirements: 3.1, 3.6, 3.7_
+
+- [x] 3. Checkpoint — Ensure migration and EmbeddingService tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 4. Implement embedding job
+  - [x] 4.1 Create `gapsense/src/gapsense/jobs/embedding_job.py` with `EmbeddingJobResult` dataclass and `run_embedding_job` async function
+    - Accept `country`, `subject`, `force_refresh` parameters
+    - Validate embedding model consistency: abort if existing embeddings use a different model and `force_refresh` is False
+    - Query indicators where `embedding IS NULL` (or all if `force_refresh`)
+    - Build indicator chunks via `EmbeddingService.build_indicator_chunk`
+    - Call `embed_batch`, write vectors + model name back to DB
+    - Return `EmbeddingJobResult` with `total_indicators`, `newly_embedded`, `already_embedded`, `errors`, `duration_seconds`
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 13.1, 13.2, 13.3_
+  - [x] 4.2 Implement IVFFlat index creation with minimum vector guard
+    - After embedding batch, check count of non-null embeddings for country/subject
+    - If >= 100: `CREATE INDEX IF NOT EXISTS idx_curriculum_indicators_embedding ON curriculum_indicators USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100)`
+    - If < 100: skip index creation, log warning with count and 100-vector minimum
+    - _Requirements: 2.1, 2.2, 2.3, 2.4_
+  - [x] 4.3 Add CLI entry point: `python -m gapsense.jobs.embedding_job --country <country> --subject <subject> [--force-refresh]`
+    - Use `argparse` or `click` for argument parsing
+    - _Requirements: 4.9_
+  - [x] 4.4 Write property test: Embedding job idempotency
+    - **Property 3: Embedding job idempotency**
+    - Mock DB with pre-seeded indicators, run job twice without `force_refresh`
+    - Second run: `newly_embedded=0`, `already_embedded` equals first run's total
+    - **Validates: Requirements 4.2, 4.5**
+  - [x] 4.5 Write property test: Embedding job result accounting
+    - **Property 6: Embedding job result accounting**
+    - Verify `total_indicators == newly_embedded + already_embedded + errors`
+    - **Validates: Requirements 4.7**
+  - [x] 4.6 Write property test: Embedding model consistency enforcement
+    - **Property 7: Embedding model consistency enforcement**
+    - Mock DB with embeddings from a different model, run without `force_refresh` → abort, no modifications
+    - **Validates: Requirements 4.8, 13.2**
+  - [x] 4.7 Write unit tests for embedding job
+    - IVFFlat guard: 50 indicators → skip with warning; 150 → index created
+    - IVFFlat idempotency: index already exists → no error
+    - Force refresh overwrites existing embeddings
+    - File: `gapsense/tests/unit/test_embedding_job.py`
+    - _Requirements: 2.1, 2.2, 2.3, 4.6_
+
+- [x] 5. Checkpoint — Ensure embedding job tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 6. Extend ImageAnalysisContext with retrieval fields
+  - [x] 6.1 Add `retrieval_metadata: dict[str, Any] = field(default_factory=dict)` and `image_description: str = ""` to `ImageAnalysisContext` dataclass
+    - File: `gapsense/src/gapsense/services/image_analysis_context.py`
+    - _Requirements: 9.1, 9.2, 9.3_
+  - [x] 6.2 Write unit tests for ImageAnalysisContext defaults
+    - New fields default to empty dict and empty string
+    - Existing fields unaffected
+    - File: `gapsense/tests/unit/test_image_analysis_context.py`
+    - _Requirements: 9.3_
+
+- [ ] 7. Implement orchestrator retrieval methods
+  - [x] 7.1 Implement `_build_query_text` method on `ImageAnalysisOrchestrator`
+    - Send student image to Claude Haiku with prompt requesting 2–3 sentence description of visible math content
+    - Prompt includes student grade and country
+    - Instructs model to name specific operations, number ranges, visible error patterns without diagnosing
+    - On failure or empty response: fall back to `"{subject} {student_grade}"`, log warning
+    - Store result on `ctx.image_description`
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+  - [x] 7.2 Implement `_vector_search` method on `ImageAnalysisOrchestrator`
+    - Accept `query_vector`, `country`, `subject`, `top_k=15`
+    - Query `CurriculumIndicator` joined to `CurriculumNode`, filtered by country/subject, `embedding IS NOT NULL`, ordered by cosine distance ascending, limited to `top_k`
+    - Return indicators with `CurriculumNode` relationships loaded
+    - On zero results: fall back to code-ordered SELECT of first 20 indicators, log warning
+    - On `OperationalError`: catch, fall back to code-ordered SELECT, log error
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+  - [x] 7.3 Implement `_walk_prerequisites` method on `ImageAnalysisOrchestrator`
+    - Accept `seed_node_ids`, `country`, `depth=2`
+    - Recursive CTE against `curriculum_prerequisites`: walk `source_node_id` → `target_node_id` up to `depth`
+    - Return discovered prerequisite node IDs excluding seed nodes
+    - Empty seeds → return empty set without DB query
+    - No edges → return empty set, log warning
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+  - [x] 7.4 Implement `_fallback_curriculum_graph` helper method
+    - Code-ordered SELECT LIMIT 20 of indicators joined to nodes for country/subject
+    - Set `ctx.retrieval_metadata["fallback_reason"]` to descriptive string
+    - Output structurally identical to normal retrieval JSON
+    - _Requirements: 12.2, 12.3, 12.5, 12.6_
+  - [x] 7.5 Replace `_build_curriculum_graph` with hybrid retrieval pipeline
+    - Pipeline: `_build_query_text` → `embed(query_text)` → `_vector_search` → extract seed node IDs → `_walk_prerequisites` → merge & deduplicate → load full node data → serialize JSON → populate `ctx.retrieval_metadata`
+    - If `self._embedding_service is None`: call `_fallback_curriculum_graph`
+    - Log token count of `ctx.curriculum_graph_json` using `tiktoken` (`cl100k_base`)
+    - Log warning if combined node set exceeds 25 nodes
+    - Log structured info with seed count, prerequisite count, total count, student ID
+    - Set `ctx.retrieval_metadata` with `seed_node_ids`, `prerequisite_node_ids`, `seed_node_codes`, `prerequisite_node_codes`, `total_nodes_injected`, `query_text_preview`
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 10.3, 12.1, 12.4, 14.1, 14.3_
+  - [x] 7.6 Write property test: Vector search returns filtered, bounded results
+    - **Property 9: Vector search bounded + filtered**
+    - Mock DB with mixed country/subject indicators, verify results ≤ `top_k`, correct country/subject, non-null embeddings
+    - **Validates: Requirements 6.2, 6.3**
+  - [x] 7.7 Write property test: Prerequisite walk returns reachable non-seed nodes
+    - **Property 10: Prerequisite walk non-seed**
+    - Use `st.sets(st.uuids())` for seeds, mock graph edges, verify returned IDs ∩ seed IDs = ∅
+    - **Validates: Requirements 7.2, 7.3**
+  - [x] 7.8 Write property test: Retrieval metadata completeness
+    - **Property 12: Retrieval metadata completeness**
+    - Mock retrieval results, verify all required keys present with correct types
+    - **Validates: Requirements 8.3**
+  - [x] 7.9 Write property test: Fallback structural identity and reason
+    - **Property 13: Fallback structural identity and reason**
+    - Mock various failure scenarios (embedding_service=None, no embeddings, OperationalError)
+    - Verify fallback JSON matches normal schema, `fallback_reason` is non-empty string
+    - **Validates: Requirements 10.3, 12.2, 12.5, 12.6**
+  - [x] 7.10 Write property test: JSON round-trip
+    - **Property 11: Curriculum graph JSON round-trip**
+    - Generate node dicts with `st.lists()` and `st.text()`, verify `json.loads(json.dumps(nodes))` == nodes
+    - **Validates: Requirements 8.6**
+  - [x] 7.11 Write unit tests for orchestrator retrieval methods
+    - `_build_query_text` fallback on AI failure
+    - `_vector_search` zero results → code-ordered fallback
+    - `_vector_search` OperationalError → code-ordered fallback
+    - `_walk_prerequisites` empty seeds → empty set, no DB query
+    - `_walk_prerequisites` no edges → empty set with warning
+    - Node count > 25 → warning logged
+    - `embedding_service=None` → fallback mode
+    - Token count logging includes student_id, token_count, total_nodes, fallback_mode
+    - File: `gapsense/tests/unit/test_hybrid_retrieval.py`
+    - _Requirements: 5.4, 6.4, 6.5, 7.4, 7.5, 8.4, 10.3, 14.1_
+
+- [x] 8. Checkpoint — Ensure orchestrator retrieval tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 9. WorkerService integration and ANALYSIS-001 template update
+  - [x] 9.1 Modify `WorkerService._handle_image_analyze` to construct `EmbeddingService` and pass to `ImageAnalysisOrchestrator`
+    - Wrap construction in try/except: on failure, log warning and pass `embedding_service=None`
+    - Update `ImageAnalysisOrchestrator.__init__` to accept `embedding_service` parameter
+    - File: `gapsense/src/gapsense/services/worker_service.py`
+    - _Requirements: 10.1, 10.2, 10.3_
+  - [x] 9.2 Update ANALYSIS-001 user template with retrieval metadata HTML comments
+    - Insert above `{{prerequisite_graph_json}}`: total nodes injected, seed node codes, prerequisite node codes, query text preview
+    - File: `gapsense-data/prompts/gapsense_prompt_library_v2.0_multicountry.json`
+    - _Requirements: 11.1, 11.3_
+  - [x] 9.3 Update `_render_prompt` to populate retrieval metadata template variables from `ctx.retrieval_metadata`
+    - Pass `total_nodes_injected`, `seed_node_codes`, `prerequisite_node_codes`, `query_text_preview` into template context
+    - _Requirements: 11.2_
+  - [x] 9.4 Write property test: Rendered prompt contains retrieval metadata
+    - **Property 14: Rendered prompt contains metadata**
+    - Use `st.text()` for metadata values, verify each appears as substring in rendered prompt
+    - **Validates: Requirements 11.2**
+  - [x] 9.5 Write unit tests for WorkerService integration and template
+    - ANALYSIS-001 template contains retrieval metadata HTML comments
+    - ANALYSIS-001 output schema unchanged from Phase 1
+    - File: `gapsense/tests/unit/test_prompt_retrieval_metadata.py`
+    - _Requirements: 11.1, 11.3_
+
+- [x] 10. Final checkpoint — Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+## Notes
+
+- Tasks marked with `*` are optional and can be skipped for faster MVP
+- Each task references specific requirements for traceability
+- Property tests use `hypothesis` with `@settings(max_examples=100)`
+- Checkpoints ensure incremental validation after each major component
+- The design uses Python throughout — all code examples target Python 3.11+
+- Mock `EmbeddingService` with real MiniLM backend for property tests (fast, no API key)
+- Use SQLAlchemy in-memory SQLite for unit tests; real PostgreSQL + pgvector for integration tests
