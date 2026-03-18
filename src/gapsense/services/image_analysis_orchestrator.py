@@ -894,6 +894,7 @@ class ImageAnalysisOrchestrator:
         )
 
         from gapsense.engagement.exercise_book_scanner import ExerciseBookScanner
+        from gapsense.engagement.remediation_engine import RemediationEngine
         from gapsense.engagement.whatsapp_client import WhatsAppClient
         from gapsense.services.notification_service import (
             DemoNotificationService,
@@ -916,6 +917,13 @@ class ImageAnalysisOrchestrator:
             notification_service = WhatsAppNotificationService(whatsapp_client=whatsapp_client)
             logger.info("using_whatsapp_notification_service", teacher_phone=ctx.teacher_phone)
 
+        # Instantiate RemediationEngine for generating teacher-facing practice questions
+        remediation_engine = RemediationEngine(
+            ai_client=self._ai_client,
+            prompt_service=self._prompt_service,
+            guard_service=self._guard_service,
+        )
+
         scanner = ExerciseBookScanner(
             db=self._db,
             media_service=self._media_service,
@@ -924,6 +932,7 @@ class ImageAnalysisOrchestrator:
             ai_client=self._ai_client,
             prompt_service=self._prompt_service,
             notification_service=notification_service,
+            remediation_engine=remediation_engine,
         )
         await scanner.process_analysis_result(
             student_id=ctx.student_id,

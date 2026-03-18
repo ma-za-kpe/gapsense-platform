@@ -410,7 +410,9 @@ async def get_teacher_reports_json(
                     "patterns": metadata_dict.get("patterns", []),
                     "focus_areas": metadata_dict.get("focus_areas", []),
                     "gaps": gaps_data,
-                    "remediation_exercise_count": len(metadata_dict.get("remediation_exercises", [])),
+                    "remediation_exercise_count": len(
+                        metadata_dict.get("remediation_exercises", [])
+                    ),
                 }
 
         # Build students data with gap profiles
@@ -473,7 +475,9 @@ async def get_teacher_reports_json(
                     "errors": metadata_dict.get("errors", []),
                     "patterns": metadata_dict.get("patterns", []),
                     "focus_areas": metadata_dict.get("focus_areas", []),
-                    "remediation_exercise_count": len(metadata_dict.get("remediation_exercises", [])),
+                    "remediation_exercise_count": len(
+                        metadata_dict.get("remediation_exercises", [])
+                    ),
                 }
             )
 
