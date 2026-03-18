@@ -11,7 +11,6 @@ fail-closed for guard violations.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -124,8 +123,18 @@ class RemediationEngine:
                 )
                 return []
 
-            # Parse JSON response into exercise list
-            exercises_raw = json.loads(response.text)
+            # Get parsed JSON from response (already recovered by AI client)
+            exercises_raw = response.json_parsed
+
+            # If JSON parsing failed even after recovery, fail-open
+            if exercises_raw is None:
+                logger.warning(
+                    "remediation_failed",
+                    reason="json_parse_failed_after_recovery",
+                    prompt_id=self.PROMPT_ID,
+                    gap_node_count=len(gap_nodes),
+                )
+                return []
 
             # Validate that we got a list
             if not isinstance(exercises_raw, list):
@@ -171,15 +180,6 @@ class RemediationEngine:
                 guard_skip_reason="teacher_professional_content",
             )
             return exercises_valid
-
-        except json.JSONDecodeError as e:
-            logger.error(
-                "remediation_failed",
-                reason="json_parse_error",
-                prompt_id=self.PROMPT_ID,
-                error=str(e),
-            )
-            return []
 
         except Exception as e:
             # Catch-all: fail-open for any unexpected errors
