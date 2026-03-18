@@ -5,7 +5,6 @@ Handles webhook verification (GET) and incoming messages (POST).
 Supports both Meta WhatsApp Cloud API and Twilio WhatsApp webhooks
 via the webhook adapter normalization layer.
 """
-# ruff: noqa: B008 - FastAPI Depends in function defaults is standard pattern
 
 from __future__ import annotations
 

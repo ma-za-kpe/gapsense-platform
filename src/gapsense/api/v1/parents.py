@@ -3,7 +3,6 @@ Parent API Endpoints
 
 WhatsApp parent management following Wolf/Aurino dignity-first principles.
 """
-# ruff: noqa: B008 - FastAPI Depends in function defaults is standard pattern
 
 from datetime import datetime
 from uuid import UUID
