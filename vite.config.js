@@ -48,7 +48,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'public/index.html'),
         demo: resolve(__dirname, 'public/demo.html'),
-        developer: resolve(__dirname, 'public/developer.html')
+        developer: resolve(__dirname, 'public/developer.html'),
+        curriculum: resolve(__dirname, 'public/curriculum.html')
       },
       output: {
         // Manual chunks for better caching
