@@ -59,7 +59,7 @@ class SchoolRegistrationResponse(BaseModel):
 @router.get("/search", response_model=SchoolSearchResponse)
 async def search_ges_schools(
     q: str = Query(..., min_length=1, description="Search query"),
-    db: AsyncSession = Depends(get_db),  # noqa: B008
+    db: AsyncSession = Depends(get_db),
 ) -> SchoolSearchResponse:
     """
     Search GES schools for autocomplete.
@@ -81,7 +81,7 @@ async def search_ges_schools(
 @router.post("/register", response_model=SchoolRegistrationResponse, status_code=201)
 async def register_school(
     data: SchoolRegistrationRequest,
-    db: AsyncSession = Depends(get_db),  # noqa: B008
+    db: AsyncSession = Depends(get_db),
 ) -> SchoolRegistrationResponse:
     """
     Register a new school and generate invitation code.

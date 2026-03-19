@@ -3,7 +3,6 @@ Curriculum API Endpoints
 
 Provides read-only access to curriculum data (strands, sub-strands, nodes).
 """
-# ruff: noqa: B008 - FastAPI Depends in function defaults is standard pattern
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
