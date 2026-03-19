@@ -47,7 +47,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'public/index.html'),
-        demo: resolve(__dirname, 'public/demo.html')
+        demo: resolve(__dirname, 'public/demo.html'),
+        developer: resolve(__dirname, 'public/developer.html')
       },
       output: {
         // Manual chunks for better caching
@@ -111,15 +112,16 @@ export default defineConfig({
     // CORS for API proxy
     cors: true,
 
-    // Proxy API requests to AWS backend
+    // Proxy API requests to backend (configurable via env)
+    // Set VITE_API_BASE_URL in .env file or environment
     proxy: {
       '/demo/api': {
-        target: 'http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
         changeOrigin: true,
         secure: false
       },
       '/demo/reports': {
-        target: 'http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
         changeOrigin: true,
         secure: false
       }

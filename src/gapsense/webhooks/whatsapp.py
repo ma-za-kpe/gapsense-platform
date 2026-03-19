@@ -5,7 +5,6 @@ Handles webhook verification (GET) and incoming messages (POST).
 Supports both Meta WhatsApp Cloud API and Twilio WhatsApp webhooks
 via the webhook adapter normalization layer.
 """
-# ruff: noqa: B008 - FastAPI Depends in function defaults is standard pattern
 
 from __future__ import annotations
 
@@ -519,7 +518,7 @@ async def _handle_teacher_image(
                 text="⚠️ Sorry, we encountered an error processing your image. Please try again.",
             )
         except Exception as e:
-            logger.warning("error_notification_failed", teacher_phone=teacher.phone, error=str(e))
+            logger.warning("error_notification_failed", teacher_phone=teacher.phone, error=str(e))  # type: ignore[call-arg]
 
 
 async def _handle_teacher_conversation(teacher: Teacher, message: str, db: AsyncSession) -> None:
@@ -677,4 +676,4 @@ async def _handle_parent_voice(
                 text="⚠️ Sorry, we encountered an error processing your voice message. Please try again.",
             )
         except Exception as e:
-            logger.warning("error_notification_failed", parent_phone=parent.phone, error=str(e))
+            logger.warning("error_notification_failed", parent_phone=parent.phone, error=str(e))  # type: ignore[call-arg]

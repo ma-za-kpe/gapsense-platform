@@ -3,7 +3,6 @@ Teacher API Endpoints
 
 Teacher management for school-based diagnostic delivery.
 """
-# ruff: noqa: B008 - FastAPI Depends in function defaults is standard pattern
 
 from datetime import datetime
 from uuid import UUID

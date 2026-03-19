@@ -128,9 +128,7 @@ class PromptService:
         config = self._country_configs.get(country_key)
         if config is None:
             supported = self.get_supported_countries()
-            raise ValueError(
-                f"Unsupported country '{country}'. " f"Supported countries: {supported}"
-            )
+            raise ValueError(f"Unsupported country '{country}'. Supported countries: {supported}")
 
         # Validate language if specified
         if language is not None:
@@ -194,9 +192,7 @@ class PromptService:
         config = self._country_configs.get(country_key)
         if config is None:
             supported = self.get_supported_countries()
-            raise ValueError(
-                f"Unsupported country '{country}'. " f"Supported countries: {supported}"
-            )
+            raise ValueError(f"Unsupported country '{country}'. Supported countries: {supported}")
         return list(config.supported_languages)
 
     def list_prompts(self) -> list[str]:
