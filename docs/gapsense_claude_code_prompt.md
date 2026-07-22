@@ -3,6 +3,9 @@
 # Last Updated: 2026-02-13
 # Author: Maku Mazakpe
 
+> Historical design input. The active web-first, Ollama-local direction is in
+> `PROJECT_CHARTER.md`, `WAYS_OF_WORKING.md`, and `../TASKS.md`.
+
 You are building **GapSense**, an AI-powered foundational learning diagnostic platform for Ghana. GapSense identifies root learning gaps in primary and JHS students using the NaCCA Standards-Based Curriculum, then engages parents via WhatsApp with specific, dignity-preserving activities to close those gaps.
 
 ---
@@ -344,8 +347,8 @@ async def whatsapp_webhook(request: Request):
 
 ```env
 # Required
-DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/gapsense
-ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL is injected by the approved runtime
+OLLAMA_BASE_URL=http://host.docker.internal:11434
 WHATSAPP_API_TOKEN=EAAx...
 WHATSAPP_PHONE_NUMBER_ID=123456789
 WHATSAPP_VERIFY_TOKEN=your_verify_token

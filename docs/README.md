@@ -7,6 +7,10 @@
 - [Working List](../TASKS.md) - canonical, ever-growing execution list
 - [Curriculum Coverage Audit](CURRICULUM_COVERAGE_AUDIT.md) - honest Ghana/Uganda baseline
 - [Market and User Research](MARKET_AND_USER_RESEARCH.md) - dated facts and hypotheses
+- [Free Assessment Generation Product Brief](ASSESSMENT_GENERATION_PRODUCT_BRIEF.md) - public
+  generator goal, official assessment constraints, quality model, and commercial hypothesis
+- [Security and Privacy Engineering Model](SECURITY_AND_PRIVACY_MODEL.md) - secure-by-design
+  invariants, threat model, control baseline, and release evidence
 
 ## Architecture and Specifications
 

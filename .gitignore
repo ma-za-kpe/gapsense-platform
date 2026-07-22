@@ -92,8 +92,7 @@ env/
 ENV/
 .venv
 
-# Poetry
-poetry.lock  # Keep this for now, can commit later if we want deterministic deps
+# Poetry lockfile is committed for deterministic Docker and CI builds.
 
 # PyInstaller
 *.manifest
@@ -104,6 +103,7 @@ poetry.lock  # Keep this for now, can commit later if we want deterministic deps
 .coverage
 .coverage.*
 htmlcov/
+test-results/
 .tox/
 .nox/
 coverage.xml
@@ -212,7 +212,6 @@ yarn-error.log*
 # Don't ignore Dockerfile and docker-compose.yml (we want those)
 # But ignore local overrides
 docker-compose.override.yml
-.dockerignore
 
 # ============================================================================
 # CLOUD / INFRASTRUCTURE
@@ -239,6 +238,7 @@ cdk.context.json
 *.swp
 *.swo
 .cache/
+.artifacts/
 tmp/
 temp/
 

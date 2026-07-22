@@ -1,280 +1,111 @@
 # GapSense Platform
 
-**AI-Powered Foundational Learning Diagnostic Platform for Ghana**
+GapSense is a local-first, web-first education product for Ghana and Uganda. It
+is being designed to help learners, caregivers, teachers, and schools find and
+close curriculum-aligned learning gaps and to make high-quality assessment
+generation freely accessible.
 
-[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+The current repository is an early engineering foundation, not a deployed or
+curriculum-complete product. Neither Ghana nor Uganda has complete, reviewed
+coverage across all subjects and levels yet. WhatsApp delivery and production
+deployment are explicitly on hold while the web product, curriculum evidence,
+safety controls, and user experience are built properly.
 
----
+## Current Direction
 
-## Overview
+- Web first, with excellent mobile, tablet, and desktop experiences.
+- Ghana and Uganda, with honest versioned coverage and official-source provenance.
+- Free assessment generation with separate answer keys, rubrics, blueprints,
+  source references, and review status.
+- Deterministic behavior for tests and core workflows; local Ollama is an
+  optional AI capability, never a hidden startup or test requirement.
+- Local mock authentication and services until deployment is authorized.
+- Security, child safety, privacy, accessibility, and dignity by design.
+- 100% line and branch coverage for application-owned executable code.
 
-GapSense identifies root learning gaps in Ghanaian primary and JHS students using AI-powered diagnostic reasoning, then engages parents via WhatsApp with dignity-preserving, evidence-based activities.
+## Runtime Contract
 
-**The Problem:** 84% of Ghanaian children aged 7-14 lack foundational numeracy (UNICEF MICS 2023).
+Docker is the runtime. Do not install or run project Python or Node packages on
+the host. The platform expects the private `gapsense-data` repository as a
+sibling directory and mounts it read-only.
 
-**The Solution:** An AI that extracts diagnostic intelligence from existing artifacts (exercise books, classroom conversations) without adding another test.
+Prerequisites:
 
----
+- Docker Desktop with Docker Compose
+- Git
+- the sibling `gapsense-data` repository
+- optional: Ollama on the host with `llama3.1:8b` or another configured local model
 
-## Key Features
+Start the local foundation:
 
-- ✅ **Adaptive Diagnostic Engine** - Traces backward through prerequisite graph to find root gaps
-- ✅ **Exercise Book Analysis** - AI analyzes photos of student work for error patterns
-- ✅ **WhatsApp Parent Engagement** - Dignity-first messaging (Wolf/Aurino research-based)
-- ✅ **Teacher Conversation Partner** - Actionable insights, not just reports
-- ✅ **NaCCA-Aligned** - Ghana curriculum (35 nodes, 6 cascade failure paths)
-- ✅ **Multi-Language** - Twi, Ewe, Ga, Dagbani, English
-
----
-
-## Architecture
-
-```
-WhatsApp → API → SQS Queue → Worker → Claude AI → PostgreSQL
-                                   ↓
-                           GUARD-001 Compliance
-                                   ↓
-                              WhatsApp Send
-```
-
-**Stack:**
-- **Backend**: FastAPI (Python 3.12), async everywhere
-- **Database**: PostgreSQL 16 (RDS)
-- **AI**: Anthropic Claude Sonnet 4.5 / Haiku 4.5
-- **Queue**: AWS SQS FIFO
-- **Messaging**: WhatsApp Cloud API (direct)
-- **Infrastructure**: AWS (Cape Town region - 50ms to Ghana)
-
----
-
-## Project Structure
-
-```
-gapsense-platform/
-├── src/gapsense/              # Application code
-│   ├── core/                  # Models, schemas, config
-│   ├── curriculum/            # Prerequisite graph, traversal
-│   ├── diagnostic/            # Diagnostic engine
-│   ├── engagement/            # Parent WhatsApp engagement
-│   ├── webhooks/              # WhatsApp webhook handlers
-│   ├── teachers/              # Teacher reports
-│   ├── analytics/             # Aggregation
-│   └── ai/                    # Anthropic integration
-├── tests/                     # Test suite
-├── infrastructure/            # AWS CDK
-├── migrations/                # Alembic database migrations
-├── data/                      # Non-proprietary seed data
-└── docs/                      # Documentation
+```powershell
+docker compose up -d --wait db
+docker compose run --rm web alembic upgrade head
+docker compose up -d --build web
 ```
 
-**Note:** Proprietary IP (prerequisite graph, prompts) lives in separate **gapsense-data** private repo.
+Then use:
 
----
+- API documentation: <http://localhost:8000/docs>
+- liveness: <http://localhost:8000/v1/health/live>
+- readiness: <http://localhost:8000/v1/health/ready>
 
-## Quick Start
+Run the same strict gate used by the local Git hook:
 
-### Prerequisites
-
-- Python 3.12+
-- Docker & Docker Compose
-- Poetry (Python dependency management)
-- Access to `gapsense-data` repo
-
-### Local Development
-
-```bash
-# 1. Clone repo
-git clone https://github.com/ma-za-kpe/gapsense-platform.git
-cd gapsense-platform
-
-# 2. Set up environment
-cp .env.example .env
-# Edit .env with your API keys
-
-# 3. Set data path
-export GAPSENSE_DATA_PATH=/path/to/gapsense-data
-
-# 4. Install dependencies
-poetry install
-
-# 5. Start services
-docker compose up -d
-
-# 6. Run migrations
-poetry run alembic upgrade head
-
-# 7. Load prerequisite graph
-poetry run python scripts/load_curriculum.py
-
-# 8. Run tests
-poetry run pytest
-
-# API will be available at http://localhost:8000
-# Docs at http://localhost:8000/docs
+```powershell
+sh scripts/install_hooks.sh
+sh .githooks/pre-commit
 ```
 
----
+The installer configures this repository to use its versioned commit-message,
+pre-commit, and pre-push hooks. The pre-push hook deliberately blocks every
+remote push during the current local-only phase.
 
-## Development Workflow
+The gate builds and runs inside Docker and includes dependency consistency,
+formatting, linting, strict typing, secret and static-security scans, fresh
+migration round trips, model-to-schema drift detection, tests at 100% line and
+branch coverage, package build, dependency audit, Markdown linting, and patch
+whitespace checks.
 
-### Running Tests
+## Local AI
 
-```bash
-# All tests
-poetry run pytest
+GapSense uses Ollama at `http://host.docker.internal:11434` from Docker. The
+default model is `llama3.1:8b`; override it with `OLLAMA_MODEL` in a local
+`.env` file. No Anthropic key or other external-model credential is required.
 
-# Unit tests only
-poetry run pytest tests/unit -v
+The provider adapter, deterministic fake, health reporting, safety validation,
+and graceful offline behavior remain tracked work. Core product workflows must
+remain useful when Ollama is unavailable.
 
-# Integration tests
-poetry run pytest tests/integration -v
+## Repositories and Data
 
-# With coverage
-poetry run pytest --cov=src/gapsense --cov-report=html
-```
+- `gapsense-platform`: application, tests, local runtime, and active product docs
+- `gapsense-data`: proprietary curriculum and research artifacts
 
-### Code Quality
+Do not copy proprietary curriculum artifacts or real personal data into this
+repository. Synthetic test data must be unmistakably fictional.
 
-```bash
-# Format
-poetry run ruff format src/
+## Project Operating Documents
 
-# Lint
-poetry run ruff check src/ --fix
+- [Working list](TASKS.md)
+- [Ways of working](docs/WAYS_OF_WORKING.md)
+- [Project charter](docs/PROJECT_CHARTER.md)
+- [Curriculum coverage audit](docs/CURRICULUM_COVERAGE_AUDIT.md)
+- [Assessment-generation product brief](docs/ASSESSMENT_GENERATION_PRODUCT_BRIEF.md)
+- [Market and user research](docs/MARKET_AND_USER_RESEARCH.md)
+- [Security and privacy model](docs/SECURITY_AND_PRIVACY_MODEL.md)
+- [Documentation index](docs/README.md)
 
-# Type check
-poetry run mypy src/gapsense --strict
+`TASKS.md` is deliberately never finished. Add discovered work before starting
+it, keep the current slice marked active, and close it only with evidence.
 
-# Run all checks
-poetry run pre-commit run --all-files
-```
+## Change Policy
 
-### Database Migrations
-
-```bash
-# Create migration
-poetry run alembic revision --autogenerate -m "description"
-
-# Apply migrations
-poetry run alembic upgrade head
-
-# Rollback
-poetry run alembic downgrade -1
-```
-
----
-
-## API Documentation
-
-Once running, visit:
-- **Interactive docs**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **Health check**: http://localhost:8000/v1/health
-
----
-
-## Key Modules
-
-### Diagnostic Engine (`src/gapsense/diagnostic/`)
-Orchestrates adaptive diagnostic sessions using Claude AI and the prerequisite graph.
-
-**Key algorithms:**
-- Backward tracing (B5 failure → test B4 → B2 → find root gap)
-- Cascade detection (55% of students: Place Value Collapse)
-- Confidence scoring (≥0.80 required for diagnosis)
-
-### Parent Engagement (`src/gapsense/engagement/`)
-WhatsApp messaging with Wolf/Aurino compliance.
-
-**Non-negotiable constraints:**
-- Strength-first framing
-- No deficit language ("behind", "struggling", "failing")
-- 3-minute activities, household materials only
-- GUARD-001 validation at temp=0.0
-
-### AI Service (`src/gapsense/ai/`)
-Anthropic Claude integration with prompt caching (90% cost reduction).
-
-**13 prompts:**
-- DIAG-001/002/003: Diagnostic reasoning
-- PARENT-001/002/003: Parent messaging
-- GUARD-001: Compliance validation (blocking)
-- ANALYSIS-001/002: Exercise book, voice notes
-- TEACHER-001/002/003: Reports, conversation
-
----
-
-## Deployment
-
-Deployed via AWS CDK to Cape Town region (af-south-1).
-
-```bash
-cd infrastructure/cdk
-cdk deploy --all
-```
-
-**Infrastructure:**
-- Fargate (web + worker services)
-- RDS PostgreSQL 16
-- SQS FIFO queues
-- S3 (media storage)
-- Cognito (auth)
-- ALB (load balancing)
-
----
-
-## Security & Privacy
-
-**Ghana Data Protection Act Compliance:**
-- ✅ Minimal data collection (no last names, addresses, IDs)
-- ✅ Encryption at rest (RDS, S3) and in transit (TLS 1.3)
-- ✅ No PII in logs
-- ✅ Right to deletion
-- ✅ 2-year retention, then anonymize
-
-**Proprietary IP Protection:**
-- Separate `gapsense-data` repo (private)
-- Pre-commit hooks block sensitive files
-- Aggressive .gitignore
-
----
-
-## Contributing
-
-This is proprietary software. Internal team only.
-
-**Code standards:**
-- Follow `CODING_STANDARDS.md`
-- Test critical paths (GUARD-001, graph traversal)
-- Type hints on all functions (MyPy strict)
-- Semantic commits
-
----
+Work on focused local branches. Before every milestone commit and local merge,
+run the full Docker gate and review the complete diff. Use conventional commit
+messages. Do not bypass hooks and do not push any branch or tag until remote
+work is explicitly authorized.
 
 ## License
 
-Proprietary - Licensed to ViztaEdu under GapSense Partnership Agreement.
-
----
-
-## Support
-
-- **Documentation**: `docs/`
-- **Issues**: Internal tracker
-- **Contact**: maku@gapsense.app
-
----
-
-## Acknowledgments
-
-- **UNICEF StartUp Lab Cohort 6** - Technical validation & pilot funding
-- **ViztaEdu** - Partnership & distribution
-- **NaCCA** - Ghana curriculum standards
-- **Wolf & Aurino (2020)** - Evidence-based parent engagement research
-
----
-
-**Built for Ghana. Powered by AI. Grounded in dignity.**
+Proprietary. Internal team use only.

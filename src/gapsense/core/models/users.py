@@ -110,12 +110,12 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     primary_students: Mapped[list[Student]] = relationship(
         foreign_keys="Student.primary_parent_id",
         back_populates="primary_parent",
-        cascade="all, delete-orphan",
+        passive_deletes="all",
     )
     secondary_students: Mapped[list[Student]] = relationship(
         foreign_keys="Student.secondary_parent_id",
         back_populates="secondary_parent",
-        cascade="all, delete-orphan",
+        passive_deletes="all",
     )
     interactions: Mapped[list[ParentInteraction]] = relationship(
         back_populates="parent", cascade="all, delete-orphan"

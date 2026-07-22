@@ -97,7 +97,9 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
             name="check_population_status",
         ),
         Index("idx_curriculum_nodes_grade", "grade"),
-        Index("idx_curriculum_nodes_severity", "severity", postgresql_ops={"severity": "DESC"}),
+        # PostgreSQL B-tree indexes support backward scans, so a portable ascending
+        # index serves both severity sort directions without reflection drift.
+        Index("idx_curriculum_nodes_severity", "severity"),
         Index("idx_curriculum_nodes_code", "code"),
     )
 

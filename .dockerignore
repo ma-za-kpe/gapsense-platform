@@ -1,0 +1,22 @@
+.git
+.gitignore
+.githooks
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.venv
+__pycache__
+*.py[cod]
+.coverage
+htmlcov
+cdk.out
+test_results
+
+# Proprietary curriculum data is mounted read-only from the sibling repository.
+data
+local_data
+
+# Local and secret configuration must never enter an image layer.
+.env
+.env.*
+!.env.example

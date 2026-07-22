@@ -1,5 +1,9 @@
 # Moving Proprietary Files to gapsense-data Repo
 
+> Historical migration note: the repositories are already separated. Current
+> Docker Compose mounts the sibling `gapsense-data` repository read-only; do not
+> run the old host-specific move commands below.
+
 **CRITICAL: These files contain GapSense's core IP and must NEVER be in the platform repo.**
 
 ---
@@ -169,7 +173,7 @@ cd /Users/mac/Documents/projects/gapsense
 cp .env.example .env
 
 # Edit .env to add data path
-echo "GAPSENSE_DATA_PATH=/Users/mac/Documents/projects/gapsense-data" >> .env
+# Docker Compose supplies GAPSENSE_DATA_PATH=/app/data inside the web container.
 
 # Test access
 ls $GAPSENSE_DATA_PATH/curriculum/prerequisite_graph_v1.2.json

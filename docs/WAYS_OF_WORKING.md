@@ -160,7 +160,9 @@ pointing at legacy Ghana-only files.
 
 ## AI Is Optional Infrastructure, Not Hidden Logic
 
-Ollama may be used locally behind a provider abstraction.
+Ollama is the active local AI runtime behind a provider abstraction. Do not add an external-model
+SDK or API-key requirement without a new evidence-backed decision. Deterministic fakes remain the
+test runtime, and core workflows remain usable when Ollama is unavailable.
 
 - Deterministic domain logic comes before model orchestration.
 - The complete automated test suite uses deterministic fake model responses.
@@ -321,6 +323,10 @@ after every source load fails. Green output without inspected evidence is worse 
 
 ## Safety, Privacy, and Dignity Are Blocking
 
+- Follow the active [Security and Privacy Engineering Model](SECURITY_AND_PRIVACY_MODEL.md).
+- Add security acceptance criteria and abuse cases before implementing each major workflow.
+- Update the threat model whenever a trust boundary, data flow, role, provider, or dependency changes.
+- Deny access by default and prove authorization at the server/resource boundary.
 - Use synthetic learner and family data until real-data protocols are approved.
 - Minimize all collected data.
 - Keep PII out of logs, fixtures, analytics, and model prompts.
@@ -329,7 +335,8 @@ after every source load fails. Green output without inspected evidence is worse 
 - Require explicit confidence, evidence, and human-review paths for diagnostics.
 - Apply dignity-first language across the web, not only future parent messages.
 
-Why: safeguarding is part of correctness.
+Why: safeguarding and security are part of correctness. A feature that works only for honest
+inputs and authorized users is not complete.
 
 ## Reconcile Every Major Slice
 

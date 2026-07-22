@@ -4,6 +4,9 @@
 # Author: Maku Mazakpe
 # Aligned to: GapSense v2.0 — The AI-Native Redesign
 
+> Historical design input. The active web-first, Ollama-local direction is in
+> `PROJECT_CHARTER.md`, `WAYS_OF_WORKING.md`, and `../TASKS.md`.
+
 You are building **GapSense**, an AI-native foundational learning diagnostic platform for Ghana. GapSense makes invisible learning gaps visible — at school and at home — for teachers and parents in Ghana's primary, JHS, SHS, and TVET classrooms.
 
 **Core design principle:** If you removed the AI, GapSense would cease to function. The AI is not a feature. The AI IS GapSense. Everything else is scaffolding.
@@ -401,8 +404,8 @@ async def whatsapp_webhook(request: Request):
 
 ```env
 # Required
-DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/gapsense
-ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL is injected by the approved runtime
+OLLAMA_BASE_URL=http://host.docker.internal:11434
 WHATSAPP_API_TOKEN=EAAx...
 WHATSAPP_PHONE_NUMBER_ID=123456789
 WHATSAPP_VERIFY_TOKEN=your_verify_token
