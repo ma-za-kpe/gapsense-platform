@@ -1,6 +1,11 @@
 # GapSense Coding Standards
 **Version 1.0 | February 2026 | 7-Day Sprint Edition**
 
+> Historical reference: this sprint-era, WhatsApp/Anthropic-first document is
+> superseded by `docs/WAYS_OF_WORKING.md`, `docs/PROJECT_CHARTER.md`, and
+> `TASKS.md`. Do not use its provider, deployment, or host-runtime examples as
+> current instructions. Its useful rules will be reconciled into active docs.
+
 ---
 
 ## Mission-Critical Context
@@ -830,8 +835,9 @@ exit 0
 ### Environment Variables (Never Commit)
 ```bash
 # .env.example (committed)
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/gapsense
-ANTHROPIC_API_KEY=sk-ant-your-key-here
+DATABASE_URL is injected by the local Docker runtime
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+OLLAMA_MODEL=llama3.1:8b
 WHATSAPP_API_TOKEN=your-token-here
 WHATSAPP_PHONE_NUMBER_ID=123456789
 WHATSAPP_VERIFY_TOKEN=your-verify-token
@@ -841,8 +847,7 @@ ENVIRONMENT=local
 LOG_LEVEL=DEBUG
 
 # .env (NEVER committed, in .gitignore)
-DATABASE_URL=postgresql+asyncpg://gapsense:actual_password@localhost:5432/gapsense
-ANTHROPIC_API_KEY=sk-ant-actual-key-xxxxx
+DATABASE_URL is supplied through the approved secret mechanism
 # ... real values
 ```
 

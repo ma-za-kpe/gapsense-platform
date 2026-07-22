@@ -18,10 +18,11 @@ not merely digitize curriculum PDFs or generate generic tutoring content.
 Build a polished, local-first web application before implementing messaging channels or
 production infrastructure.
 
-The web product will let validated users explore curricula, understand prerequisite
-relationships, run and review diagnostic sessions, inspect evidence and confidence, and
-track interventions and reassessment. It will be usable with deterministic local mocks and
-may optionally use locally installed Ollama models.
+The web product will let people generate free, curriculum-aligned assessments and let
+validated users explore curricula, understand prerequisite relationships, run and review
+diagnostic sessions, inspect evidence and confidence, and track interventions and
+reassessment. It will be usable with deterministic local mocks and may optionally use the
+locally installed Ollama runtime. The active local phase requires no external-model API key.
 
 ## Primary Users to Validate
 
@@ -33,6 +34,8 @@ The initial hypothesis is teacher-first, but research must test it.
 - Learners, with age-appropriate and safeguarded experiences
 - Parents or caregivers, where research supports a web workflow
 - Education partners and researchers using aggregated, privacy-safe evidence
+- Any legitimate visitor who needs an age-appropriate practice activity, quiz, test,
+  assessment, or exam aligned to an available Ghanaian or Ugandan curriculum
 
 No persona is treated as validated until direct research supports its workflows.
 
@@ -71,6 +74,13 @@ Coverage and validity are separate:
     user outcome, strengthen buyer value, reduce delivery cost, or deepen defensibility.
 12. **Profit without extraction.** Revenue must come from trusted outcomes and workflow
     value, not from selling learner data, manipulative engagement, or unsafe automation.
+13. **Assessment fit over exam theatre.** Generate the format appropriate to the official
+    curriculum and learner phase; a written paper is not always the right assessment.
+14. **Free means useful.** The public assessment generator must produce a complete usable
+    artifact, not a crippled teaser designed to coerce payment.
+15. **Secure by construction.** Minimize attack surface and data, distrust every boundary,
+    deny access by default, and require evidence that controls work. Security and child
+    safeguarding block release.
 
 ## Commercial Intent
 
@@ -86,6 +96,8 @@ Business-model hypotheses to test include:
 - curriculum-intelligence, validation, or API licensing to education products;
 - implementation, evaluation, and research services that lead to repeatable product revenue;
 - a useful free teacher entry point that creates evidence and qualified institutional demand.
+- a free public assessment generator that earns trust and creates demand for optional school
+  moderation, collaboration, analytics, diagnostic, integration, support, and API workflows.
 
 None is selected yet. User adoption, procurement reality, willingness to pay, cost-to-serve,
 gross margin, support burden, and outcome evidence must be researched in Ghana and Uganda.
@@ -118,8 +130,9 @@ The product must:
 - A web frontend will be selected through an ADR and prototype.
 - Docker is the development and validation runtime.
 - Authentication is mocked locally behind a replaceable interface.
-- External AI is abstracted; deterministic fakes power tests.
-- Ollama is an optional local provider, evaluated rather than assumed.
+- AI is abstracted; deterministic fakes power tests and offline behavior.
+- Ollama is the active local provider. Model availability is discovered and evaluated, while
+  application startup and deterministic core workflows remain independent of it.
 - Data access is versioned through a country/level/subject curriculum contract.
 - All application-owned executable code maintains 100% line and branch coverage.
 
@@ -144,6 +157,8 @@ The phase succeeds when:
 - the local Docker environment starts reliably from a clean checkout;
 - Ghana and Uganda curriculum coverage is machine-auditable and versioned;
 - at least one end-to-end workflow per country is usable through the browser;
+- a visitor can generate a complete, source-linked, age-appropriate assessment package for
+  at least one reviewed curriculum slice per country without providing personal data;
 - the same domain model supports country-specific terminology and curriculum structure;
 - educators can inspect sources, prerequisites, diagnostic reasoning, uncertainty, and
   recommended actions;

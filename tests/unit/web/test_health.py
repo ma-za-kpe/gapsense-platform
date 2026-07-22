@@ -1,0 +1,67 @@
+"""Tests for the local web service health contract."""
+
+from pathlib import Path
+
+from httpx import ASGITransport, AsyncClient
+
+from gapsense.main import create_app
+
+
+async def test_health_summary_reports_service_identity() -> None:
+    """The summary endpoint exposes a stable, non-secret service contract."""
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app()),
+        base_url="http://test",
+    ) as client:
+        response = await client.get("/v1/health")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "service": "gapsense",
+        "status": "ok",
+        "version": "0.1.0",
+    }
+
+
+async def test_liveness_reports_running_process() -> None:
+    """The liveness endpoint only proves that the web process can respond."""
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app()),
+        base_url="http://test",
+    ) as client:
+        response = await client.get("/v1/health/live")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "alive"}
+
+
+async def test_readiness_reports_local_curriculum_data() -> None:
+    """The readiness endpoint proves that required local curriculum data is visible."""
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app()),
+        base_url="http://test",
+    ) as client:
+        response = await client.get("/v1/health/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "checks": {"curriculum_data": "ok"},
+        "status": "ready",
+    }
+
+
+async def test_readiness_fails_closed_when_curriculum_data_is_missing(
+    tmp_path: Path,
+) -> None:
+    """The service must not claim readiness when its curriculum mount is absent."""
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app(data_path=tmp_path)),
+        base_url="http://test",
+    ) as client:
+        response = await client.get("/v1/health/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "checks": {"curriculum_data": "missing"},
+        "status": "not_ready",
+    }

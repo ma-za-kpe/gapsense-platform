@@ -478,86 +478,86 @@ def downgrade() -> None:
 
     # PHASE 1: Drop all foreign key constraints first
     # Indicator error patterns
-    op.drop_constraint(None, 'indicator_error_patterns', type_='foreignkey')
-    op.drop_constraint(None, 'indicator_error_patterns', type_='foreignkey')
+    op.drop_constraint('indicator_error_patterns_indicates_gap_at_fkey', 'indicator_error_patterns', type_='foreignkey')
+    op.drop_constraint('indicator_error_patterns_indicator_id_fkey', 'indicator_error_patterns', type_='foreignkey')
 
     # Diagnostic questions
-    op.drop_constraint(None, 'diagnostic_questions', type_='foreignkey')
-    op.drop_constraint(None, 'diagnostic_questions', type_='foreignkey')
-    op.drop_constraint(None, 'diagnostic_questions', type_='foreignkey')
-    op.drop_constraint(None, 'diagnostic_questions', type_='foreignkey')
+    op.drop_constraint('diagnostic_questions_indicator_id_fkey', 'diagnostic_questions', type_='foreignkey')
+    op.drop_constraint('diagnostic_questions_misconception_id_fkey', 'diagnostic_questions', type_='foreignkey')
+    op.drop_constraint('diagnostic_questions_node_id_fkey', 'diagnostic_questions', type_='foreignkey')
+    op.drop_constraint('diagnostic_questions_session_id_fkey', 'diagnostic_questions', type_='foreignkey')
 
     # Parent interactions
-    op.drop_constraint(None, 'parent_interactions', type_='foreignkey')
-    op.drop_constraint(None, 'parent_interactions', type_='foreignkey')
-    op.drop_constraint(None, 'parent_interactions', type_='foreignkey')
+    op.drop_constraint('parent_interactions_parent_id_fkey', 'parent_interactions', type_='foreignkey')
+    op.drop_constraint('parent_interactions_prompt_version_id_fkey', 'parent_interactions', type_='foreignkey')
+    op.drop_constraint('parent_interactions_student_id_fkey', 'parent_interactions', type_='foreignkey')
 
     # Parent activities
-    op.drop_constraint(None, 'parent_activities', type_='foreignkey')
-    op.drop_constraint(None, 'parent_activities', type_='foreignkey')
-    op.drop_constraint(None, 'parent_activities', type_='foreignkey')
-    op.drop_constraint(None, 'parent_activities', type_='foreignkey')
-    op.drop_constraint(None, 'parent_activities', type_='foreignkey')
+    op.drop_constraint('parent_activities_focus_node_id_fkey', 'parent_activities', type_='foreignkey')
+    op.drop_constraint('parent_activities_follow_up_session_id_fkey', 'parent_activities', type_='foreignkey')
+    op.drop_constraint('parent_activities_gap_profile_id_fkey', 'parent_activities', type_='foreignkey')
+    op.drop_constraint('parent_activities_parent_id_fkey', 'parent_activities', type_='foreignkey')
+    op.drop_constraint('parent_activities_student_id_fkey', 'parent_activities', type_='foreignkey')
 
     # Circular dependency: students -> gap_profiles
-    op.drop_constraint(None, 'students', type_='foreignkey')
+    op.drop_constraint('students_latest_gap_profile_id_fkey', 'students', type_='foreignkey')
 
     # Gap profiles
-    op.drop_constraint(None, 'gap_profiles', type_='foreignkey')
-    op.drop_constraint(None, 'gap_profiles', type_='foreignkey')
-    op.drop_constraint(None, 'gap_profiles', type_='foreignkey')
-    op.drop_constraint(None, 'gap_profiles', type_='foreignkey')
+    op.drop_constraint('gap_profiles_primary_gap_node_fkey', 'gap_profiles', type_='foreignkey')
+    op.drop_constraint('gap_profiles_recommended_focus_node_fkey', 'gap_profiles', type_='foreignkey')
+    op.drop_constraint('gap_profiles_session_id_fkey', 'gap_profiles', type_='foreignkey')
+    op.drop_constraint('gap_profiles_student_id_fkey', 'gap_profiles', type_='foreignkey')
 
     # Diagnostic sessions
-    op.drop_constraint(None, 'diagnostic_sessions', type_='foreignkey')
-    op.drop_constraint(None, 'diagnostic_sessions', type_='foreignkey')
-    op.drop_constraint(None, 'diagnostic_sessions', type_='foreignkey')
-    op.drop_constraint(None, 'diagnostic_sessions', type_='foreignkey')
-    op.drop_constraint(None, 'diagnostic_sessions', type_='foreignkey')
+    op.drop_constraint('diagnostic_sessions_cascade_path_id_fkey', 'diagnostic_sessions', type_='foreignkey')
+    op.drop_constraint('diagnostic_sessions_entry_node_id_fkey', 'diagnostic_sessions', type_='foreignkey')
+    op.drop_constraint('diagnostic_sessions_root_gap_node_id_fkey', 'diagnostic_sessions', type_='foreignkey')
+    op.drop_constraint('diagnostic_sessions_prompt_version_id_fkey', 'diagnostic_sessions', type_='foreignkey')
+    op.drop_constraint('diagnostic_sessions_student_id_fkey', 'diagnostic_sessions', type_='foreignkey')
 
     # Students
-    op.drop_constraint(None, 'students', type_='foreignkey')
-    op.drop_constraint(None, 'students', type_='foreignkey')
-    op.drop_constraint(None, 'students', type_='foreignkey')
-    op.drop_constraint(None, 'students', type_='foreignkey')
+    op.drop_constraint('students_primary_parent_id_fkey', 'students', type_='foreignkey')
+    op.drop_constraint('students_secondary_parent_id_fkey', 'students', type_='foreignkey')
+    op.drop_constraint('students_school_id_fkey', 'students', type_='foreignkey')
+    op.drop_constraint('students_teacher_id_fkey', 'students', type_='foreignkey')
 
     # Teachers
-    op.drop_constraint(None, 'teachers', type_='foreignkey')
+    op.drop_constraint('teachers_school_id_fkey', 'teachers', type_='foreignkey')
 
     # Prompt test cases
-    op.drop_constraint(None, 'prompt_test_cases', type_='foreignkey')
+    op.drop_constraint('prompt_test_cases_prompt_version_id_fkey', 'prompt_test_cases', type_='foreignkey')
 
     # Curriculum prerequisites
-    op.drop_constraint(None, 'curriculum_prerequisites', type_='foreignkey')
-    op.drop_constraint(None, 'curriculum_prerequisites', type_='foreignkey')
+    op.drop_constraint('curriculum_prerequisites_source_node_id_fkey', 'curriculum_prerequisites', type_='foreignkey')
+    op.drop_constraint('curriculum_prerequisites_target_node_id_fkey', 'curriculum_prerequisites', type_='foreignkey')
 
     # Curriculum misconceptions
-    op.drop_constraint(None, 'curriculum_misconceptions', type_='foreignkey')
+    op.drop_constraint('curriculum_misconceptions_node_id_fkey', 'curriculum_misconceptions', type_='foreignkey')
 
     # Curriculum indicators
-    op.drop_constraint(None, 'curriculum_indicators', type_='foreignkey')
+    op.drop_constraint('curriculum_indicators_node_id_fkey', 'curriculum_indicators', type_='foreignkey')
 
     # Cascade paths
-    op.drop_constraint(None, 'cascade_paths', type_='foreignkey')
+    op.drop_constraint('cascade_paths_diagnostic_entry_point_fkey', 'cascade_paths', type_='foreignkey')
 
     # Curriculum nodes
-    op.drop_constraint(None, 'curriculum_nodes', type_='foreignkey')
-    op.drop_constraint(None, 'curriculum_nodes', type_='foreignkey')
+    op.drop_constraint('curriculum_nodes_strand_id_fkey', 'curriculum_nodes', type_='foreignkey')
+    op.drop_constraint('curriculum_nodes_sub_strand_id_fkey', 'curriculum_nodes', type_='foreignkey')
 
     # Parents
-    op.drop_constraint(None, 'parents', type_='foreignkey')
+    op.drop_constraint('parents_district_id_fkey', 'parents', type_='foreignkey')
 
     # Schools
-    op.drop_constraint(None, 'schools', type_='foreignkey')
+    op.drop_constraint('schools_district_id_fkey', 'schools', type_='foreignkey')
 
     # Prompt versions
-    op.drop_constraint(None, 'prompt_versions', type_='foreignkey')
+    op.drop_constraint('prompt_versions_category_id_fkey', 'prompt_versions', type_='foreignkey')
 
     # Districts
-    op.drop_constraint(None, 'districts', type_='foreignkey')
+    op.drop_constraint('districts_region_id_fkey', 'districts', type_='foreignkey')
 
     # Curriculum sub strands
-    op.drop_constraint(None, 'curriculum_sub_strands', type_='foreignkey')
+    op.drop_constraint('curriculum_sub_strands_strand_id_fkey', 'curriculum_sub_strands', type_='foreignkey')
 
     # PHASE 2: Drop all tables
     op.drop_table('indicator_error_patterns')

@@ -5,11 +5,17 @@ Tests CRUD operations, relationships, and constraints with real PostgreSQL datab
 Following TDD methodology: RED → GREEN → REFACTOR
 """
 
+from collections.abc import AsyncGenerator
 from datetime import datetime
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import configure_mappers
 
 from gapsense.config import settings
@@ -32,25 +38,27 @@ configure_mappers()
 
 
 # Helper function for unique test data
-def unique_phone():
+def unique_phone() -> str:
     """Generate unique phone number for tests."""
     from uuid import uuid4
+
     return f"+2335{str(uuid4()).replace('-', '')[:11]}"
 
 
-def unique_code(prefix="", max_length=5):
+def unique_code(prefix: str = "", max_length: int = 5) -> str:
     """Generate unique code for tests within max_length constraint."""
     from uuid import uuid4
+
     available = max_length - len(prefix)
     if available <= 0:
         raise ValueError(f"Prefix '{prefix}' too long for max_length {max_length}")
-    suffix = str(uuid4()).replace('-', '')[:available].upper()
+    suffix = str(uuid4()).replace("-", "")[:available].upper()
     return f"{prefix}{suffix}"
 
 
 # Test database setup
 @pytest.fixture(scope="function")
-async def engine():
+async def engine() -> AsyncGenerator[AsyncEngine, None]:
     """Create async engine for testing."""
     test_engine = create_async_engine(settings.DATABASE_URL, echo=False)
     yield test_engine
@@ -58,33 +66,40 @@ async def engine():
 
 
 @pytest.fixture
-async def session(engine):
-    """Create a new database session for each test with automatic rollback.
+async def session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+    """Isolate each test inside an outer transaction that is always rolled back."""
+    async with engine.connect() as connection:
+        outer_transaction = await connection.begin()
+        async_session = async_sessionmaker(
+            bind=connection,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
 
-    Note: This creates a real session that commits to the database.
-    Tests should use unique data to avoid conflicts.
-    """
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        async with async_session() as test_session:
+            yield test_session
 
-    async with async_session() as test_session:
-        yield test_session
+        await outer_transaction.rollback()
 
 
 # ============================================================================
 # TDD Cycle 1: Basic CRUD Operations
 # ============================================================================
 
+
 @pytest.mark.asyncio
-async def test_create_curriculum_strand(session: AsyncSession):
+async def test_create_curriculum_strand(session: AsyncSession) -> None:
     """Test creating a curriculum strand in the database."""
     from uuid import uuid4
+
     # Arrange - Use unique strand_number to avoid conflicts
     unique_num = abs(hash(str(uuid4()))) % 1000
     strand = CurriculumStrand(
         strand_number=unique_num,
         name=f"Number-{unique_num}",
         color_hex="#2563EB",
-        description="Numbers and operations"
+        description="Numbers and operations",
     )
 
     # Act
@@ -98,25 +113,19 @@ async def test_create_curriculum_strand(session: AsyncSession):
     assert strand.name == f"Number-{unique_num}"
 
     # Verify it's in the database
-    result = await session.execute(
-        select(CurriculumStrand).where(CurriculumStrand.id == strand.id)
-    )
+    result = await session.execute(select(CurriculumStrand).where(CurriculumStrand.id == strand.id))
     db_strand = result.scalar_one()
     assert db_strand.name == f"Number-{unique_num}"
 
 
 @pytest.mark.asyncio
-async def test_create_parent(session: AsyncSession):
+async def test_create_parent(session: AsyncSession) -> None:
     """Test creating a parent with dignity-first minimal data."""
     from uuid import uuid4
+
     # Arrange - Use unique phone to avoid conflicts
     phone = f"+2335{str(uuid4())[:12]}"
-    parent = Parent(
-        phone=phone,
-        preferred_name="Akosua",
-        preferred_language="tw",
-        opted_in=True
-    )
+    parent = Parent(phone=phone, preferred_name="Akosua", preferred_language="tw", opted_in=True)
 
     # Act
     session.add(parent)
@@ -135,14 +144,10 @@ async def test_create_parent(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_update_parent(session: AsyncSession):
+async def test_update_parent(session: AsyncSession) -> None:
     """Test updating a parent record."""
     # Arrange
-    parent = Parent(
-        phone=unique_phone(),
-        preferred_language="en",
-        opted_in=False
-    )
+    parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=False)
     session.add(parent)
     await session.commit()
     await session.refresh(parent)
@@ -160,14 +165,10 @@ async def test_update_parent(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_delete_parent(session: AsyncSession):
+async def test_delete_parent(session: AsyncSession) -> None:
     """Test deleting a parent (hard delete, not soft delete)."""
     # Arrange
-    parent = Parent(
-        phone=unique_phone(),
-        preferred_language="en",
-        opted_in=True
-    )
+    parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=True)
     session.add(parent)
     await session.commit()
     parent_id = parent.id
@@ -177,9 +178,7 @@ async def test_delete_parent(session: AsyncSession):
     await session.commit()
 
     # Assert - Parent should be gone
-    result = await session.execute(
-        select(Parent).where(Parent.id == parent_id)
-    )
+    result = await session.execute(select(Parent).where(Parent.id == parent_id))
     assert result.scalar_one_or_none() is None
 
 
@@ -187,15 +186,12 @@ async def test_delete_parent(session: AsyncSession):
 # TDD Cycle 2: Foreign Key Relationships
 # ============================================================================
 
+
 @pytest.mark.asyncio
-async def test_parent_student_relationship(session: AsyncSession):
+async def test_parent_student_relationship(session: AsyncSession) -> None:
     """Test creating a student with parent relationship."""
     # Arrange - Create parent first
-    parent = Parent(
-        phone=unique_phone(),
-        preferred_language="tw",
-        opted_in=True
-    )
+    parent = Parent(phone=unique_phone(), preferred_language="tw", opted_in=True)
     session.add(parent)
     await session.commit()
     await session.refresh(parent)
@@ -206,7 +202,7 @@ async def test_parent_student_relationship(session: AsyncSession):
         current_grade="B3",
         primary_parent_id=parent.id,
         home_language="tw",
-        school_language="English"
+        school_language="English",
     )
     session.add(student)
     await session.commit()
@@ -224,15 +220,14 @@ async def test_parent_student_relationship(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_curriculum_hierarchy(session: AsyncSession):
+async def test_curriculum_hierarchy(session: AsyncSession) -> None:
     """Test curriculum strand → sub-strand → node hierarchy."""
     from uuid import uuid4
+
     # Arrange - Create strand with unique number
     unique_num = abs(hash(str(uuid4()))) % 1000 + 100  # 100-1099 range
     strand = CurriculumStrand(
-        strand_number=unique_num,
-        name=f"Algebra-{unique_num}",
-        color_hex="#10B981"
+        strand_number=unique_num, name=f"Algebra-{unique_num}", color_hex="#10B981"
     )
     session.add(strand)
     await session.commit()
@@ -240,10 +235,7 @@ async def test_curriculum_hierarchy(session: AsyncSession):
 
     # Create sub-strand
     sub_strand = CurriculumSubStrand(
-        strand_id=strand.id,
-        sub_strand_number=1,
-        phase="B1_B3",
-        name="Patterns"
+        strand_id=strand.id, sub_strand_number=1, phase="B1_B3", name="Patterns"
     )
     session.add(sub_strand)
     await session.commit()
@@ -262,7 +254,7 @@ async def test_curriculum_hierarchy(session: AsyncSession):
         severity=3,
         questions_required=2,
         confidence_threshold=0.75,
-        population_status="full"
+        population_status="full",
     )
     session.add(node)
     await session.commit()
@@ -281,7 +273,7 @@ async def test_curriculum_hierarchy(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_school_hierarchy(session: AsyncSession):
+async def test_school_hierarchy(session: AsyncSession) -> None:
     """Test region → district → school → teacher hierarchy."""
     # Create region with unique code and name
     region_code = unique_code()
@@ -291,11 +283,7 @@ async def test_school_hierarchy(session: AsyncSession):
     await session.refresh(region)
 
     # Create district
-    district = District(
-        region_id=region.id,
-        name="Accra Metro",
-        ges_district_code="GES-AM-001"
-    )
+    district = District(region_id=region.id, name="Accra Metro", ges_district_code="GES-AM-001")
     session.add(district)
     await session.commit()
     await session.refresh(district)
@@ -306,7 +294,7 @@ async def test_school_hierarchy(session: AsyncSession):
         district_id=district.id,
         school_type="primary",
         language_of_instruction="English",
-        is_active=True
+        is_active=True,
     )
     session.add(school)
     await session.commit()
@@ -318,7 +306,7 @@ async def test_school_hierarchy(session: AsyncSession):
         first_name="Akua",
         last_name="Mensah",
         phone=unique_phone(),
-        grade_taught="B3"
+        grade_taught="B3",
     )
     session.add(teacher)
     await session.commit()
@@ -339,15 +327,12 @@ async def test_school_hierarchy(session: AsyncSession):
 # TDD Cycle 3: Circular Dependencies
 # ============================================================================
 
+
 @pytest.mark.asyncio
-async def test_student_gap_profile_circular_relationship(session: AsyncSession):
+async def test_student_gap_profile_circular_relationship(session: AsyncSession) -> None:
     """Test the circular relationship: Student ↔ GapProfile."""
     # Create parent (required for student)
-    parent = Parent(
-        phone=unique_phone(),
-        preferred_language="en",
-        opted_in=True
-    )
+    parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=True)
     session.add(parent)
     await session.commit()
     await session.refresh(parent)
@@ -357,7 +342,7 @@ async def test_student_gap_profile_circular_relationship(session: AsyncSession):
         first_name="Abena",
         current_grade="B4",
         primary_parent_id=parent.id,
-        school_language="English"
+        school_language="English",
     )
     session.add(student)
     await session.commit()
@@ -374,7 +359,7 @@ async def test_student_gap_profile_circular_relationship(session: AsyncSession):
         correct_answers=3,
         nodes_tested=[],
         nodes_mastered=[],
-        nodes_gap=[]
+        nodes_gap=[],
     )
     session.add(session_obj)
     await session.commit()
@@ -388,7 +373,7 @@ async def test_student_gap_profile_circular_relationship(session: AsyncSession):
         gap_nodes=[],
         uncertain_nodes=[],
         secondary_gaps=[],
-        is_current=True
+        is_current=True,
     )
     session.add(gap_profile)
     await session.commit()
@@ -412,16 +397,13 @@ async def test_student_gap_profile_circular_relationship(session: AsyncSession):
 # TDD Cycle 4: Constraints and Validation
 # ============================================================================
 
+
 @pytest.mark.asyncio
-async def test_unique_constraint_phone(session: AsyncSession):
+async def test_unique_constraint_phone(session: AsyncSession) -> None:
     """Test that parent phone numbers must be unique."""
     phone = unique_phone()  # Generate once to use for both
     # Create first parent
-    parent1 = Parent(
-        phone=phone,
-        preferred_language="en",
-        opted_in=True
-    )
+    parent1 = Parent(phone=phone, preferred_language="en", opted_in=True)
     session.add(parent1)
     await session.commit()
 
@@ -429,12 +411,13 @@ async def test_unique_constraint_phone(session: AsyncSession):
     parent2 = Parent(
         phone=phone,  # Same phone
         preferred_language="tw",
-        opted_in=True
+        opted_in=True,
     )
     session.add(parent2)
 
     # Assert - Should raise integrity error
     from sqlalchemy.exc import IntegrityError
+
     with pytest.raises(IntegrityError):
         await session.commit()
 
@@ -443,13 +426,9 @@ async def test_unique_constraint_phone(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_check_constraint_gender(session: AsyncSession):
+async def test_check_constraint_gender(session: AsyncSession) -> None:
     """Test that student gender must be in allowed values."""
-    parent = Parent(
-        phone=unique_phone(),
-        preferred_language="en",
-        opted_in=True
-    )
+    parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=True)
     session.add(parent)
     await session.commit()
     await session.refresh(parent)
@@ -460,7 +439,7 @@ async def test_check_constraint_gender(session: AsyncSession):
         current_grade="B2",
         primary_parent_id=parent.id,
         school_language="English",
-        gender="male"  # Valid
+        gender="male",  # Valid
     )
     session.add(student)
     await session.commit()
@@ -471,7 +450,7 @@ async def test_check_constraint_gender(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_soft_delete_functionality(session: AsyncSession):
+async def test_soft_delete_functionality(session: AsyncSession) -> None:
     """Test soft delete on Teacher model."""
     # Create school first (required FK)
     region_code = unique_code()
@@ -480,10 +459,7 @@ async def test_soft_delete_functionality(session: AsyncSession):
     await session.commit()
     await session.refresh(region)
 
-    district = District(
-        region_id=region.id,
-        name="Kumasi Metro"
-    )
+    district = District(region_id=region.id, name="Kumasi Metro")
     session.add(district)
     await session.commit()
     await session.refresh(district)
@@ -493,7 +469,7 @@ async def test_soft_delete_functionality(session: AsyncSession):
         district_id=district.id,
         school_type="jhs",
         language_of_instruction="English",
-        is_active=True
+        is_active=True,
     )
     session.add(school)
     await session.commit()
@@ -501,10 +477,7 @@ async def test_soft_delete_functionality(session: AsyncSession):
 
     # Create teacher
     teacher = Teacher(
-        school_id=school.id,
-        first_name="Yaw",
-        last_name="Boateng",
-        phone=unique_phone()
+        school_id=school.id, first_name="Yaw", last_name="Boateng", phone=unique_phone()
     )
     session.add(teacher)
     await session.commit()
@@ -525,15 +498,12 @@ async def test_soft_delete_functionality(session: AsyncSession):
 # TDD Cycle 5: Complex Queries
 # ============================================================================
 
+
 @pytest.mark.asyncio
-async def test_query_students_by_grade(session: AsyncSession):
+async def test_query_students_by_grade(session: AsyncSession) -> None:
     """Test querying students by current grade."""
     # Create parent
-    parent = Parent(
-        phone=unique_phone(),
-        preferred_language="en",
-        opted_in=True
-    )
+    parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=True)
     session.add(parent)
     await session.commit()
     await session.refresh(parent)
@@ -544,19 +514,19 @@ async def test_query_students_by_grade(session: AsyncSession):
             first_name="Ama",
             current_grade="B3",
             primary_parent_id=parent.id,
-            school_language="English"
+            school_language="English",
         ),
         Student(
             first_name="Kofi",
             current_grade="B3",
             primary_parent_id=parent.id,
-            school_language="English"
+            school_language="English",
         ),
         Student(
             first_name="Esi",
             current_grade="B4",
             primary_parent_id=parent.id,
-            school_language="English"
+            school_language="English",
         ),
     ]
 
@@ -565,9 +535,7 @@ async def test_query_students_by_grade(session: AsyncSession):
     await session.commit()
 
     # Query B3 students
-    result = await session.execute(
-        select(Student).where(Student.current_grade == "B3")
-    )
+    result = await session.execute(select(Student).where(Student.current_grade == "B3"))
     b3_students = result.scalars().all()
 
     # Assert
@@ -578,24 +546,15 @@ async def test_query_students_by_grade(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="FK constraint behavior needs investigation - delete succeeds but test expects failure")
-async def test_cascade_delete_protection(session: AsyncSession):
-    """Test that we cannot delete a parent who has students.
-
-    TODO: Investigate why FK constraint allows deletion when it should restrict.
-    The FK is created without ondelete parameter, which should default to RESTRICT.
-    """
+async def test_cascade_delete_protection(session: AsyncSession) -> None:
+    """A parent hard delete cannot silently erase an associated learner record."""
     from uuid import uuid4
 
     from sqlalchemy.exc import IntegrityError
 
     # Create parent with student
     phone = f"+2335{str(uuid4())[:12]}"
-    parent = Parent(
-        phone=phone,
-        preferred_language="tw",
-        opted_in=True
-    )
+    parent = Parent(phone=phone, preferred_language="tw", opted_in=True)
     session.add(parent)
     await session.commit()
     await session.refresh(parent)
@@ -604,7 +563,7 @@ async def test_cascade_delete_protection(session: AsyncSession):
         first_name="Akosua",
         current_grade="B5",
         primary_parent_id=parent.id,
-        school_language="English"
+        school_language="English",
     )
     session.add(student)
     await session.commit()

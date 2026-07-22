@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+echo "Remote pushes are intentionally blocked for the current local-only phase." >&2
+echo "Lift the hold explicitly in TASKS.md and project governance before enabling push." >&2
+exit 1

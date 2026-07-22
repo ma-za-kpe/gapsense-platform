@@ -83,6 +83,32 @@ These are hypotheses, not decisions:
    schools, programmes, NGOs, districts, or ministries control budgets.
 8. **Curriculum intelligence may be independently monetizable.** Other education products may
    value a validated curriculum/prerequisite API, but licensing and demand remain untested.
+9. **Free assessment generation may be a strong acquisition loop.** Existing products already
+   advertise curriculum-aligned generation in Ghana and Uganda, so generation alone is not a
+   defensible claim. GapSense must test whether transparent official-source alignment,
+   country-correct assessment policy, deterministic validation, diagnostic integration, and
+   excellent print/low-bandwidth UX create meaningfully greater trust and repeat use.
+
+## Assessment Generation Research Addendum
+
+The new product hypothesis is documented in the
+[Free Assessment Generation Product Brief](ASSESSMENT_GENERATION_PRODUCT_BRIEF.md). The desk
+research changes the shape of the idea: universal access is valuable, but a universal written
+"exam" is not educationally appropriate at every level.
+
+Ghana's national framework says assessment methods should match performance indicators,
+serve learner needs, use multiple methods, include meaningful feedback, and address
+inclusivity and quality. Uganda's early-primary thematic curriculum emphasizes continuous
+observation and normal learning tasks and explicitly cautions against separate examinations
+at that phase. Uganda's lower-secondary direction emphasizes applied competency rather than
+recall. Therefore the generator should choose among activities, observation guides, projects,
+quizzes, tests, and exam-style papers using explicit country/phase policy.
+
+Current product sites also show that the category is already active. EduMate Africa advertises
+exam generation aligned to both Ghana NaCCA/GES and Uganda NCDC curricula, while Digital
+Schools Uganda advertises an AI exam generator within school management. These are vendor
+claims, not independent evidence of alignment or adoption, but they invalidate any assumption
+that "AI exam generation" alone is novel.
 
 ## Research Gaps Before MVP Scope Is Frozen
 

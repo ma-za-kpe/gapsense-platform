@@ -29,17 +29,19 @@ Rules:
 ## Current Product Direction
 
 - [~] Build a local-first, web-first GapSense experience for Ghana and Uganda.
+- [ ] Make free, curriculum-aligned assessment generation a public web entry product for
+  learners, parents/caregivers, teachers, school leaders, and other legitimate users.
 - [ ] Make the web experience excellent on mobile, tablet, and desktop, including
   low-bandwidth and intermittent-connectivity conditions.
 - [ ] Support teachers first while researching the needs of learners, parents,
   curriculum specialists, school leaders, and education-system partners.
 - [ ] Complete official curriculum coverage for all in-scope subjects and levels in
   Ghana and Uganda.
-- [ ] Maintain 100% line and branch coverage for application-owned executable code.
+- [~] Maintain 100% line and branch coverage for application-owned executable code.
 - [ ] Use local mock services and local authentication until deployment is approved.
-- [ ] Support local Ollama models behind a provider abstraction; never make a local
+- [~] Use local Ollama as the active AI runtime behind a provider abstraction; never make a local
   model a hidden requirement for deterministic tests.
-- [ ] Keep WhatsApp delivery and production deployment on hold.
+- [~] Keep WhatsApp delivery and production deployment on hold.
 
 ## Milestone 0 - Governance and Honest Baseline
 
@@ -50,12 +52,14 @@ Rules:
 - [x] Add an initial market and user research brief based on primary sources.
 - [x] Add a documentation index.
 - [ ] Link active governance documents from both repository entry points.
-- [ ] Mark the old seven-day WhatsApp implementation plan as historical and superseded.
+- [x] Mark the old seven-day WhatsApp implementation plan as historical and superseded.
+- [ ] Normalize or archive the six explicitly ignored historical Markdown documents, then
+  remove their narrow lint exclusions; active governance and product docs have no exclusions.
 - [ ] Reconcile stale and contradictory completion statements throughout both repos.
 - [ ] Define owners or accountable reviewers for curriculum, pedagogy, UX, safety,
   engineering, and country validation.
 - [ ] Create a decision log for unresolved product questions.
-- [ ] Create an append-only discovery section at the bottom of this file and review it
+- [x] Create an append-only discovery section at the bottom of this file and review it
   at the start and end of every milestone.
 
 ### Milestone evidence
@@ -67,39 +71,57 @@ Rules:
 
 ## Milestone 1 - Reproducible Local Runtime
 
-- [ ] Repair Docker Compose so the web service starts successfully.
+- [x] Repair Docker Compose so the web service starts successfully.
 - [ ] Remove references to nonexistent `gapsense.main`, worker, data mount, and
   LocalStack paths, or implement the intended components.
-- [ ] Add and commit a deterministic dependency lockfile.
+- [x] Add and commit a deterministic dependency lockfile.
 - [ ] Standardize supported Python and tool versions across Docker, Poetry,
   pre-commit, and documentation.
-- [ ] Add a single containerized `validate` command.
-- [ ] Add local health and readiness endpoints.
+- [x] Make locked Docker dependency installation resilient to transient package-index
+  failures with bounded official retries and BuildKit caches.
+- [x] Remove the unused `aiobotocore`/`botocore` cloud runtime dependency while
+  WhatsApp/AWS delivery is on hold; reintroduce an adapter dependency only for a tested use case.
+- [x] Remove the unused vulnerable `python-jose`/`ecdsa` stack until a threat-modeled,
+  tested authentication adapter selects a maintained cryptographic implementation.
+- [x] Upgrade FastAPI/Starlette, multipart parsing, and the pytest stack to audited
+  compatible releases; accept no vulnerability allowlists for this baseline.
+- [x] Align Poetry and pre-commit on a compatible virtualenv release; the first strict gate
+  correctly exposed the inherited Poetry 1.8.2 / virtualenv 21 conflict.
+- [x] Add a single containerized `validate` command.
+- [x] Add local health and readiness endpoints.
 - [ ] Add deterministic seed/demo data that contains no real personal information.
 - [ ] Add local mock authentication with teacher, curriculum-reviewer, and admin roles.
 - [ ] Add local object/media storage abstraction only when a web use case needs it.
 - [ ] Add Ollama discovery and health checks without coupling application startup to it.
+- [x] Remove the active Anthropic SDK, API-key configuration, and infrastructure secret path;
+  retain no external-model credential requirement in local web development.
 - [ ] Add a deterministic fake AI provider for tests and demos.
-- [ ] Confirm Windows Docker Desktop is the supported development path.
+- [x] Confirm Windows Docker Desktop is the supported development path.
+- [x] Make every Docker-backed Git hook safe from Git Bash/MSYS container-path
+  rewriting on Windows and verify it through the real hook entry point.
+- [x] Enforce LF checkout for container-executed scripts and parsed configuration so
+  Windows Git settings cannot corrupt the Linux runtime contract.
 
 ## Milestone 2 - CI-Equivalent Quality Gate
 
-- [ ] Replace the current permissive pre-commit configuration with a strict,
+- [x] Replace the current permissive pre-commit configuration with a strict,
   container-backed configuration that matches the CI-equivalent pipeline.
-- [ ] Remove host-specific Python 3.9 and macOS Poetry paths from hooks.
-- [ ] Remove every `|| echo`, ignored failure, or best-effort critical check.
-- [ ] Remove documentation that presents `--no-verify` as an accepted workflow.
-- [ ] Install commit-msg, pre-commit, and pre-push hooks through a reproducible setup command.
-- [ ] Enforce conventional/semantic commit messages including the task or milestone.
+- [x] Remove host-specific Python 3.9 and macOS Poetry paths from hooks.
+- [x] Remove every `|| echo`, ignored failure, or best-effort critical check.
+- [x] Remove documentation that presents `--no-verify` as an accepted workflow.
+- [x] Install commit-msg, pre-commit, and pre-push hooks through a reproducible setup command.
+- [x] Enforce conventional/semantic commit messages including the task or milestone.
 - [ ] Block secrets, credentials, private keys, proprietary-data leaks, PII, oversized
   generated files, merge markers, invalid JSON/YAML/TOML, and debug statements.
-- [ ] Enforce 100% line coverage.
-- [ ] Enforce 100% branch coverage.
+- [x] Enforce 100% line coverage.
+- [x] Enforce 100% branch coverage.
 - [ ] Require explicit, reviewed justification for any excluded non-executable line.
-- [ ] Add Ruff formatting and lint checks.
-- [ ] Add strict MyPy checks.
-- [ ] Add unit tests.
-- [ ] Add integration tests against containerized PostgreSQL.
+- [x] Add Ruff formatting and lint checks.
+- [x] Add strict MyPy checks.
+- [x] Add unit tests.
+- [x] Add integration tests against containerized PostgreSQL.
+- [x] Isolate integration tests from developer data and one another with a
+  dedicated disposable database plus rollback-safe outer transactions.
 - [ ] Add curriculum schema and graph contract tests.
 - [ ] Add API contract tests.
 - [ ] Add browser end-to-end tests.
@@ -109,12 +131,26 @@ Rules:
 - [ ] Add responsive-layout tests for low-cost Android-sized screens through desktop.
 - [ ] Add performance budgets and Lighthouse-style checks.
 - [ ] Add security, dependency, secret, and PII scans.
-- [ ] Add migration upgrade/downgrade tests.
+- [x] Keep network-backed dependency audits strict while using bounded socket
+  timeouts and only ephemeral writable cache paths in the read-only container.
+- [x] Add migration upgrade/downgrade tests.
+- [x] Reconcile inherited ORM/server-default and severity-index drift through a
+  forward migration without rewriting migration history.
+- [x] Break the Alembic table-sort cycle for the learner's latest gap-profile
+  foreign key while preserving the database constraint.
+- [x] Run every migration upgrade, downgrade, rebuild, and drift check against a
+  fresh dedicated local database in the strict gate.
+- [x] Repair the unreleased initial migration's unnamed foreign-key downgrade
+  operations using names verified from PostgreSQL; never rewrite a deployed migration.
+- [x] Scan every tracked and unignored commit candidate for secrets in Docker;
+  review each false positive explicitly at the source.
 - [ ] Add property-based tests for graph invariants and critical domain rules.
 - [ ] Add mutation testing for diagnostic and safety-critical logic.
 - [ ] Make every validator fail closed when inputs are absent or zero records are tested.
-- [ ] Run the complete gate in Docker before every milestone commit and local merge.
-- [ ] Add local CI scripts now; add hosted CI only when remote work is authorized.
+- [x] Pin the validation container's import path to the candidate workspace so
+  tests and coverage cannot accidentally measure the image's installed source tree.
+- [~] Run the complete gate in Docker before every milestone commit and local merge.
+- [x] Add local CI scripts now; add hosted CI only when remote work is authorized.
 
 ## Clean Engineering and Mandatory TDD
 
@@ -265,6 +301,61 @@ Rules:
 - [ ] Add Ollama-backed optional analysis behind the AI provider interface.
 - [ ] Ensure the web product remains usable when AI is unavailable.
 
+## Free Assessment Generation Programme
+
+- [x] Capture the initial assessment-generation product brief and primary-source research.
+- [ ] Validate the jobs-to-be-done separately with Ghanaian and Ugandan learners,
+  parents/caregivers, teachers, tutors, school leaders, and curriculum specialists.
+- [ ] Use the age- and curriculum-appropriate term (`activity`, `practice`, `quiz`, `test`,
+  `assessment`, or `exam`) instead of presenting every generated artifact as an exam.
+- [ ] Define the anonymous public flow: role or use case, country, curriculum version,
+  education level, class/year, subject, scope, purpose, language, duration, total marks,
+  question formats, cognitive/competency balance, and accessibility/print needs.
+- [ ] Allow generation without collecting learner names, phone numbers, school identities,
+  or other personal data.
+- [ ] Generate an editable learner paper or activity, separate answer/marking guide,
+  explanations, rubric where appropriate, and curriculum-alignment blueprint.
+- [ ] Include official learning-outcome identifiers, source provenance, curriculum version,
+  generation method, review state, and generation timestamp in every artifact.
+- [ ] Model country- and level-specific assessment policies rather than using one universal
+  exam template for Ghana and Uganda.
+- [ ] Support observation checklists, oral prompts, practical activities, projects, and
+  continuous assessment in phases where a written examination is inappropriate.
+- [ ] Support formative, diagnostic, summative, revision, homework, and mock-exam purposes
+  only where the selected curriculum and level permit them.
+- [ ] Create a deterministic assessment blueprint engine before adding generative AI.
+- [ ] Create a reviewed item/template bank with difficulty, cognitive demand, language,
+  estimated time, marks, prerequisites, misconceptions, and accessibility metadata.
+- [ ] Put Ollama and future external models behind an optional item-drafting port; the
+  product must remain useful when no model is available.
+- [ ] Treat every AI-authored item as a draft until deterministic checks and the required
+  human review state pass.
+- [ ] Validate answer correctness, solvability, ambiguity, distractor quality, duplicate
+  items, leakage between paper and key, marks/timing totals, reading level, units, bias,
+  cultural relevance, and curriculum coverage.
+- [ ] Add subject-specific validators for mathematics notation, sciences, languages,
+  humanities, practical/technical subjects, arts, and special educational needs.
+- [ ] Add seeded/property tests proving identical inputs and seed produce reproducible
+  blueprints and that constrained variants remain equivalent in coverage and difficulty.
+- [ ] Add golden educator-reviewed assessment fixtures per country, phase, and subject.
+- [ ] Add browser preview, edit, regenerate-one-item, print, accessible HTML, and PDF export.
+- [ ] Design monochrome, low-ink, A4, and phone-friendly outputs for constrained settings.
+- [ ] Add a clear `practice material — not an official national examination` notice and
+  never imply endorsement by NaCCA, WAEC, NCDC, UNEB, or another authority.
+- [ ] Research source, curriculum, assessment-item, past-paper, logo, and output licensing;
+  generate original items and do not copy protected examination questions without rights.
+- [ ] Add misuse controls for answer-key exposure, impersonation of official papers,
+  high-stakes cheating, automated scraping, and abusive compute consumption.
+- [ ] Keep the core assessment generator genuinely free; test paid organization value in
+  shared libraries, moderation, analytics, bulk variants, workflow, integrations, support,
+  audit history, and APIs rather than withholding basic learner dignity or correctness.
+- [ ] Define privacy-safe product analytics for generation completion, time saved, edit rate,
+  print/export rate, regeneration reasons, validation failures, and voluntary usefulness.
+- [ ] Measure curriculum-alignment precision, educator acceptance without edits, answer-key
+  correctness, accessibility, latency, cost per generation, and repeat use by role.
+- [ ] Do not release a country/level/subject combination until its underlying curriculum
+  slice and assessment policy are at the required review maturity.
+
 ## Diagnostic and AI Quality
 
 - [ ] Implement deterministic graph traversal before AI orchestration.
@@ -333,15 +424,83 @@ Rules:
 
 ## Privacy, Safety, and Local Data
 
+- [x] Add the initial secure-by-design and privacy engineering model.
+- [x] Prevent parent hard deletion from cascading into silent learner-record deletion and
+  replace the skipped regression with enforced database-integrity evidence.
+- [ ] Maintain a versioned asset inventory, data-flow diagram, trust-boundary map, threat
+  register, abuse-case catalog, and control-to-evidence matrix for every major workflow.
+- [ ] Use OWASP ASVS 5.0 Level 2 as the minimum web/API verification target before accepting
+  real user data; select additional Level 3 controls through risk analysis.
+- [ ] Map the secure development lifecycle to NIST SSDF 1.1 and track the 1.2 draft without
+  representing draft guidance as final.
+- [ ] Track OWASP Top 10:2025, API Security Top 10:2023, and GenAI/LLM Top 10:2025 risks in
+  threat models, tests, and the security evidence matrix.
+- [ ] Perform threat modeling at design time and whenever data flows, trust boundaries,
+  dependencies, authorization rules, AI providers, or deployment assumptions change.
+- [ ] Add explicit security acceptance criteria and abuse cases to every product slice.
+- [ ] Make authorization server-side, deny-by-default, least-privilege, object-scoped, and
+  independently tested for every role/action/resource combination.
+- [ ] Keep local mock identity clearly separated from authorization policy and structurally
+  impossible to enable in a production configuration.
+- [ ] Test broken-object-level, broken-function-level, horizontal, vertical, confused-deputy,
+  enumeration, replay, session fixation, and privilege-escalation attacks.
+- [ ] Define secure session, re-authentication, recovery, logout, timeout, and device rules
+  before implementing non-mock identity.
+- [ ] Define strict request/response schemas, size/depth/count limits, canonicalization rules,
+  safe error responses, and fail-closed exceptional-condition behavior.
+- [ ] Add tests and controls for injection, XSS, CSRF, SSRF, unsafe redirects, path traversal,
+  insecure deserialization, mass assignment, file upload, content sniffing, and cache leakage.
+- [ ] Add restrictive CORS, CSP, framing, MIME, referrer, permissions, transport, and cache
+  headers appropriate to each web surface before browser feature work is called complete.
+- [ ] Add rate, concurrency, cost, export, and generation quotas at application boundaries;
+  controls must resist abuse without silently excluding legitimate low-resource users.
+- [ ] Bind local service ports to loopback by default and document every exposed port.
+- [ ] Run containers as non-root where practical, minimize capabilities and writable mounts,
+  separate networks, add resource ceilings, and scan both development and production images.
+- [ ] Pin direct and transitive dependencies through a committed lockfile; verify hashes,
+  provenance, licenses, known vulnerabilities, typosquatting risk, and malicious releases.
+- [ ] Produce and retain an SBOM for release candidates; define signed build provenance and
+  artifact verification before any deployment hold is lifted.
+- [ ] Pin or deliberately update base images, scan OS packages, and test the production image
+  separately from the development image.
+- [x] Build and smoke-test the production image locally as a non-root, read-only container
+  with no-new-privileges, read-only curriculum data, loopback binding, and no deployment.
+- [ ] Run secret, credential, private-key, high-entropy-token, PII, proprietary-data, SAST,
+  dependency, container, IaC, and DAST checks in the strict Docker gate.
+- [ ] Block commits and milestone merges on unresolved critical/high vulnerabilities; require
+  a named, dated, scoped, expiring risk decision for any lower-severity acceptance.
 - [ ] Complete Ghana and Uganda data-protection requirements research.
+- [ ] Obtain qualified Ghanaian and Ugandan legal/privacy review before collecting real data;
+  engineering research is not legal advice.
 - [ ] Perform child-safety and privacy threat modeling.
 - [ ] Minimize learner data and use synthetic data by default locally.
 - [ ] Encrypt sensitive local data where retained.
+- [ ] Classify data by sensitivity and define purpose, lawful basis, fields, access, residency,
+  retention, deletion, backup, export, and processor rules before collection.
 - [ ] Add consent, retention, export, correction, and deletion workflows.
 - [ ] Prevent PII and sensitive learner information from entering logs or model prompts.
 - [ ] Add role-based access tests.
 - [ ] Add secure defaults and visible privacy explanations to the web UX.
+- [ ] Use structured allowlisted security logging with correlation IDs and tamper-evident audit
+  events; never log secrets, answer keys for learner sessions, or sensitive free text.
+- [ ] Separate operational metrics, product analytics, audit evidence, and research datasets.
+- [ ] Add curriculum/artifact hashes and signature verification so poisoned or substituted
+  source data cannot silently enter generation or diagnostic workflows.
+- [ ] Treat curriculum text, user input, generated items, and retrieved documents as untrusted
+  data at every AI boundary; isolate instructions and constrain tool/output capabilities.
+- [ ] Test prompt injection, sensitive-information disclosure, poisoning, excessive agency,
+  insecure output handling, unbounded consumption, and model/provider substitution.
+- [ ] Never send child/learner PII, secrets, proprietary corpora, or private chain-of-thought
+  to Ollama or an external model; make provider data policy visible and enforceable.
+- [ ] Back up only intentionally retained data, encrypt backups, test restoration and deletion,
+  and prevent test/demo data from contaminating real environments.
 - [ ] Define incident response before any real user data is accepted.
+- [ ] Define vulnerability intake, triage, remediation SLAs, disclosure, notification,
+  containment, recovery, evidence preservation, and post-incident learning.
+- [ ] Complete independent penetration testing and remediate findings before accepting real
+  child data or lifting the production deployment hold.
+- [ ] Review the security model and evidence at every milestone; security-critical follow-ups
+  enter this never-finished list immediately.
 
 ## Explicit Holds
 
@@ -367,3 +526,15 @@ to the appropriate section while retaining a short trace or link.
 - [ ] Determine which country/level/subject combination gives the fastest valid web pilot
   without weakening the all-curricula programme.
 - [ ] Revisit every old count and completion claim using machine-derived coverage reports.
+- [ ] Investigate intermittent Docker Desktop DNS failure resolving `auth.docker.io`; do not
+  replace the Docker evidence path with host dependencies.
+- [ ] Determine where Ghana and Uganda require activities, continuous assessment, projects,
+  or competency tasks instead of written examinations, and encode that policy by phase.
+- [ ] Request or obtain legal guidance on lawful use of official curricula, public sample
+  items, past papers, authority names, and generated assessment artifacts.
+- [ ] Test whether free assessment generation is the strongest acquisition loop into paid
+  school moderation, analytics, diagnostic, and curriculum-intelligence workflows.
+- [ ] Add a Docker-native browser, accessibility, and visual-regression harness so local web
+  journeys remain verifiable when an interactive browser automation runtime is unavailable.
+- [ ] Make the strict gate recover predictably from Docker Desktop BuildKit missing-parent
+  snapshot cache faults without broad cache deletion, disabled checks, or a host-runtime fallback.
