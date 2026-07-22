@@ -1,0 +1,31 @@
+# GapSense Documentation Index
+
+## Active Governance
+
+- [Project Charter](PROJECT_CHARTER.md) - current web-first product direction
+- [Ways of Working](WAYS_OF_WORKING.md) - mandatory operating and quality model
+- [Working List](../TASKS.md) - canonical, ever-growing execution list
+- [Curriculum Coverage Audit](CURRICULUM_COVERAGE_AUDIT.md) - honest Ghana/Uganda baseline
+- [Market and User Research](MARKET_AND_USER_RESEARCH.md) - dated facts and hypotheses
+
+## Architecture and Specifications
+
+- [Architecture decision record](architecture/gapsense_adr.md)
+- [API specification](specs/gapsense_api_spec.json)
+- [Database specification](specs/gapsense_data_model.sql)
+- [Test scenarios](specs/gapsense_test_scenarios.json)
+- [WhatsApp flows](specs/gapsense_whatsapp_flows.json) - historical/future reference; channel
+  implementation is currently on hold
+
+## Historical Planning Context
+
+The following documents explain earlier product and funding directions. They do not override
+the active charter or working list:
+
+- [Roadmap bridge](gapsense_roadmap_bridge.md)
+- [Alignment analysis](gapsense_alignment_analysis.md)
+- [Project structure blueprint](gapsense_project_structure.md)
+- Claude Code prompts (`gapsense_claude_code_prompt*.md`)
+
+When a historical document conflicts with the active governance documents, retain it for context
+and add a supersession notice rather than rewriting history silently.
