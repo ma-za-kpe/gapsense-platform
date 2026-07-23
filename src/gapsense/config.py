@@ -7,9 +7,9 @@ Uses Pydantic Settings for type-safe environment variable management.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import AnyHttpUrl, Field, field_validator
+from pydantic import AnyHttpUrl, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from gapsense.curriculum.coverage import canonical_repository_available
@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     DEBUG: bool = False
+    ANALYTICS_MODE: Literal["disabled", "local_aggregate"] = "disabled"
 
     # ========================================================================
     # DATABASE
@@ -120,6 +121,13 @@ class Settings(BaseSettings):
             )
 
         return path
+
+    @model_validator(mode="after")
+    def validate_analytics_environment(self) -> Self:
+        """Keep the temporary aggregate sink inside an explicitly local runtime."""
+        if self.ANALYTICS_MODE == "local_aggregate" and self.ENVIRONMENT != "local":
+            raise ValueError("local_aggregate analytics is restricted to the local environment")
+        return self
 
     # ========================================================================
     # COMPUTED PROPERTIES

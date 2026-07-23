@@ -1,9 +1,11 @@
 import axe from "axe-core";
-import { render, screen } from "@testing-library/react";
+import { StrictMode } from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
+import type { Analytics, AnalyticsEventName } from "./analytics/client";
 
 const readyResponse = () =>
   new Response(JSON.stringify({ status: "ready", checks: { curriculum_repository: "ok" } }), {
@@ -62,7 +64,7 @@ const coverageResponse = () =>
 const requestUrl = (input: RequestInfo | URL): string =>
   typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
 
-const renderReadyApp = () => {
+const renderReadyApp = (analytics?: Analytics) => {
   vi.stubGlobal(
     "fetch",
     vi
@@ -73,7 +75,7 @@ const renderReadyApp = () => {
         ),
       ),
   );
-  return render(<App />);
+  return render(analytics === undefined ? <App /> : <App analytics={analytics} />);
 };
 
 afterEach(() => {
@@ -108,6 +110,7 @@ describe("GapSense web entry experience", () => {
 
   it("keeps planning available when the API is unavailable and recovers on retry", async () => {
     const user = userEvent.setup();
+    const analyticsEvents: AnalyticsEventName[] = [];
     const attempts = { coverage: 0, readiness: 0 };
     const fetcher = vi.fn<typeof fetch>().mockImplementation((input) => {
       if (requestUrl(input).includes("/curriculum/coverage")) {
@@ -124,7 +127,15 @@ describe("GapSense web entry experience", () => {
       return Promise.resolve(readyResponse());
     });
     vi.stubGlobal("fetch", fetcher);
-    render(<App />);
+    render(
+      <App
+        analytics={{
+          track: (event) => {
+            analyticsEvents.push(event);
+          },
+        }}
+      />,
+    );
 
     expect(await screen.findByText("Planning still works locally")).toBeVisible();
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -137,6 +148,11 @@ describe("GapSense web entry experience", () => {
     expect(await screen.findByText("Curriculum evidence connected")).toBeVisible();
     expect(await screen.findByText("74 repository files located")).toBeVisible();
     expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(analyticsEvents).toEqual([
+      "entry_viewed",
+      "readiness_retry_selected",
+      "coverage_retry_selected",
+    ]);
   });
 
   it("builds and resets an honest Ghana starting point", async () => {
@@ -177,6 +193,87 @@ describe("GapSense web entry experience", () => {
     ).toBeVisible();
     expect(screen.getByText("Parent or caregiver · Practice activity")).toBeVisible();
     expect(screen.getByText(/NCDC curriculum inventory is still being verified/)).toBeVisible();
+  });
+
+  it("measures the complete anonymous entry funnel without selected values", async () => {
+    const user = userEvent.setup();
+    const events: AnalyticsEventName[] = [];
+    renderReadyApp({
+      track: (event) => {
+        events.push(event);
+      },
+    });
+
+    await waitFor(() => {
+      expect(events).toEqual(["entry_viewed"]);
+    });
+    await user.click(screen.getByRole("link", { name: "Countries" }));
+    await user.click(screen.getByRole("link", { name: "Why GapSense" }));
+    await user.click(screen.getByRole("link", { name: "Start free" }));
+    await user.click(screen.getByRole("link", { name: /Plan a free assessment/ }));
+    await user.click(screen.getByRole("link", { name: "Explore country coverage" }));
+    await user.click(screen.getByRole("radio", { name: /^Teacher/ }));
+    await user.click(screen.getByRole("radio", { name: /^Ghana/ }));
+    await user.click(screen.getByRole("radio", { name: /^Diagnostic check/ }));
+    await user.click(screen.getByRole("button", { name: "Review my starting point" }));
+    await user.click(screen.getByRole("button", { name: "Start again" }));
+
+    expect(events).toEqual([
+      "entry_viewed",
+      "navigation_countries_selected",
+      "navigation_principles_selected",
+      "navigation_planner_selected",
+      "navigation_planner_selected",
+      "navigation_countries_selected",
+      "planner_role_selected",
+      "planner_country_selected",
+      "planner_goal_selected",
+      "planner_reviewed",
+      "planner_reset",
+    ]);
+    expect(JSON.stringify(events)).not.toMatch(/Ghana|teacher|diagnostic/i);
+  });
+
+  it("does not call an incomplete planner state reviewed", async () => {
+    const events: AnalyticsEventName[] = [];
+    const { container } = renderReadyApp({
+      track: (event) => {
+        events.push(event);
+      },
+    });
+    await waitFor(() => {
+      expect(events).toEqual(["entry_viewed"]);
+    });
+    const form = container.querySelector("form");
+    if (form === null) {
+      throw new Error("assessment planner form was not rendered");
+    }
+
+    fireEvent.submit(form);
+
+    expect(events).toEqual(["entry_viewed"]);
+    expect(screen.queryByText(/starting point is ready/)).not.toBeInTheDocument();
+  });
+
+  it("records one entry view through the development StrictMode check", async () => {
+    const events: AnalyticsEventName[] = [];
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockRejectedValue(new TypeError("offline")));
+
+    render(
+      <StrictMode>
+        <App
+          analytics={{
+            track: (event) => {
+              events.push(event);
+            },
+          }}
+        />
+      </StrictMode>,
+    );
+
+    await waitFor(() => {
+      expect(events).toEqual(["entry_viewed"]);
+    });
   });
 
   it("has no automatically detectable document-level accessibility violations", async () => {
