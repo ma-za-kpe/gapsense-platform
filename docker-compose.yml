@@ -51,6 +51,123 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/v1/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  # --- GapSense Web Interface ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    init: true
+    environment:
+      - API_PROXY_TARGET=http://web:8000
+      - VITE_OUT_DIR=/tmp/gapsense-dist
+    ports:
+      - "127.0.0.1:3000:3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  # --- Immutable Frontend Smoke Target ---
+  frontend-production:
+    profiles: ["test"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      web:
+        condition: service_healthy
+
+  # --- Isolated Development Browser Target ---
+  frontend-validation:
+    profiles: ["test"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    init: true
+    environment:
+      - API_PROXY_TARGET=http://web:8000
+      - VITE_OUT_DIR=/tmp/gapsense-dist
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  # --- Repeatable Browser Validation ---
+  browser-tests:
+    profiles: ["test"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: browser-tests
+    environment:
+      - FRONTEND_URL=http://localhost:3000
+    network_mode: "service:frontend-validation"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /dev/shm:size=1g
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      frontend-validation:
+        condition: service_healthy
+
+  # --- Immutable Production Browser Validation ---
+  browser-production-tests:
+    profiles: ["test"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: browser-tests
+    environment:
+      - EXPECT_IMMUTABLE_ASSETS=1
+      - FRONTEND_URL=http://localhost:8080
+    network_mode: "service:frontend-production"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /dev/shm:size=1g
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      frontend-production:
+        condition: service_healthy
 
   # --- GapSense Worker ---
   worker:

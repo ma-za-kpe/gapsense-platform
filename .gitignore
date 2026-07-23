@@ -246,6 +246,7 @@ temp/
 *.jpg
 *.jpeg
 *.png
+!frontend/e2e/**/*.png
 *.mp3
 *.wav
 *.m4a
