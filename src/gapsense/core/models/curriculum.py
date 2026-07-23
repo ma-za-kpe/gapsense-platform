@@ -44,7 +44,10 @@ class CurriculumStrand(Base):
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=text("NOW()"), comment="Creation timestamp"
+        String,
+        nullable=False,
+        server_default=text("NOW()"),
+        comment="Creation timestamp",
     )
 
     # Relationships
@@ -143,7 +146,9 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Population status
     population_status: Mapped[str] = mapped_column(
-        String(20), default="skeleton", comment="Population status: skeleton/partial/full/validated"
+        String(20),
+        default="skeleton",
+        comment="Population status: skeleton/partial/full/validated",
     )
 
     # Relationships
@@ -204,7 +209,9 @@ class CurriculumPrerequisite(Base):
     )
 
     relationship_type: Mapped[str] = mapped_column(
-        String(20), default="requires", comment="Type: 'requires', 'strengthens', 'enables'"
+        String(20),
+        default="requires",
+        comment="Type: 'requires', 'strengthens', 'enables'",
     )
     weight: Mapped[float] = mapped_column(default=1.0, comment="Edge weight for path analysis")
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -225,10 +232,15 @@ class CurriculumIndicator(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "curriculum_indicators"
 
     node_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("curriculum_nodes.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("curriculum_nodes.id", ondelete="CASCADE"),
+        nullable=False,
     )
     indicator_code: Mapped[str] = mapped_column(
-        String(25), unique=True, nullable=False, comment="Indicator code (e.g., 'B1.1.1.1.1')"
+        String(25),
+        unique=True,
+        nullable=False,
+        comment="Indicator code (e.g., 'B1.1.1.1.1')",
     )
     title: Mapped[str] = mapped_column(String(300), nullable=False)
 
@@ -269,7 +281,9 @@ class IndicatorErrorPattern(Base):
     )
     error_description: Mapped[str] = mapped_column(Text, nullable=False)
     severity: Mapped[str] = mapped_column(
-        String(10), default="standard", comment="Severity: 'critical', 'standard', 'minor'"
+        String(10),
+        default="standard",
+        comment="Severity: 'critical', 'standard', 'minor'",
     )
     indicates_gap_at: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -295,10 +309,14 @@ class CurriculumMisconception(Base):
     )
 
     id: Mapped[str] = mapped_column(
-        String(30), primary_key=True, comment="Misconception ID (e.g., 'MC-B2.1.3.1-01')"
+        String(30),
+        primary_key=True,
+        comment="Misconception ID (e.g., 'MC-B2.1.3.1-01')",
     )
     node_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("curriculum_nodes.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("curriculum_nodes.id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     description: Mapped[str] = mapped_column(
@@ -337,7 +355,9 @@ class CascadePath(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     name: Mapped[str] = mapped_column(
-        String(100), nullable=False, comment="Cascade name (e.g., 'Place Value Collapse')"
+        String(100),
+        nullable=False,
+        comment="Cascade name (e.g., 'Place Value Collapse')",
     )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     frequency: Mapped[str | None] = mapped_column(
@@ -353,7 +373,9 @@ class CascadePath(Base):
     diagnostic_entry_question: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     remediation_priority: Mapped[str | None] = mapped_column(
-        String(20), nullable=True, comment="Priority: 'HIGHEST', 'HIGH', 'MEDIUM-HIGH', 'MEDIUM'"
+        String(20),
+        nullable=True,
+        comment="Priority: 'HIGHEST', 'HIGH', 'MEDIUM-HIGH', 'MEDIUM'",
     )
 
     node_sequence: Mapped[list[UUID]] = mapped_column(

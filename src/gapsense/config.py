@@ -12,6 +12,8 @@ from typing import Literal
 from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from gapsense.curriculum.coverage import canonical_repository_available
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -111,10 +113,10 @@ class Settings(BaseSettings):
                 "Please set GAPSENSE_DATA_PATH to point to gapsense-data repo."
             )
 
-        if not (path / "curriculum").exists():
+        if not canonical_repository_available(path):
             raise ValueError(
-                f"GAPSENSE_DATA_PATH missing curriculum/ directory: {path.absolute()}\n"
-                "Expected structure: curriculum/, prompts/, business/"
+                "GAPSENSE_DATA_PATH missing canonical curricula/ghana and curricula/uganda "
+                f"directories: {path.absolute()}"
             )
 
         return path
@@ -124,14 +126,16 @@ class Settings(BaseSettings):
     # ========================================================================
 
     @property
-    def prerequisite_graph_path(self) -> Path:
-        """Path to latest prerequisite graph JSON."""
-        return self.GAPSENSE_DATA_PATH / "curriculum" / "gapsense_prerequisite_graph_v1.2.json"
+    def curricula_path(self) -> Path:
+        """Path to the canonical multi-country curriculum repository root."""
+        return self.GAPSENSE_DATA_PATH / "curricula"
 
     @property
     def prompt_library_path(self) -> Path:
         """Path to latest prompt library JSON."""
-        return self.GAPSENSE_DATA_PATH / "prompts" / "gapsense_prompt_library_v1.1.json"
+        return (
+            self.GAPSENSE_DATA_PATH / "prompts" / "gapsense_prompt_library_v2.0_multicountry.json"
+        )
 
     @property
     def is_production(self) -> bool:

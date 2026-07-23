@@ -10,16 +10,15 @@ from gapsense.config import Settings
 
 def test_settings_accept_valid_curriculum_repository(tmp_path: Path) -> None:
     """A repository with the required curriculum directory is accepted."""
-    (tmp_path / "curriculum").mkdir()
+    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
+    (tmp_path / "curricula" / "uganda").mkdir()
 
     configured = Settings(GAPSENSE_DATA_PATH=tmp_path)
 
     assert tmp_path == configured.GAPSENSE_DATA_PATH
-    assert configured.prerequisite_graph_path == (
-        tmp_path / "curriculum" / "gapsense_prerequisite_graph_v1.2.json"
-    )
+    assert configured.curricula_path == tmp_path / "curricula"
     assert configured.prompt_library_path == (
-        tmp_path / "prompts" / "gapsense_prompt_library_v1.1.json"
+        tmp_path / "prompts" / "gapsense_prompt_library_v2.0_multicountry.json"
     )
     assert configured.is_local is True
     assert configured.is_production is False
@@ -29,7 +28,8 @@ def test_settings_accept_valid_curriculum_repository(tmp_path: Path) -> None:
 
 def test_settings_report_production_environment(tmp_path: Path) -> None:
     """Environment helpers distinguish production from local development."""
-    (tmp_path / "curriculum").mkdir()
+    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
+    (tmp_path / "curricula" / "uganda").mkdir()
 
     configured = Settings(ENVIRONMENT="production", GAPSENSE_DATA_PATH=str(tmp_path))
 
@@ -47,5 +47,17 @@ def test_settings_reject_missing_data_repository(tmp_path: Path) -> None:
 
 def test_settings_reject_repository_without_curriculum(tmp_path: Path) -> None:
     """An unrelated directory cannot masquerade as the data repository."""
-    with pytest.raises(ValidationError, match="missing curriculum/ directory"):
+    with pytest.raises(
+        ValidationError, match="missing canonical curricula/ghana and curricula/uganda"
+    ):
+        Settings(GAPSENSE_DATA_PATH=tmp_path)
+
+
+def test_settings_reject_repository_with_only_one_country(tmp_path: Path) -> None:
+    """Ghana-only or Uganda-only data cannot satisfy the two-country runtime contract."""
+    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
+
+    with pytest.raises(
+        ValidationError, match="missing canonical curricula/ghana and curricula/uganda"
+    ):
         Settings(GAPSENSE_DATA_PATH=tmp_path)

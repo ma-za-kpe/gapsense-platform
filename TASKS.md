@@ -1,6 +1,6 @@
 # GapSense Working List
 
-**Canonical project execution list.** Last reconciled: 2026-07-22.
+**Canonical project execution list.** Last reconciled: 2026-07-23.
 
 This list is deliberately never finished. A completed task stays as evidence; every
 research finding, validation failure, user observation, curriculum gap, design debt
@@ -101,6 +101,13 @@ Rules:
   rewriting on Windows and verify it through the real hook entry point.
 - [x] Enforce LF checkout for container-executed scripts and parsed configuration so
   Windows Git settings cannot corrupt the Linux runtime contract.
+- [~] Inspect and prune stopped one-off containers, unused networks, dangling images, and
+  dangling build cache after each major validation or browser milestone; record reclaimed
+  space, preserve named evidence containers that are still needed, and never auto-prune
+  volumes because unattached data can still be irreplaceable.
+- [x] Recover the Docker orchestration layer after the 2026-07-23 client stall and reclaim
+  11.46 GB from 13 stopped containers, two unused networks, and dangling build cache while
+  preserving all four local volumes.
 
 ## Milestone 2 - CI-Equivalent Quality Gate
 
@@ -272,6 +279,12 @@ Rules:
 - [ ] Map Key Phases 2-3: Primary B1-B6 subjects and integrated changes from 2024/25.
 - [ ] Map Key Phase 4: JHS B7-B9 Common Core Programme subjects.
 - [ ] Map Key Phase 5: SHS, SHTS, and STEM core/elective pathways and combinations.
+- [ ] Inventory, reconcile, and surface the Ghana secondary artifacts already present
+  (JHS Mathematics, SHS English, and SHS General Science) by exact level, subject, source
+  version, extraction state, and review state; file presence must not imply full coverage.
+- [ ] Complete every official Ghana JHS and SHS/SHTS/STEM subject and pathway after the
+  authoritative menu and combination rules are approved, with one traceable child task per
+  level/subject combination.
 - [ ] Research and scope Ghana TVET and tertiary curricula where national standards exist.
 - [ ] Reconcile Primary Mathematics graph, populated-node file, README, and metadata;
   current counts conflict.
@@ -298,6 +311,12 @@ Rules:
 - [ ] Complete P5-P7 subject-based curriculum coverage.
 - [ ] Complete Lower Secondary S1-S4 compulsory and elective curriculum coverage.
 - [ ] Complete aligned A-Level S5-S6 curriculum coverage.
+- [ ] Verify whether any current Uganda secondary artifact exists outside the empty canonical
+  `secondary/mathematics` folder found by the 2026-07-22 audit; migrate nothing by assumption
+  and record source/version evidence for every located artifact.
+- [ ] Complete every official Uganda Lower Secondary and A-Level subject and permitted
+  combination after the current NCDC inventory is approved, with one traceable child task per
+  level/subject combination.
 - [ ] Research and scope Uganda TVET and tertiary curricula where national standards exist.
 - [ ] Create one child task per official Uganda subject and phase after inventory review.
 - [ ] Complete structure, evidence, diagnostics, cultural review, and pilot validation
@@ -330,7 +349,7 @@ Rules:
 
 ## Web Product Engineering
 
-### Active slice - `localhost:3000` entry experience
+### Completed slice - `localhost:3000` entry experience
 
 - [x] Audit every local and GitHub branch in both GapSense repositories, run the substantial
   historical frontend from remote `main`/`develop`/`feature/mvp-core-services` in an isolated
@@ -378,7 +397,7 @@ Rules:
   build, dependency-audit, browser, axe, responsive-viewport, and security-header gates in Docker.
 - [x] Enforce 100% frontend statement, branch, function, and line coverage across every owned
   executable TypeScript/TSX module, including files not imported by tests.
-- [ ] Periodically open the rendered page in a visible browser and inspect frontend and API logs
+- [~] Periodically open the rendered page in a visible browser and inspect frontend and API logs
   throughout implementation; retain deterministic Docker browser tests as repeatable evidence.
 - [x] Isolate immutable-production browser validation from the visible port 3000 development
   service so repeated quality gates do not unnecessarily interrupt a co-founder review session.
@@ -389,8 +408,36 @@ Rules:
 - [x] Reconcile evidence, commit this slice on its feature branch, and merge it into local `main`
   only after the complete backend and frontend gates pass; do not push.
 
+### Active slice - truthful curriculum coverage contract
+
+- [x] Replace the legacy singular `curriculum/` readiness test with a fail-closed canonical
+  `curricula/` contract for Ghana and Uganda; directory or file presence must never be reported as
+  completed extraction or educator approval.
+- [x] Add a tested country/authority/level catalog using current official NaCCA and NCDC
+  terminology, while keeping tertiary scope and any unsupported level explicitly unresolved.
+- [x] Build a deterministic read-only inventory that ignores hidden/transient files, refuses
+  symlink traversal, reports source-file availability separately from review state, and exposes
+  no private paths or file content.
+- [x] Add a typed `/v1/curriculum/coverage` API with explicit incomplete/unknown states and tests
+  for present, partial, missing, malformed, and unexpected repository structures.
+- [ ] Evolve the country-level inventory into a machine-generated country/phase/level/subject
+  coverage matrix so the UI distinguishes existing secondary artifacts from primary artifacts
+  and shows `missing`, `located`, `extracted`, `structurally validated`, and human-review states
+  without inferring any state from an aggregate file count.
+- [x] Update service readiness to require the canonical Ghana and Uganda roots while remaining
+  independent of optional Ollama, authentication, deployment, and WhatsApp services.
+- [x] Consume the typed coverage contract in the port-3000 web shell without overstating
+  readiness; cover loading, success, partial, unavailable, and recovery paths at 100%.
+- [x] Run the complete Docker gate and inspect both browser viewports and logs. Evidence on
+  2026-07-23: 36 backend tests and 37 frontend tests at 100% line/branch coverage, 10/10
+  development and 10/10 immutable-production browser checks, zero known dependency
+  vulnerabilities, clean security/secret/type/lint/migration/package/docs gates, and reviewed
+  desktop/Pixel 7 baselines.
+- [~] Commit the truthful coverage slice on the reconciliation branch, merge the completed
+  milestone into local `main`, and retain the no-push/no-deploy hold.
+
 - [x] Select the web frontend stack through an ADR and a tested prototype.
-- [ ] Define the browser/API boundary and typed API contract.
+- [x] Define the first browser/API boundary and typed curriculum-coverage contract.
 - [ ] Implement local mock authentication and role switching.
 - [ ] Implement country, phase, subject, and curriculum-version selection.
 - [ ] Implement a curriculum explorer with prerequisite visualization.
@@ -435,6 +482,22 @@ Rules:
   estimated time, marks, prerequisites, misconceptions, and accessibility metadata.
 - [ ] Put Ollama and future external models behind an optional item-drafting port; the
   product must remain useful when no model is available.
+- [?] Research an opt-in **bring your own AI provider key** path for educators who choose
+  AI-assisted assessment features in the free product; validate demand, provider terms,
+  accessibility, support burden, and whether the trust and setup cost is justified.
+- [ ] Define a provider-neutral credential port and local fake before any BYOK UI; keep
+  deterministic generation and local Ollama available without an external credential and
+  never make BYOK a hidden condition of a free or safety-critical workflow.
+- [ ] Threat-model BYOK end to end before implementation: explicit informed consent,
+  provider/data-policy disclosure, least privilege, secret redaction, memory and persistence
+  boundaries, encryption where retention is unavoidable, rotation/revocation, expiry,
+  account/session isolation, CSP/XSS and extension risk, SSRF/egress allowlists, quota abuse,
+  incident response, and proof that keys never enter logs, analytics, exports, prompts,
+  browser storage, source control, or support tooling.
+- [ ] Prototype and test the safest viable BYOK flow locally with synthetic data only; compare
+  server-side ephemeral use, an encrypted per-user vault, and provider-supported delegated
+  authorization, and reject direct browser key handling unless a documented threat model proves
+  it appropriate for that provider.
 - [ ] Treat every AI-authored item as a draft until deterministic checks and the required
   human review state pass.
 - [ ] Validate answer correctness, solvability, ambiguity, distractor quality, duplicate
@@ -528,6 +591,9 @@ Rules:
 - [ ] Model willingness to pay only after willingness to adopt and value are observed.
 - [ ] Build cost-to-serve models for local-only, hosted, AI-assisted, offline, and support-heavy use.
 - [ ] Track gross-margin sensitivity to inference, storage, support, onboarding, and validation costs.
+- [ ] Model whether optional educator BYOK can preserve a genuinely useful free tier without
+  shifting hidden provider cost, security liability, confusing setup, or unequal access onto
+  educators; compare it with funded inference allowances and fully local Ollama operation.
 - [ ] Define ethical product analytics that measure activation, retained use, diagnostic completion,
   intervention follow-through, and outcome evidence without exploiting learner data.
 - [ ] Define replaceable entitlement, feature-flag, usage-metering, and billing ports; use local fakes now.
@@ -674,3 +740,6 @@ to the appropriate section while retaining a short trace or link.
   journeys remain verifiable when an interactive browser automation runtime is unavailable.
 - [ ] Make the strict gate recover predictably from Docker Desktop BuildKit missing-parent
   snapshot cache faults without broad cache deletion, disabled checks, or a host-runtime fallback.
+- [ ] Investigate the 2026-07-23 co-founder observation that curriculum coverage appeared
+  primary-only; replace ambiguous aggregate presentation with verified per-level and per-subject
+  evidence, explicitly including Ghana and Uganda secondary education.

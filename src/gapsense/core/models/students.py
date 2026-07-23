@@ -17,7 +17,16 @@ if TYPE_CHECKING:
     from .schools import School
     from .users import Parent, Teacher
 
-from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, Integer, SmallInteger, String, text
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    ForeignKey,
+    Index,
+    Integer,
+    SmallInteger,
+    String,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -108,7 +117,9 @@ class Student(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         back_populates="student", cascade="all, delete-orphan"
     )
     gap_profiles: Mapped[list[GapProfile]] = relationship(
-        foreign_keys="GapProfile.student_id", back_populates="student", cascade="all, delete-orphan"
+        foreign_keys="GapProfile.student_id",
+        back_populates="student",
+        cascade="all, delete-orphan",
     )
     parent_activities: Mapped[list[ParentActivity]] = relationship(
         back_populates="student", cascade="all, delete-orphan"

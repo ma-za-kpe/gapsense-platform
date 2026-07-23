@@ -18,7 +18,15 @@ if TYPE_CHECKING:
     from .students import Student
     from .users import Parent
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, SmallInteger, String, Text, text
+from sqlalchemy import (
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    SmallInteger,
+    String,
+    Text,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

@@ -68,7 +68,10 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Identity (minimal required)
     phone: Mapped[str] = mapped_column(
-        String(20), unique=True, nullable=False, comment="WhatsApp number (primary identifier)"
+        String(20),
+        unique=True,
+        nullable=False,
+        comment="WhatsApp number (primary identifier)",
     )
     phone_verified: Mapped[bool] = mapped_column(default=False)
     preferred_name: Mapped[str | None] = mapped_column(

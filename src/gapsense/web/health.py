@@ -7,6 +7,7 @@ from fastapi import APIRouter, Response, status
 from pydantic import BaseModel, Field
 
 from gapsense import __version__
+from gapsense.curriculum.coverage import canonical_repository_available
 
 
 class HealthSummary(BaseModel):
@@ -26,13 +27,15 @@ class LivenessStatus(BaseModel):
 class ReadinessChecks(BaseModel):
     """Local dependencies required by the current web foundation."""
 
-    curriculum_data: Literal["ok", "missing"]
+    curriculum_repository: Literal["ok", "missing"]
 
 
 class ReadinessStatus(BaseModel):
     """Proof that dependencies required for local serving are available."""
 
-    checks: ReadinessChecks = Field(default_factory=lambda: ReadinessChecks(curriculum_data="ok"))
+    checks: ReadinessChecks = Field(
+        default_factory=lambda: ReadinessChecks(curriculum_repository="ok")
+    )
     status: Literal["ready", "not_ready"] = "ready"
 
 
@@ -53,10 +56,10 @@ def create_health_router(data_path: Path) -> APIRouter:
     @router.get("/ready", response_model=ReadinessStatus)
     async def readiness(response: Response) -> ReadinessStatus:
         """Fail closed when the required curriculum repository is unavailable."""
-        if not (data_path / "curriculum").is_dir():
+        if not canonical_repository_available(data_path):
             response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
             return ReadinessStatus(
-                checks=ReadinessChecks(curriculum_data="missing"),
+                checks=ReadinessChecks(curriculum_repository="missing"),
                 status="not_ready",
             )
 

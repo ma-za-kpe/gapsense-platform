@@ -68,7 +68,8 @@ class School(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "schools"
     __table_args__ = (
         CheckConstraint(
-            "school_type IN ('primary', 'jhs', 'combined', 'private')", name="check_school_type"
+            "school_type IN ('primary', 'jhs', 'combined', 'private')",
+            name="check_school_type",
         ),
     )
 

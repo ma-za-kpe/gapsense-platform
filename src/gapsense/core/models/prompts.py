@@ -65,9 +65,14 @@ class PromptVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("category_id", "version"),
         CheckConstraint(
-            "status IN ('draft', 'testing', 'active', 'deprecated')", name="check_prompt_status"
+            "status IN ('draft', 'testing', 'active', 'deprecated')",
+            name="check_prompt_status",
         ),
-        Index("idx_prompt_versions_active", "category_id", postgresql_where="status = 'active'"),
+        Index(
+            "idx_prompt_versions_active",
+            "category_id",
+            postgresql_where="status = 'active'",
+        ),
     )
 
     category_id: Mapped[int] = mapped_column(ForeignKey("prompt_categories.id"), nullable=False)
@@ -85,7 +90,9 @@ class PromptVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Text, nullable=False, comment="The actual system prompt"
     )
     user_template: Mapped[str | None] = mapped_column(
-        Text, nullable=True, comment="Template for user messages (with {{placeholders}})"
+        Text,
+        nullable=True,
+        comment="Template for user messages (with {{placeholders}})",
     )
     output_schema: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB, nullable=True, comment="Expected output format"
@@ -93,7 +100,9 @@ class PromptVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Configuration
     model_target: Mapped[str] = mapped_column(
-        String(50), default="claude-sonnet-4-5", comment="Which model this is optimized for"
+        String(50),
+        default="claude-sonnet-4-5",
+        comment="Which model this is optimized for",
     )
     temperature: Mapped[float] = mapped_column(default=0.3)
     max_tokens: Mapped[int] = mapped_column(Integer, default=2048)
@@ -136,7 +145,9 @@ class PromptTestCase(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "prompt_test_cases"
 
     prompt_version_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("prompt_versions.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("prompt_versions.id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     # Test input

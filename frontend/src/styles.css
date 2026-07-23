@@ -1073,10 +1073,29 @@ a {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.coverage-alert {
+  display: flex;
+  margin-top: var(--space-10);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--coral-200);
+  border-radius: var(--radius-lg);
+  background: var(--coral-50);
+  color: var(--ink-800);
+  gap: var(--space-5);
+}
+
+.coverage-alert span {
+  color: var(--ink-600);
+}
+
 .country-panel {
   position: relative;
   overflow: hidden;
-  min-height: 27rem;
+  display: flex;
+  min-height: 31rem;
+  flex-direction: column;
   padding: clamp(var(--space-8), 4vw, var(--space-12));
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
@@ -1158,7 +1177,7 @@ a {
   position: relative;
   z-index: 2;
   display: flex;
-  margin: var(--space-10) 0 0;
+  margin: var(--space-10) 0 var(--space-6);
   padding: 0;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -1176,13 +1195,12 @@ a {
 }
 
 .country-panel__status {
-  position: absolute;
+  position: relative;
   z-index: 2;
-  right: clamp(var(--space-8), 4vw, var(--space-12));
-  bottom: clamp(var(--space-8), 4vw, var(--space-12));
-  left: clamp(var(--space-8), 4vw, var(--space-12));
   display: flex;
-  align-items: center;
+  width: 100%;
+  align-items: flex-start;
+  margin-top: auto;
   padding-top: var(--space-5);
   border-top: 1px solid var(--line);
   color: var(--ink-600);
@@ -1191,15 +1209,37 @@ a {
   gap: var(--space-3);
 }
 
-.country-panel__status span {
+.country-panel__signal {
+  flex: 0 0 auto;
   width: 0.55rem;
   height: 0.55rem;
+  margin-top: 0.28rem;
   border-radius: 50%;
   background: var(--gold-500);
 }
 
-.country-panel--coral .country-panel__status span {
+.country-panel--coral .country-panel__signal {
   background: var(--coral-500);
+}
+
+.country-panel__status div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.country-panel__status strong,
+.country-panel__status small {
+  display: block;
+}
+
+.country-panel__status strong {
+  color: var(--ink-800);
+}
+
+.country-panel__status small {
+  color: var(--ink-600);
+  font-size: 0.72rem;
+  font-weight: 570;
 }
 
 .principles {

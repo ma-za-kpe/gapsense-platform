@@ -48,10 +48,12 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "diagnostic_sessions"
     __table_args__ = (
         CheckConstraint(
-            "initiated_by IN ('parent', 'teacher', 'system', 'self')", name="check_initiated_by"
+            "initiated_by IN ('parent', 'teacher', 'system', 'self')",
+            name="check_initiated_by",
         ),
         CheckConstraint(
-            "channel IN ('whatsapp', 'web', 'app', 'sms', 'paper')", name="check_channel"
+            "channel IN ('whatsapp', 'web', 'app', 'sms', 'paper')",
+            name="check_channel",
         ),
         CheckConstraint(
             "status IN ('in_progress', 'completed', 'abandoned', 'timed_out')",
@@ -76,7 +78,9 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
 
     # Session state
     status: Mapped[str] = mapped_column(
-        String(20), default="in_progress", comment="in_progress, completed, abandoned, timed_out"
+        String(20),
+        default="in_progress",
+        comment="in_progress, completed, abandoned, timed_out",
     )
     started_at: Mapped[datetime] = mapped_column(
         nullable=False, server_default=text("NOW()"), comment="Session start time"
@@ -114,7 +118,9 @@ class DiagnosticSession(Base, UUIDPrimaryKeyMixin):
         nullable=True, comment="Confidence 0.0-1.0"
     )
     cascade_path_id: Mapped[int | None] = mapped_column(
-        ForeignKey("cascade_paths.id"), nullable=True, comment="Which cascade pattern matched"
+        ForeignKey("cascade_paths.id"),
+        nullable=True,
+        comment="Which cascade pattern matched",
     )
 
     # AI metadata
@@ -174,7 +180,9 @@ class DiagnosticQuestion(Base, UUIDPrimaryKeyMixin):
         Text, nullable=False, comment="The actual question asked"
     )
     question_type: Mapped[str] = mapped_column(
-        String(30), nullable=False, comment="multiple_choice, free_response, image, voice"
+        String(30),
+        nullable=False,
+        comment="multiple_choice, free_response, image, voice",
     )
     question_media_url: Mapped[str | None] = mapped_column(
         Text, nullable=True, comment="Image/audio if applicable"
@@ -221,7 +229,11 @@ class GapProfile(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "gap_profiles"
     __table_args__ = (
         Index("idx_gap_profiles_student", "student_id"),
-        Index("idx_gap_profiles_current", "student_id", postgresql_where="is_current = TRUE"),
+        Index(
+            "idx_gap_profiles_current",
+            "student_id",
+            postgresql_where="is_current = TRUE",
+        ),
     )
 
     student_id: Mapped[UUID] = mapped_column(

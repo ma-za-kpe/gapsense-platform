@@ -82,6 +82,29 @@ The Ghana datasets have significant depth, but contradictory counts and stale st
 mean completion must be recomputed from data. Structural completion would still not prove
 domain or pilot validity.
 
+## Live Coverage Contract
+
+As of 2026-07-23, the local web API exposes a read-only
+`GET /v1/curriculum/coverage` contract sourced only from the canonical
+`curricula/ghana` and `curricula/uganda` roots.
+
+The contract:
+
+- identifies NaCCA and NCDC and lists their official education phases;
+- reports canonical repository file presence separately for Ghana and Uganda;
+- always reports extraction and educator review as `not_verified` at this stage;
+- always reports overall `complete: false`;
+- ignores hidden, transient, backup, symlinked, and special-file entries;
+- fails closed for missing, partial, invalid, or unsafe repository structures; and
+- never exposes private paths, curriculum content, or inferred completion.
+
+The observed counts of 74 Ghana files and 23 Uganda files are inventory signals, not
+coverage percentages. They combine different levels and artifact types and will change as
+the data repository evolves. The next coverage-contract generation must replace these
+aggregate counts with a machine-generated country, phase, level, subject, source-version,
+extraction-state, and review-state matrix. That matrix must make the existing Ghana
+secondary subsets and Uganda's current secondary gaps independently visible.
+
 ## Required Next Actions
 
 The canonical tasks live in [`TASKS.md`](../TASKS.md). Immediate curriculum actions are:

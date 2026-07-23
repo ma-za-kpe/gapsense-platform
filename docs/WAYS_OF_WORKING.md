@@ -1,6 +1,6 @@
 # Ways of Working
 
-Date: 2026-07-22
+Date: 2026-07-23
 
 GapSense is an education diagnostic and curriculum-intelligence project. Our operating
 model is deliberately evidence-led because a false claim or false diagnosis can waste a
@@ -71,6 +71,24 @@ run inside Docker.
 - Docker runtime failures are product work, not setup problems to work around silently.
 
 Why: a result that depends on one co-founder's machine is not reproducible evidence.
+
+## Docker Hygiene Is Part of Every Milestone
+
+Inspect Docker state after long runs, browser validation, and milestone gates. Remove only
+resources that are demonstrably unused.
+
+- Prune stopped one-off containers, unused networks, dangling images, and dangling build
+  cache after their evidence has been reconciled.
+- Keep named containers while they are still needed for logs, failure inspection, or a
+  co-founder review session.
+- Record material reclaimed space in `TASKS.md` so recurring waste can be diagnosed.
+- Do not auto-prune volumes. An unattached database or research volume can still contain
+  irreplaceable work; inspect and name the exact volume before any removal.
+- Rebuild required targets from the candidate workspace after cleanup rather than trusting a
+  stale image or container as current evidence.
+
+Why: disciplined cleanup keeps Docker fast and understandable without turning storage hygiene
+into accidental data loss.
 
 ## Web First, Local First
 

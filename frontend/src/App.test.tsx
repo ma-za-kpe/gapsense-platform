@@ -6,13 +6,73 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
 const readyResponse = () =>
-  new Response(JSON.stringify({ status: "ready", checks: { curriculum_data: "ready" } }), {
+  new Response(JSON.stringify({ status: "ready", checks: { curriculum_repository: "ok" } }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
 
+const coveragePayload = {
+  repository_status: "available",
+  complete: false,
+  warnings: [],
+  countries: [
+    {
+      code: "GH",
+      name: "Ghana",
+      authority: "National Council for Curriculum and Assessment (NaCCA)",
+      authority_url: "https://nacca.gov.gh/curriculum/",
+      availability: "present_unverified",
+      review_status: "not_verified",
+      repository_file_count: 74,
+      levels: [
+        {
+          identifier: "lower_primary",
+          name: "Lower Primary",
+          official_phase: "Key Phase 2 (Basic 1–3)",
+          review_status: "not_verified",
+        },
+      ],
+    },
+    {
+      code: "UG",
+      name: "Uganda",
+      authority: "National Curriculum Development Centre (NCDC)",
+      authority_url: "https://ncdc.go.ug/directorates/",
+      availability: "present_unverified",
+      review_status: "not_verified",
+      repository_file_count: 23,
+      levels: [
+        {
+          identifier: "primary_1_3",
+          name: "Primary One–Three",
+          official_phase: "Primary Phase 1",
+          review_status: "not_verified",
+        },
+      ],
+    },
+  ],
+} as const;
+
+const coverageResponse = () =>
+  new Response(JSON.stringify(coveragePayload), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+
+const requestUrl = (input: RequestInfo | URL): string =>
+  typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+
 const renderReadyApp = () => {
-  vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue(readyResponse()));
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn<typeof fetch>()
+      .mockImplementation((input) =>
+        Promise.resolve(
+          requestUrl(input).includes("/curriculum/coverage") ? coverageResponse() : readyResponse(),
+        ),
+      ),
+  );
   return render(<App />);
 };
 
@@ -31,6 +91,8 @@ describe("GapSense web entry experience", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Uganda" })).toBeInTheDocument();
     expect(screen.getByText("No account. No learner data. No hidden AI dependency.")).toBeVisible();
     expect(await screen.findByText("Curriculum evidence connected")).toBeVisible();
+    expect(await screen.findByText("74 repository files located")).toBeVisible();
+    expect(screen.getByText("23 repository files located")).toBeVisible();
   });
 
   it("uses Maku's Africa-first attribution without institutional branding", async () => {
@@ -46,19 +108,35 @@ describe("GapSense web entry experience", () => {
 
   it("keeps planning available when the API is unavailable and recovers on retry", async () => {
     const user = userEvent.setup();
-    const fetcher = vi
-      .fn<typeof fetch>()
-      .mockRejectedValueOnce(new TypeError("offline"))
-      .mockResolvedValueOnce(readyResponse());
+    const attempts = { coverage: 0, readiness: 0 };
+    const fetcher = vi.fn<typeof fetch>().mockImplementation((input) => {
+      if (requestUrl(input).includes("/curriculum/coverage")) {
+        attempts.coverage += 1;
+        if (attempts.coverage === 1) {
+          return Promise.reject(new TypeError("offline"));
+        }
+        return Promise.resolve(coverageResponse());
+      }
+      attempts.readiness += 1;
+      if (attempts.readiness === 1) {
+        return Promise.reject(new TypeError("offline"));
+      }
+      return Promise.resolve(readyResponse());
+    });
     vi.stubGlobal("fetch", fetcher);
     render(<App />);
 
     expect(await screen.findByText("Planning still works locally")).toBeVisible();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Live coverage details are unavailable",
+    );
     const retry = screen.getByRole("button", { name: "Check connection again" });
     await user.click(retry);
+    await user.click(screen.getByRole("button", { name: "Retry coverage details" }));
 
     expect(await screen.findByText("Curriculum evidence connected")).toBeVisible();
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(await screen.findByText("74 repository files located")).toBeVisible();
+    expect(fetcher).toHaveBeenCalledTimes(4);
   });
 
   it("builds and resets an honest Ghana starting point", async () => {

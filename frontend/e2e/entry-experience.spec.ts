@@ -24,6 +24,8 @@ test("renders a truthful, accessible Ghana and Uganda entry experience", async (
   await expect(page.getByRole("heading", { level: 3, name: "Ghana" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 3, name: "Uganda" })).toBeVisible();
   await expect(page.getByText("Curriculum evidence connected")).toBeVisible();
+  await expect(page.getByText(/\d+ repository files located/)).toHaveCount(2);
+  await expect(page.getByText("Extraction and educator review not verified")).toHaveCount(2);
   await expect(
     page.getByText("No account. No learner data. No hidden AI dependency."),
   ).toBeVisible();
@@ -82,20 +84,47 @@ test("preserves keyboard focus, touch sizing, responsive layout, and reduced mot
 
   const viewport = page.viewportSize();
   expect(viewport).not.toBeNull();
-  const layout = await page.evaluate(() => ({
-    documentWidth: document.documentElement.scrollWidth,
-    viewportWidth: document.documentElement.clientWidth,
-    reviewHeight: document
-      .querySelector<HTMLButtonElement>("button[type='submit']")
-      ?.getBoundingClientRect().height,
-    reducedMotionDuration: (() => {
-      const reveal = document.querySelector(".reveal");
-      return reveal instanceof HTMLElement ? getComputedStyle(reveal).animationDuration : null;
-    })(),
-  }));
+  const layout = await page.evaluate(() => {
+    const rootStyles = getComputedStyle(document.documentElement);
+    const minimumCountryEvidenceSpacing =
+      Number.parseFloat(rootStyles.getPropertyValue("--space-6")) *
+      Number.parseFloat(rootStyles.fontSize);
+    return {
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      reviewHeight: document
+        .querySelector<HTMLButtonElement>("button[type='submit']")
+        ?.getBoundingClientRect().height,
+      reducedMotionDuration: (() => {
+        const reveal = document.querySelector(".reveal");
+        return reveal instanceof HTMLElement ? getComputedStyle(reveal).animationDuration : null;
+      })(),
+      minimumCountryEvidenceSpacing,
+      countryPanelLayout: [...document.querySelectorAll<HTMLElement>(".country-panel")].map(
+        (panel) => {
+          const levels = panel.querySelector<HTMLElement>("ul");
+          const status = panel.querySelector<HTMLElement>(".country-panel__status");
+          if (levels === null || status === null) {
+            throw new Error("country panel is missing its level list or evidence status");
+          }
+          const panelBounds = panel.getBoundingClientRect();
+          const levelBounds = levels.getBoundingClientRect();
+          const statusBounds = status.getBoundingClientRect();
+          return {
+            levelStatusGap: statusBounds.top - levelBounds.bottom,
+            panelStatusGap: panelBounds.bottom - statusBounds.bottom,
+          };
+        },
+      ),
+    };
+  });
   expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
   expect(layout.reviewHeight).toBeGreaterThanOrEqual(44);
   expect(["0.01ms", "1e-05s"]).toContain(layout.reducedMotionDuration);
+  for (const panel of layout.countryPanelLayout) {
+    expect(panel.levelStatusGap).toBeGreaterThanOrEqual(layout.minimumCountryEvidenceSpacing);
+    expect(panel.panelStatusGap).toBeGreaterThanOrEqual(layout.minimumCountryEvidenceSpacing);
+  }
 });
 
 test("serves a hardened same-origin surface", async ({ page }) => {
@@ -126,5 +155,6 @@ test("serves a hardened same-origin surface", async ({ page }) => {
 test("matches the reviewed entry-experience baseline", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText("Curriculum evidence connected")).toBeVisible();
+  await expect(page.getByText(/\d+ repository files located/)).toHaveCount(2);
   await expect(page).toHaveScreenshot("entry-experience.png", { fullPage: true });
 });

@@ -1,12 +1,14 @@
 import { AssessmentPlanner } from "./components/AssessmentPlanner";
 import { BrandMark } from "./components/BrandMark";
+import { CoveragePanels } from "./components/CoveragePanels";
 import { ReadinessBanner } from "./components/ReadinessBanner";
-import { countryProfiles } from "./domain/planner";
+import { useCoverage } from "./hooks/useCoverage";
 import { useReadiness } from "./hooks/useReadiness";
 import "./styles.css";
 
 export function App(): React.JSX.Element {
   const readiness = useReadiness();
+  const coverage = useCoverage();
 
   return (
     <>
@@ -139,30 +141,7 @@ export function App(): React.JSX.Element {
             </p>
           </div>
 
-          <div className="country-showcase">
-            {Object.values(countryProfiles).map((country) => (
-              <article
-                className={`country-panel country-panel--${country.accent}`}
-                key={country.name}
-              >
-                <div className="country-panel__index" aria-hidden="true">
-                  {country.name === "Ghana" ? "GH" : "UG"}
-                </div>
-                <span className="country-panel__authority">{country.authority}</span>
-                <h3>{country.name}</h3>
-                <p>{country.authorityLongName}</p>
-                <ul aria-label={`${country.name} initial level structure`}>
-                  {country.levels.map((level) => (
-                    <li key={level}>{level}</li>
-                  ))}
-                </ul>
-                <div className="country-panel__status">
-                  <span aria-hidden="true" />
-                  Official inventory and evidence review in progress
-                </div>
-              </article>
-            ))}
-          </div>
+          <CoveragePanels state={coverage.state} onRetry={coverage.retry} />
         </section>
 
         <section className="principles" id="principles" aria-labelledby="principles-title">

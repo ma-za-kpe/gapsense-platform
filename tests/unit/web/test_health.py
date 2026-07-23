@@ -45,7 +45,7 @@ async def test_readiness_reports_local_curriculum_data() -> None:
 
     assert response.status_code == 200
     assert response.json() == {
-        "checks": {"curriculum_data": "ok"},
+        "checks": {"curriculum_repository": "ok"},
         "status": "ready",
     }
 
@@ -62,6 +62,24 @@ async def test_readiness_fails_closed_when_curriculum_data_is_missing(
 
     assert response.status_code == 503
     assert response.json() == {
-        "checks": {"curriculum_data": "missing"},
+        "checks": {"curriculum_repository": "missing"},
+        "status": "not_ready",
+    }
+
+
+async def test_readiness_requires_both_canonical_country_roots(tmp_path: Path) -> None:
+    """A legacy graph or one country alone cannot make the platform ready."""
+    (tmp_path / "curriculum").mkdir()
+    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app(data_path=tmp_path)),
+        base_url="http://test",
+    ) as client:
+        response = await client.get("/v1/health/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "checks": {"curriculum_repository": "missing"},
         "status": "not_ready",
     }
