@@ -22,9 +22,9 @@ MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)")
 URI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 REVIEWED_ACTIONS = {
     # pragma: allowlist nextline secret -- reviewed immutable GitHub Action commit
-    "actions/checkout": "11d5960a326750d5838078e36cf38b85af677262",
+    "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
     # pragma: allowlist nextline secret -- reviewed immutable GitHub Action commit
-    "googleapis/release-please-action": "5c625bfb5d1ff62eadeeb3772007f7f66fdcf071",
+    "googleapis/release-please-action": "45996ed1f6d02564a971a2fa1b5860e934307cf7",
 }
 # pragma: allowlist nextline secret -- reviewed local reconciliation boundary commit
 RELEASE_BOOTSTRAP_SHA = "e3f3849914cea911d4d7c7e641cb18d4793804ca"

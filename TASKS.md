@@ -68,6 +68,9 @@ Rules:
   recorded 13/13 coverage responses at HTTP 200 with zero 499 cancellations. The next exact gate
   correctly caught an unnarrowed heterogeneous FastAPI route type in the new regression test;
   close this task only after the explicit `APIRoute` narrowing passes the whole gate.
+- [~] Remove deprecated Node 20 action runtimes from hosted automation: pin the reviewed official
+  Node 24 releases of Checkout `v7.0.1` and Release Please Action `v5.0.0`, update the fail-closed
+  action allowlist under TDD, and require a warning-free hosted Required run before merge.
 - [ ] Open the platform reconciliation PR against remote `main`; review the large historical
   replacement diff, verify every required hosted check is green, merge through GitHub, and
   reconcile local `main` without deploying.

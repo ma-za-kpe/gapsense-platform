@@ -16,9 +16,9 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 # pragma: allowlist nextline secret -- reviewed immutable GitHub Action commit fixture
-CHECKOUT_SHA = "11d5960a326750d5838078e36cf38b85af677262"
+CHECKOUT_SHA = "3d3c42e5aac5ba805825da76410c181273ba90b1"
 # pragma: allowlist nextline secret -- reviewed immutable GitHub Action commit fixture
-RELEASE_PLEASE_SHA = "5c625bfb5d1ff62eadeeb3772007f7f66fdcf071"
+RELEASE_PLEASE_SHA = "45996ed1f6d02564a971a2fa1b5860e934307cf7"
 # pragma: allowlist nextline secret -- reviewed local reconciliation boundary fixture
 RELEASE_BOOTSTRAP_SHA = "e3f3849914cea911d4d7c7e641cb18d4793804ca"
 
