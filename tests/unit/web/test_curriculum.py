@@ -1,19 +1,22 @@
 """Tests for the public curriculum coverage API contract."""
 
+import asyncio
 from inspect import iscoroutinefunction
 from pathlib import Path
 
 from fastapi.routing import APIRoute
 from httpx import ASGITransport, AsyncClient
+from pytest import MonkeyPatch
 
+from gapsense.curriculum.coverage import CoverageReport, build_coverage_report
 from gapsense.main import create_app
 from gapsense.web.curriculum import create_curriculum_router
 
 
-def test_coverage_filesystem_scan_is_delegated_to_a_worker_thread(
+def test_coverage_request_uses_the_application_snapshot(
     tmp_path: Path,
 ) -> None:
-    """A recursive evidence scan must never block the application's async event loop."""
+    """The request path must not perform filesystem work in a worker thread."""
     router = create_curriculum_router(tmp_path)
     coverage_route = next(
         route
@@ -21,7 +24,35 @@ def test_coverage_filesystem_scan_is_delegated_to_a_worker_thread(
         if isinstance(route, APIRoute) and route.path == "/v1/curriculum/coverage"
     )
 
-    assert not iscoroutinefunction(coverage_route.endpoint)
+    assert iscoroutinefunction(coverage_route.endpoint)
+
+
+async def test_coverage_snapshot_is_built_once_for_concurrent_requests(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Closed or concurrent pages cannot enqueue duplicate repository scans."""
+    calls = 0
+
+    def counted_report(data_path: Path) -> CoverageReport:
+        nonlocal calls
+        calls += 1
+        return build_coverage_report(data_path)
+
+    monkeypatch.setattr(
+        "gapsense.web.curriculum.build_coverage_report",
+        counted_report,
+    )
+    application = create_app(data_path=tmp_path)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=application),
+        base_url="http://test",
+    ) as client:
+        responses = await asyncio.gather(*(client.get("/v1/curriculum/coverage") for _ in range(8)))
+
+    assert calls == 1
+    assert {response.status_code for response in responses} == {200}
 
 
 async def test_coverage_endpoint_exposes_typed_non_sensitive_metadata(

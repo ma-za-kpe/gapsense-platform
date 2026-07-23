@@ -33,6 +33,7 @@ FRONTEND_VERSION_TARGETS = {
     ("json", "frontend/package-lock.json", "$.version"),
     ("json", "frontend/package-lock.json", '$.packages[""].version'),
 }
+CHANGELOG_HEADER = "# Changelog\n\n"
 
 
 class RepositoryPolicyError(ValueError):
@@ -144,6 +145,25 @@ def _validate_release_configuration(root: Path) -> None:
         raise RepositoryPolicyError("Release Please must update all frontend version targets")
 
 
+def _validate_changelog(root: Path) -> None:
+    try:
+        content = (root / "CHANGELOG.md").read_text(encoding="utf-8").replace("\r\n", "\n")
+    except OSError as error:
+        raise RepositoryPolicyError(
+            "Release Please changelog lifecycle requires a readable CHANGELOG.md"
+        ) from error
+
+    if content == "":
+        return
+    has_release_entry = content.startswith(f"{CHANGELOG_HEADER}## [")
+    has_duplicate_header = re.search(r"^## Changelog\s*$", content, re.MULTILINE) is not None
+    if not has_release_entry or has_duplicate_header:
+        raise RepositoryPolicyError(
+            "Release Please changelog lifecycle requires an empty initial file or one canonical "
+            "header followed by versioned entries"
+        )
+
+
 def _validate_deployment_hold(root: Path) -> None:
     config = _json_object(root / "vercel.json")
     git_configuration = _mapping(config.get("git"), "Vercel git configuration")
@@ -232,6 +252,7 @@ def validate_repository(root: Path) -> None:
     """Validate the release, version, action-pin, and permission contract."""
     _validate_versions(root)
     _validate_release_configuration(root)
+    _validate_changelog(root)
     _validate_deployment_hold(root)
     _validate_workflows(root)
     _validate_markdown_links(root)

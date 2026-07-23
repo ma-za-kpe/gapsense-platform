@@ -80,6 +80,7 @@ def _valid_repository(root: Path) -> None:
         ),
     )
     _write(root, ".release-please-manifest.json", json.dumps({".": "0.1.0"}))
+    _write(root, "CHANGELOG.md", "")
     _write(
         root,
         "vercel.json",
@@ -222,6 +223,47 @@ def test_repository_policy_requires_every_frontend_version_target(tmp_path: Path
     config_path.write_text(json.dumps(config), encoding="utf-8")
 
     with pytest.raises(RepositoryPolicyError, match="frontend version targets"):
+        validate_repository(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "# Changelog\n",
+        (
+            "# Changelog\n\n"
+            "## [0.2.0](https://example.test/releases/0.2.0)\n\n"
+            "- First release.\n\n"
+            "## Changelog\n"
+        ),
+    ],
+)
+def test_repository_policy_rejects_changelog_header_duplication(
+    tmp_path: Path, content: str
+) -> None:
+    _valid_repository(tmp_path)
+    _write(tmp_path, "CHANGELOG.md", content)
+
+    with pytest.raises(RepositoryPolicyError, match="Release Please changelog lifecycle"):
+        validate_repository(tmp_path)
+
+
+def test_repository_policy_accepts_release_please_changelog(tmp_path: Path) -> None:
+    _valid_repository(tmp_path)
+    _write(
+        tmp_path,
+        "CHANGELOG.md",
+        ("# Changelog\n\n## [0.2.0](https://example.test/releases/0.2.0)\n\n- First release.\n"),
+    )
+
+    validate_repository(tmp_path)
+
+
+def test_repository_policy_requires_changelog_file(tmp_path: Path) -> None:
+    _valid_repository(tmp_path)
+    (tmp_path / "CHANGELOG.md").unlink()
+
+    with pytest.raises(RepositoryPolicyError, match="Release Please changelog lifecycle"):
         validate_repository(tmp_path)
 
 
