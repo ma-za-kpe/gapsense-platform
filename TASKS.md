@@ -17,14 +17,14 @@ item, and new opportunity is added before work begins.
 Rules:
 
 1. Add scope here before starting a new slice.
-2. Work on a focused local branch created from an up-to-date local `main`.
+2. Work on a focused branch created from the current reviewed integration target.
 3. Do not mark a task complete because a document says it is complete.
 4. Completion requires the applicable automated checks, artifacts, and review evidence.
 5. Every discovered follow-up is appended to this file; the list itself never closes.
-6. Commit completed milestones and merge them into local `main` only after the local
-   CI-equivalent pipeline is green.
-7. Do not push branches, tags, or `main` to a remote until deployment and remote
-   collaboration are explicitly authorized.
+6. Commit completed milestones only after the local CI-equivalent pipeline is green; push once,
+   review the resulting hosted evidence, and merge by pull request.
+7. Remote contribution is authorized as of 2026-07-23. Batch coherent green milestones to
+   minimize CI runs. Production deployment remains separately prohibited.
 
 ## Current Product Direction
 
@@ -42,6 +42,41 @@ Rules:
 - [~] Use local Ollama as the active AI runtime behind a provider abstraction; never make a local
   model a hidden requirement for deterministic tests.
 - [~] Keep WhatsApp delivery and production deployment on hold.
+
+## Current Cross-Repository Delivery Sequence
+
+- [x] Complete the `gapsense-platform` release/CI milestone on
+  `chore/remote-main-reconciliation`: implement immutable-action CI, Release Please, one
+  synchronized product version, synthetic public curriculum fixtures, and local policy tests.
+  Evidence: 37 release-policy tests cover 156 statements and 68 branches at 100%; Actionlint and
+  the complete strict gate passed on 2026-07-23.
+- [~] Run the exact strict Docker gate for that platform milestone, commit once, and push the
+  branch once so hosted CI is triggered only for a locally green candidate.
+- [ ] Open the platform reconciliation PR against remote `main`; review the large historical
+  replacement diff, verify every required hosted check is green, merge through GitHub, and
+  reconcile local `main` without deploying.
+- [ ] Create a focused branch in the separate `gapsense-data` repository without mixing platform
+  code or history into it.
+- [ ] Inventory every Ghana and Uganda secondary source already present, including misplaced,
+  duplicate, partial, stale, and untracked artifacts; reconcile rather than overwrite useful
+  extraction work.
+- [ ] Build the official secondary source matrix by country, authority, phase, level, subject,
+  syllabus edition, source URL, retrieval date, license/use status, checksum, extraction state,
+  review state, and known gap.
+- [ ] Download missing official secondary documents from NaCCA and NCDC first; use broader web
+  discovery only to locate an authoritative copy or archive, and quarantine any source whose
+  authenticity cannot be proven.
+- [ ] Hash, catalogue, and retain immutable provenance for every acquired source document before
+  extraction; detect duplicates and source substitutions automatically.
+- [ ] Extract and normalize the acquired secondary curricula with deterministic tooling, preserve
+  raw originals, and validate output structure and source traceability.
+- [ ] Measure Ghana and Uganda secondary coverage per phase, level, and subject; add every newly
+  exposed gap to this working list and never infer completeness from file presence.
+- [ ] Run the data repository's complete Docker validation and quality gates, commit the coherent
+  secondary acquisition/extraction milestone, push once, and open a separate data PR.
+- [ ] Review and merge the data PR only when provenance, hashes, extraction checks, curriculum
+  review status, security checks, and hosted CI are green; then update the platform coverage
+  contract in a later, separately tracked milestone.
 
 ## Milestone 0 - Governance and Honest Baseline
 
@@ -79,6 +114,11 @@ Rules:
   pre-commit, and documentation.
 - [x] Make locked Docker dependency installation resilient to transient package-index
   failures with bounded official retries and BuildKit caches.
+- [x] Add bounded retry and freshness checks to Debian OS-package index/download layers; the
+  2026-07-23 first lightweight-CI rehearsal failed closed when transient DNS/timeouts left `apt`
+  without a usable package index for `curl`. Evidence: both OS-package layers now use bounded
+  index/download retries, timeouts, and an index-presence check; a clean `web` image build
+  completed successfully in 91.7 seconds.
 - [x] Remove the unused `aiobotocore`/`botocore` cloud runtime dependency while
   WhatsApp/AWS delivery is on hold; reintroduce an adapter dependency only for a tested use case.
 - [x] Remove the unused vulnerable `python-jose`/`ecdsa` stack until a threat-modeled,
@@ -104,7 +144,9 @@ Rules:
 - [~] Inspect and prune stopped one-off containers, unused networks, dangling images, and
   dangling build cache after each major validation or browser milestone; record reclaimed
   space, preserve named evidence containers that are still needed, and never auto-prune
-  volumes because unattached data can still be irreplaceable.
+  volumes because unattached data can still be irreplaceable. Evidence: the 2026-07-23
+  release/CI milestone cleanup reclaimed 1.089 GB of dangling build cache and removed one unused
+  network while preserving every volume and all five healthy GapSense containers.
 - [x] Recover the Docker orchestration layer after the 2026-07-23 client stall and reclaim
   11.46 GB from 13 stopped containers, two unused networks, and dangling build cache while
   preserving all four local volumes.
@@ -170,42 +212,46 @@ Rules:
   branch activity, cache use, permissions, event triggers, duplicated work, and billable-minute
   waste before adding or replacing any workflow. Evidence:
   [`docs/DELIVERY_AND_RELEASE_MODEL.md`](docs/DELIVERY_AND_RELEASE_MODEL.md).
-- [ ] Define and document the branch lifecycle: protected `main` as releasable history, `develop`
+- [x] Define and document the branch lifecycle: protected `main` as releasable history, `develop`
   as the integration branch only where it reduces risk, short-lived `feature/*` branches,
   time-bounded `release/*` stabilization branches, and urgent `hotfix/*` branches.
-- [ ] Prefer trunk-based feature integration over permanently divergent branches; define merge,
+- [x] Prefer trunk-based feature integration over permanently divergent branches; define merge,
   rebase, deletion, stale-branch, backport, and release-cut rules with repository evidence.
-- [ ] Require conventional commits, pull-request titles, reviewed changes, green required checks,
+- [~] Require conventional commits, pull-request titles, reviewed changes, green required checks,
   linear or explicitly justified merge history, and no direct writes to protected branches.
-- [ ] Design one reusable CI graph shared by pull requests, merge queues, and protected-branch
+- [x] Design one reusable CI graph shared by pull requests, merge queues, and protected-branch
   pushes; avoid running the same full suite twice for the same commit.
-- [ ] Minimize CI credit use with event filters, path filters, concurrency groups with
+- [x] Minimize CI credit use with event filters, path filters, concurrency groups with
   `cancel-in-progress`, dependency and Docker layer caches, change-aware job selection, bounded
   matrices, fail-fast ordering, artifact retention limits, and scheduled deep checks only where
   risk justifies them.
-- [ ] Keep security-critical, lockfile, migration, coverage, browser, and release checks fail
+- [x] Keep security-critical, lockfile, migration, coverage, browser, and release checks fail
   closed even when optimizing runtime; cost reduction must never create an evidence gap.
-- [ ] Add a lightweight documentation-only path that still runs Markdown, links, secrets, policy,
+- [x] Add a lightweight documentation-only path that still runs Markdown, links, secrets, policy,
   and workflow validation without rebuilding unrelated application images.
-- [ ] Pin every third-party GitHub Action to an immutable commit SHA, minimize `GITHUB_TOKEN`
+- [x] Pin every third-party GitHub Action to an immutable commit SHA, minimize `GITHUB_TOKEN`
   permissions per job, use no long-lived release secret, and review artifact/provenance trust.
-- [ ] Add workflow syntax, policy, action-pin, and local Docker-equivalent tests so CI changes are
+- [x] Add workflow syntax, policy, action-pin, and local Docker-equivalent tests so CI changes are
   validated before they consume a hosted run.
-- [ ] Select one canonical product version source, adopt Semantic Versioning, and expose the
+- [x] Select one canonical product version source, adopt Semantic Versioning, and expose the
   version consistently in Python package metadata, frontend metadata, API responses, artifacts,
   and release notes without manual duplication.
-- [ ] Configure Release Please with manifest-based version management for the platform components,
+- [x] Configure Release Please with manifest-based version management for the platform components,
   conventional-commit changelogs, release pull requests, signed/tagged releases where supported,
   and no automatic production deployment.
+- [x] Prove the local release/CI candidate through the exact Docker gate on 2026-07-23: migration
+  upgrade/downgrade/rebuild/drift passed; 73 backend tests and 37 frontend tests maintained 100%
+  line and branch coverage; Bandit, pip-audit, and npm audit reported no findings; development and
+  immutable-production Playwright suites each passed 10/10 desktop/mobile scenarios.
 - [ ] Define pre-release identifiers and promotion rules for `develop`/`release/*`; do not publish
   a stable release from an unreviewed feature branch or a dirty worktree.
 - [ ] Add software-bill-of-materials, build provenance, checksums, dependency review, and a
   reproducible release-artifact verification step before any public release.
 - [ ] Measure CI wall time, runner minutes, cache hit rate, flaky reruns, queue time, and cost per
   accepted change; add optimization work when thresholds regress.
-- [!] Do not push a branch, create a remote PR/release, trigger hosted CI, or deploy while the
-  explicit remote-push/deployment hold remains active; reconcile that hold with the latest
-  contribution request immediately before the first remote mutation.
+- [x] Lift the remote contribution hold only: the co-founder authorized branch pushes, pull
+  requests, and reviewed merges on 2026-07-23, while requiring CI-credit-aware batching. Production
+  deployment remains separately and explicitly on hold.
 
 ## Clean Engineering and Mandatory TDD
 
@@ -694,8 +740,9 @@ Rules:
   security/privacy, accessibility, performance, release engineering, local operations, and
   deployment-readiness gates are complete and reconciled; no earlier task may depend on it.
 - [!] Production deployment is on hold. Do not deploy to Firebase, AWS, or another host.
-- [!] Remote Git pushes are on hold. Work in local branches, commit milestones, and merge
-  into local `main` only.
+- [x] Remote contribution hold lifted by explicit co-founder direction on 2026-07-23. Push only
+  locally green milestone branches, use reviewed PRs, batch changes to avoid duplicate CI, and do
+  not interpret this as production-deployment authorization.
 - [ ] Before lifting deployment hold, write an ADR comparing hosting, API, database,
   authentication, observability, privacy, cost, regional availability, and offline needs.
 - [ ] Preserve channel-neutral domain boundaries so WhatsApp can be added later without

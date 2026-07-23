@@ -58,8 +58,9 @@ sh .githooks/pre-commit
 ```
 
 The installer configures this repository to use its versioned commit-message,
-pre-commit, and pre-push hooks. The pre-push hook deliberately blocks every
-remote push during the current local-only phase.
+pre-commit, and pre-push hooks. The pre-push hook blocks direct integration-branch
+and local tag pushes, rejects a dirty worktree, and repeats the exact strict
+Docker gate before a feature branch can be contributed.
 
 The gate builds and runs inside Docker and includes dependency consistency,
 formatting, linting, strict typing, secret and static-security scans, fresh
@@ -103,8 +104,10 @@ it, keep the current slice marked active, and close it only with evidence.
 
 Work on focused local branches. Before every milestone commit and local merge,
 run the full Docker gate and review the complete diff. Use conventional commit
-messages. Do not bypass hooks and do not push any branch or tag until remote
-work is explicitly authorized.
+messages. Do not bypass hooks. Batch each coherent milestone into one locally
+green feature-branch push, require a reviewed pull request and green hosted
+checks, never push directly to `main` or `develop`, and let Release Please own
+release tags. Production deployment remains prohibited.
 
 ## License
 

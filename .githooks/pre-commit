@@ -8,6 +8,12 @@ cd "$repository_root"
 # host paths before handing them to the Docker CLI.
 export MSYS_NO_PATHCONV=1
 
+echo "GapSense: validating GitHub Actions workflow syntax"
+docker run --rm \
+  -v "$repository_root:/repo:ro" \
+  -w /repo \
+  rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+
 echo "GapSense: validating Docker Compose configuration"
 docker compose config --quiet
 
@@ -16,6 +22,14 @@ docker compose up -d --wait db
 
 echo "GapSense: rebuilding the locked development image"
 docker compose build web
+
+echo "GapSense: validating release and repository policy"
+docker compose run --rm --no-deps \
+  -v "$repository_root:/workspace:ro" \
+  -w /workspace \
+  -e GAPSENSE_PR_TITLE \
+  -e PYTHONPATH=/workspace/src \
+  web python -m gapsense.release.policy
 
 readonly migration_database="gapsense_migration_test"
 # pragma: allowlist nextline secret -- isolated local database with a disposable credential

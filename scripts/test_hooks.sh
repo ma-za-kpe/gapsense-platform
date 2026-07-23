@@ -24,9 +24,11 @@ fi
 echo "Running the exact strict pre-commit gate."
 sh .githooks/pre-commit
 
-echo "Verifying the current local-only pre-push hold."
-if sh .githooks/pre-push; then
-  echo "Pre-push unexpectedly allowed a remote push." >&2
+echo "Verifying direct pushes to protected branches remain blocked."
+zero_sha=0000000000000000000000000000000000000000
+if printf '%s\n' "refs/heads/main $zero_sha refs/heads/main $zero_sha" \
+  | sh .githooks/pre-push; then
+  echo "Pre-push unexpectedly allowed a direct main push." >&2
   exit 1
 fi
 

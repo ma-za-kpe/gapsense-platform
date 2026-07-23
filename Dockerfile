@@ -17,9 +17,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eu; \
+    for attempt in 1 2 3 4 5; do \
+        rm -rf /var/lib/apt/lists/*; \
+        if apt-get \
+            -o Acquire::Retries=3 \
+            -o Acquire::http::Timeout=30 \
+            update \
+            && find /var/lib/apt/lists -type f -name '*_Packages*' -print -quit \
+                | grep -q . \
+            && apt-get install -y --no-install-recommends curl; then \
+            rm -rf /var/lib/apt/lists/*; \
+            exit 0; \
+        fi; \
+        if [ "$attempt" -eq 5 ]; then \
+            exit 1; \
+        fi; \
+        sleep "$((attempt * 2))"; \
+    done
 
 RUN pip install --no-cache-dir poetry==2.4.1 poetry-plugin-export==1.10.0
 
@@ -27,9 +42,24 @@ RUN pip install --no-cache-dir poetry==2.4.1 poetry-plugin-export==1.10.0
 # --- Dev stage (hot-reload, dev dependencies) ---
 FROM base AS dev
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eu; \
+    for attempt in 1 2 3 4 5; do \
+        rm -rf /var/lib/apt/lists/*; \
+        if apt-get \
+            -o Acquire::Retries=3 \
+            -o Acquire::http::Timeout=30 \
+            update \
+            && find /var/lib/apt/lists -type f -name '*_Packages*' -print -quit \
+                | grep -q . \
+            && apt-get install -y --no-install-recommends git; then \
+            rm -rf /var/lib/apt/lists/*; \
+            exit 0; \
+        fi; \
+        if [ "$attempt" -eq 5 ]; then \
+            exit 1; \
+        fi; \
+        sleep "$((attempt * 2))"; \
+    done
 
 COPY pyproject.toml poetry.lock ./
 

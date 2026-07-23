@@ -1,7 +1,8 @@
 # Delivery, Branching, Versioning, and Release Model
 
-Date: 2026-07-22
-Status: Proposed target model; remote mutation and deployment remain on hold
+Date: 2026-07-23
+Status: Implemented release/CI candidate; remote contribution is authorized and production
+deployment remains on hold
 
 ## Outcome
 
@@ -60,28 +61,30 @@ time-bound exit becomes a task-list finding.
 
 - `pull_request` into `main` or `develop`: the required validation run;
 - `merge_group`: the same validation for a merge queue;
-- `push` to `main`: a small post-merge integrity/release-input check, not a duplicate full suite;
-- `workflow_dispatch`: an explicitly requested full diagnostic run;
+- `workflow_dispatch`: an explicitly requested validation run, including the Release Please
+  workflow's validation dispatch for a generated release pull request;
+- `push` to `main`: Release Please only, without duplicating the full application suite;
 - a bounded scheduled deep security/reproducibility run only when it adds evidence not already
   produced per change;
 - no deployment event while the deployment hold remains active.
 
 ### Required validation graph
 
-1. A cheap policy job validates workflow files, immutable action pins, conventional PR title,
-   locks, Compose configuration, Markdown, links, secrets, conflict markers, and changed paths.
-2. Documentation-only changes still run policy, Markdown/link, secrets, and documentation tests,
-   then report the same required aggregate status without building unrelated images.
-3. Application changes run the exact Docker migration and backend gate against disposable
-   PostgreSQL, with 100% line and branch coverage.
-4. Frontend changes run exact lockfile validation, 100% statement/branch/function/line coverage,
-   dependency audit, build, and isolated development and immutable-production Playwright/axe,
-   responsive, keyboard, visual, console, and security-header suites.
-5. Curriculum-affecting changes fail closed on schema, source, hash, graph, coverage, and review
-   evidence; CI must use a safe public synthetic fixture rather than depend on the private data
-   repository or a secret checkout token.
-6. One aggregate job reports success only when every selected required job succeeds or is
-   explicitly and correctly not applicable.
+The initial implementation deliberately uses one repository-owned Docker entry point instead of a
+premature multi-job graph:
+
+1. A classifier selects either the documentation path or the complete path.
+2. Documentation-only changes still validate Compose, workflows, immutable action pins, release
+   policy, Markdown, secrets, and whitespace without running the application suites.
+3. All other changes run `scripts/ci.sh full`, which delegates to the exact strict local Docker
+   gate against disposable PostgreSQL and isolated frontend test services.
+4. Backend and frontend executable code retain 100% line and branch coverage; browser evidence
+   covers development and production builds, accessibility, keyboard use, responsive layouts,
+   visual regressions, console errors, and security headers.
+5. Hosted validation mounts a public two-country presence fixture. It proves the platform's
+   fail-closed data contract without copying proprietary curriculum artifacts into this repository
+   or depending on a private checkout token. It does not claim curriculum completeness.
+6. The single required workflow fails if its selected path fails; no critical step is soft-failed.
 
 Use a workflow-scoped concurrency key based on the pull request/head ref and cancel superseded
 feature work. Do not cancel an in-progress release promotion. Keep artifacts only on failure or for
@@ -93,8 +96,8 @@ never an input that correctness requires.
 Use Semantic Versioning and Conventional Commits. The first reconciliation release remains
 `0.x` until GapSense has validated public API/product compatibility expectations.
 
-Adopt Release Please's manifest configuration after choosing the canonical version source. The
-preferred model is one GapSense platform version propagated to:
+Release Please uses a manifest configuration and one synchronized GapSense platform version
+propagated to:
 
 - root Python package metadata;
 - `src/gapsense/__init__.py`;
@@ -115,21 +118,28 @@ The release workflow must:
 - use the minimum write permissions only in the release job;
 - create version/changelog PRs but never deploy;
 - ensure release PRs receive the normal required CI checks;
-- avoid a broad personal access token; evaluate a least-privilege GitHub App token if the default
-  `GITHUB_TOKEN` cannot trigger required release-PR checks;
+- avoid a broad personal access token; the release workflow uses its narrowly scoped
+  `GITHUB_TOKEN` and dispatches the required CI workflow for the generated release-PR branch
+  because events created with that token do not start another workflow automatically;
 - produce checksums, an SBOM, provenance, and reproducibility verification before a public tag is
   considered complete.
 
+The Release Please and checkout actions are pinned to reviewed full commit SHAs. Repository policy
+tests enforce the action allowlist, workflow permissions, release configuration, bootstrap commit,
+and synchronized `0.1.0` version in Python and frontend metadata. Release automation creates no
+deployment and publishes no application artifact.
+
 ## Implementation Sequence
 
-1. Finish and commit the current local web-entry milestone.
-2. Reconcile remote `main` on a dedicated local branch so the existing workflow and application
-   history are not silently replaced.
-3. Add a public synthetic curriculum fixture for hosted validation.
-4. Write workflow-policy tests, then replace the remote CI graph locally.
-5. Run the exact CI-equivalent path locally in Docker and inspect generated workflow syntax.
-6. Add Release Please configuration and version-consistency tests without creating a release.
-7. Resolve the explicit remote-push hold before the first feature-branch push.
-8. Push one feature branch, observe the single hosted run, fix it until green, then enable branch
-   protection/rulesets and open a reviewed PR.
-9. Keep production deployment disabled. WhatsApp remains the final product programme.
+1. Reconcile remote `main` on the dedicated `chore/remote-main-reconciliation` branch so its
+   history remains an ancestor and the replacement is reviewable.
+2. Add the public synthetic curriculum fixture, workflow-policy tests, immutable workflows, and
+   synchronized Release Please configuration.
+3. Run the exact full gate locally in Docker, commit the coherent milestone, and let the pre-push
+   hook repeat that evidence from a clean worktree.
+4. Push the feature branch once, observe the single hosted run, open and review the reconciliation
+   PR, and merge only when every required check is green.
+5. Enable appropriate branch protection/rulesets after the reconciled workflow has proved green.
+6. Let Release Please open a distinct release PR; review its version and changelog evidence rather
+   than merging it automatically.
+7. Keep production deployment disabled. WhatsApp remains the final product programme.

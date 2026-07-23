@@ -43,21 +43,25 @@ Why: curriculum work and product development span long periods, many artifacts, 
 repositories. A living list prevents invisible work, stale claims, and abandoned partial
 solutions.
 
-## Focused Branches, Local Milestone Merges
+## Focused Branches, Reviewed Promotion
 
-Every milestone uses a focused local branch created from an up-to-date local `main`.
+Every milestone uses a focused branch created from the current reviewed integration target.
 
 - Use descriptive branches such as `feat/web-curriculum-explorer`,
   `data/uganda-primary-english`, or `fix/curriculum-validator`.
 - Keep one coherent purpose per branch.
 - Commit only after the local CI-equivalent pipeline is green.
-- Merge completed milestones into local `main`.
-- Do not push any branch, tag, or `main` to a remote until explicitly authorized.
+- Push a coherent, locally green branch once rather than using hosted CI as an iterative debugger.
+- Require a reviewed pull request and green required checks before promotion.
+- Do not push directly to `main` or `develop`; do not create or push release tags locally.
+- Let Release Please own product version tags and changelog release pull requests.
+- Reconcile the local integration branch after the reviewed remote merge.
 - Do not mix unrelated user-owned changes into a milestone commit.
+- Keep production deployment prohibited until that separate hold is explicitly lifted.
 
 Why: small branches make evidence review, rollback, and historical reasoning possible.
-The current project contains very large commits and long-lived uncommitted work; this rule
-reduces that risk.
+The current project contains a necessary large history-reconciliation change as well as long-lived
+uncommitted data work; this rule prevents either exception from becoming normal practice.
 
 ## Docker Is the Runtime
 
@@ -371,7 +375,9 @@ Review and update:
 - research findings and hypotheses;
 - user-visible documentation.
 
-Run the full validation pipeline again after reconciliation, then commit and merge locally.
+Run the full validation pipeline again after reconciliation, then commit. Repeat the exact gate
+from a clean worktree before the one feature-branch push, inspect the hosted evidence, and promote
+only through a reviewed pull request.
 
 ## Definition of a Completed Milestone
 
@@ -383,5 +389,9 @@ A milestone is complete only when:
 4. Line and branch coverage are both 100%.
 5. Required research, accessibility, safety, and domain reviews are recorded.
 6. Newly discovered work has been added to `TASKS.md`.
-7. The branch is committed and merged into local `main`.
-8. Nothing has been pushed remotely.
+7. The coherent branch is committed and clean.
+8. The feature branch has been pushed once, its pull request is reviewed, and every required hosted
+   check is green.
+9. The pull request is merged without bypassing protection and local integration state is
+   reconciled.
+10. No production deployment has occurred.

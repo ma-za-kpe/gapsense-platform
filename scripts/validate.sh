@@ -35,8 +35,7 @@ echo "[4/11] Strict typing"
 mypy src tests
 
 echo "[5/11] Secret scan of every commit candidate"
-git -c safe.directory="$(pwd)" ls-files --cached --others --exclude-standard -z \
-  | xargs -0 -r detect-secrets-hook
+sh scripts/scan_secrets.sh
 
 echo "[6/11] Static security analysis"
 bandit -c pyproject.toml -r src

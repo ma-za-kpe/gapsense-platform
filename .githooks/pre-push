@@ -1,6 +1,26 @@
 #!/bin/sh
 set -eu
 
-echo "Remote pushes are intentionally blocked for the current local-only phase." >&2
-echo "Lift the hold explicitly in TASKS.md and project governance before enabling push." >&2
-exit 1
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$local_ref" in
+    refs/heads/main|refs/heads/develop)
+      echo "Direct pushes to protected integration branches are prohibited: $local_ref" >&2
+      exit 1
+      ;;
+    refs/tags/*)
+      echo "Local tag pushes are prohibited; Release Please owns version tags." >&2
+      exit 1
+      ;;
+  esac
+  test -n "$local_sha"
+  test -n "$remote_ref"
+  test -n "$remote_sha"
+done
+
+if test -n "$(git status --porcelain)"; then
+  echo "Refusing to push a dirty worktree; commit and validate one coherent milestone." >&2
+  exit 1
+fi
+
+echo "GapSense: rerunning the exact strict Docker gate before remote contribution"
+sh .githooks/pre-commit

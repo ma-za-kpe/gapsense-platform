@@ -42,7 +42,7 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - ./src:/app/src:ro
-      - ../gapsense-data:/app/data:ro
+      - ${GAPSENSE_DATA_HOST_PATH:-../gapsense-data}:/app/data:ro
     read_only: true
     tmpfs:
       - /tmp
@@ -191,7 +191,7 @@ services:
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
     volumes:
       - ./src:/app/src:ro
-      - ../gapsense-data:/app/data:ro
+      - ${GAPSENSE_DATA_HOST_PATH:-../gapsense-data}:/app/data:ro
     read_only: true
     tmpfs:
       - /tmp
