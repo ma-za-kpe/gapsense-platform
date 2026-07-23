@@ -1,1 +1,1 @@
-"""Web demo interface for GapSense teacher flow."""
+"""HTTP adapters for the GapSense web application."""

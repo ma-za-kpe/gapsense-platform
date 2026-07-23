@@ -1,50 +1,41 @@
-[tool.poetry]
+[project]
 name = "gapsense"
 version = "0.1.0"
-description = "AI-Powered Foundational Learning Diagnostic Platform for Ghana"
-authors = ["Maku Mazakpe <maku@gapsense.app>"]
-license = "Proprietary"
+description = "Curriculum-aligned learning diagnostics for Ghana and Uganda"
+authors = [{name = "Maku Mazakpe", email = "maku@gapsense.app"}]
 readme = "README.md"
+requires-python = ">=3.12,<4.0"
+dynamic = ["dependencies"]
+
+[tool.poetry]
 packages = [{include = "gapsense", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
-fastapi = "^0.115"
+fastapi = "^0.139.2"
 uvicorn = {extras = ["standard"], version = "^0.34"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0"}
 asyncpg = "^0.30"
 alembic = "^1.14"
 pydantic = "^2.10"
 pydantic-settings = "^2.7"
-anthropic = "^0.43"
-openai = "^1.58"
 httpx = "^0.28"
-aiobotocore = "^2.15"
-python-jose = {extras = ["cryptography"], version = "^3.3"}
 structlog = "^24.4"
-python-multipart = "^0.0.12"  # Security: fixes CVEs in 0.0.9
+python-multipart = "^0.0.32"
 aiofiles = "^24.1"
-beautifulsoup4 = "^4.14.3"
-lxml = "^6.0.2"
-pgvector = "^0.3"
-tiktoken = "^0.12"
-sentence-transformers = "^3.3"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3"
-pytest-asyncio = "^0.25"
+pytest = "^9.1.1"
+pytest-asyncio = "^1.4.0"
 pytest-cov = "^6.0"
-hypothesis = "^6.0"
 factory-boy = "^3.3"
 mypy = "^1.14"
 ruff = "^0.9"
 pre-commit = "^4.0"
-bandit = "^1.7"
-safety = "^3.0"
-detect-secrets = "^1.4"
-vulture = "^2.11"
-deptry = "^0.19"
-viztracer = "^0.17"
+bandit = {version = "^1.8", extras = ["toml"]}
+build = "^1.2"
+detect-secrets = "^1.5"
+pip-audit = "^2.9"
 
 [build-system]
 requires = ["poetry-core"]
@@ -58,12 +49,13 @@ build-backend = "poetry.core.masonry.api"
 target-version = "py312"
 line-length = 100
 src = ["src"]
+extend-exclude = ["alembic/versions"]  # Generated revisions are verified by migration tests.
 
 [tool.ruff.lint]
 select = [
     "E",    # pycodestyle errors
     "W",    # pycodestyle warnings
-    "F",    # pyflakes (unused imports, variables)
+    "F",    # pyflakes
     "I",    # isort
     "N",    # pep8-naming
     "UP",   # pyupgrade
@@ -71,44 +63,16 @@ select = [
     "C4",   # flake8-comprehensions
     "SIM",  # flake8-simplify
     "TCH",  # flake8-type-checking
-    "ARG",  # flake8-unused-arguments (unused function args)
-    "ERA",  # eradicate (commented-out code)
-    "PIE",  # flake8-pie (unnecessary pass, duplicates)
-    "RUF",  # Ruff-specific rules (unused noqa, etc.)
-    "PLC",  # pylint convention
-    "PLE",  # pylint error
-    "PLR",  # pylint refactor
-    "PLW",  # pylint warning
 ]
 ignore = [
-    "E501",    # Line too long (handled by formatter)
-    "PLR0913", # Too many arguments to function (sometimes necessary)
-    "PLR2004", # Magic value used in comparison (context-dependent)
-    "PLR0912", # Too many branches (refactor in follow-up)
-    "B008",    # Function call in defaults (FastAPI Depends pattern)
-    "RUF002",  # Ambiguous unicode characters (intentional × in math docs)
-    "RUF005",  # Concatenation vs unpacking (style preference)
-    "RUF022",  # __all__ sorting (low priority)
-    "TC001",   # Type-checking import optimization (low priority)
+    "E501",  # Line too long (handled by formatter)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "ARG001", "ARG002", "PLR2004"]  # Allow asserts, unused args, magic values in tests
-"src/gapsense/core/models/*" = ["TC003", "ERA001"]  # datetime/UUID used at runtime in SQLAlchemy, allow section comment headers
-"src/gapsense/ai/prompt_loader.py" = ["TC003", "PLW0603"]  # Path used at runtime, global cache OK
-"src/gapsense/ai/prompt_service.py" = ["ERA001"]  # Allow section comment headers
-"src/gapsense/ai/client.py" = ["ARG002"]  # Interface protocol - args required
-"src/gapsense/engagement/whatsapp/factory.py" = ["PLW0603"]  # Global singleton pattern
-"src/gapsense/engagement/whatsapp/twilio_provider.py" = ["ARG002"]  # Interface arguments required but unused
-"src/gapsense/web/mock_whatsapp.py" = ["ARG002"]  # Mock interface - args match real API
-"src/gapsense/web/demo.py" = ["E712", "B904", "PLR0915"]  # SQLAlchemy bool comparisons, FastAPI error handling, complex dashboard functions
-"src/gapsense/engagement/teacher_flows.py" = ["PLR0911", "PLR0915", "PLW2901"]  # Teacher flow state machine complexity
-"src/gapsense/core/country_utils.py" = ["ERA001", "ARG001"]  # MVP temporary code, future expansion args
-"src/gapsense/config.py" = ["ERA001"]  # Section headers as comments
-"alembic/versions/*" = ["ERA001", "PLR0915"]  # Allow commented code and long functions in migrations
-"alembic/env.py" = ["ARG001"]  # Alembic callbacks have required signatures
-"scripts/*" = ["RUF001"]  # Allow emoji in scripts
-"src/gapsense/worker/main.py" = ["PLR0915", "SIM105"]  # Bootstrap entrypoint: long init + signal cleanup
+"tests/**/*.py" = ["S101"]  # Assertions are the executable test contract.
+"src/gapsense/core/models/*.py" = [
+    "TC003",  # SQLAlchemy resolves mapped annotation names when configuring models.
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["gapsense"]
@@ -143,8 +107,11 @@ asyncio_mode = "auto"
 addopts = [
     "-v",
     "--strict-markers",
+    "--strict-config",
     "--cov=src/gapsense",
-    "--cov-report=html",
+    "--cov-branch",
+    "--cov-fail-under=100",
+    "--cov-report=html:/tmp/gapsense-htmlcov",
     "--cov-report=term-missing",
 ]
 markers = [
@@ -160,7 +127,7 @@ markers = [
 
 [tool.coverage.run]
 source = ["src/gapsense"]
-concurrency = ["greenlet"]
+branch = true
 omit = [
     "*/tests/*",
     "*/__pycache__/*",
@@ -168,6 +135,8 @@ omit = [
 ]
 
 [tool.coverage.report]
+fail_under = 100
+show_missing = true
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -179,30 +148,9 @@ exclude_lines = [
 ]
 
 # ============================================================================
-# BANDIT - Security Linter
+# BANDIT - Security Static Analysis
 # ============================================================================
 
 [tool.bandit]
-exclude_dirs = ["tests", "migrations"]
-skips = ["B101"]  # Allow assert in tests (redundant with exclude_dirs)
-severity = "medium"
-
-# ============================================================================
-# VULTURE - Dead Code Detection
-# ============================================================================
-
-[tool.vulture]
-min_confidence = 80
-paths = ["src"]
-exclude = ["tests/", "migrations/"]
-ignore_names = ["cls"]  # Required by Pydantic validators
-
-# ============================================================================
-# DEPTRY - Dependency Management
-# ============================================================================
-
-[tool.deptry]
-extend_exclude = ["tests", "migrations", "infrastructure"]
-known_first_party = ["gapsense"]
-# Per-rule ignores for dependencies used in future modules or indirectly
-per_rule_ignores = { DEP002 = ["asyncpg", "alembic", "anthropic", "httpx", "aiobotocore", "python-jose", "structlog", "python-multipart", "aiofiles", "beautifulsoup4", "lxml"] }
+exclude_dirs = ["tests"]
+targets = ["src"]

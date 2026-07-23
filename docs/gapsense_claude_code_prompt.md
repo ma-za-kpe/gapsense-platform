@@ -3,6 +3,9 @@
 # Last Updated: 2026-02-13
 # Author: Maku Mazakpe
 
+> Historical design input. The active web-first, Ollama-local direction is in
+> `PROJECT_CHARTER.md`, `WAYS_OF_WORKING.md`, and `../TASKS.md`.
+
 You are building **GapSense**, an AI-powered foundational learning diagnostic platform for Ghana. GapSense identifies root learning gaps in primary and JHS students using the NaCCA Standards-Based Curriculum, then engages parents via WhatsApp with specific, dignity-preserving activities to close those gaps.
 
 ---
@@ -169,7 +172,7 @@ async def process_response(session_id: UUID, response: str) -> DiagnosticNextSte
 Load the prerequisite graph from `data/curriculum/prerequisite_graph.json` at startup. Provide:
 ```python
 def backward_trace(node_code: str, max_depth: int = 4) -> list[str]
-def forward_impact(node_code: str) -> list[str]
+def forward_impact(node_code: str) -> list[str]  
 def find_cascade_path(gap_nodes: list[str]) -> str | None
 def priority_screening_order(grade: str) -> list[str]
 def get_severity(node_code: str) -> int
@@ -180,7 +183,7 @@ The graph is a DAG. Use iterative traversal, not recursion (stack overflow risk 
 ```python
 class AIService:
     async def invoke_prompt(
-        self,
+        self, 
         prompt_id: str,       # e.g., "DIAG-001"
         variables: dict,      # Template variables
         cache_prefix: bool = True  # Use prompt caching for system prompt + graph
@@ -218,11 +221,11 @@ States: `idle` → `onboarding` → `diagnostic` → `activity_cycle` → `dorma
 async def handle_inbound(message: InboundMessage) -> None:
     parent = await get_or_create_parent(message.phone)
     state = await get_conversation_state(parent.id)
-
+    
     if is_stop_word(message.text):
         await handle_opt_out(parent)
         return
-
+    
     match state:
         case "idle" | None:
             await start_onboarding(parent, message)
@@ -256,7 +259,7 @@ async def send_diagnostic_report(parent: Parent, student: Student, profile: GapP
         "strengths_summary": profile.strengths_summary,
         # ... etc
     })
-
+    
     # Compliance check
     guard_result = await ai_service.invoke_prompt("GUARD-001", {
         "message_text": message["message_text"],
@@ -264,11 +267,11 @@ async def send_diagnostic_report(parent: Parent, student: Student, profile: GapP
         "literacy_level": parent.literacy_level,
         # ...
     })
-
+    
     if not guard_result["approved"]:
         # Regenerate with guard feedback
         ...
-
+    
     # Send via WhatsApp
     await whatsapp_service.send_text(parent.phone, message["message_text"])
 ```
@@ -321,7 +324,7 @@ async def whatsapp_webhook(request: Request):
 - Test compliance guard with known-good and known-bad messages
 - Use factories (Factory Boy) for test data
 
-### Integration Tests
+### Integration Tests  
 - Use test PostgreSQL database (Docker Compose provides one)
 - Test full diagnostic flow: create session → submit responses → get profile
 - Test webhook handling end-to-end
@@ -344,8 +347,8 @@ async def whatsapp_webhook(request: Request):
 
 ```env
 # Required
-DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/gapsense
-ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL is injected by the approved runtime
+OLLAMA_BASE_URL=http://host.docker.internal:11434
 WHATSAPP_API_TOKEN=EAAx...
 WHATSAPP_PHONE_NUMBER_ID=123456789
 WHATSAPP_VERIFY_TOKEN=your_verify_token

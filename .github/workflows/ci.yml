@@ -1,244 +1,69 @@
-# ============================================================================
-# GapSense CI/CD Pipeline
-#
-# Runs the same checks as git hooks to catch anyone who skipped hooks
-# ============================================================================
-
 name: CI
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
+  merge_group:
+    types:
+      - checks_requested
+  workflow_dispatch:
 
-env:
-  PYTHON_VERSION: "3.12"  # CI uses 3.12 (adjust if needed)
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 jobs:
-  # ==========================================================================
-  # Quality Checks (Linting, Formatting, Type Checking)
-  # ==========================================================================
-  quality:
-    name: Code Quality Checks
-    runs-on: ubuntu-latest
+  validation:
+    name: Required
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      GAPSENSE_DATA_HOST_PATH: ./fixtures/public-data
+      GAPSENSE_PR_TITLE: ${{ github.event.pull_request.title || '' }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Check out the candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        run: poetry install --no-interaction
-
-      - name: Run Ruff Linter
-        run: poetry run ruff check src/ scripts/ alembic/
-
-      - name: Run Ruff Formatter Check
-        run: poetry run ruff format --check src/ scripts/ alembic/
-
-      - name: Run MyPy Type Checker
-        run: poetry run mypy src/
-
-  # ==========================================================================
-  # Tests (Unit + Integration)
-  # ==========================================================================
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-
-    services:
-      # PostgreSQL for integration tests
-      postgres:
-        image: postgres:16-alpine
+      - name: Select the smallest safe validation path
+        id: scope
+        shell: bash
         env:
-          POSTGRES_USER: gapsense
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: gapsense_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        run: poetry install --no-interaction
-
-      - name: Run Tests with Coverage (≥80%)
-        run: poetry run pytest tests/ --cov=src/gapsense --cov-report=xml --cov-report=term-missing --cov-fail-under=80 -v --tb=short
-        env:
-          DATABASE_URL: postgresql+asyncpg://gapsense:testpass@localhost:5432/gapsense_test
-
-      - name: Upload Coverage Reports
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false  # Don't fail CI if Codecov upload fails (requires token)
-
-  # ==========================================================================
-  # Database Migrations Check
-  # ==========================================================================
-  migrations:
-    name: Check Database Migrations
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: gapsense
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: gapsense_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        run: poetry install --no-interaction
-
-      - name: Check Alembic Migrations
-        run: poetry run alembic check || echo "No migrations to check"
-        env:
-          DATABASE_URL: postgresql+asyncpg://gapsense:testpass@localhost:5432/gapsense_test
-
-  # ==========================================================================
-  # Security Checks (CRITICAL for Ghana Data Protection Act compliance)
-  # ==========================================================================
-  security:
-    name: Security & Code Analysis
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        run: poetry install --no-interaction
-
-      - name: Detect Secrets
-        run: poetry run detect-secrets scan --baseline .secrets.baseline
-
-      - name: Bandit Security Scan
-        run: poetry run bandit -c pyproject.toml -r src/
-
-      - name: Safety Dependency Vulnerability Check
-        run: poetry run safety check --json || echo "⚠️  Safety check failed or skipped"
-        continue-on-error: true  # Don't fail build on Safety API issues
-
-      - name: Vulture Dead Code Detection
-        run: poetry run vulture src/ --min-confidence 80
-
-      - name: Deptry Dependency Analysis
-        run: poetry run deptry src/
-
-  # ==========================================================================
-  # Summary
-  # ==========================================================================
-  summary:
-    name: CI Summary
-    runs-on: ubuntu-latest
-    needs: [quality, test, migrations, security]
-    if: always()
-
-    steps:
-      - name: Check Results
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.sha }}
         run: |
-          echo "Quality Checks: ${{ needs.quality.result }}"
-          echo "Tests: ${{ needs.test.result }}"
-          echo "Migrations: ${{ needs.migrations.result }}"
-          echo "Security: ${{ needs.security.result }}"
-
-          if [[ "${{ needs.quality.result }}" == "failure" || "${{ needs.test.result }}" == "failure" || "${{ needs.migrations.result }}" == "failure" || "${{ needs.security.result }}" == "failure" ]]; then
-            echo "❌ CI Failed - Fix issues before merging"
-            exit 1
-          else
-            echo "✅ All CI checks passed"
+          mode="full"
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            mode="docs"
+            while IFS= read -r path; do
+              case "$path" in
+                *.md|docs/*|.github/ISSUE_TEMPLATE/*)
+                  ;;
+                *)
+                  mode="full"
+                  break
+                  ;;
+              esac
+            done < <(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
           fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+
+      - name: Run the repository-owned Docker gate
+        shell: bash
+        env:
+          CI_MODE: ${{ steps.scope.outputs.mode }}
+        run: bash scripts/ci.sh "$CI_MODE"
+
+      - name: Remove ephemeral CI resources
+        if: always()
+        shell: bash
+        run: docker compose --profile test down --volumes --remove-orphans

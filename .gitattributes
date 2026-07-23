@@ -1,0 +1,13 @@
+* text=auto
+
+# Files executed or parsed inside Linux containers must never be checked out as CRLF.
+.gitattributes text eol=lf
+*.sh text eol=lf
+.githooks/* text eol=lf
+Dockerfile text eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+frontend/** text eol=lf
+frontend/**/*.png binary

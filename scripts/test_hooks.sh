@@ -1,90 +1,35 @@
-#!/bin/bash
-# Test Git Hooks Script
-#
-# Manually test pre-commit hooks without actually committing
-# Useful for debugging hook configuration
-# Last updated: 2026-02-14
+#!/bin/sh
+set -eu
 
-set -e
+repository_root=$(git rev-parse --show-toplevel)
+cd "$repository_root"
 
-# Colors
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+valid_message=$(mktemp)
+invalid_message=$(mktemp)
+cleanup() {
+  rm -f "$valid_message" "$invalid_message"
+}
+trap cleanup EXIT INT TERM
 
-echo -e "${BLUE}🔍 Testing Git Hooks${NC}"
-echo ""
+printf '%s\n' 'test(hooks): verify strict local controls' >"$valid_message"
+printf '%s\n' 'bypass the quality gate' >"$invalid_message"
 
-# Detect poetry location
-POETRY_CMD=""
-if command -v poetry &> /dev/null; then
-    POETRY_CMD="poetry"
-elif [ -f "$HOME/Library/Python/3.9/bin/poetry" ]; then
-    POETRY_CMD="$HOME/Library/Python/3.9/bin/poetry"
-elif [ -f "$HOME/.local/bin/poetry" ]; then
-    POETRY_CMD="$HOME/.local/bin/poetry"
-else
-    echo -e "${RED}Error: Poetry not found${NC}"
-    exit 1
+echo "Verifying conventional commit-message enforcement."
+sh .githooks/commit-msg "$valid_message"
+if sh .githooks/commit-msg "$invalid_message"; then
+  echo "Commit-message hook accepted an invalid subject." >&2
+  exit 1
 fi
 
-# Check if hooks are installed
-if [ ! -f ".git/hooks/pre-commit" ]; then
-    echo -e "${YELLOW}⚠️  Pre-commit hooks not installed${NC}"
-    echo "Run: $POETRY_CMD run pre-commit install"
-    echo ""
+echo "Running the exact strict pre-commit gate."
+sh .githooks/pre-commit
+
+echo "Verifying direct pushes to protected branches remain blocked."
+zero_sha=0000000000000000000000000000000000000000
+if printf '%s\n' "refs/heads/main $zero_sha refs/heads/main $zero_sha" \
+  | sh .githooks/pre-push; then
+  echo "Pre-push unexpectedly allowed a direct main push." >&2
+  exit 1
 fi
 
-# Test pre-commit stage hooks
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${YELLOW}Testing PRE-COMMIT Hooks (fast checks)${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-
-if $POETRY_CMD run pre-commit run --all-files --hook-stage commit; then
-    echo ""
-    echo -e "${GREEN}✅ All pre-commit hooks passed${NC}"
-else
-    echo ""
-    echo -e "${RED}❌ Some pre-commit hooks failed${NC}"
-    echo "Fix the issues above and try again"
-fi
-
-echo ""
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${YELLOW}Testing PRE-PUSH Hooks (thorough checks)${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-
-if $POETRY_CMD run pre-commit run --all-files --hook-stage push; then
-    echo ""
-    echo -e "${GREEN}✅ All pre-push hooks passed${NC}"
-else
-    echo ""
-    echo -e "${RED}❌ Some pre-push hooks failed${NC}"
-    echo "Fix the issues above and try again"
-fi
-
-echo ""
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${GREEN}🎉 Hook Testing Complete${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-echo "To run specific hooks:"
-echo "  # Code Quality"
-echo "  $POETRY_CMD run pre-commit run ruff --all-files"
-echo "  $POETRY_CMD run pre-commit run mypy-full --all-files"
-echo "  $POETRY_CMD run pre-commit run pytest-coverage --all-files"
-echo ""
-echo "  # Security & Analysis"
-echo "  $POETRY_CMD run pre-commit run detect-secrets --all-files"
-echo "  $POETRY_CMD run pre-commit run bandit --all-files"
-echo "  $POETRY_CMD run pre-commit run safety --all-files"
-echo "  $POETRY_CMD run pre-commit run vulture --all-files"
-echo "  $POETRY_CMD run pre-commit run deptry --all-files"
-echo ""
-echo "To skip hooks when committing:"
-echo "  git commit --no-verify -m 'message'"
-echo ""
+echo "Git hook behavior is correct."

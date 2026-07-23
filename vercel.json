@@ -1,51 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": null,
-  "installCommand": null,
-  "framework": null,
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/demo",
-      "destination": "/demo.html"
-    },
-    {
-      "source": "/demo/curriculum",
-      "destination": "/curriculum.html"
-    },
-    {
-      "source": "/demo/api/:path*",
-      "destination": "http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com/demo/api/:path*"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com/api/:path*"
-    },
-    {
-      "source": "/demo/:path*",
-      "destination": "http://gapsense-prod-alb-1888969750.us-east-1.elb.amazonaws.com/demo/:path*"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
-        }
-      ]
-    }
-  ]
+  "git": {
+    "deploymentEnabled": false
+  }
 }

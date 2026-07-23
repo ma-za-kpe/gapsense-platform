@@ -4,6 +4,9 @@
 # Author: Maku Mazakpe
 # Aligned to: GapSense v2.0 — The AI-Native Redesign
 
+> Historical design input. The active web-first, Ollama-local direction is in
+> `PROJECT_CHARTER.md`, `WAYS_OF_WORKING.md`, and `../TASKS.md`.
+
 You are building **GapSense**, an AI-native foundational learning diagnostic platform for Ghana. GapSense makes invisible learning gaps visible — at school and at home — for teachers and parents in Ghana's primary, JHS, SHS, and TVET classrooms.
 
 **Core design principle:** If you removed the AI, GapSense would cease to function. The AI is not a feature. The AI IS GapSense. Everything else is scaffolding.
@@ -96,7 +99,7 @@ The PRIMARY diagnostic pathway is NOT an explicit test session. It is:
 
 ```
 Exercise book photo → ANALYSIS-001 → gap signals → update gap profile
-Teacher conversation → TEACHER-003 → teacher observations + AI synthesis → update gap profile
+Teacher conversation → TEACHER-003 → teacher observations + AI synthesis → update gap profile  
 Parent voice note → ANALYSIS-002 → cognitive process extraction → update gap profile
 ```
 
@@ -134,7 +137,7 @@ The PostgreSQL schema in `gapsense_data_model.sql` is the source of truth. When 
 
 Every AI interaction uses a prompt from `prompt_library.json`. The prompts have:
 - Specific system prompts with guardrails
-- User templates with `{{placeholder}}` variables
+- User templates with `{{placeholder}}` variables  
 - Output schemas the AI response must conform to
 - Test cases for validation
 
@@ -202,7 +205,7 @@ worker/ → services/ → models/ + db/ + utils/
 ### 9. Async Everywhere
 
 - All database operations: async SQLAlchemy (asyncpg driver)
-- All HTTP calls (Anthropic, WhatsApp): httpx async client
+- All HTTP calls (Anthropic, WhatsApp): httpx async client  
 - All SQS operations: aiobotocore
 - Never use sync-over-async patterns
 - Never block the event loop
@@ -319,10 +322,10 @@ EVERY outbound parent message flows through this pipeline:
 async def send_parent_message(parent: Parent, student: Student, profile: GapProfile) -> None:
     # 1. Generate activity (ACT-001)
     activity = await ai_service.invoke_prompt("ACT-001", {...})
-
+    
     # 2. Format as WhatsApp message (PARENT-001) in parent's language
     message = await ai_service.invoke_prompt("PARENT-001", {...})
-
+    
     # 3. COMPLIANCE CHECK — non-negotiable (GUARD-001 at temp=0.0)
     guard_result = await ai_service.invoke_prompt("GUARD-001", {
         "message_text": message["message_text"],
@@ -330,7 +333,7 @@ async def send_parent_message(parent: Parent, student: Student, profile: GapProf
         "literacy_level": parent.literacy_level,
         ...
     })
-
+    
     # 4. If rejected: regenerate with guard feedback, NOT skip the check
     if not guard_result["approved"]:
         message = await regenerate_with_feedback(guard_result["issues"], ...)
@@ -339,7 +342,7 @@ async def send_parent_message(parent: Parent, student: Student, profile: GapProf
         if not guard_result["approved"]:
             logger.error("compliance_double_failure", ...)
             return  # DO NOT SEND. Flag for human review.
-
+    
     # 5. Send via WhatsApp
     await whatsapp_service.send_text(parent.phone, message["message_text"])
 ```
@@ -401,8 +404,8 @@ async def whatsapp_webhook(request: Request):
 
 ```env
 # Required
-DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/gapsense
-ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL is injected by the approved runtime
+OLLAMA_BASE_URL=http://host.docker.internal:11434
 WHATSAPP_API_TOKEN=EAAx...
 WHATSAPP_PHONE_NUMBER_ID=123456789
 WHATSAPP_VERIFY_TOKEN=your_verify_token

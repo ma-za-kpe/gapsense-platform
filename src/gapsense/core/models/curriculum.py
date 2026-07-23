@@ -8,10 +8,8 @@ Based on docs/specs/gapsense_data_model.sql
 
 from __future__ import annotations
 
-from datetime import datetime
 from uuid import UUID
 
-from pgvector.sqlalchemy import Vector  # type: ignore[import-not-found]
 from sqlalchemy import (
     ARRAY,
     CheckConstraint,
@@ -45,8 +43,11 @@ class CurriculumStrand(Base):
         String(7), nullable=True, comment="UI color code (#RRGGBB)"
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        nullable=False, server_default=text("NOW()"), comment="Creation timestamp"
+    created_at: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        server_default=text("NOW()"),
+        comment="Creation timestamp",
     )
 
     # Relationships
@@ -99,15 +100,10 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
             name="check_population_status",
         ),
         Index("idx_curriculum_nodes_grade", "grade"),
-        Index("idx_curriculum_nodes_severity", "severity", postgresql_ops={"severity": "DESC"}),
+        # PostgreSQL B-tree indexes support backward scans, so a portable ascending
+        # index serves both severity sort directions without reflection drift.
+        Index("idx_curriculum_nodes_severity", "severity"),
         Index("idx_curriculum_nodes_code", "code"),
-        Index(
-            "idx_curriculum_nodes_country_subject_level_grade",
-            "country",
-            "subject",
-            "level",
-            "grade",
-        ),
     )
 
     code: Mapped[str] = mapped_column(
@@ -117,21 +113,9 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         String(5), nullable=False, comment="Grade level ('B1' through 'B9')"
     )
 
-    country: Mapped[str] = mapped_column(
-        String(5), nullable=False, default="GH", comment="ISO country code (GH, UG, KE, NG)"
-    )
-    subject: Mapped[str] = mapped_column(
-        String(50), nullable=False, default="mathematics", comment="Subject name"
-    )
-    level: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="primary", comment="Education level"
-    )
-
-    strand_id: Mapped[int | None] = mapped_column(
-        ForeignKey("curriculum_strands.id"), nullable=True
-    )
-    sub_strand_id: Mapped[int | None] = mapped_column(
-        ForeignKey("curriculum_sub_strands.id"), nullable=True
+    strand_id: Mapped[int] = mapped_column(ForeignKey("curriculum_strands.id"), nullable=False)
+    sub_strand_id: Mapped[int] = mapped_column(
+        ForeignKey("curriculum_sub_strands.id"), nullable=False
     )
     content_standard_number: Mapped[int] = mapped_column(SmallInteger, nullable=False)
 
@@ -162,7 +146,9 @@ class CurriculumNode(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Population status
     population_status: Mapped[str] = mapped_column(
-        String(20), default="skeleton", comment="Population status: skeleton/partial/full/validated"
+        String(20),
+        default="skeleton",
+        comment="Population status: skeleton/partial/full/validated",
     )
 
     # Relationships
@@ -223,7 +209,9 @@ class CurriculumPrerequisite(Base):
     )
 
     relationship_type: Mapped[str] = mapped_column(
-        String(20), default="requires", comment="Type: 'requires', 'strengthens', 'enables'"
+        String(20),
+        default="requires",
+        comment="Type: 'requires', 'strengthens', 'enables'",
     )
     weight: Mapped[float] = mapped_column(default=1.0, comment="Edge weight for path analysis")
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -244,10 +232,15 @@ class CurriculumIndicator(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "curriculum_indicators"
 
     node_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("curriculum_nodes.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("curriculum_nodes.id", ondelete="CASCADE"),
+        nullable=False,
     )
     indicator_code: Mapped[str] = mapped_column(
-        String(25), unique=True, nullable=False, comment="Indicator code (e.g., 'B1.1.1.1.1')"
+        String(25),
+        unique=True,
+        nullable=False,
+        comment="Indicator code (e.g., 'B1.1.1.1.1')",
     )
     title: Mapped[str] = mapped_column(String(300), nullable=False)
 
@@ -262,10 +255,6 @@ class CurriculumIndicator(Base, UUIDPrimaryKeyMixin):
     )
 
     created_at: Mapped[str] = mapped_column(String, nullable=False, server_default=text("NOW()"))
-
-    # Embedding columns (Phase 2: Hybrid RAG Retrieval)
-    embedding: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)
-    embedding_model: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Relationships
     node: Mapped[CurriculumNode] = relationship(back_populates="indicators")
@@ -292,7 +281,9 @@ class IndicatorErrorPattern(Base):
     )
     error_description: Mapped[str] = mapped_column(Text, nullable=False)
     severity: Mapped[str] = mapped_column(
-        String(10), default="standard", comment="Severity: 'critical', 'standard', 'minor'"
+        String(10),
+        default="standard",
+        comment="Severity: 'critical', 'standard', 'minor'",
     )
     indicates_gap_at: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -318,10 +309,14 @@ class CurriculumMisconception(Base):
     )
 
     id: Mapped[str] = mapped_column(
-        String(30), primary_key=True, comment="Misconception ID (e.g., 'MC-B2.1.3.1-01')"
+        String(30),
+        primary_key=True,
+        comment="Misconception ID (e.g., 'MC-B2.1.3.1-01')",
     )
     node_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("curriculum_nodes.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("curriculum_nodes.id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     description: Mapped[str] = mapped_column(
@@ -360,7 +355,9 @@ class CascadePath(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     name: Mapped[str] = mapped_column(
-        String(100), nullable=False, comment="Cascade name (e.g., 'Place Value Collapse')"
+        String(100),
+        nullable=False,
+        comment="Cascade name (e.g., 'Place Value Collapse')",
     )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     frequency: Mapped[str | None] = mapped_column(
@@ -376,7 +373,9 @@ class CascadePath(Base):
     diagnostic_entry_question: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     remediation_priority: Mapped[str | None] = mapped_column(
-        String(20), nullable=True, comment="Priority: 'HIGHEST', 'HIGH', 'MEDIUM-HIGH', 'MEDIUM'"
+        String(20),
+        nullable=True,
+        comment="Priority: 'HIGHEST', 'HIGH', 'MEDIUM-HIGH', 'MEDIUM'",
     )
 
     node_sequence: Mapped[list[UUID]] = mapped_column(

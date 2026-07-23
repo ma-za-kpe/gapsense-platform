@@ -92,9 +92,7 @@ env/
 ENV/
 .venv
 
-# Poetry
-# poetry.lock is COMMITTED for deterministic builds and CI/CD stability
-# See: https://python-poetry.org/docs/basic-usage/#committing-your-poetrylock-file-to-version-control
+# Poetry lockfile is committed for deterministic Docker and CI builds.
 
 # PyInstaller
 *.manifest
@@ -105,6 +103,7 @@ ENV/
 .coverage
 .coverage.*
 htmlcov/
+test-results/
 .tox/
 .nox/
 coverage.xml
@@ -213,7 +212,6 @@ yarn-error.log*
 # Don't ignore Dockerfile and docker-compose.yml (we want those)
 # But ignore local overrides
 docker-compose.override.yml
-.dockerignore
 
 # ============================================================================
 # CLOUD / INFRASTRUCTURE
@@ -240,6 +238,7 @@ cdk.context.json
 *.swp
 *.swo
 .cache/
+.artifacts/
 tmp/
 temp/
 
@@ -247,6 +246,7 @@ temp/
 *.jpg
 *.jpeg
 *.png
+!frontend/e2e/**/*.png
 *.mp3
 *.wav
 *.m4a
@@ -276,8 +276,6 @@ test_results/
 # Performance profiling
 *.prof
 .prof/
-traces/
-*.json.gz
 
 # ============================================================================
 # NOTES
@@ -287,12 +285,3 @@ NOTES.md
 TODO.md
 SCRATCH.md
 notes/
-
-# ============================================================================
-# E2E Tests (local only)
-# ============================================================================
-tests/e2e/test_demo_flow_e2e.py
-.vercel
-
-# Generated files
-vercel.json

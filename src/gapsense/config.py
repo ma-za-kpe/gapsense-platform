@@ -9,8 +9,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from gapsense.curriculum.coverage import canonical_repository_available
 
 
 class Settings(BaseSettings):
@@ -28,78 +30,44 @@ class Settings(BaseSettings):
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     DEBUG: bool = False
 
-    APP_URL: str = Field(
-        default="http://localhost:8000",
-        description="Base URL for the application (used in WhatsApp links)",
-    )
-
     # ========================================================================
     # DATABASE
     # ========================================================================
 
     DATABASE_URL: str = Field(
+        # pragma: allowlist nextline secret -- local-only disposable credential
         default="postgresql+asyncpg://gapsense:localdev@localhost:5432/gapsense",
         description="PostgreSQL connection string (async)",
     )
 
     # ========================================================================
-    # AI PROVIDERS
+    # LOCAL AI (OLLAMA)
     # ========================================================================
 
-    ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
-
-    ANTHROPIC_MAX_REQUESTS_PER_MINUTE: int = 50
-    ANTHROPIC_MAX_CONCURRENT_REQUESTS: int = 10
-
-    GROK_API_KEY: str = Field(default="", description="xAI Grok API key (fallback provider)")
-
-    # ========================================================================
-    # EMBEDDING CONFIGURATION (Phase 2: Hybrid RAG Retrieval)
-    # ========================================================================
-
-    EMBEDDING_MODEL: Literal["openai", "minilm"] = "openai"
-    OPENAI_API_KEY: str = Field(default="", description="OpenAI API key for embeddings")
-
-    # ========================================================================
-    # WHATSAPP PROVIDER
-    # ========================================================================
-
-    WHATSAPP_PROVIDER: str = Field(
-        default="meta",
-        description="WhatsApp provider: 'meta' (Cloud API) or 'twilio'",
+    OLLAMA_BASE_URL: AnyHttpUrl = Field(
+        default=AnyHttpUrl("http://host.docker.internal:11434"),
+        description="Local Ollama API reachable from the Docker runtime",
     )
+    OLLAMA_MODEL: str = Field(
+        default="llama3.1:8b",
+        min_length=1,
+        max_length=200,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+        description="Locally installed Ollama model selected for optional AI assistance",
+    )
+    OLLAMA_TIMEOUT_SECONDS: int = Field(default=60, ge=1, le=600)
+    OLLAMA_MAX_CONCURRENT_REQUESTS: int = Field(default=2, ge=1, le=16)
 
-    @field_validator("WHATSAPP_PROVIDER")
-    @classmethod
-    def validate_whatsapp_provider(cls, v: str) -> str:
-        """Validate WhatsApp provider is either 'meta' or 'twilio'."""
-        if v not in ("meta", "twilio"):
-            raise ValueError(
-                f"WHATSAPP_PROVIDER must be 'meta' or 'twilio', got '{v}'. "
-                "Check your .env file or environment variables."
-            )
-        return v
+    # ========================================================================
+    # WHATSAPP CLOUD API
+    # ========================================================================
 
-    # Meta WhatsApp Cloud API
     WHATSAPP_API_TOKEN: str = Field(default="", description="WhatsApp Cloud API token")
 
     WHATSAPP_PHONE_NUMBER_ID: str = Field(default="", description="WhatsApp phone number ID")
 
     WHATSAPP_VERIFY_TOKEN: str = Field(
         default="local_verify_token", description="WhatsApp webhook verification token"
-    )
-
-    # Twilio WhatsApp API
-    TWILIO_ACCOUNT_SID: str = Field(default="", description="Twilio Account SID")
-    TWILIO_AUTH_TOKEN: str = Field(
-        default="", description="Twilio Auth Token (or leave empty if using API Key)"
-    )
-    TWILIO_API_KEY_SID: str = Field(
-        default="", description="Twilio API Key SID (optional, more secure than Auth Token)"
-    )
-    TWILIO_API_KEY_SECRET: str = Field(default="", description="Twilio API Key Secret")
-    TWILIO_WHATSAPP_NUMBER: str = Field(
-        default="", description="Twilio WhatsApp sender (e.g., whatsapp:+14155238886)"
     )
 
     # ========================================================================
@@ -135,15 +103,9 @@ class Settings(BaseSettings):
 
     @field_validator("GAPSENSE_DATA_PATH", mode="before")
     @classmethod
-    def validate_data_path(cls: type[Settings], v: str | Path) -> Path:
+    def validate_data_path(cls, v: str | Path) -> Path:
         """Convert string to Path and validate existence."""
-        import os
-
         path = Path(v) if isinstance(v, str) else v
-
-        # Skip validation in CI environment (gapsense-data repo not available)
-        if os.getenv("CI") == "true":
-            return path
 
         if not path.exists():
             raise ValueError(
@@ -151,10 +113,10 @@ class Settings(BaseSettings):
                 "Please set GAPSENSE_DATA_PATH to point to gapsense-data repo."
             )
 
-        if not (path / "curricula").exists():
+        if not canonical_repository_available(path):
             raise ValueError(
-                f"GAPSENSE_DATA_PATH missing curricula/ directory: {path.absolute()}\n"
-                "Expected structure: curricula/, prompts/, cultural_context/, languages/"
+                "GAPSENSE_DATA_PATH missing canonical curricula/ghana and curricula/uganda "
+                f"directories: {path.absolute()}"
             )
 
         return path
@@ -164,31 +126,16 @@ class Settings(BaseSettings):
     # ========================================================================
 
     @property
-    def prerequisite_graph_path(self) -> Path:
-        """Path to latest prerequisite graph JSON."""
-        return self.GAPSENSE_DATA_PATH / "curriculum" / "gapsense_prerequisite_graph_v1.2.json"
-
-    @property
-    def prompt_library_path(self) -> Path:
-        """Path to v2.0 multi-country prompt library JSON."""
-        return (
-            self.GAPSENSE_DATA_PATH / "prompts" / "gapsense_prompt_library_v2.0_multicountry.json"
-        )
-
-    @property
-    def curricula_base_path(self) -> Path:
-        """Multi-country curricula directory."""
+    def curricula_path(self) -> Path:
+        """Path to the canonical multi-country curriculum repository root."""
         return self.GAPSENSE_DATA_PATH / "curricula"
 
     @property
-    def cultural_context_path(self) -> Path:
-        """Cultural context files directory."""
-        return self.GAPSENSE_DATA_PATH / "cultural_context"
-
-    @property
-    def languages_base_path(self) -> Path:
-        """L1 language files directory."""
-        return self.GAPSENSE_DATA_PATH / "languages"
+    def prompt_library_path(self) -> Path:
+        """Path to latest prompt library JSON."""
+        return (
+            self.GAPSENSE_DATA_PATH / "prompts" / "gapsense_prompt_library_v2.0_multicountry.json"
+        )
 
     @property
     def is_production(self) -> bool:

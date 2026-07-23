@@ -1,144 +1,63 @@
-"""
-Unit Tests for Settings v2.0 Configuration
+"""Tests for fail-closed, type-safe application configuration."""
 
-Tests for the updated Settings class with multi-country data path properties.
-Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7
-"""
+from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from gapsense.config import Settings
 
 
-class TestSettingsDefaults:
-    """Test default settings values."""
+def test_settings_accept_valid_curriculum_repository(tmp_path: Path) -> None:
+    """A repository with the required curriculum directory is accepted."""
+    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
+    (tmp_path / "curricula" / "uganda").mkdir()
 
-    def test_settings_defaults(self, monkeypatch):
-        monkeypatch.setenv("CI", "true")
-        s = Settings()
-        assert s.ENVIRONMENT in ("local", "staging", "production")
-        assert s.LOG_LEVEL in ("DEBUG", "INFO", "WARNING", "ERROR")
-        assert isinstance(s.DATABASE_URL, str)
+    configured = Settings(GAPSENSE_DATA_PATH=tmp_path)
 
-    def test_environment_local(self, monkeypatch):
-        monkeypatch.setenv("CI", "true")
-        s = Settings(ENVIRONMENT="local")
-        assert s.is_local is True
-        assert s.is_production is False
-
-    def test_environment_production(self, monkeypatch):
-        monkeypatch.setenv("CI", "true")
-        s = Settings(ENVIRONMENT="production")
-        assert s.is_local is False
-        assert s.is_production is True
+    assert tmp_path == configured.GAPSENSE_DATA_PATH
+    assert configured.curricula_path == tmp_path / "curricula"
+    assert configured.prompt_library_path == (
+        tmp_path / "prompts" / "gapsense_prompt_library_v2.0_multicountry.json"
+    )
+    assert configured.is_local is True
+    assert configured.is_production is False
+    assert str(configured.OLLAMA_BASE_URL) == "http://host.docker.internal:11434/"
+    assert configured.OLLAMA_MODEL == "llama3.1:8b"
 
 
-class TestV20PathProperties:
-    """Test all four new v2.0 data path properties resolve correctly.
+def test_settings_report_production_environment(tmp_path: Path) -> None:
+    """Environment helpers distinguish production from local development."""
+    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
+    (tmp_path / "curricula" / "uganda").mkdir()
 
-    Validates: Requirements 3.1, 3.2, 3.3, 3.4
-    """
+    configured = Settings(ENVIRONMENT="production", GAPSENSE_DATA_PATH=str(tmp_path))
 
-    def test_prompt_library_path(self, tmp_path, monkeypatch):
-        """Req 3.1: prompt_library_path resolves to prompts/gapsense_prompt_library_v2.0_multicountry.json."""
-        (tmp_path / "curricula").mkdir()
-        monkeypatch.setenv("GAPSENSE_DATA_PATH", str(tmp_path))
-        s = Settings(GAPSENSE_DATA_PATH=tmp_path)
-        expected = tmp_path / "prompts" / "gapsense_prompt_library_v2.0_multicountry.json"
-        assert s.prompt_library_path == expected
-
-    def test_curricula_base_path(self, tmp_path, monkeypatch):
-        """Req 3.2: curricula_base_path resolves to curricula/."""
-        (tmp_path / "curricula").mkdir()
-        monkeypatch.setenv("GAPSENSE_DATA_PATH", str(tmp_path))
-        s = Settings(GAPSENSE_DATA_PATH=tmp_path)
-        expected = tmp_path / "curricula"
-        assert s.curricula_base_path == expected
-
-    def test_cultural_context_path(self, tmp_path, monkeypatch):
-        """Req 3.3: cultural_context_path resolves to cultural_context/."""
-        (tmp_path / "curricula").mkdir()
-        monkeypatch.setenv("GAPSENSE_DATA_PATH", str(tmp_path))
-        s = Settings(GAPSENSE_DATA_PATH=tmp_path)
-        expected = tmp_path / "cultural_context"
-        assert s.cultural_context_path == expected
-
-    def test_languages_base_path(self, tmp_path, monkeypatch):
-        """Req 3.4: languages_base_path resolves to languages/."""
-        (tmp_path / "curricula").mkdir()
-        monkeypatch.setenv("GAPSENSE_DATA_PATH", str(tmp_path))
-        s = Settings(GAPSENSE_DATA_PATH=tmp_path)
-        expected = tmp_path / "languages"
-        assert s.languages_base_path == expected
-
-    def test_all_paths_relative_to_data_path(self, tmp_path, monkeypatch):
-        """All v2.0 paths are children of GAPSENSE_DATA_PATH."""
-        (tmp_path / "curricula").mkdir()
-        monkeypatch.setenv("GAPSENSE_DATA_PATH", str(tmp_path))
-        s = Settings(GAPSENSE_DATA_PATH=tmp_path)
-        for prop in (
-            s.prompt_library_path,
-            s.curricula_base_path,
-            s.cultural_context_path,
-            s.languages_base_path,
-        ):
-            assert str(prop).startswith(str(tmp_path))
+    assert configured.is_production is True
+    assert configured.is_local is False
 
 
-class TestValidateDataPath:
-    """Test the validate_data_path validator.
+def test_settings_reject_missing_data_repository(tmp_path: Path) -> None:
+    """A missing proprietary-data repository fails configuration immediately."""
+    missing = tmp_path / "absent"
 
-    Validates: Requirements 3.5, 3.7
-    """
-
-    def test_validator_raises_when_curricula_missing(self, tmp_path, monkeypatch):
-        """Req 3.5 / 3.7: ValueError when curricula/ directory does not exist."""
-        # tmp_path exists but has no curricula/ subdirectory
-        monkeypatch.delenv("CI", raising=False)
-        with pytest.raises(ValueError, match="curricula"):
-            Settings(GAPSENSE_DATA_PATH=tmp_path)
-
-    def test_validator_raises_when_path_does_not_exist(self, tmp_path, monkeypatch):
-        """ValueError when GAPSENSE_DATA_PATH itself does not exist."""
-        monkeypatch.delenv("CI", raising=False)
-        nonexistent = tmp_path / "does_not_exist"
-        with pytest.raises(ValueError, match="does not exist"):
-            Settings(GAPSENSE_DATA_PATH=nonexistent)
-
-    def test_validator_passes_with_curricula_dir(self, tmp_path, monkeypatch):
-        """Validator succeeds when curricula/ directory exists."""
-        (tmp_path / "curricula").mkdir()
-        monkeypatch.delenv("CI", raising=False)
-        monkeypatch.setenv("GAPSENSE_DATA_PATH", str(tmp_path))
-        s = Settings(GAPSENSE_DATA_PATH=tmp_path)
-        assert tmp_path == s.GAPSENSE_DATA_PATH
-
-    def test_validator_skipped_in_ci(self, tmp_path, monkeypatch):
-        """Validator is skipped when CI=true env var is set."""
-        monkeypatch.setenv("CI", "true")
-        # No curricula/ dir, but CI=true should bypass validation
-        s = Settings(GAPSENSE_DATA_PATH=tmp_path)
-        assert tmp_path == s.GAPSENSE_DATA_PATH
+    with pytest.raises(ValidationError, match="GAPSENSE_DATA_PATH does not exist"):
+        Settings(GAPSENSE_DATA_PATH=missing)
 
 
-class TestBackwardCompatibility:
-    """Test backward compatibility of prerequisite_graph_path.
+def test_settings_reject_repository_without_curriculum(tmp_path: Path) -> None:
+    """An unrelated directory cannot masquerade as the data repository."""
+    with pytest.raises(
+        ValidationError, match="missing canonical curricula/ghana and curricula/uganda"
+    ):
+        Settings(GAPSENSE_DATA_PATH=tmp_path)
 
-    Validates: Requirement 3.6
-    """
 
-    def test_prerequisite_graph_path(self, tmp_path, monkeypatch):
-        """Req 3.6: prerequisite_graph_path still points to curriculum/ (singular) v1.2 file."""
-        (tmp_path / "curricula").mkdir()
-        monkeypatch.setenv("GAPSENSE_DATA_PATH", str(tmp_path))
-        s = Settings(GAPSENSE_DATA_PATH=tmp_path)
-        expected = tmp_path / "curriculum" / "gapsense_prerequisite_graph_v1.2.json"
-        assert s.prerequisite_graph_path == expected
+def test_settings_reject_repository_with_only_one_country(tmp_path: Path) -> None:
+    """Ghana-only or Uganda-only data cannot satisfy the two-country runtime contract."""
+    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
 
-    def test_prerequisite_graph_path_uses_singular_curriculum(self, tmp_path, monkeypatch):
-        """prerequisite_graph_path uses 'curriculum' (singular), not 'curricula' (plural)."""
-        (tmp_path / "curricula").mkdir()
-        monkeypatch.setenv("GAPSENSE_DATA_PATH", str(tmp_path))
-        s = Settings(GAPSENSE_DATA_PATH=tmp_path)
-        assert "curriculum" in s.prerequisite_graph_path.parts
-        assert "curricula" not in s.prerequisite_graph_path.parts
+    with pytest.raises(
+        ValidationError, match="missing canonical curricula/ghana and curricula/uganda"
+    ):
+        Settings(GAPSENSE_DATA_PATH=tmp_path)

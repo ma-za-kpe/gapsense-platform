@@ -4,7 +4,6 @@ GapSense SQLAlchemy Models
 All models follow the data model specification in docs/specs/gapsense_data_model.sql
 """
 
-from .ai_usage import AIUsageLog
 from .base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 from .curriculum import (
     CascadePath,
@@ -18,9 +17,8 @@ from .curriculum import (
 )
 from .diagnostics import DiagnosticQuestion, DiagnosticSession, GapProfile
 from .engagement import ParentActivity, ParentInteraction
-from .processing_ledger import ProcessingLedger
 from .prompts import PromptCategory, PromptTestCase, PromptVersion
-from .schools import District, GESSchool, Region, School, SchoolInvitation
+from .schools import District, Region, School
 from .students import Student
 from .users import Parent, Teacher
 
@@ -30,8 +28,6 @@ __all__ = [
     "UUIDPrimaryKeyMixin",
     "TimestampMixin",
     "SoftDeleteMixin",
-    # AI Usage
-    "AIUsageLog",
     # Curriculum
     "CurriculumStrand",
     "CurriculumSubStrand",
@@ -42,11 +38,9 @@ __all__ = [
     "CurriculumMisconception",
     "CascadePath",
     # Schools
-    "GESSchool",
     "Region",
     "District",
     "School",
-    "SchoolInvitation",
     # Users
     "Teacher",
     "Parent",
@@ -59,8 +53,6 @@ __all__ = [
     # Engagement
     "ParentInteraction",
     "ParentActivity",
-    # Processing Ledger
-    "ProcessingLedger",
     # Prompts
     "PromptCategory",
     "PromptVersion",

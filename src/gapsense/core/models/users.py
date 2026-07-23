@@ -8,7 +8,7 @@ Based on docs/specs/gapsense_data_model.sql (Section 2)
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 if TYPE_CHECKING:
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from .schools import District, School
     from .students import Student
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, event
-from sqlalchemy.dialects.postgresql import ARRAY, JSON
+from sqlalchemy import ForeignKey, Integer, String, event
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
@@ -28,20 +28,15 @@ class Teacher(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
 
     __tablename__ = "teachers"
 
-    school_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("schools.id"), nullable=True, comment="Set during onboarding via invitation code"
-    )
+    school_id: Mapped[UUID] = mapped_column(ForeignKey("schools.id"), nullable=False)
 
     # Identity
-    first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, comment="WhatsApp number")
     phone_verified: Mapped[bool] = mapped_column(default=False)
 
     # Teaching context
-    class_name: Mapped[str | None] = mapped_column(
-        String(100), nullable=True, comment="Class name (e.g., 'JHS 1A')"
-    )
     grade_taught: Mapped[str | None] = mapped_column(
         String(5), nullable=True, comment="Current grade (B1-B9)"
     )
@@ -53,18 +48,6 @@ class Teacher(Base, UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin):
     onboarded_at: Mapped[datetime | None] = mapped_column(nullable=True)
     last_active_at: Mapped[datetime | None] = mapped_column(nullable=True)
     total_students_diagnosed: Mapped[int] = mapped_column(Integer, default=0)
-
-    # WhatsApp conversation state (for teacher onboarding)
-    conversation_state: Mapped[dict[str, Any] | None] = mapped_column(
-        type_=JSON,
-        nullable=True,
-        comment="Current flow state for teacher onboarding: {flow, step, data}",
-    )
-    conversation_history: Mapped[list[dict[str, Any]] | None] = mapped_column(
-        type_=JSON,
-        nullable=True,
-        comment="Teacher conversation history for TEACHER-CONVERSATION-PARTNER",
-    )
 
     is_active: Mapped[bool] = mapped_column(default=True)
 
@@ -85,7 +68,10 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Identity (minimal required)
     phone: Mapped[str] = mapped_column(
-        String(20), unique=True, nullable=False, comment="WhatsApp number (primary identifier)"
+        String(20),
+        unique=True,
+        nullable=False,
+        comment="WhatsApp number (primary identifier)",
     )
     phone_verified: Mapped[bool] = mapped_column(default=False)
     preferred_name: Mapped[str | None] = mapped_column(
@@ -107,48 +93,18 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     community: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     # Engagement tracking
-    onboarded_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, comment="When parent completed onboarding flow"
-    )
+    onboarded_at: Mapped[datetime | None] = mapped_column(nullable=True)
     last_interaction_at: Mapped[datetime | None] = mapped_column(nullable=True)
     total_interactions: Mapped[int] = mapped_column(Integer, default=0)
     engagement_score: Mapped[float | None] = mapped_column(
         nullable=True, comment="Rolling engagement metric"
     )
 
-    # Conversation state (WhatsApp flow orchestration)
-    conversation_state: Mapped[dict[str, Any] | None] = mapped_column(
-        type_=JSON,
-        nullable=True,
-        comment="Current flow state: {flow, step, data}. Enables multi-step conversations.",
-    )
-    last_message_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Last WhatsApp message received from parent",
-    )
-    session_expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="24-hour session window expiry (WhatsApp constraint)",
-    )
-
     # Wolf/Aurino compliance
     opted_in: Mapped[bool] = mapped_column(default=False, comment="Explicit WhatsApp opt-in")
-    opted_in_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    opted_in_at: Mapped[datetime | None] = mapped_column(nullable=True)
     opted_out: Mapped[bool] = mapped_column(default=False)
-    opted_out_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
-    # Diagnostic consent (separate from messaging opt-in)
-    diagnostic_consent: Mapped[bool | None] = mapped_column(
-        nullable=True,
-        comment="Parent consent for diagnostic assessments (True=yes, False=no, None=not asked)",
-    )
-    diagnostic_consent_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="When diagnostic consent was recorded",
-    )
+    opted_out_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     is_active: Mapped[bool] = mapped_column(default=True)
 
@@ -157,12 +113,12 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     primary_students: Mapped[list[Student]] = relationship(
         foreign_keys="Student.primary_parent_id",
         back_populates="primary_parent",
-        cascade="all, delete-orphan",
+        passive_deletes="all",
     )
     secondary_students: Mapped[list[Student]] = relationship(
         foreign_keys="Student.secondary_parent_id",
         back_populates="secondary_parent",
-        cascade="all, delete-orphan",
+        passive_deletes="all",
     )
     interactions: Mapped[list[ParentInteraction]] = relationship(
         back_populates="parent", cascade="all, delete-orphan"
@@ -174,7 +130,7 @@ class Parent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
 # Event listener to ensure opted_out defaults to False for in-memory objects
 @event.listens_for(Parent, "init", propagate=True)
-def receive_init_parent(target, _args, kwargs):  # type: ignore[no-untyped-def]
+def receive_init_parent(target, args, kwargs):  # type: ignore[no-untyped-def]
     """Ensure opted_out defaults to False if not provided."""
     if "opted_out" not in kwargs:
         target.opted_out = False

@@ -1,0 +1,116 @@
+#!/bin/sh
+set -eu
+
+repository_root=$(git rev-parse --show-toplevel)
+cd "$repository_root"
+
+# Git for Windows otherwise rewrites container paths such as /workspace into
+# host paths before handing them to the Docker CLI.
+export MSYS_NO_PATHCONV=1
+
+echo "GapSense: validating GitHub Actions workflow syntax"
+docker run --rm \
+  -v "$repository_root:/repo:ro" \
+  -w /repo \
+  rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+
+echo "GapSense: validating Docker Compose configuration"
+docker compose config --quiet
+
+echo "GapSense: starting the isolated PostgreSQL dependency"
+docker compose up -d --wait db
+
+echo "GapSense: rebuilding the locked development image"
+docker compose build web
+
+echo "GapSense: validating release and repository policy"
+docker compose run --rm --no-deps \
+  -v "$repository_root:/workspace:ro" \
+  -w /workspace \
+  -e GAPSENSE_PR_TITLE \
+  -e PYTHONPATH=/workspace/src \
+  web python -m gapsense.release.policy
+
+readonly migration_database="gapsense_migration_test"
+# pragma: allowlist nextline secret -- isolated local database with a disposable credential
+readonly migration_database_url="postgresql+asyncpg://gapsense:localdev@db:5432/$migration_database"
+readonly application_test_database="gapsense_application_test"
+# pragma: allowlist nextline secret -- isolated local database with a disposable credential
+readonly application_test_database_url="postgresql+asyncpg://gapsense:localdev@db:5432/$application_test_database"
+if [ "$migration_database" != "gapsense_migration_test" ] || \
+   [ "$application_test_database" != "gapsense_application_test" ]; then
+  echo "GapSense: refusing to touch an unexpected test database" >&2
+  exit 1
+fi
+
+cleanup_migration_database() {
+  docker compose exec -T db \
+    dropdb --if-exists --force --username gapsense "$migration_database" >/dev/null
+}
+
+cleanup_application_test_database() {
+  docker compose exec -T db \
+    dropdb --if-exists --force --username gapsense "$application_test_database" >/dev/null
+}
+
+cleanup_test_databases() {
+  cleanup_migration_database
+  cleanup_application_test_database
+}
+
+trap cleanup_test_databases EXIT INT TERM
+cleanup_migration_database
+docker compose exec -T db createdb --username gapsense "$migration_database"
+
+echo "GapSense: proving upgrade, downgrade, rebuild, and drift checks on a fresh database"
+docker compose run --rm --no-deps \
+  -v "$repository_root:/workspace:ro" \
+  -w /workspace \
+  -e PYTHONPATH=/workspace/src \
+  -e DATABASE_URL="$migration_database_url" \
+  web sh scripts/test_migrations.sh
+
+cleanup_migration_database
+cleanup_application_test_database
+docker compose exec -T db createdb --username gapsense "$application_test_database"
+
+echo "GapSense: running the complete application gate in Docker"
+docker compose run --rm --no-deps \
+  -v "$repository_root:/workspace:ro" \
+  -w /workspace \
+  -e PYTHONPATH=/workspace/src \
+  -e DATABASE_URL="$application_test_database_url" \
+  web sh scripts/validate.sh
+
+echo "GapSense: rebuilding and validating the locked frontend in Docker"
+docker compose --profile test build \
+  frontend \
+  frontend-validation \
+  frontend-production \
+  browser-tests \
+  browser-production-tests
+docker compose run --rm --no-deps frontend npm run validate
+
+echo "GapSense: running isolated development and production browser gates"
+docker compose up -d --wait web
+docker compose --profile test up -d --wait --force-recreate --no-deps \
+  frontend-validation \
+  frontend-production
+docker compose --profile test run --rm --no-deps browser-tests npm run test:e2e
+docker compose --profile test run --rm --no-deps browser-production-tests npm run test:e2e
+
+echo "GapSense: linting all non-archived Markdown in Docker"
+docker run --rm \
+  -v "$repository_root:/workspace:ro" \
+  -w /workspace \
+  node:22-alpine \
+  npx --yes markdownlint-cli2@0.18.1 "README.md" "TASKS.md" "docs/**/*.md"
+
+echo "GapSense: checking patch whitespace"
+git diff --cached --check
+git diff --check
+
+cleanup_application_test_database
+trap - EXIT INT TERM
+
+echo "GapSense: strict pre-commit gate passed"

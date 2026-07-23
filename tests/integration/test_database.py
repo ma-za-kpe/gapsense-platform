@@ -5,11 +5,17 @@ Tests CRUD operations, relationships, and constraints with real PostgreSQL datab
 Following TDD methodology: RED → GREEN → REFACTOR
 """
 
+from collections.abc import AsyncGenerator
 from datetime import datetime
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import configure_mappers
 
 from gapsense.config import settings
@@ -32,14 +38,14 @@ configure_mappers()
 
 
 # Helper function for unique test data
-def unique_phone():
+def unique_phone() -> str:
     """Generate unique phone number for tests."""
     from uuid import uuid4
 
     return f"+2335{str(uuid4()).replace('-', '')[:11]}"
 
 
-def unique_code(prefix="", max_length=5):
+def unique_code(prefix: str = "", max_length: int = 5) -> str:
     """Generate unique code for tests within max_length constraint."""
     from uuid import uuid4
 
@@ -52,7 +58,7 @@ def unique_code(prefix="", max_length=5):
 
 # Test database setup
 @pytest.fixture(scope="function")
-async def engine():
+async def engine() -> AsyncGenerator[AsyncEngine, None]:
     """Create async engine for testing."""
     test_engine = create_async_engine(settings.DATABASE_URL, echo=False)
     yield test_engine
@@ -60,16 +66,21 @@ async def engine():
 
 
 @pytest.fixture
-async def session(engine):
-    """Create a new database session for each test with automatic rollback.
+async def session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+    """Isolate each test inside an outer transaction that is always rolled back."""
+    async with engine.connect() as connection:
+        outer_transaction = await connection.begin()
+        async_session = async_sessionmaker(
+            bind=connection,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
 
-    Note: This creates a real session that commits to the database.
-    Tests should use unique data to avoid conflicts.
-    """
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        async with async_session() as test_session:
+            yield test_session
 
-    async with async_session() as test_session:
-        yield test_session
+        await outer_transaction.rollback()
 
 
 # ============================================================================
@@ -78,13 +89,12 @@ async def session(engine):
 
 
 @pytest.mark.asyncio
-async def test_create_curriculum_strand(session: AsyncSession):
+async def test_create_curriculum_strand(session: AsyncSession) -> None:
     """Test creating a curriculum strand in the database."""
     from uuid import uuid4
 
-    # Arrange - Use unique strand_number to avoid conflicts with curriculum data (1-5)
-    # SMALLINT max is 32767, use range 30000-32767 for tests (2767 unique values)
-    unique_num = 30000 + (abs(hash(str(uuid4()))) % 2767)
+    # Arrange - Use unique strand_number to avoid conflicts
+    unique_num = abs(hash(str(uuid4()))) % 1000
     strand = CurriculumStrand(
         strand_number=unique_num,
         name=f"Number-{unique_num}",
@@ -109,7 +119,7 @@ async def test_create_curriculum_strand(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_create_parent(session: AsyncSession):
+async def test_create_parent(session: AsyncSession) -> None:
     """Test creating a parent with dignity-first minimal data."""
     from uuid import uuid4
 
@@ -134,7 +144,7 @@ async def test_create_parent(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_update_parent(session: AsyncSession):
+async def test_update_parent(session: AsyncSession) -> None:
     """Test updating a parent record."""
     # Arrange
     parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=False)
@@ -155,7 +165,7 @@ async def test_update_parent(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_delete_parent(session: AsyncSession):
+async def test_delete_parent(session: AsyncSession) -> None:
     """Test deleting a parent (hard delete, not soft delete)."""
     # Arrange
     parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=True)
@@ -178,7 +188,7 @@ async def test_delete_parent(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_parent_student_relationship(session: AsyncSession):
+async def test_parent_student_relationship(session: AsyncSession) -> None:
     """Test creating a student with parent relationship."""
     # Arrange - Create parent first
     parent = Parent(phone=unique_phone(), preferred_language="tw", opted_in=True)
@@ -210,13 +220,12 @@ async def test_parent_student_relationship(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_curriculum_hierarchy(session: AsyncSession):
+async def test_curriculum_hierarchy(session: AsyncSession) -> None:
     """Test curriculum strand → sub-strand → node hierarchy."""
     from uuid import uuid4
 
-    # Arrange - Create strand with unique number (avoid curriculum data 1-5)
-    # SMALLINT max is 32767, use range 31000-32767 for tests (1767 unique values)
-    unique_num = 31000 + (abs(hash(str(uuid4()))) % 1767)
+    # Arrange - Create strand with unique number
+    unique_num = abs(hash(str(uuid4()))) % 1000 + 100  # 100-1099 range
     strand = CurriculumStrand(
         strand_number=unique_num, name=f"Algebra-{unique_num}", color_hex="#10B981"
     )
@@ -264,7 +273,7 @@ async def test_curriculum_hierarchy(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_school_hierarchy(session: AsyncSession):
+async def test_school_hierarchy(session: AsyncSession) -> None:
     """Test region → district → school → teacher hierarchy."""
     # Create region with unique code and name
     region_code = unique_code()
@@ -320,7 +329,7 @@ async def test_school_hierarchy(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_student_gap_profile_circular_relationship(session: AsyncSession):
+async def test_student_gap_profile_circular_relationship(session: AsyncSession) -> None:
     """Test the circular relationship: Student ↔ GapProfile."""
     # Create parent (required for student)
     parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=True)
@@ -390,7 +399,7 @@ async def test_student_gap_profile_circular_relationship(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_unique_constraint_phone(session: AsyncSession):
+async def test_unique_constraint_phone(session: AsyncSession) -> None:
     """Test that parent phone numbers must be unique."""
     phone = unique_phone()  # Generate once to use for both
     # Create first parent
@@ -417,7 +426,7 @@ async def test_unique_constraint_phone(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_check_constraint_gender(session: AsyncSession):
+async def test_check_constraint_gender(session: AsyncSession) -> None:
     """Test that student gender must be in allowed values."""
     parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=True)
     session.add(parent)
@@ -441,7 +450,7 @@ async def test_check_constraint_gender(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_soft_delete_functionality(session: AsyncSession):
+async def test_soft_delete_functionality(session: AsyncSession) -> None:
     """Test soft delete on Teacher model."""
     # Create school first (required FK)
     region_code = unique_code()
@@ -491,7 +500,7 @@ async def test_soft_delete_functionality(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_query_students_by_grade(session: AsyncSession):
+async def test_query_students_by_grade(session: AsyncSession) -> None:
     """Test querying students by current grade."""
     # Create parent
     parent = Parent(phone=unique_phone(), preferred_language="en", opted_in=True)
@@ -537,15 +546,8 @@ async def test_query_students_by_grade(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(
-    reason="FK constraint behavior needs investigation - delete succeeds but test expects failure"
-)
-async def test_cascade_delete_protection(session: AsyncSession):
-    """Test that we cannot delete a parent who has students.
-
-    TODO: Investigate why FK constraint allows deletion when it should restrict.
-    The FK is created without ondelete parameter, which should default to RESTRICT.
-    """
+async def test_cascade_delete_protection(session: AsyncSession) -> None:
+    """A parent hard delete cannot silently erase an associated learner record."""
     from uuid import uuid4
 
     from sqlalchemy.exc import IntegrityError

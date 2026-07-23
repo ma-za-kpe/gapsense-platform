@@ -1,1 +1,0 @@
-"""GapSense background jobs."""
