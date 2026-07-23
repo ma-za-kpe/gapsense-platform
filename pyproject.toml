@@ -111,7 +111,7 @@ addopts = [
     "--cov=src/gapsense",
     "--cov-branch",
     "--cov-fail-under=100",
-    "--cov-report=html",
+    "--cov-report=html:/tmp/gapsense-htmlcov",
     "--cov-report=term-missing",
 ]
 markers = [

@@ -124,11 +124,13 @@ Rules:
   dedicated disposable database plus rollback-safe outer transactions.
 - [ ] Add curriculum schema and graph contract tests.
 - [ ] Add API contract tests.
-- [ ] Add browser end-to-end tests.
-- [ ] Add accessibility tests targeting WCAG 2.2 AA.
+- [x] Add browser end-to-end tests.
+- [x] Add automated accessibility tests targeting WCAG 2.2 AA; retain manual assistive-
+  technology validation as a separate release-readiness requirement.
 - [ ] Add keyboard-only and screen-reader workflow checks.
-- [ ] Add visual regression tests for supported viewport and theme combinations.
-- [ ] Add responsive-layout tests for low-cost Android-sized screens through desktop.
+- [x] Add visual regression tests for the initial supported desktop and mobile viewports;
+  expand baselines as themes and product routes are added.
+- [x] Add responsive-layout tests for low-cost Android-sized screens through desktop.
 - [ ] Add performance budgets and Lighthouse-style checks.
 - [ ] Add security, dependency, secret, and PII scans.
 - [x] Keep network-backed dependency audits strict while using bounded socket
@@ -149,8 +151,54 @@ Rules:
 - [ ] Make every validator fail closed when inputs are absent or zero records are tested.
 - [x] Pin the validation container's import path to the candidate workspace so
   tests and coverage cannot accidentally measure the image's installed source tree.
+- [x] Make the complete application gate operate against a read-only candidate workspace by
+  routing Ruff, MyPy, Pytest, Coverage, Poetry, pip, and build artifacts only to ephemeral `/tmp`
+  paths; retain the read-only mount in the exact pre-commit entry point.
 - [~] Run the complete gate in Docker before every milestone commit and local merge.
 - [x] Add local CI scripts now; add hosted CI only when remote work is authorized.
+
+## Delivery, Branching, Versioning, and Releases
+
+- [x] Audit the workflow already present on remote platform `main`, current GitHub Actions runs,
+  branch activity, cache use, permissions, event triggers, duplicated work, and billable-minute
+  waste before adding or replacing any workflow. Evidence:
+  [`docs/DELIVERY_AND_RELEASE_MODEL.md`](docs/DELIVERY_AND_RELEASE_MODEL.md).
+- [ ] Define and document the branch lifecycle: protected `main` as releasable history, `develop`
+  as the integration branch only where it reduces risk, short-lived `feature/*` branches,
+  time-bounded `release/*` stabilization branches, and urgent `hotfix/*` branches.
+- [ ] Prefer trunk-based feature integration over permanently divergent branches; define merge,
+  rebase, deletion, stale-branch, backport, and release-cut rules with repository evidence.
+- [ ] Require conventional commits, pull-request titles, reviewed changes, green required checks,
+  linear or explicitly justified merge history, and no direct writes to protected branches.
+- [ ] Design one reusable CI graph shared by pull requests, merge queues, and protected-branch
+  pushes; avoid running the same full suite twice for the same commit.
+- [ ] Minimize CI credit use with event filters, path filters, concurrency groups with
+  `cancel-in-progress`, dependency and Docker layer caches, change-aware job selection, bounded
+  matrices, fail-fast ordering, artifact retention limits, and scheduled deep checks only where
+  risk justifies them.
+- [ ] Keep security-critical, lockfile, migration, coverage, browser, and release checks fail
+  closed even when optimizing runtime; cost reduction must never create an evidence gap.
+- [ ] Add a lightweight documentation-only path that still runs Markdown, links, secrets, policy,
+  and workflow validation without rebuilding unrelated application images.
+- [ ] Pin every third-party GitHub Action to an immutable commit SHA, minimize `GITHUB_TOKEN`
+  permissions per job, use no long-lived release secret, and review artifact/provenance trust.
+- [ ] Add workflow syntax, policy, action-pin, and local Docker-equivalent tests so CI changes are
+  validated before they consume a hosted run.
+- [ ] Select one canonical product version source, adopt Semantic Versioning, and expose the
+  version consistently in Python package metadata, frontend metadata, API responses, artifacts,
+  and release notes without manual duplication.
+- [ ] Configure Release Please with manifest-based version management for the platform components,
+  conventional-commit changelogs, release pull requests, signed/tagged releases where supported,
+  and no automatic production deployment.
+- [ ] Define pre-release identifiers and promotion rules for `develop`/`release/*`; do not publish
+  a stable release from an unreviewed feature branch or a dirty worktree.
+- [ ] Add software-bill-of-materials, build provenance, checksums, dependency review, and a
+  reproducible release-artifact verification step before any public release.
+- [ ] Measure CI wall time, runner minutes, cache hit rate, flaky reruns, queue time, and cost per
+  accepted change; add optimization work when thresholds regress.
+- [!] Do not push a branch, create a remote PR/release, trigger hosted CI, or deploy while the
+  explicit remote-push/deployment hold remains active; reconcile that hold with the latest
+  contribution request immediately before the first remote mutation.
 
 ## Clean Engineering and Mandatory TDD
 
@@ -282,7 +330,55 @@ Rules:
 
 ## Web Product Engineering
 
-- [?] Select the web frontend stack through an ADR and a tested prototype.
+### Active slice - `localhost:3000` entry experience
+
+- [x] Audit every local and GitHub branch in both GapSense repositories, run the substantial
+  historical frontend from remote `main`/`develop`/`feature/mvp-core-services` in an isolated
+  Docker worktree, and reconcile its strongest workflows and assets with the web-first Ghana and
+  Uganda product direction without disturbing the co-founder review service on port 3000.
+  Evidence: [`docs/FRONTEND_RECONCILIATION_AUDIT.md`](docs/FRONTEND_RECONCILIATION_AUDIT.md).
+- [x] Record a page-by-page and capability-by-capability reconciliation decision before accepting
+  the frontend ADR; preserve useful historical work, retire WhatsApp-first presentation from the
+  active web journey, and add every discovered gap to this persistent list. Evidence:
+  [`docs/FRONTEND_RECONCILIATION_AUDIT.md`](docs/FRONTEND_RECONCILIATION_AUDIT.md).
+- [ ] After this slice is green and committed, create a dedicated reconciliation branch and merge
+  remote platform `main` without selecting either side wholesale; preserve and test all meaningful
+  backend, migration, governance, security, and frontend behaviour across the 138/4 divergence.
+- [ ] Migrate the historical curriculum explorer, teacher diagnostic workspace, class and learner
+  reports, and concise architecture/trust story into the tested web shell; do not ship duplicate
+  public frontends or unsupported production, latency, reach, cost, and coverage claims.
+- [ ] Add and enforce route-level transfer budgets informed by the historical frontend's compact
+  228 KB uncompressed build, including JavaScript, CSS, image, font, and total-page budgets.
+- [ ] Resolve or retire the historical frontend's strict-type failures, missing lint dependencies,
+  empty build chunks, backend-coupled HTTP 500 paths, and four high/three moderate dependency
+  vulnerabilities before any of its executable code enters the active product.
+- [x] Select and document the frontend stack through an ADR grounded in official framework,
+  testing, accessibility, browser-support, operational, and deployment-neutral evidence.
+- [x] Add a Docker-only frontend service on `http://localhost:3000` with a deterministic lockfile,
+  health check, read-only runtime, loopback binding, and same-origin API proxy.
+- [x] Build a polished responsive GapSense entry experience that represents Ghana and Uganda
+  distinctly without stereotypes and never overstates curriculum readiness.
+- [x] Build the accessible public assessment-planning entry flow for role, country, and intended
+  outcome while clearly separating currently available and still-being-reviewed coverage.
+- [x] Create the first reusable design tokens and components for typography, color, spacing,
+  focus, motion, status, buttons, cards, and form controls.
+- [x] Add explicit loading, API-ready, API-unavailable, incomplete-curriculum, and recovery states.
+- [x] Add frontend format, lint, strict TypeScript, unit/component, DOM-accessibility, production
+  build, dependency-audit, browser, axe, responsive-viewport, and security-header gates in Docker.
+- [x] Enforce 100% frontend statement, branch, function, and line coverage across every owned
+  executable TypeScript/TSX module, including files not imported by tests.
+- [ ] Periodically open the rendered page in a visible browser and inspect frontend and API logs
+  throughout implementation; retain deterministic Docker browser tests as repeatable evidence.
+- [x] Isolate immutable-production browser validation from the visible port 3000 development
+  service so repeated quality gates do not unnecessarily interrupt a co-founder review session.
+- [x] Add an internal development-browser target and make frontend validation plus development
+  and immutable-production browser suites mandatory in the exact strict pre-commit entry point,
+  without recreating the visible port 3000 review service.
+- [x] Build and smoke-test a non-root production frontend image locally without deploying it.
+- [ ] Reconcile evidence, commit this slice on its feature branch, and merge it into local `main`
+  only after the complete backend and frontend gates pass; do not push.
+
+- [x] Select the web frontend stack through an ADR and a tested prototype.
 - [ ] Define the browser/API boundary and typed API contract.
 - [ ] Implement local mock authentication and role switching.
 - [ ] Implement country, phase, subject, and curriculum-version selection.
@@ -373,6 +469,18 @@ Rules:
 
 ## Brand and Country Experience
 
+- [~] Remove UNICEF from GapSense product identity, active UI, demos, pitch language, metadata,
+  and implied affiliation or endorsement across both repositories; replace required evidence with
+  authoritative Ghanaian or Ugandan sources instead of deleting provenance silently.
+- [x] Use the founder attribution **Built by Maku for Africa** consistently in the active product
+  and brand standard, backed by unit and browser regression checks.
+- [ ] During remote-branch reconciliation, remove the historical frontend's UNICEF cohort badges,
+  application language, footer credit, metadata, and external calls to action before any migrated
+  surface enters the active build.
+- [~] Audit product copy across both repositories and replace Ghana-only, Math-only,
+  WhatsApp-first, or unsupported continent-wide positioning with the honest hierarchy: GapSense is
+  **built by Maku for Africa**, grounded first in Ghana and Uganda, and every coverage claim names
+  its verified country, authority, level, subject, version, and review state.
 - [ ] Research brand perception with Ghanaian and Ugandan teachers and families.
 - [ ] Define one GapSense master brand without flattening country differences.
 - [ ] Define country, phase, and subject navigation labels from official terminology.
@@ -504,8 +612,10 @@ Rules:
 
 ## Explicit Holds
 
-- [!] WhatsApp channel implementation is on hold. Resume only by an explicit product
-  decision after the web experience is validated.
+- [!] WhatsApp channel implementation is the **very last product programme**. Resume only after
+  the complete web product, Ghana and Uganda curriculum evidence, free assessment workflows,
+  security/privacy, accessibility, performance, release engineering, local operations, and
+  deployment-readiness gates are complete and reconciled; no earlier task may depend on it.
 - [!] Production deployment is on hold. Do not deploy to Firebase, AWS, or another host.
 - [!] Remote Git pushes are on hold. Work in local branches, commit milestones, and merge
   into local `main` only.
@@ -513,6 +623,21 @@ Rules:
   authentication, observability, privacy, cost, regional availability, and offline needs.
 - [ ] Preserve channel-neutral domain boundaries so WhatsApp can be added later without
   rewriting diagnostic logic.
+
+## Final Programme - WhatsApp Delivery
+
+- [!] Do not begin this programme until every preceding applicable programme is complete and an
+  explicit co-founder decision lifts the hold.
+- [ ] Revalidate whether WhatsApp remains the best last-mile channel for target users in Ghana and
+  Uganda after observing the mature web product in real user research.
+- [ ] Reconcile and threat-model the historical WhatsApp code; migrate only channel-neutral,
+  secure, tested behaviour and reject stale pitch-driven assumptions.
+- [ ] Design consent, identity, child safeguarding, opt-in/out, retention, deletion, rate limits,
+  abuse controls, message templates, media handling, delivery receipts, and human escalation.
+- [ ] Implement the channel as an adapter over proven web/domain use cases, never as a second
+  source of curriculum, assessment, diagnostic, learner, or authorization logic.
+- [ ] Prove equivalent correctness, privacy, accessibility alternatives, observability, cost,
+  provider-failure recovery, and end-to-end security before a production-channel decision.
 
 ## Discovery Inbox - Append, Triage, Never Delete
 
@@ -534,7 +659,7 @@ to the appropriate section while retaining a short trace or link.
   items, past papers, authority names, and generated assessment artifacts.
 - [ ] Test whether free assessment generation is the strongest acquisition loop into paid
   school moderation, analytics, diagnostic, and curriculum-intelligence workflows.
-- [ ] Add a Docker-native browser, accessibility, and visual-regression harness so local web
+- [x] Add a Docker-native browser, accessibility, and visual-regression harness so local web
   journeys remain verifiable when an interactive browser automation runtime is unavailable.
 - [ ] Make the strict gate recover predictably from Docker Desktop BuildKit missing-parent
   snapshot cache faults without broad cache deletion, disabled checks, or a host-runtime fallback.

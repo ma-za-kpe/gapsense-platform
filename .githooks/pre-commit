@@ -62,12 +62,28 @@ docker compose exec -T db createdb --username gapsense "$application_test_databa
 
 echo "GapSense: running the complete application gate in Docker"
 docker compose run --rm --no-deps \
-  -v "$repository_root:/workspace" \
+  -v "$repository_root:/workspace:ro" \
   -w /workspace \
-  -e COVERAGE_FILE=/tmp/.coverage \
   -e PYTHONPATH=/workspace/src \
   -e DATABASE_URL="$application_test_database_url" \
   web sh scripts/validate.sh
+
+echo "GapSense: rebuilding and validating the locked frontend in Docker"
+docker compose --profile test build \
+  frontend \
+  frontend-validation \
+  frontend-production \
+  browser-tests \
+  browser-production-tests
+docker compose run --rm --no-deps frontend npm run validate
+
+echo "GapSense: running isolated development and production browser gates"
+docker compose up -d --wait web
+docker compose --profile test up -d --wait --force-recreate --no-deps \
+  frontend-validation \
+  frontend-production
+docker compose --profile test run --rm --no-deps browser-tests npm run test:e2e
+docker compose --profile test run --rm --no-deps browser-production-tests npm run test:e2e
 
 echo "GapSense: linting all non-archived Markdown in Docker"
 docker run --rm \

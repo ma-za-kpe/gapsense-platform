@@ -11,10 +11,17 @@
   generator goal, official assessment constraints, quality model, and commercial hypothesis
 - [Security and Privacy Engineering Model](SECURITY_AND_PRIVACY_MODEL.md) - secure-by-design
   invariants, threat model, control baseline, and release evidence
+- [Brand and Interface Guidelines](BRAND_AND_INTERFACE_GUIDELINES.md) - identity, typography,
+  colour, layout, motion, accessibility, resilience, and interface release gates
+- [Frontend and Branch Reconciliation Audit](FRONTEND_RECONCILIATION_AUDIT.md) - all-branch
+  evidence, historical UI runtime findings, and the no-duplication migration decision
+- [Delivery and Release Model](DELIVERY_AND_RELEASE_MODEL.md) - branch lifecycle, remote CI audit,
+  optimized required-check graph, version management, and Release Please plan
 
 ## Architecture and Specifications
 
 - [Architecture decision record](architecture/gapsense_adr.md)
+- [ADR-001: Local Web Frontend Stack](decisions/ADR-001-web-frontend-stack.md)
 - [API specification](specs/gapsense_api_spec.json)
 - [Database specification](specs/gapsense_data_model.sql)
 - [Test scenarios](specs/gapsense_test_scenarios.json)
