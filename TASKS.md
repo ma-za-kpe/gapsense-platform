@@ -77,13 +77,26 @@ Rules:
   replacement diff, verify every required hosted check is green, merge through GitHub, and
   reconcile local `main` without deploying. Evidence: PR #10 merged as `8da93e1`, local `main`
   fast-forwarded to the same SHA, and the feature branch was pruned locally and remotely.
-- [~] Repair the first post-merge Release Please run: keep default workflow token permissions
+- [x] Repair the first post-merge Release Please run: keep default workflow token permissions
   read-only, enable the repository setting required for GitHub Actions to create the release PR,
   rerun failed workflow `30041492848`, require its bot PR and dispatched Required check to pass,
   and confirm no deployment occurs. Evidence: the rerun created PR #11 and dispatched Required;
   that gate then exposed a hard-coded `0.1.0` health-test expectation after the generated tree
-  correctly advanced to `0.2.0`. Replace that assertion with the canonical package version and
-  remove seed prose that generated a duplicate changelog heading before revalidation.
+  correctly advanced to `0.2.0`; commit `109d323` replaced it with the canonical package version.
+  The updated bot SHA `02cef84` then passed Required run `30042715809` in 3 minutes 53 seconds with
+  zero annotations and an empty deployment list.
+- [~] Normalize the first-release changelog lifecycle under TDD: keep the pre-release changelog
+  empty so Release Please creates the canonical heading exactly once, reject heading-only or
+  repeated-heading states in repository policy, and prove the corrected bot branch through the
+  Docker gate without merging or tagging it.
+- [x] Make squash merging the only normal GitHub merge mode and delete reviewed head branches
+  automatically so main stays linear, Release Please sees one Conventional Commit per PR, stale
+  branches do not accumulate, and the duplicate merge-commit/child-commit notes seen in PR #11
+  cannot recur. Evidence: the GitHub repository now reports merge commits and rebase merges false,
+  squash merges true with `PR_TITLE`/`PR_BODY`, and automatic head-branch deletion true.
+- [ ] Reconcile the one-time duplicate `fix(release)` entry on Release Please PR #11 after its
+  final automated update and before any first tag; do not hand-edit an actively regenerated bot
+  branch or allow the historical merge-policy defect into public release notes.
 - [?] Review the first-release baseline before merging Release Please PR #11: confirm that
   `0.2.0` is the intended first public tag, decide how a missing `v0.1.0` comparison baseline
   should be represented, and do not publish a release merely to make the automation appear done.

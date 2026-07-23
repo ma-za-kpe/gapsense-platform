@@ -55,6 +55,13 @@ Prefer short-lived feature branches and a protected trunk. `develop` and `releas
 coordination, not permanent parking places. A branch that has no owner, current purpose, or
 time-bound exit becomes a task-list finding.
 
+GitHub accepts squash merges only, uses the reviewed Conventional Commit pull-request title as the
+single mainline commit title, includes the reviewed pull-request body as its context, and deletes
+the merged head branch. Merge commits and rebase merges are disabled. This keeps the release input
+linear and prevents Release Please from listing both a Conventional Commit merge and its
+Conventional Commit child. PR #11 retains one historical duplicate from the earlier merge policy;
+that one-time generated note must be reconciled before the first public tag.
+
 ## Hosted CI Shape
 
 ### Events
@@ -118,6 +125,14 @@ that PR is merged. Its official documentation recommends manifest configuration 
 multi-component use; see the
 [Release Please action](https://github.com/googleapis/release-please-action) and
 [manifest releaser](https://github.com/googleapis/release-please/blob/main/docs/manifest-releaser.md).
+Before the first release, the tracked `CHANGELOG.md` is intentionally empty. Release Please's
+updater creates `# Changelog` when no content exists; a seed containing that heading alone is
+treated as prose, receives a second generated heading, and is demoted to `## Changelog`. Repository
+policy therefore accepts either the exact empty initial state or one canonical heading followed by
+versioned entries, and rejects heading-only, missing, or duplicated-heading states. This follows
+the upstream
+[changelog updater implementation](https://github.com/googleapis/release-please/blob/main/src/updaters/changelog.ts)
+rather than relying on a hand-maintained generated file.
 
 The release workflow must:
 
@@ -133,8 +148,9 @@ The release workflow must:
 
 The Release Please and checkout actions are pinned to reviewed full commit SHAs. Repository policy
 tests enforce the action allowlist, workflow permissions, release configuration, bootstrap commit,
-the Vercel deployment hold, and synchronized `0.1.0` version in Python and frontend metadata.
-Release automation creates no deployment and publishes no application artifact.
+the changelog lifecycle, the Vercel deployment hold, and synchronized product versions in Python
+and frontend metadata. Release automation creates no deployment and publishes no application
+artifact.
 
 Repository Actions settings keep the default workflow token permission at read-only. The separate
 GitHub setting that permits Actions to create pull requests is enabled solely so Release Please can
