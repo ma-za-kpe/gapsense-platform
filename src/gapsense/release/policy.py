@@ -144,6 +144,15 @@ def _validate_release_configuration(root: Path) -> None:
         raise RepositoryPolicyError("Release Please must update all frontend version targets")
 
 
+def _validate_deployment_hold(root: Path) -> None:
+    config = _json_object(root / "vercel.json")
+    git_configuration = _mapping(config.get("git"), "Vercel git configuration")
+    if git_configuration.get("deploymentEnabled") is not False:
+        raise RepositoryPolicyError(
+            "Repository policy requires automatic Vercel deployments to remain disabled"
+        )
+
+
 def _validate_workflows(root: Path) -> None:
     workflow_root = root / ".github/workflows"
     required = {
@@ -223,6 +232,7 @@ def validate_repository(root: Path) -> None:
     """Validate the release, version, action-pin, and permission contract."""
     _validate_versions(root)
     _validate_release_configuration(root)
+    _validate_deployment_hold(root)
     _validate_workflows(root)
     _validate_markdown_links(root)
 

@@ -107,7 +107,8 @@ run the full Docker gate and review the complete diff. Use conventional commit
 messages. Do not bypass hooks. Batch each coherent milestone into one locally
 green feature-branch push, require a reviewed pull request and green hosted
 checks, never push directly to `main` or `develop`, and let Release Please own
-release tags. Production deployment remains prohibited.
+release tags. Production deployment remains prohibited, and committed Vercel
+configuration disables automatic preview and production deployments.
 
 ## License
 

@@ -48,10 +48,26 @@ Rules:
 - [x] Complete the `gapsense-platform` release/CI milestone on
   `chore/remote-main-reconciliation`: implement immutable-action CI, Release Please, one
   synchronized product version, synthetic public curriculum fixtures, and local policy tests.
-  Evidence: 37 release-policy tests cover 156 statements and 68 branches at 100%; Actionlint and
+  Evidence: 40 release-policy tests cover 162 statements and 70 branches at 100%; Actionlint and
   the complete strict gate passed on 2026-07-23.
-- [~] Run the exact strict Docker gate for that platform milestone, commit once, and push the
-  branch once so hosted CI is triggered only for a locally green candidate.
+- [x] Run the exact strict Docker gate for that platform milestone, commit once, and push the
+  branch once so hosted CI is triggered only for a locally green candidate. Evidence: commit
+  `28309d2` passed the commit and pre-push gates; GitHub Actions run `30037813589` completed the
+  repository-owned `Required` Docker job successfully in 3 minutes 50 seconds.
+- [~] Disable the inherited Vercel Git integration at the repository configuration boundary:
+  automatic preview and production deployments must be false, historical AWS rewrites must not
+  return, repository policy must fail closed if the hold is removed, and PR #10 must show no new
+  Vercel deployment before merge. The first PR event exposed and failed the legacy preview path
+  while the intended `Required` Docker job passed.
+- [~] Remove the production-browser curriculum coverage race exposed by the corrective commit
+  gate: delegate recursive evidence scans away from the async event loop, give the browser
+  assertion time to observe the five-second fail-closed outcome, retain the failing regression
+  test, and prove the complete production suite repeatedly before closing the task. Evidence:
+  the focused route suite passed 3/3 after the regression test failed first; the immutable
+  production suite passed 30/30 repeated desktop/mobile scenarios; and the corresponding API log
+  recorded 13/13 coverage responses at HTTP 200 with zero 499 cancellations. The next exact gate
+  correctly caught an unnarrowed heterogeneous FastAPI route type in the new regression test;
+  close this task only after the explicit `APIRoute` narrowing passes the whole gate.
 - [ ] Open the platform reconciliation PR against remote `main`; review the large historical
   replacement diff, verify every required hosted check is green, merge through GitHub, and
   reconcile local `main` without deploying.
@@ -240,7 +256,7 @@ Rules:
   conventional-commit changelogs, release pull requests, signed/tagged releases where supported,
   and no automatic production deployment.
 - [x] Prove the local release/CI candidate through the exact Docker gate on 2026-07-23: migration
-  upgrade/downgrade/rebuild/drift passed; 73 backend tests and 37 frontend tests maintained 100%
+  upgrade/downgrade/rebuild/drift passed; 76 backend tests and 37 frontend tests maintained 100%
   line and branch coverage; Bandit, pip-audit, and npm audit reported no findings; development and
   immutable-production Playwright suites each passed 10/10 desktop/mobile scenarios.
 - [ ] Define pre-release identifiers and promotion rules for `develop`/`release/*`; do not publish
@@ -740,6 +756,9 @@ Rules:
   security/privacy, accessibility, performance, release engineering, local operations, and
   deployment-readiness gates are complete and reconciled; no earlier task may depend on it.
 - [!] Production deployment is on hold. Do not deploy to Firebase, AWS, or another host.
+- [~] Enforce the deployment hold in Vercel configuration as well as project policy; the inherited
+  Git integration attempted preview deployment `5578453910` on PR #10 before this missing
+  repository-level guardrail was discovered.
 - [x] Remote contribution hold lifted by explicit co-founder direction on 2026-07-23. Push only
   locally green milestone branches, use reviewed PRs, batch changes to avoid duplicate CI, and do
   not interpret this as production-deployment authorization.

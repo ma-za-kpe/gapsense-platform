@@ -68,6 +68,13 @@ time-bound exit becomes a task-list finding.
   produced per change;
 - no deployment event while the deployment hold remains active.
 
+The inherited Vercel Git connection is not a release channel. Root `vercel.json` sets
+`git.deploymentEnabled` to `false`, carries no build or routing configuration, and is enforced by
+repository policy. This prevents both preview and production auto-deployments without relying on a
+stale external dashboard setting. The first reconciliation PR event exposed the missing guardrail
+when Vercel attempted and failed a preview deployment; no merge is allowed until a superseding
+candidate proves that automatic deployment is skipped.
+
 ### Required validation graph
 
 The initial implementation deliberately uses one repository-owned Docker entry point instead of a
@@ -126,8 +133,8 @@ The release workflow must:
 
 The Release Please and checkout actions are pinned to reviewed full commit SHAs. Repository policy
 tests enforce the action allowlist, workflow permissions, release configuration, bootstrap commit,
-and synchronized `0.1.0` version in Python and frontend metadata. Release automation creates no
-deployment and publishes no application artifact.
+the Vercel deployment hold, and synchronized `0.1.0` version in Python and frontend metadata.
+Release automation creates no deployment and publishes no application artifact.
 
 ## Implementation Sequence
 

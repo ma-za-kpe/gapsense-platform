@@ -1,6 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+const coverageSettlingTimeoutMilliseconds = 7_500;
+
+const expectCoverageEvidence = async (page: import("@playwright/test").Page): Promise<void> => {
+  await expect(page.getByText(/\d+ repository files? located/)).toHaveCount(2, {
+    timeout: coverageSettlingTimeoutMilliseconds,
+  });
+};
+
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
 });
@@ -24,7 +32,7 @@ test("renders a truthful, accessible Ghana and Uganda entry experience", async (
   await expect(page.getByRole("heading", { level: 3, name: "Ghana" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 3, name: "Uganda" })).toBeVisible();
   await expect(page.getByText("Curriculum evidence connected")).toBeVisible();
-  await expect(page.getByText(/\d+ repository files? located/)).toHaveCount(2);
+  await expectCoverageEvidence(page);
   await expect(page.getByText("Extraction and educator review not verified")).toHaveCount(2);
   await expect(
     page.getByText("No account. No learner data. No hidden AI dependency."),
@@ -155,6 +163,6 @@ test("serves a hardened same-origin surface", async ({ page }) => {
 test("matches the reviewed entry-experience baseline", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText("Curriculum evidence connected")).toBeVisible();
-  await expect(page.getByText(/\d+ repository files? located/)).toHaveCount(2);
+  await expectCoverageEvidence(page);
   await expect(page).toHaveScreenshot("entry-experience.png", { fullPage: true });
 });

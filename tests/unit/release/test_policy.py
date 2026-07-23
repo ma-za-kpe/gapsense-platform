@@ -82,6 +82,16 @@ def _valid_repository(root: Path) -> None:
     _write(root, ".release-please-manifest.json", json.dumps({".": "0.1.0"}))
     _write(
         root,
+        "vercel.json",
+        json.dumps(
+            {
+                "$schema": "https://openapi.vercel.sh/vercel.json",
+                "git": {"deploymentEnabled": False},
+            }
+        ),
+    )
+    _write(
+        root,
         "release-please-config.json",
         json.dumps(
             {
@@ -324,6 +334,31 @@ def test_repository_policy_rejects_markdown_links_outside_repository(tmp_path: P
     _write(tmp_path, "docs/OPERATING_MODEL.md", "[Outside](../../outside.md)\n")
 
     with pytest.raises(RepositoryPolicyError, match="broken internal Markdown link"):
+        validate_repository(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        json.dumps({"git": {"deploymentEnabled": True}}),
+        json.dumps({"git": {}}),
+    ],
+)
+def test_repository_policy_rejects_enabled_or_implicit_vercel_deployment(
+    tmp_path: Path, content: str
+) -> None:
+    _valid_repository(tmp_path)
+    _write(tmp_path, "vercel.json", content)
+
+    with pytest.raises(RepositoryPolicyError, match="automatic Vercel deployments"):
+        validate_repository(tmp_path)
+
+
+def test_repository_policy_requires_vercel_deployment_hold(tmp_path: Path) -> None:
+    _valid_repository(tmp_path)
+    (tmp_path / "vercel.json").unlink()
+
+    with pytest.raises(RepositoryPolicyError, match="valid JSON"):
         validate_repository(tmp_path)
 
 

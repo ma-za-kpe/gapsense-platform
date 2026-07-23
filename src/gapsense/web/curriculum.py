@@ -12,7 +12,7 @@ def create_curriculum_router(data_path: Path) -> APIRouter:
     router = APIRouter(prefix="/v1/curriculum", tags=["curriculum"])
 
     @router.get("/coverage", response_model=CoverageReport)
-    async def coverage() -> CoverageReport:
+    def coverage() -> CoverageReport:
         """Report repository availability separately from unverified extraction status."""
         return build_coverage_report(data_path)
 

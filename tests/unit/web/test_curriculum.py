@@ -1,10 +1,27 @@
 """Tests for the public curriculum coverage API contract."""
 
+from inspect import iscoroutinefunction
 from pathlib import Path
 
+from fastapi.routing import APIRoute
 from httpx import ASGITransport, AsyncClient
 
 from gapsense.main import create_app
+from gapsense.web.curriculum import create_curriculum_router
+
+
+def test_coverage_filesystem_scan_is_delegated_to_a_worker_thread(
+    tmp_path: Path,
+) -> None:
+    """A recursive evidence scan must never block the application's async event loop."""
+    router = create_curriculum_router(tmp_path)
+    coverage_route = next(
+        route
+        for route in router.routes
+        if isinstance(route, APIRoute) and route.path == "/v1/curriculum/coverage"
+    )
+
+    assert not iscoroutinefunction(coverage_route.endpoint)
 
 
 async def test_coverage_endpoint_exposes_typed_non_sensitive_metadata(
