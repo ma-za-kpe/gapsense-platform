@@ -15,6 +15,8 @@
   colour, layout, motion, accessibility, resilience, and interface release gates
 - [Frontend and Branch Reconciliation Audit](FRONTEND_RECONCILIATION_AUDIT.md) - all-branch
   evidence, historical UI runtime findings, and the no-duplication migration decision
+- [Remote Main Reconciliation](REMOTE_MAIN_RECONCILIATION.md) - capability-by-capability
+  disposition for safely migrating the divergent remote history without activating stale code
 - [Delivery and Release Model](DELIVERY_AND_RELEASE_MODEL.md) - branch lifecycle, remote CI audit,
   optimized required-check graph, version management, and Release Please plan
 

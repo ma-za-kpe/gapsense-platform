@@ -341,9 +341,20 @@ Rules:
   the frontend ADR; preserve useful historical work, retire WhatsApp-first presentation from the
   active web journey, and add every discovered gap to this persistent list. Evidence:
   [`docs/FRONTEND_RECONCILIATION_AUDIT.md`](docs/FRONTEND_RECONCILIATION_AUDIT.md).
-- [ ] After this slice is green and committed, create a dedicated reconciliation branch and merge
-  remote platform `main` without selecting either side wholesale; preserve and test all meaningful
-  backend, migration, governance, security, and frontend behaviour across the 138/4 divergence.
+- [~] Reconcile remote platform `main` on the dedicated
+  `chore/remote-main-reconciliation` branch without activating either line wholesale; preserve
+  remote commit `b24ec44` as a merge parent and port every meaningful behaviour through the
+  current TDD, security, Docker, and product gates. Evidence and disposition map:
+  [`docs/REMOTE_MAIN_RECONCILIATION.md`](docs/REMOTE_MAIN_RECONCILIATION.md).
+- [x] Classify the divergent remote UI, API, domain, migration, AI, WhatsApp, infrastructure,
+  data, asset, test, and documentation families as rebuild, defer, or retire before completing
+  the history merge; keep every rejected active file recoverable from the merge parent.
+- [ ] Port the accepted remote backend, migration, governance, security, and frontend behaviours
+  in small tested slices; do not import external-provider credentials, copied proprietary data,
+  stale claims, or skipped checks to make historical tests pass.
+- [ ] Complete the remote-main reconciliation only after every accepted backend, migration,
+  governance, security, and frontend behaviour across the 138/4 divergence has current evidence;
+  run the strict gate and merge the branch into local `main` without pushing.
 - [ ] Migrate the historical curriculum explorer, teacher diagnostic workspace, class and learner
   reports, and concise architecture/trust story into the tested web shell; do not ship duplicate
   public frontends or unsupported production, latency, reach, cost, and coverage claims.
@@ -375,7 +386,7 @@ Rules:
   and immutable-production browser suites mandatory in the exact strict pre-commit entry point,
   without recreating the visible port 3000 review service.
 - [x] Build and smoke-test a non-root production frontend image locally without deploying it.
-- [ ] Reconcile evidence, commit this slice on its feature branch, and merge it into local `main`
+- [x] Reconcile evidence, commit this slice on its feature branch, and merge it into local `main`
   only after the complete backend and frontend gates pass; do not push.
 
 - [x] Select the web frontend stack through an ADR and a tested prototype.
