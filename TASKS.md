@@ -54,12 +54,13 @@ Rules:
   branch once so hosted CI is triggered only for a locally green candidate. Evidence: commit
   `28309d2` passed the commit and pre-push gates; GitHub Actions run `30037813589` completed the
   repository-owned `Required` Docker job successfully in 3 minutes 50 seconds.
-- [~] Disable the inherited Vercel Git integration at the repository configuration boundary:
+- [x] Disable the inherited Vercel Git integration at the repository configuration boundary:
   automatic preview and production deployments must be false, historical AWS rewrites must not
   return, repository policy must fail closed if the hold is removed, and PR #10 must show no new
   Vercel deployment before merge. The first PR event exposed and failed the legacy preview path
-  while the intended `Required` Docker job passed.
-- [~] Remove the production-browser curriculum coverage race exposed by the corrective commit
+  while the intended `Required` Docker job passed. Evidence: final PR SHA `1f39f03` and merge SHA
+  `8da93e1` both returned empty GitHub deployment lists.
+- [x] Remove the production-browser curriculum coverage race exposed by the corrective commit
   gate: delegate recursive evidence scans away from the async event loop, give the browser
   assertion time to observe the five-second fail-closed outcome, retain the failing regression
   test, and prove the complete production suite repeatedly before closing the task. Evidence:
@@ -67,13 +68,25 @@ Rules:
   production suite passed 30/30 repeated desktop/mobile scenarios; and the corresponding API log
   recorded 13/13 coverage responses at HTTP 200 with zero 499 cancellations. The next exact gate
   correctly caught an unnarrowed heterogeneous FastAPI route type in the new regression test;
-  close this task only after the explicit `APIRoute` narrowing passes the whole gate.
-- [~] Remove deprecated Node 20 action runtimes from hosted automation: pin the reviewed official
+  the explicit `APIRoute` narrowing then passed both complete local gates and hosted CI.
+- [x] Remove deprecated Node 20 action runtimes from hosted automation: pin the reviewed official
   Node 24 releases of Checkout `v7.0.1` and Release Please Action `v5.0.0`, update the fail-closed
   action allowlist under TDD, and require a warning-free hosted Required run before merge.
-- [ ] Open the platform reconciliation PR against remote `main`; review the large historical
+  Evidence: Required run `30041138985` passed in 4 minutes 5 seconds with zero annotations.
+- [x] Open the platform reconciliation PR against remote `main`; review the large historical
   replacement diff, verify every required hosted check is green, merge through GitHub, and
-  reconcile local `main` without deploying.
+  reconcile local `main` without deploying. Evidence: PR #10 merged as `8da93e1`, local `main`
+  fast-forwarded to the same SHA, and the feature branch was pruned locally and remotely.
+- [~] Repair the first post-merge Release Please run: keep default workflow token permissions
+  read-only, enable the repository setting required for GitHub Actions to create the release PR,
+  rerun failed workflow `30041492848`, require its bot PR and dispatched Required check to pass,
+  and confirm no deployment occurs. Evidence: the rerun created PR #11 and dispatched Required;
+  that gate then exposed a hard-coded `0.1.0` health-test expectation after the generated tree
+  correctly advanced to `0.2.0`. Replace that assertion with the canonical package version and
+  remove seed prose that generated a duplicate changelog heading before revalidation.
+- [?] Review the first-release baseline before merging Release Please PR #11: confirm that
+  `0.2.0` is the intended first public tag, decide how a missing `v0.1.0` comparison baseline
+  should be represented, and do not publish a release merely to make the automation appear done.
 - [ ] Create a focused branch in the separate `gapsense-data` repository without mixing platform
   code or history into it.
 - [ ] Inventory every Ghana and Uganda secondary source already present, including misplaced,

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from httpx import ASGITransport, AsyncClient
 
+from gapsense import __version__
 from gapsense.main import create_app
 
 
@@ -19,7 +20,7 @@ async def test_health_summary_reports_service_identity() -> None:
     assert response.json() == {
         "service": "gapsense",
         "status": "ok",
-        "version": "0.1.0",
+        "version": __version__,
     }
 
 

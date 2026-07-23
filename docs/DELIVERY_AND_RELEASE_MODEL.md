@@ -136,6 +136,12 @@ tests enforce the action allowlist, workflow permissions, release configuration,
 the Vercel deployment hold, and synchronized `0.1.0` version in Python and frontend metadata.
 Release automation creates no deployment and publishes no application artifact.
 
+Repository Actions settings keep the default workflow token permission at read-only. The separate
+GitHub setting that permits Actions to create pull requests is enabled solely so Release Please can
+open its version/changelog PR; individual workflow jobs still receive only their explicitly
+declared least-privilege permissions. Release PRs remain subject to the same Required Docker gate
+and human merge decision as every other change.
+
 ## Implementation Sequence
 
 1. Reconcile remote `main` on the dedicated `chore/remote-main-reconciliation` branch so its
