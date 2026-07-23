@@ -69,6 +69,16 @@ Rules:
   recorded 13/13 coverage responses at HTTP 200 with zero 499 cancellations. The next exact gate
   correctly caught an unnarrowed heterogeneous FastAPI route type in the new regression test;
   the explicit `APIRoute` narrowing then passed both complete local gates and hosted CI.
+- [x] Close the recurring production-browser coverage race found by the 2026-07-23 pre-push
+  gate: page teardown cancelled repeated `/v1/curriculum/coverage` requests with HTTP 499 while
+  their worker-thread filesystem scans continued, eventually exhausting the frontend's
+  five-second fail-closed budget. Build one immutable coverage snapshot per application process,
+  prove concurrent requests cannot duplicate the scan, repeat the production browser suite, and
+  inspect proxy/API logs before attempting another remote push. Evidence: the regression failed
+  with eight scans for eight concurrent requests before the fix, then passed 4/4 focused tests;
+  the production stress suite passed 30/30 desktop/mobile scenarios with 60/60 coverage requests
+  at HTTP 200, zero 499 responses, and zero API errors; the complete strict Docker gate passed
+  with 82 backend tests and 37 frontend tests at 100% coverage plus both 10/10 browser suites.
 - [x] Remove deprecated Node 20 action runtimes from hosted automation: pin the reviewed official
   Node 24 releases of Checkout `v7.0.1` and Release Please Action `v5.0.0`, update the fail-closed
   action allowlist under TDD, and require a warning-free hosted Required run before merge.

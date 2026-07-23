@@ -29,6 +29,11 @@ Docker is the runtime. Do not install or run project Python or Node packages on
 the host. The platform expects the private `gapsense-data` repository as a
 sibling directory and mounts it read-only.
 
+The public curriculum coverage response is an immutable snapshot built when the
+web application starts. Restart the `web` service after changing the sibling
+data repository so one coherent evidence release is served for the lifetime of
+each application process.
+
 Prerequisites:
 
 - Docker Desktop with Docker Compose
