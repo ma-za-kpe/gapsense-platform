@@ -533,7 +533,9 @@ Rules:
   relevant TVET/tertiary authorities.
 - [ ] Map Pre-primary learning areas.
 - [ ] Complete P1-P3 thematic learning areas, not only Mathematics.
-- [ ] Validate the current uncommitted P1-P3 Mathematics extraction before merging it.
+- [~] Validate the current uncommitted P1-P3 Mathematics extraction before merging it. Initial
+  Docker read-only audit confirms the P1–P3 mapping, prerequisite graph, and source manifest parse;
+  educator review, schema normalization, and data-repository commit evidence remain outstanding.
 - [ ] Complete P4 transition-phase subjects and learning outcomes.
 - [ ] Complete P5-P7 subject-based curriculum coverage.
 - [ ] Complete Lower Secondary S1-S4 compulsory and elective curriculum coverage.
