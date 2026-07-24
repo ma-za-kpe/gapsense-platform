@@ -31,6 +31,17 @@ Rules:
 - [~] Build a local-first, web-first GapSense experience for Ghana and Uganda.
 - [ ] Make free, curriculum-aligned assessment generation a public web entry product for
   learners, parents/caregivers, teachers, school leaders, and other legitimate users.
+- [x] Deliver a fully usable local web prototype: planner selection, evidence-linked starter
+  activity generation, answer key, print/export affordance, and honest unsupported-coverage states.
+  WhatsApp and deployment remain explicitly out of scope for this slice. Evidence: Docker
+  frontend validation reached 100% coverage, the dedicated Playwright target passed 10/10
+  desktop/mobile tests, and the local draft flow is covered by unit and accessibility tests.
+- [ ] Replace the deterministic starter bank with versioned, educator-reviewed curriculum
+  evidence records, beginning with Ghana primary Mathematics and Uganda Primary 1–3 Mathematics.
+- [ ] Add a real assessment document export contract (PDF/download) with print-layout and
+  answer-key snapshots before calling generation production-ready.
+- [x] Document the current local web workflow, Docker startup, validation commands, prototype
+  boundaries, and next evidence-backed slice in `docs/LOCAL_WEB_PROTOTYPE_GUIDE.md`.
 - [ ] Make the web experience excellent on mobile, tablet, and desktop, including
   low-bandwidth and intermittent-connectivity conditions.
 - [ ] Support teachers first while researching the needs of learners, parents,

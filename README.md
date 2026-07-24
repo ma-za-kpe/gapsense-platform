@@ -106,6 +106,7 @@ repository. Synthetic test data must be unmistakably fictional.
 - [Project charter](docs/PROJECT_CHARTER.md)
 - [Curriculum coverage audit](docs/CURRICULUM_COVERAGE_AUDIT.md)
 - [Assessment-generation product brief](docs/ASSESSMENT_GENERATION_PRODUCT_BRIEF.md)
+- [Local web prototype guide](docs/LOCAL_WEB_PROTOTYPE_GUIDE.md)
 - [Market and user research](docs/MARKET_AND_USER_RESEARCH.md)
 - [Security and privacy model](docs/SECURITY_AND_PRIVACY_MODEL.md)
 - [Documentation index](docs/README.md)

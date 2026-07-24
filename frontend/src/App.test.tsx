@@ -195,6 +195,30 @@ describe("GapSense web entry experience", () => {
     expect(screen.getByText(/NCDC curriculum inventory is still being verified/)).toBeVisible();
   });
 
+  it("generates and prints a local starter activity after reviewing intent", async () => {
+    const user = userEvent.setup();
+    renderReadyApp();
+    await user.click(screen.getByRole("radio", { name: /^Teacher/ }));
+    await user.click(screen.getByRole("radio", { name: /^Ghana/ }));
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
+    await user.click(screen.getByRole("button", { name: "Review my starting point" }));
+
+    await user.selectOptions(screen.getByLabelText("Level"), "Basic 3");
+    await user.selectOptions(screen.getByLabelText("Subject"), "Science");
+    await user.click(screen.getByRole("button", { name: /Generate starter activity/ }));
+
+    expect(
+      screen.getByRole("heading", { level: 4, name: "Science Practice activity" }),
+    ).toBeVisible();
+    expect(screen.getByText("Name one source of light.")).toBeVisible();
+    const print = vi.spyOn(window, "print").mockImplementation(() => undefined);
+    await user.click(screen.getByRole("button", { name: "Print / save PDF" }));
+    expect(print).toHaveBeenCalledOnce();
+    print.mockRestore();
+    await user.click(screen.getByText("Show answer guidance"));
+    expect(screen.getByText("liquid")).toBeVisible();
+  });
+
   it("measures the complete anonymous entry funnel without selected values", async () => {
     const user = userEvent.setup();
     const events: AnalyticsEventName[] = [];
