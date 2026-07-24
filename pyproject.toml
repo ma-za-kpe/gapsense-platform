@@ -1,6 +1,6 @@
 [project]
 name = "gapsense"
-version = "0.1.0"
+version = "0.2.0"
 description = "Curriculum-aligned learning diagnostics for Ghana and Uganda"
 authors = [{name = "Maku Mazakpe", email = "maku@gapsense.app"}]
 readme = "README.md"
