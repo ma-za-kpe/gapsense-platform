@@ -49,6 +49,9 @@ Rules:
 - [ ] Add a manually triggered, environment-protected Vercel deployment workflow only after the
   deployment hold is explicitly lifted; keep `vercel.json` automatic deployments disabled and
   require hosted security, privacy, accessibility, and release checks before promotion.
+- [!] Three-milestone deployment checkpoint reached after `v0.3.0`, but Docker `vercel --prod`
+  failed closed because the available Vercel token is invalid. Obtain a fresh scoped token and
+  project/org binding, then rerun the same command only after verifying the target and rollback.
 - [ ] After every three reviewed milestones, run a deployment checkpoint: reconcile release
   version, CI evidence, privacy/security status, runtime logs, rollback target, and Vercel
   promotion approval before deploying.
