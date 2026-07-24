@@ -59,14 +59,26 @@ Rules:
   implemented workflows, known limitations, local commands, Docker services, validation evidence,
   release/deployment state, troubleshooting, logs, privacy boundaries, and links to the canonical
   operating documents. Keep it synchronized after each milestone.
-- [ ] Raise CI/CD to open-source professional standard: split fast checks from expensive Docker
+- [~] Raise CI/CD to open-source professional standard: split fast checks from expensive Docker
   gates, use dependency and Docker-layer caching safely, cancel superseded branch runs, pin every
   action by immutable SHA, publish test/coverage/security artifacts, surface flaky-test and runtime
   metrics, enforce least-privilege permissions, protect release/deployment environments, and keep
-  required checks green without wasting hosted minutes.
-- [ ] Establish professional contribution hygiene: pull-request and issue templates, reproducible
+  required checks green without wasting hosted minutes. Initial slice: classify the repository PR
+  template as documentation-only so template edits do not trigger the full Docker gate; retain
+  action pinning, concurrency cancellation, and required policy checks. Follow-up: add safe cache and
+  artifact measurements only after baseline runtime evidence exists. Evidence for this slice:
+  changed-file classification now uses explicit Bash predicates (no overlapping shell `case` arms),
+  and Docker policy, actionlint, secret scan, Markdown lint, and whitespace checks pass locally.
+- [!] Full local pre-commit rebuild is currently slow/hanging in `docker compose build web` after
+  the existing image was removed; reproduce and resolve the Docker build-time baseline before
+  claiming this CI optimization slice complete. Do not bypass the hook in normal work.
+- [ ] Measure the current CI Docker rebuild/runtime baseline and add a bounded cache strategy only if
+  it reduces hosted minutes without weakening reproducibility or leaking dependency state.
+- [x] Establish professional contribution hygiene: pull-request and issue templates, reproducible
   checklists, security-report routing, conventional titles, release-note prompts, screenshots or
   evidence links for UX changes, curriculum provenance fields, and consistent labels/milestones.
+  Evidence: `.github/PULL_REQUEST_TEMPLATE.md`, the bug/feature/curriculum issue forms, and the
+  security advisory routing config are present on `main` and covered by the Docker docs gate.
 - [ ] Add a real assessment document export contract (PDF/download) with print-layout and
   answer-key snapshots before calling generation production-ready.
 - [x] Document the current local web workflow, Docker startup, validation commands, prototype
@@ -77,6 +89,10 @@ Rules:
   curriculum specialists, school leaders, and education-system partners.
 - [ ] Complete official curriculum coverage for all in-scope subjects and levels in
   Ghana and Uganda.
+- [x] Expose a truthful subject/learning-area inventory in the local coverage API and web
+  explorer, grouped by evidence phase and explicitly separated from extraction/review status.
+  Evidence: Docker Python coverage passed 95 tests at 100%; Docker frontend validation passed
+  66 tests at 100%; the API now reports subject identifiers without exposing source contents.
 - [ ] Audit and model Uganda secondary as O’Level (lower secondary / UCE) and A’Level (advanced
   secondary / UACE), rather than generic “secondary”; inventory NCDC O-Level and A-Level sources,
   subjects, combinations, examination links, and curriculum-version dates. Research lead:

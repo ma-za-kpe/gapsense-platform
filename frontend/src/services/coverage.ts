@@ -10,6 +10,14 @@ export type CurriculumLevel = {
   readonly review_status: "not_verified";
 };
 
+export type CurriculumSubject = {
+  readonly identifier: string;
+  readonly name: string;
+  readonly phase: string;
+  readonly availability: AvailabilityStatus;
+  readonly review_status: "not_verified";
+};
+
 export type CountryCoverage = {
   readonly code: "GH" | "UG";
   readonly name: "Ghana" | "Uganda";
@@ -19,6 +27,7 @@ export type CountryCoverage = {
   readonly review_status: "not_verified";
   readonly repository_file_count: number;
   readonly levels: readonly CurriculumLevel[];
+  readonly subjects?: readonly CurriculumSubject[];
 };
 
 export type CurriculumCoverageReport = {
@@ -48,6 +57,19 @@ const isLevelCatalog = (value: unknown): value is readonly CurriculumLevel[] =>
   value.every(isLevel) &&
   new Set(value.map((level) => level.identifier)).size === value.length;
 
+const isSubject = (value: unknown): value is CurriculumSubject =>
+  isRecord(value) &&
+  typeof value.identifier === "string" &&
+  typeof value.name === "string" &&
+  typeof value.phase === "string" &&
+  (value.availability === "present_unverified" || value.availability === "missing") &&
+  value.review_status === "not_verified";
+
+const isSubjectCatalog = (value: unknown): value is readonly CurriculumSubject[] =>
+  Array.isArray(value) &&
+  value.every(isSubject) &&
+  new Set(value.map((subject) => `${subject.phase}:${subject.identifier}`)).size === value.length;
+
 const isCountry = (value: unknown): value is CountryCoverage =>
   isRecord(value) &&
   hasExpectedCountryIdentity(value) &&
@@ -57,7 +79,8 @@ const isCountry = (value: unknown): value is CountryCoverage =>
   value.review_status === "not_verified" &&
   Number.isSafeInteger(value.repository_file_count) &&
   Number(value.repository_file_count) >= 0 &&
-  isLevelCatalog(value.levels);
+  isLevelCatalog(value.levels) &&
+  (value.subjects === undefined || isSubjectCatalog(value.subjects));
 
 const isCoverageReport = (value: unknown): value is CurriculumCoverageReport => {
   if (!isRecord(value) || value.complete !== false) {
