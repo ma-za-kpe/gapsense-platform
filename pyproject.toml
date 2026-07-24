@@ -49,7 +49,7 @@ build-backend = "poetry.core.masonry.api"
 target-version = "py312"
 line-length = 100
 src = ["src"]
-extend-exclude = ["alembic/versions"]  # Generated revisions are verified by migration tests.
+extend-exclude = ["alembic/versions", "data"]  # Generated migrations and mounted evidence are checked by their own gates.
 
 [tool.ruff.lint]
 select = [

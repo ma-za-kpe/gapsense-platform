@@ -89,6 +89,10 @@ Rules:
   curriculum specialists, school leaders, and education-system partners.
 - [ ] Complete official curriculum coverage for all in-scope subjects and levels in
   Ghana and Uganda.
+- [x] Expose a truthful subject/learning-area inventory in the local coverage API and web
+  explorer, grouped by evidence phase and explicitly separated from extraction/review status.
+  Evidence: Docker Python coverage passed 95 tests at 100%; Docker frontend validation passed
+  66 tests at 100%; the API now reports subject identifiers without exposing source contents.
 - [ ] Audit and model Uganda secondary as O’Level (lower secondary / UCE) and A’Level (advanced
   secondary / UACE), rather than generic “secondary”; inventory NCDC O-Level and A-Level sources,
   subjects, combinations, examination links, and curriculum-version dates. Research lead:

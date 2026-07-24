@@ -27,6 +27,10 @@ def test_inventory_reports_presence_without_claiming_completion(tmp_path: Path) 
     (tmp_path / "curricula" / "README.md").write_text("# Curriculum index", encoding="utf-8")
     (ghana_path / "primary").mkdir()
     (ghana_path / "primary" / "mathematics.json").write_text("{}", encoding="utf-8")
+    (ghana_path / "primary" / "source").mkdir()
+    (ghana_path / "primary" / "linked").symlink_to(ghana_path / "primary", target_is_directory=True)
+    (ghana_path / "secondary").mkdir()
+    (ghana_path / "secondary" / "science").mkdir()
     (uganda_path / "primary").mkdir()
     (uganda_path / "primary" / "mathematics.json").write_text("{}", encoding="utf-8")
 
@@ -37,6 +41,11 @@ def test_inventory_reports_presence_without_claiming_completion(tmp_path: Path) 
     assert report.warnings == ()
     assert [country.code for country in report.countries] == ["GH", "UG"]
     assert [country.repository_file_count for country in report.countries] == [1, 1]
+    assert [(subject.phase, subject.identifier) for subject in report.countries[0].subjects] == [
+        ("primary", "mathematics"),
+        ("secondary", "science"),
+    ]
+    assert report.countries[0].subjects[0].review_status == "not_verified"
     assert all(country.availability == "present_unverified" for country in report.countries)
     assert all(country.review_status == "not_verified" for country in report.countries)
     assert report.countries[0].authority == (
@@ -160,3 +169,23 @@ def test_inventory_fails_closed_when_a_country_root_cannot_be_read(
     assert report.repository_status == "partial"
     assert report.warnings == ("unreadable_country_root:ghana",)
     assert report.countries[0].availability == "missing"
+
+
+def test_inventory_fails_closed_when_subject_scan_cannot_be_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A subject-directory race is reported without invalidating the whole service."""
+    ghana_path, _uganda_path = _create_country_roots(tmp_path)
+    (ghana_path / "primary").mkdir()
+    (ghana_path / "primary" / "mathematics.json").write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "gapsense.curriculum.coverage._subject_inventory",
+        lambda _path: (_ for _ in ()).throw(PermissionError("synthetic subject failure")),
+    )
+
+    report = build_coverage_report(tmp_path)
+
+    assert report.warnings == ("unreadable_subject_inventory:ghana",)
+    assert report.countries[0].subjects == ()

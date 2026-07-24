@@ -25,6 +25,15 @@ const report = {
           review_status: "not_verified",
         },
       ],
+      subjects: [
+        {
+          identifier: "mathematics",
+          name: "Mathematics",
+          phase: "primary",
+          availability: "present_unverified",
+          review_status: "not_verified",
+        },
+      ],
     },
     {
       code: "UG",
@@ -54,6 +63,7 @@ describe("coverage panels", () => {
     expect(screen.getByText("1 repository file located")).toBeVisible();
     expect(screen.getByText("No canonical repository files located")).toBeVisible();
     expect(screen.getByText("Lower Primary")).toBeVisible();
+    expect(screen.getByText("Mathematics")).toBeVisible();
     expect(screen.getAllByText("Extraction and educator review not verified")).toHaveLength(2);
   });
 
