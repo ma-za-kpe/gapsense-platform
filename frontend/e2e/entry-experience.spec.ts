@@ -84,7 +84,7 @@ test("plans an anonymous Uganda activity and supports a clean restart", async ({
     page.getByRole("heading", { level: 3, name: "Your Uganda starting point is ready" }),
   ).toBeVisible();
   await expect(page.getByText(/NCDC curriculum inventory is still being verified/)).toBeVisible();
-  await page.getByLabel("Level").selectOption("Primary 2");
+  await page.getByRole("combobox", { name: "Level" }).selectOption("Primary 2");
   await page.getByRole("button", { name: /Generate starter activity/ }).click();
   await expect(
     page.getByRole("heading", { level: 4, name: "Mathematics Practice activity" }),
