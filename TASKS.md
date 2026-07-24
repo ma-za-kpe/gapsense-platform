@@ -43,6 +43,68 @@ Rules:
   model a hidden requirement for deterministic tests.
 - [~] Keep WhatsApp delivery and production deployment on hold.
 
+## Current Analytics and Search Slice
+
+- [x] Establish the first privacy-safe product-analytics and technical-search foundation on
+  `feat/privacy-safe-analytics-seo`; keep analytics collection disabled and search indexing
+  blocked by default while production deployment and qualified privacy review remain on hold.
+  Evidence: the complete Docker gate passed on 2026-07-23; the branch remains undeployed.
+- [x] Document the analytics data flow, event taxonomy, minimization rules, abuse cases,
+  retention boundary, search-publication contract, primary-source research basis, and the exact
+  distinction between 100% automated contract coverage and outcomes that software cannot
+  guarantee, such as search ranking, indexing, traffic, or representative product insight.
+  Evidence: `docs/ANALYTICS_AND_SEARCH_MODEL.md` and ADR-002 define the disabled-by-default,
+  local-aggregate-only architecture, research basis, publication gate, and deferred decisions.
+- [x] Implement an allowlisted, versioned, first-party funnel event contract under TDD; accept no
+  names, contact details, school or learner identifiers, free text, URLs, query strings,
+  referrers, cookies, persistent IDs, advertising IDs, device fingerprints, or hidden external
+  analytics dependency. Evidence: the versioned schema accepts exactly 11 property-free events,
+  forbids unknown fields, and is covered through the browser client and API boundary.
+- [x] Add a bounded same-origin analytics adapter and local aggregate-only API sink that fails
+  silently from the user's perspective, never blocks a product action, never logs event bodies,
+  rejects unknown fields/events and oversized batches, and remains replaceable behind a port.
+  Evidence: disabled mode exposes no route; local mode uses in-memory thread-safe counters, a
+  20-event/4 KiB ceiling, strict media-type checks, and an application-level streaming limit.
+- [x] Instrument the complete current public funnel—entry view, primary navigation, planner role,
+  country and goal selections, plan review/reset, readiness retry, and coverage retry—without
+  collecting the selected values or creating a shadow learner profile. Evidence: all 11 current
+  journey events are emitted without selection values, and React Strict Mode entry rendering is
+  deduplicated.
+- [x] Respect browser Global Privacy Control, Do Not Track, and reduced-data constraints; keep the
+  immutable production-style frontend disabled while real collection is on hold.
+- [ ] Design a visible analytics notice and explicit future opt-out only after Ghana/Uganda legal
+  and user research establishes the lawful basis, notice, choice, retention, access, deletion, and
+  processor requirements.
+- [x] Generate complete static search metadata from one typed source of truth: unique title and
+  description, application identity, robots directives, canonical and Open Graph URL only for an
+  approved HTTPS origin, social metadata, `WebSite` JSON-LD, `robots.txt`, and a canonical-only
+  XML sitemap. Evidence: 17 typed publication tests cover all statements, branches, functions,
+  and lines, including unsafe origins and local/loopback variants.
+- [x] Fail closed at build time if public indexing is requested without an approved absolute HTTPS
+  origin; default local, test, preview, and deployment-hold artifacts to `noindex`, omit false
+  canonicals and structured URLs, and return a real 404 for a sitemap that was not generated.
+  Evidence: the hold artifact returns `noindex` and a text/plain sitemap 404; a synthetic,
+  undeployed public artifact proved canonical, Open Graph URL, JSON-LD, sitemap, CSP digest,
+  hidden-source removal, container health, and final runtime UID 101.
+- [x] Prove analytics and search behaviour through red-green unit, API-contract, security,
+  build-artifact, development-browser, immutable-production-browser, accessibility, console/log,
+  CSP, and regression tests while maintaining 100% statements, branches, functions, and lines
+  for all application-owned executable code. Evidence so far: 94 backend tests cover 953
+  statements and 132 branches at 100%; 64 frontend tests retain 100% statements, branches,
+  functions, and lines; and the focused development and production browser suites each pass
+  10/10 desktop/mobile scenarios with zero unexpected server errors or analytics requests. The
+  complete strict Docker gate, including migrations, security scans, dependency audits, package
+  builds, Markdown policy, and patch checks, passed on 2026-07-23.
+- [ ] Add deterministic size and Core Web Vitals budgets; measure LCP, INP, and CLS in field
+  analytics only after privacy approval, using coarse classifications rather than fingerprinting
+  precision and never loading a third-party script in the critical path.
+- [ ] Create evidence-backed Ghana, Uganda, phase, level, subject, assessment, and diagnostic
+  landing-page information architecture only as the underlying curriculum/product surfaces
+  become real; never manufacture thin keyword pages or claim unsupported coverage.
+- [!] Search Console/Bing registration, public sitemap submission, real analytics collection,
+  crawl validation, ranking measurement, and production dashboards require an approved host and
+  remain blocked by the production-deployment hold.
+
 ## Current Cross-Repository Delivery Sequence
 
 - [x] Complete the `gapsense-platform` release/CI milestone on
@@ -110,28 +172,50 @@ Rules:
 - [?] Review the first-release baseline before merging Release Please PR #11: confirm that
   `0.2.0` is the intended first public tag, decide how a missing `v0.1.0` comparison baseline
   should be represented, and do not publish a release merely to make the automation appear done.
-- [ ] Create a focused branch in the separate `gapsense-data` repository without mixing platform
-  code or history into it.
-- [ ] Inventory every Ghana and Uganda secondary source already present, including misplaced,
+- [x] Create a focused branch in the separate `gapsense-data` repository without mixing platform
+  code or history into it. Evidence: `research/ghana-uganda-secondary-inventory` was developed in
+  an isolated worktree while the original seven uncommitted curriculum files remained untouched.
+- [x] Inventory every Ghana and Uganda secondary source already present, including misplaced,
   duplicate, partial, stale, and untracked artifacts; reconcile rather than overwrite useful
-  extraction work.
-- [ ] Build the official secondary source matrix by country, authority, phase, level, subject,
+  extraction work. Evidence: merged data PR #2 records the honest baseline and unresolved gaps.
+- [x] Build the official secondary source matrix by country, authority, phase, level, subject,
   syllabus edition, source URL, retrieval date, license/use status, checksum, extraction state,
-  review state, and known gap.
-- [ ] Download missing official secondary documents from NaCCA and NCDC first; use broader web
+  review state, and known gap. Evidence: 66 official-source records are machine validated.
+- [x] Download the currently discoverable missing official secondary documents from NaCCA and
+  NCDC first; use broader web
   discovery only to locate an authoritative copy or archive, and quarantine any source whose
-  authenticity cannot be proven.
-- [ ] Hash, catalogue, and retain immutable provenance for every acquired source document before
-  extraction; detect duplicates and source substitutions automatically.
+  authenticity cannot be proven. Evidence: 57 visible Uganda PDFs and three useful Ghana SHS PDFs
+  were acquired; Ghana SHS English and authority-index count discrepancies remain explicit gaps.
+- [x] Hash, catalogue, and retain immutable provenance for every acquired source document before
+  extraction; detect duplicates and source substitutions automatically. Evidence: 62 catalogued
+  artifacts are byte verified and 60 acquisition receipts are cross-checked by policy.
 - [ ] Extract and normalize the acquired secondary curricula with deterministic tooling, preserve
   raw originals, and validate output structure and source traceability.
 - [ ] Measure Ghana and Uganda secondary coverage per phase, level, and subject; add every newly
   exposed gap to this working list and never infer completeness from file presence.
-- [ ] Run the data repository's complete Docker validation and quality gates, commit the coherent
+- [x] Run the data repository's complete Docker validation and quality gates, commit the coherent
   secondary acquisition/extraction milestone, push once, and open a separate data PR.
-- [ ] Review and merge the data PR only when provenance, hashes, extraction checks, curriculum
-  review status, security checks, and hosted CI are green; then update the platform coverage
-  contract in a later, separately tracked milestone.
+  Evidence: 29 tests and the eight-step Docker gate passed with 100% coverage before PR #2.
+- [x] Review and merge the data acquisition/provenance PR only when hashes, catalogues, policy,
+  security checks, and hosted CI are green; keep extraction/review incompleteness explicit.
+  Evidence: data PR #2 and hosted Required run `30050380590` passed before merge `f742937`.
+- [x] Repair the first `gapsense-data` Release Please candidate without weakening Markdown policy:
+  scope the generated-changelog MD012 allowance to `CHANGELOG.md`, policy-lock the one-file,
+  one-rule exception, normalize workflow-policy input across LF/CRLF Docker mounts, and retain the
+  failing regressions. Evidence: data PR #4 passed 30 tests at 100% line, branch, and function
+  coverage plus Required run `30051104472`, then squash-merged as `220eaf3`.
+- [x] Prove the regenerated `gapsense-data` draft release candidate without publishing it.
+  Evidence: Release Please generated candidate SHA `8be32d2`; dispatched Required run
+  `30052774447` passed the exact Docker gate. Draft PR #3 remains open and unmerged.
+- [x] Align the data repository with the platform's reviewed history policy after the one-time
+  corrective merge: squash-only merging is enabled, merge commits and rebase merges are disabled,
+  and merged head branches are deleted automatically.
+- [!] Keep `gapsense-data` draft release PR #3 unmerged and untagged until the first-release
+  baseline, version, changelog, curriculum completeness language, and release hold receive an
+  explicit co-founder review.
+- [ ] Update the platform coverage contract only after a separately reviewed deterministic
+  secondary extraction milestone establishes phase/subject maturity; raw PDF presence is not
+  curriculum completion.
 
 ## Milestone 0 - Governance and Honest Baseline
 
@@ -848,3 +932,37 @@ to the appropriate section while retaining a short trace or link.
 - [ ] Investigate the 2026-07-23 co-founder observation that curriculum coverage appeared
   primary-only; replace ambiguous aggregate presentation with verified per-level and per-subject
   evidence, explicitly including Ghana and Uganda secondary education.
+- [x] Add an application-level streaming byte ceiling to the local analytics route so a direct
+  loopback client cannot bypass the production proxy cap by lying about `Content-Length`.
+  Evidence: the regression first returned 422 for a 4 KiB-plus body declared as one byte, then
+  passed with HTTP 413; 11 focused analytics tests cover 80 statements and 12 branches at 100%.
+- [x] Exercise the dormant public-search production artifact locally without deploying it; make
+  the build-time root transition explicit for the pinned unprivileged Nginx image and return the
+  runtime to UID 101. Evidence: the first image failed to remove its temporary CSP source, while
+  the corrected image became healthy with matching canonical, Open Graph URL, `WebSite` JSON-LD,
+  robots, sitemap, and exact JSON-LD CSP digest, and no retained hidden source file.
+- [x] Narrow the browser analytics-request assertion to the exact API pathname after the broad
+  substring check incorrectly classified Vite's source-module request as data collection.
+  Evidence: the retained assertion watches only `/api/v1/analytics/events`, and both browser
+  modes prove that the disabled default sends no analytics request.
+- [x] Return the deployment-hold sitemap miss with an explicit `text/plain` media type rather than
+  allowing Nginx's URI-extension inference to label the 404 as XML. Evidence: red-green immutable
+  browser assertions verify HTTP 404, `text/plain`, and the exact non-indexable response body.
+- [x] Preserve the strict credential scanner when a test-only unsafe-origin fixture resembles
+  embedded credentials; use the scanner's exact-line test pragma instead of weakening or
+  excluding the check. Evidence: the first complete gate stopped at the fixture, while the
+  focused secret scan passed after the narrow annotation.
+- [ ] Add a release-only, Docker-native public-search artifact verifier so the synthetic HTTPS
+  canonical, sitemap, JSON-LD, CSP-digest, hidden-file-removal, and runtime-UID assertions remain
+  reproducible without adding a duplicate full PR workflow.
+- [ ] Define an evidence-based analytics abuse and rate policy before any host is approved; test
+  burst, concurrency, proxy-bypass, slow-body, malformed-transfer, and multi-process behaviour
+  without relying on IP tracking as the only control.
+- [ ] Design authenticated, purpose-limited operator access to aggregate metrics with minimum
+  reporting thresholds, audit evidence, retention, deletion, and no public summary endpoint.
+- [ ] Produce and review a provenance-safe favicon, manifest, and responsive social-preview image
+  after the identity system is approved; validate dimensions, crops, contrast, alternative text,
+  cache behaviour, and absence of learner data or fabricated authority endorsements.
+- [ ] After the deployment hold is explicitly lifted, verify crawl status, canonical selection,
+  structured-data eligibility, field Core Web Vitals, and search-query quality with controlled
+  organisation accounts; record these as monitored outcomes rather than guaranteed “100% SEO.”

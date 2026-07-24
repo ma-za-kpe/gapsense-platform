@@ -11,6 +11,8 @@
   generator goal, official assessment constraints, quality model, and commercial hypothesis
 - [Security and Privacy Engineering Model](SECURITY_AND_PRIVACY_MODEL.md) - secure-by-design
   invariants, threat model, control baseline, and release evidence
+- [Analytics and Search Model](ANALYTICS_AND_SEARCH_MODEL.md) - aggregate-only product evidence,
+  fail-closed indexing, technical search contracts, and promotion gates
 - [Brand and Interface Guidelines](BRAND_AND_INTERFACE_GUIDELINES.md) - identity, typography,
   colour, layout, motion, accessibility, resilience, and interface release gates
 - [Frontend and Branch Reconciliation Audit](FRONTEND_RECONCILIATION_AUDIT.md) - all-branch
@@ -24,6 +26,7 @@
 
 - [Architecture decision record](architecture/gapsense_adr.md)
 - [ADR-001: Local Web Frontend Stack](decisions/ADR-001-web-frontend-stack.md)
+- [ADR-002: Analytics and Search Publication](decisions/ADR-002-analytics-and-search-publication.md)
 - [API specification](specs/gapsense_api_spec.json)
 - [Database specification](specs/gapsense_data_model.sql)
 - [Test scenarios](specs/gapsense_test_scenarios.json)

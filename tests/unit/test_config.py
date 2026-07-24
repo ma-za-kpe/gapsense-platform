@@ -22,6 +22,7 @@ def test_settings_accept_valid_curriculum_repository(tmp_path: Path) -> None:
     )
     assert configured.is_local is True
     assert configured.is_production is False
+    assert configured.ANALYTICS_MODE == "disabled"
     assert str(configured.OLLAMA_BASE_URL) == "http://host.docker.internal:11434/"
     assert configured.OLLAMA_MODEL == "llama3.1:8b"
 
@@ -31,10 +32,38 @@ def test_settings_report_production_environment(tmp_path: Path) -> None:
     (tmp_path / "curricula" / "ghana").mkdir(parents=True)
     (tmp_path / "curricula" / "uganda").mkdir()
 
-    configured = Settings(ENVIRONMENT="production", GAPSENSE_DATA_PATH=str(tmp_path))
+    configured = Settings(
+        ENVIRONMENT="production",
+        GAPSENSE_DATA_PATH=str(tmp_path),
+    )
 
     assert configured.is_production is True
     assert configured.is_local is False
+    assert configured.ANALYTICS_MODE == "disabled"
+
+
+def test_settings_allow_aggregate_analytics_only_in_local_environment(tmp_path: Path) -> None:
+    """The collection route cannot be enabled by staging or production configuration."""
+    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
+    (tmp_path / "curricula" / "uganda").mkdir()
+
+    local = Settings(
+        ENVIRONMENT="local",
+        ANALYTICS_MODE="local_aggregate",
+        GAPSENSE_DATA_PATH=tmp_path,
+    )
+
+    assert local.ANALYTICS_MODE == "local_aggregate"
+    for environment in ("staging", "production"):
+        with pytest.raises(
+            ValidationError,
+            match="local_aggregate analytics is restricted to the local environment",
+        ):
+            Settings(
+                ENVIRONMENT=environment,
+                ANALYTICS_MODE="local_aggregate",
+                GAPSENSE_DATA_PATH=tmp_path,
+            )
 
 
 def test_settings_reject_missing_data_repository(tmp_path: Path) -> None:

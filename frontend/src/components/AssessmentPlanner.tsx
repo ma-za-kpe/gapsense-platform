@@ -1,5 +1,6 @@
 import { useReducer } from "react";
 
+import type { Analytics } from "../analytics/client";
 import {
   countryProfiles,
   goalProfiles,
@@ -25,7 +26,11 @@ const goals = Object.entries(goalProfiles) as readonly (readonly [
   (typeof goalProfiles)[Goal],
 ])[];
 
-export function AssessmentPlanner(): React.JSX.Element {
+type AssessmentPlannerProps = {
+  readonly analytics: Analytics;
+};
+
+export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.JSX.Element {
   const [state, dispatch] = useReducer(plannerReducer, initialPlan);
   const complete = isPlanComplete(state);
   const reviewedPlan = state.reviewed && complete ? state : null;
@@ -45,6 +50,9 @@ export function AssessmentPlanner(): React.JSX.Element {
         className="planner__form"
         onSubmit={(event) => {
           event.preventDefault();
+          if (complete) {
+            analytics.track("planner_reviewed");
+          }
           dispatch({ type: "review" });
         }}
       >
@@ -62,6 +70,7 @@ export function AssessmentPlanner(): React.JSX.Element {
                   value={value}
                   checked={state.role === value}
                   onChange={() => {
+                    analytics.track("planner_role_selected");
                     dispatch({ type: "select-role", role: value });
                   }}
                 />
@@ -89,6 +98,7 @@ export function AssessmentPlanner(): React.JSX.Element {
                   value={value}
                   checked={state.country === value}
                   onChange={() => {
+                    analytics.track("planner_country_selected");
                     dispatch({ type: "select-country", country: value });
                   }}
                 />
@@ -122,6 +132,7 @@ export function AssessmentPlanner(): React.JSX.Element {
                   value={value}
                   checked={state.goal === value}
                   onChange={() => {
+                    analytics.track("planner_goal_selected");
                     dispatch({ type: "select-goal", goal: value });
                   }}
                 />
@@ -168,6 +179,7 @@ export function AssessmentPlanner(): React.JSX.Element {
             className="button button--secondary"
             type="button"
             onClick={() => {
+              analytics.track("planner_reset");
               dispatch({ type: "reset" });
             }}
           >

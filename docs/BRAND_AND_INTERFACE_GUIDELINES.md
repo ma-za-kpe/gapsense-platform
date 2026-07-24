@@ -188,6 +188,34 @@ only when the eventual shape is known; otherwise use direct progress copy.
 - Design for intermittent connectivity, small screens, lower-memory devices, monochrome print, and
   constrained data plans.
 
+## Search, Sharing, and Measurement
+
+- Write a unique, accurate page title and plain-language description for every indexable public
+  route; the visible heading, title, and description must promise the same task.
+- Keep curriculum, country, subject, level, and provenance terms specific enough for people to
+  recognise the right official context. Do not manufacture search phrases or claims that the
+  interface cannot support.
+- Use one reviewed canonical URL for each public page. Canonicals, sitemaps, structured data, and
+  social-preview URLs must derive from the same configured HTTPS public origin.
+- Treat social previews as compact product surfaces: preserve the calm visual system, provide
+  useful alternative text, and never place learner data, assessment results, or fabricated
+  endorsements in preview content.
+- Keep search indexing fail closed while the product is local-only. A build may become indexable
+  only after the release checklist records legal, content, curriculum-provenance, security,
+  performance, accessibility, canonical-origin, and crawl verification.
+- Measure only allowlisted product events that answer an explicit product or sustainability
+  question. Event names may describe an action; event payloads must not reveal the selected
+  country, role, goal, curriculum answer, learner identity, or free text.
+- Analytics must be disabled by default, same-origin, aggregate-only, and non-blocking. Respect
+  Global Privacy Control, Do Not Track, reduced-data signals, and any future visible opt-out before
+  sending an event.
+- Never trade comprehension, accessibility, privacy, performance, or evidence quality for a search
+  ranking or conversion metric. Search traffic and analytics trends are observations, not proof of
+  learning impact.
+
+The binding implementation, threat model, event catalogue, and indexing-promotion contract live in
+[`ANALYTICS_AND_SEARCH_MODEL.md`](ANALYTICS_AND_SEARCH_MODEL.md).
+
 ## Release Evidence
 
 An interface milestone is not complete until Docker evidence includes:

@@ -33,6 +33,11 @@ FROM dependencies AS build
 
 COPY . .
 
+ARG GAPSENSE_PUBLIC_ORIGIN=
+ARG GAPSENSE_SEARCH_INDEXING=hold
+ENV GAPSENSE_PUBLIC_ORIGIN=${GAPSENSE_PUBLIC_ORIGIN} \
+    GAPSENSE_SEARCH_INDEXING=${GAPSENSE_SEARCH_INDEXING}
+
 RUN npm run build
 
 
@@ -40,8 +45,19 @@ FROM nginxinc/nginx-unprivileged:1.29.5-alpine3.23 AS production
 
 ENV NGINX_ENTRYPOINT_QUIET_LOGS=1
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+USER root
+
+COPY nginx.conf /tmp/gapsense-nginx.conf
 COPY --from=build /workspace/dist /usr/share/nginx/html
+
+RUN search_script_source="$(cat /usr/share/nginx/html/.search-script-source)" \
+    && sed \
+        "s|__GAPSENSE_SEARCH_SCRIPT_SOURCE__|${search_script_source}|g" \
+        /tmp/gapsense-nginx.conf \
+        > /etc/nginx/conf.d/default.conf \
+    && rm \
+        /tmp/gapsense-nginx.conf \
+        /usr/share/nginx/html/.search-script-source
 
 USER 101
 

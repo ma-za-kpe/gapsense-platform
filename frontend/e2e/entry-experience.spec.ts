@@ -2,6 +2,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 const coverageSettlingTimeoutMilliseconds = 7_500;
+const httpOk = 200;
+const httpNotFound = 404;
 
 const expectCoverageEvidence = async (page: import("@playwright/test").Page): Promise<void> => {
   await expect(page.getByText(/\d+ repository files? located/)).toHaveCount(2, {
@@ -16,6 +18,7 @@ test.beforeEach(async ({ page }) => {
 test("renders a truthful, accessible Ghana and Uganda entry experience", async ({ page }) => {
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
+  const analyticsRequests: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") {
       consoleErrors.push(message.text());
@@ -23,6 +26,11 @@ test("renders a truthful, accessible Ghana and Uganda entry experience", async (
   });
   page.on("pageerror", (error) => {
     pageErrors.push(error.message);
+  });
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/v1/analytics/events") {
+      analyticsRequests.push(request.url());
+    }
   });
 
   const response = await page.goto("/");
@@ -49,6 +57,7 @@ test("renders a truthful, accessible Ghana and Uganda entry experience", async (
   expect(accessibility.violations).toEqual([]);
   expect(consoleErrors).toEqual([]);
   expect(pageErrors).toEqual([]);
+  expect(analyticsRequests).toEqual([]);
 });
 
 test("plans an anonymous Uganda activity and supports a clean restart", async ({ page }) => {
@@ -138,7 +147,29 @@ test("preserves keyboard focus, touch sizing, responsive layout, and reduced mot
 test("serves a hardened same-origin surface", async ({ page }) => {
   const response = await page.goto("/");
   const moduleSource = await page.locator("script[type='module']").last().getAttribute("src");
+  const robots = await page.request.get("/robots.txt");
+  const sitemap = await page.request.get("/sitemap.xml");
 
+  await expect(page).toHaveTitle("GapSense — Find the next learning step");
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "GapSense helps Ghanaian and Ugandan learning communities plan curriculum-aligned assessments and find the next useful learning step.",
+  );
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    "noindex, nofollow, noarchive",
+  );
+  await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute(
+    "content",
+    "GapSense",
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
+  expect(robots.status()).toBe(httpOk);
+  expect(await robots.text()).toBe("User-agent: *\nDisallow: /\n");
+  expect(sitemap.status()).toBe(httpNotFound);
+  expect(sitemap.headers()["content-type"]).toContain("text/plain");
+  expect(await sitemap.text()).toBe("Not found\n");
   expect(response?.headers()["content-security-policy"]).toContain("default-src 'self'");
   expect(response?.headers()["cross-origin-opener-policy"]).toBe("same-origin");
   expect(response?.headers()["permissions-policy"]).toContain("camera=()");

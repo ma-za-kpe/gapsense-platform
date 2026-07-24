@@ -35,6 +35,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://gapsense:localdev@db:5432/gapsense # pragma: allowlist secret -- local-only disposable credential
       - ENVIRONMENT=local
       - LOG_LEVEL=DEBUG
+      - ANALYTICS_MODE=${GAPSENSE_ANALYTICS_MODE:-disabled}
       - GAPSENSE_DATA_PATH=/app/data
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
@@ -67,6 +68,7 @@ services:
     init: true
     environment:
       - API_PROXY_TARGET=http://web:8000
+      - VITE_ANALYTICS_MODE=${GAPSENSE_ANALYTICS_MODE:-disabled}
       - VITE_OUT_DIR=/tmp/gapsense-dist
     ports:
       - "127.0.0.1:3000:3000"
@@ -112,6 +114,7 @@ services:
     init: true
     environment:
       - API_PROXY_TARGET=http://web:8000
+      - VITE_ANALYTICS_MODE=${GAPSENSE_ANALYTICS_MODE:-disabled}
       - VITE_OUT_DIR=/tmp/gapsense-dist
     read_only: true
     tmpfs:

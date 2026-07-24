@@ -1,3 +1,6 @@
+import { useEffect, useRef } from "react";
+
+import { browserAnalytics, type Analytics } from "./analytics/client";
 import { AssessmentPlanner } from "./components/AssessmentPlanner";
 import { BrandMark } from "./components/BrandMark";
 import { CoveragePanels } from "./components/CoveragePanels";
@@ -6,9 +9,22 @@ import { useCoverage } from "./hooks/useCoverage";
 import { useReadiness } from "./hooks/useReadiness";
 import "./styles.css";
 
-export function App(): React.JSX.Element {
+type AppProps = {
+  readonly analytics?: Analytics;
+};
+
+export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Element {
   const readiness = useReadiness();
   const coverage = useCoverage();
+  const entryRecorded = useRef(false);
+
+  useEffect(() => {
+    if (entryRecorded.current) {
+      return;
+    }
+    entryRecorded.current = true;
+    analytics.track("entry_viewed");
+  }, [analytics]);
 
   return (
     <>
@@ -22,9 +38,29 @@ export function App(): React.JSX.Element {
             <BrandMark />
           </a>
           <nav aria-label="Primary navigation">
-            <a href="#countries">Countries</a>
-            <a href="#principles">Why GapSense</a>
-            <a className="button button--compact" href="#planner">
+            <a
+              href="#countries"
+              onClick={() => {
+                analytics.track("navigation_countries_selected");
+              }}
+            >
+              Countries
+            </a>
+            <a
+              href="#principles"
+              onClick={() => {
+                analytics.track("navigation_principles_selected");
+              }}
+            >
+              Why GapSense
+            </a>
+            <a
+              className="button button--compact"
+              href="#planner"
+              onClick={() => {
+                analytics.track("navigation_planner_selected");
+              }}
+            >
               Start free
             </a>
           </nav>
@@ -48,10 +84,22 @@ export function App(): React.JSX.Element {
                 language that protects learner dignity, and no personal data required.
               </p>
               <div className="hero__actions reveal reveal--four">
-                <a className="button button--primary button--large" href="#planner">
+                <a
+                  className="button button--primary button--large"
+                  href="#planner"
+                  onClick={() => {
+                    analytics.track("navigation_planner_selected");
+                  }}
+                >
                   Plan a free assessment <span aria-hidden="true">→</span>
                 </a>
-                <a className="quiet-link" href="#countries">
+                <a
+                  className="quiet-link"
+                  href="#countries"
+                  onClick={() => {
+                    analytics.track("navigation_countries_selected");
+                  }}
+                >
                   Explore country coverage
                 </a>
               </div>
@@ -120,10 +168,16 @@ export function App(): React.JSX.Element {
         </section>
 
         <div className="readiness-shell section-shell">
-          <ReadinessBanner status={readiness.status} onRetry={readiness.retry} />
+          <ReadinessBanner
+            status={readiness.status}
+            onRetry={() => {
+              analytics.track("readiness_retry_selected");
+              readiness.retry();
+            }}
+          />
         </div>
 
-        <AssessmentPlanner />
+        <AssessmentPlanner analytics={analytics} />
 
         <section
           className="countries section-shell"
@@ -141,7 +195,13 @@ export function App(): React.JSX.Element {
             </p>
           </div>
 
-          <CoveragePanels state={coverage.state} onRetry={coverage.retry} />
+          <CoveragePanels
+            state={coverage.state}
+            onRetry={() => {
+              analytics.track("coverage_retry_selected");
+              coverage.retry();
+            }}
+          />
         </section>
 
         <section className="principles" id="principles" aria-labelledby="principles-title">

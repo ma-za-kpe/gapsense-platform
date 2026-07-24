@@ -46,14 +46,22 @@ Start the local foundation:
 ```powershell
 docker compose up -d --wait db
 docker compose run --rm web alembic upgrade head
-docker compose up -d --build web
+docker compose up -d --build --wait web frontend
 ```
 
 Then use:
 
+- web experience: <http://localhost:3000>
 - API documentation: <http://localhost:8000/docs>
 - liveness: <http://localhost:8000/v1/health/live>
 - readiness: <http://localhost:8000/v1/health/ready>
+
+Analytics and search indexing are disabled by default. An operator may exercise the ephemeral,
+property-free aggregate analytics contract locally by setting `GAPSENSE_ANALYTICS_MODE` to
+`local_aggregate` before recreating `web` and `frontend`. This mode retains counters only in the
+API process, publishes no dashboard, and is rejected outside the local environment. The binding
+privacy and search-publication contract is in
+[`docs/ANALYTICS_AND_SEARCH_MODEL.md`](docs/ANALYTICS_AND_SEARCH_MODEL.md).
 
 Run the same strict gate used by the local Git hook:
 
