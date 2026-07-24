@@ -49,6 +49,13 @@ Rules:
 - [ ] Add a manually triggered, environment-protected Vercel deployment workflow only after the
   deployment hold is explicitly lifted; keep `vercel.json` automatic deployments disabled and
   require hosted security, privacy, accessibility, and release checks before promotion.
+- [ ] After every three reviewed milestones, run a deployment checkpoint: reconcile release
+  version, CI evidence, privacy/security status, runtime logs, rollback target, and Vercel
+  promotion approval before deploying.
+- [ ] Rewrite `README.md` to professional-grade current-state documentation: accurately describe
+  implemented workflows, known limitations, local commands, Docker services, validation evidence,
+  release/deployment state, troubleshooting, logs, privacy boundaries, and links to the canonical
+  operating documents. Keep it synchronized after each milestone.
 - [ ] Add a real assessment document export contract (PDF/download) with print-layout and
   answer-key snapshots before calling generation production-ready.
 - [x] Document the current local web workflow, Docker startup, validation commands, prototype
