@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a user-centered, evidence-backed improvement
+title: "feat: "
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Who needs this and what outcome is blocked?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the complete workflow, including failure and offline states.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and success criteria
+      description: Link research, curriculum sources, design evidence, and acceptance criteria.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safeguards
+    attributes:
+      label: Safeguards
+      options:
+        - label: I considered privacy, child safety, accessibility, security, and deployment scope.
+          required: true

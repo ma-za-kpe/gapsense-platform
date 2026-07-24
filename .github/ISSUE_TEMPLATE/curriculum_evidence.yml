@@ -1,0 +1,40 @@
+name: Curriculum evidence
+description: Track an official curriculum source or extraction gap
+title: "curriculum: "
+labels: [curriculum, evidence-needed]
+body:
+  - type: dropdown
+    id: country
+    attributes:
+      label: Country
+      options:
+        - Ghana
+        - Uganda
+    validations:
+      required: true
+  - type: input
+    id: authority
+    attributes:
+      label: Authority
+      description: NaCCA, NCDC, MoES, or another official body.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Official source URL or artifact path
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Level, subject, version, and extraction scope
+    validations:
+      required: true
+  - type: textarea
+    id: review
+    attributes:
+      label: Review and licensing notes
+      description: Record provenance, permission, reviewer, and unresolved gaps.
+    validations:
+      required: true
