@@ -45,14 +45,11 @@ jobs:
           if [[ "$EVENT_NAME" == "pull_request" ]]; then
             mode="docs"
             while IFS= read -r path; do
-              case "$path" in
-                *.md|docs/*|.github/ISSUE_TEMPLATE/*)
-                  ;;
-                *)
-                  mode="full"
-                  break
-                  ;;
-              esac
+              if [[ "$path" == *.md || "$path" == docs/* || "$path" == .github/ISSUE_TEMPLATE/* ]]; then
+                continue
+              fi
+              mode="full"
+              break
             done < <(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
           fi
           echo "mode=$mode" >> "$GITHUB_OUTPUT"
