@@ -40,6 +40,8 @@ Rules:
   evidence records, beginning with Ghana primary Mathematics and Uganda Primary 1–3 Mathematics.
 - [ ] Add a real assessment document export contract (PDF/download) with print-layout and
   answer-key snapshots before calling generation production-ready.
+- [x] Document the current local web workflow, Docker startup, validation commands, prototype
+  boundaries, and next evidence-backed slice in `docs/LOCAL_WEB_PROTOTYPE_GUIDE.md`.
 - [ ] Make the web experience excellent on mobile, tablet, and desktop, including
   low-bandwidth and intermittent-connectivity conditions.
 - [ ] Support teachers first while researching the needs of learners, parents,
