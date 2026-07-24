@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 
 import type { Analytics } from "../analytics/client";
 import {
@@ -26,14 +26,55 @@ const goals = Object.entries(goalProfiles) as readonly (readonly [
   (typeof goalProfiles)[Goal],
 ])[];
 
+const starterCatalog = {
+  ghana: {
+    levels: ["Basic 1", "Basic 2", "Basic 3", "Basic 4", "Basic 5", "Basic 6"],
+    subjects: ["Mathematics", "English Language", "Science"],
+  },
+  uganda: { levels: ["Primary 1", "Primary 2", "Primary 3"], subjects: ["Mathematics"] },
+} as const;
+
+const starterQuestions = {
+  Mathematics: [
+    "Write the number that comes immediately after 19.",
+    "Amina has 7 mangoes and receives 5 more. How many mangoes does she have now?",
+    "Circle the greater number: 34 or 43.",
+    "Share 12 pencils equally between 3 learners. How many does each learner get?",
+    "Complete the pattern: 2, 4, 6, __, __.",
+  ],
+  "English Language": [
+    "Write one sentence that uses the word ‘school’.",
+    "Circle the noun: The bright bird sings.",
+    "Write the plural of ‘book’.",
+    "Put these words in order: is / kind / Kojo.",
+    "Write one word that rhymes with ‘cat’.",
+  ],
+  Science: [
+    "Name one source of light.",
+    "Which sense do we use to hear sounds?",
+    "Name one thing a plant needs to grow.",
+    "Is water a solid, liquid, or gas at room temperature?",
+    "Name one animal that lives in your community.",
+  ],
+} as const;
+const answerGuidance: Record<keyof typeof starterQuestions, readonly string[]> = {
+  Mathematics: ["20", "12 mangoes", "43", "4 pencils", "8, 10"],
+  "English Language": ["Any clear sentence", "bird", "books", "Kojo is kind.", "bat (example)"],
+  Science: ["The sun (example)", "hearing", "water (example)", "liquid", "Any local animal"],
+};
+
 type AssessmentPlannerProps = {
   readonly analytics: Analytics;
 };
 
 export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.JSX.Element {
   const [state, dispatch] = useReducer(plannerReducer, initialPlan);
+  const [level, setLevel] = useState("Basic 1");
+  const [subject, setSubject] = useState<keyof typeof starterQuestions>("Mathematics");
+  const [generated, setGenerated] = useState(false);
   const complete = isPlanComplete(state);
   const reviewedPlan = state.reviewed && complete ? state : null;
+  const catalog = state.country === null ? starterCatalog.ghana : starterCatalog[state.country];
 
   return (
     <section className="planner section-shell" id="planner" aria-labelledby="planner-heading">
@@ -99,6 +140,9 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
                   checked={state.country === value}
                   onChange={() => {
                     analytics.track("planner_country_selected");
+                    setLevel(starterCatalog[value].levels[0]);
+                    setSubject(starterCatalog[value].subjects[0]);
+                    setGenerated(false);
                     dispatch({ type: "select-country", country: value });
                   }}
                 />
@@ -171,15 +215,92 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
             </p>
             <p>
               {countryProfiles[reviewedPlan.country].authority} curriculum inventory is still being
-              verified. GapSense will not invent curriculum choices or generate unsupported
-              material. The next step unlocks as reviewed evidence becomes available.
+              verified. This local prototype uses a small, deterministic starter bank while that
+              work continues; it never presents this draft as an official examination.
             </p>
+            <div className="starter-builder" aria-label="Build a starter activity">
+              <label>
+                Level
+                <select
+                  value={level}
+                  onChange={(event) => {
+                    setLevel(event.target.value);
+                    setGenerated(false);
+                  }}
+                >
+                  {catalog.levels.map((option) => (
+                    <option key={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Subject
+                <select
+                  value={subject}
+                  onChange={(event) => {
+                    setSubject(event.target.value as keyof typeof starterQuestions);
+                    setGenerated(false);
+                  }}
+                >
+                  {catalog.subjects.map((option) => (
+                    <option key={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="button button--primary"
+                type="button"
+                onClick={() => setGenerated(true)}
+              >
+                Generate starter activity <span aria-hidden="true">→</span>
+              </button>
+            </div>
+            {generated ? (
+              <div className="starter-activity" aria-live="polite">
+                <div className="starter-activity__header">
+                  <div>
+                    <span className="eyebrow">Local draft · {level}</span>
+                    <h4>
+                      {subject} {goalProfiles[reviewedPlan.goal].label}
+                    </h4>
+                  </div>
+                  <button
+                    className="button button--secondary"
+                    type="button"
+                    onClick={() => window.print()}
+                  >
+                    Print / save PDF
+                  </button>
+                </div>
+                <ol>
+                  {starterQuestions[subject].map((question) => (
+                    <li key={question}>
+                      {question}
+                      <span className="answer-line" />
+                    </li>
+                  ))}
+                </ol>
+                <details>
+                  <summary>Show answer guidance</summary>
+                  <ol>
+                    {answerGuidance[subject].map((answer) => (
+                      <li key={answer}>{answer}</li>
+                    ))}
+                  </ol>
+                </details>
+                <p className="starter-activity__note">
+                  Prototype content for local testing. Curriculum alignment and educator review are
+                  tracked separately in the evidence repository.
+                </p>
+              </div>
+            ) : null}
           </div>
           <button
             className="button button--secondary"
             type="button"
             onClick={() => {
               analytics.track("planner_reset");
+              setGenerated(false);
               dispatch({ type: "reset" });
             }}
           >
