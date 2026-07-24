@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.2.0...v0.3.0) (2026-07-24)
+
+
+### Features
+
+* **web:** expose curriculum evidence and sharing ([2f87b90](https://github.com/ma-za-kpe/gapsense-platform/commit/2f87b9020b0422279b151d177991bf25cde03284))
+
 ## [0.2.0](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.1.0...v0.2.0) (2026-07-24)
 
 
