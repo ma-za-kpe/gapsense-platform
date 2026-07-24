@@ -38,6 +38,32 @@ Rules:
   desktop/mobile tests, and the local draft flow is covered by unit and accessibility tests.
 - [ ] Replace the deterministic starter bank with versioned, educator-reviewed curriculum
   evidence records, beginning with Ghana primary Mathematics and Uganda Primary 1–3 Mathematics.
+- [x] Add a teacher-facing curriculum evidence explorer so users can inspect country, authority,
+  phase, source status, and question-organization concepts before trusting generated material.
+  Keep raw proprietary documents out of the public UI. Evidence: the loaded country panels now
+  expose expandable Ghana/Uganda organization maps, authority links, and generated-draft provenance.
+- [x] Add a release-managed “latest version” link in the public footer, backed by the repository
+  Releases page and kept compatible with Release Please; verify it in UI, accessibility, and SEO
+  checks without hard-coding a stale version number. Evidence: footer contract test and Docker
+  frontend validation.
+- [ ] Add a manually triggered, environment-protected Vercel deployment workflow only after the
+  deployment hold is explicitly lifted; keep `vercel.json` automatic deployments disabled and
+  require hosted security, privacy, accessibility, and release checks before promotion.
+- [ ] After every three reviewed milestones, run a deployment checkpoint: reconcile release
+  version, CI evidence, privacy/security status, runtime logs, rollback target, and Vercel
+  promotion approval before deploying.
+- [ ] Rewrite `README.md` to professional-grade current-state documentation: accurately describe
+  implemented workflows, known limitations, local commands, Docker services, validation evidence,
+  release/deployment state, troubleshooting, logs, privacy boundaries, and links to the canonical
+  operating documents. Keep it synchronized after each milestone.
+- [ ] Raise CI/CD to open-source professional standard: split fast checks from expensive Docker
+  gates, use dependency and Docker-layer caching safely, cancel superseded branch runs, pin every
+  action by immutable SHA, publish test/coverage/security artifacts, surface flaky-test and runtime
+  metrics, enforce least-privilege permissions, protect release/deployment environments, and keep
+  required checks green without wasting hosted minutes.
+- [ ] Establish professional contribution hygiene: pull-request and issue templates, reproducible
+  checklists, security-report routing, conventional titles, release-note prompts, screenshots or
+  evidence links for UX changes, curriculum provenance fields, and consistent labels/milestones.
 - [ ] Add a real assessment document export contract (PDF/download) with print-layout and
   answer-key snapshots before calling generation production-ready.
 - [x] Document the current local web workflow, Docker startup, validation commands, prototype
@@ -48,6 +74,11 @@ Rules:
   curriculum specialists, school leaders, and education-system partners.
 - [ ] Complete official curriculum coverage for all in-scope subjects and levels in
   Ghana and Uganda.
+- [ ] Audit and model Uganda secondary as O’Level (lower secondary / UCE) and A’Level (advanced
+  secondary / UACE), rather than generic “secondary”; inventory NCDC O-Level and A-Level sources,
+  subjects, combinations, examination links, and curriculum-version dates. Research lead:
+  NCDC’s official resources catalogue separates O Level Curriculum and A Level Curriculum:
+  [NCDC resources catalogue](https://ncdc.go.ug/resource/).
 - [~] Maintain 100% line and branch coverage for application-owned executable code.
 - [ ] Use local mock services and local authentication until deployment is approved.
 - [~] Use local Ollama as the active AI runtime behind a provider abstraction; never make a local

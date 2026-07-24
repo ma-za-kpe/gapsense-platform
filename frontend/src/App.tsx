@@ -74,7 +74,16 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
             <div className="hero__copy">
               <div className="hero__kicker reveal reveal--one">
                 <span className="status-orb" aria-hidden="true" />
-                Built by Maku for Africa, grounded first in Ghana and Uganda.
+                Built by{" "}
+                <a
+                  className="attribution-link"
+                  href="https://startuptribunal.com/maku"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Maku
+                </a>{" "}
+                for Africa, grounded first in Ghana and Uganda.
               </div>
               <h1 id="hero-title" className="reveal reveal--two">
                 Find the next <span>learning step.</span>
@@ -241,9 +250,29 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
         <div className="section-shell site-footer__inner">
           <BrandMark />
           <p>
-            <strong>Built by Maku for Africa.</strong> Not an official examination provider.
+            <strong>
+              Built by{" "}
+              <a
+                className="attribution-link"
+                href="https://startuptribunal.com/maku"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Maku
+              </a>{" "}
+              for Africa.
+            </strong>{" "}
+            Not an official examination provider.
           </p>
           <a href="#top">Back to top ↑</a>
+          <a
+            className="release-link"
+            href="https://github.com/ma-za-kpe/gapsense-platform/releases"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Latest version <span aria-hidden="true">↗</span>
+          </a>
         </div>
       </footer>
     </>

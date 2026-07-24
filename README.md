@@ -11,6 +11,22 @@ coverage across all subjects and levels yet. WhatsApp delivery and production
 deployment are explicitly on hold while the web product, curriculum evidence,
 safety controls, and user experience are built properly.
 
+## Current product status
+
+The local web prototype currently supports an anonymous planning journey for Ghana and Uganda:
+
+- role, country, purpose, level, and subject selection;
+- a deterministic five-question starter activity with answer guidance;
+- visible question-organization and provenance notes;
+- whole-page print/save-to-PDF styling;
+- native device sharing with a privacy-safe clipboard fallback;
+- expandable country evidence maps and official authority links;
+- explicit Ghana KG, Basic, JHS, and SHS labels and Uganda Early Childhood, Primary, O-Level,
+  and A-Level labels.
+
+The starter bank is prototype content, not an official examination. Official curriculum evidence,
+educator review, and production-grade generation remain open work in `TASKS.md`.
+
 ## Current Direction
 
 - Web first, with excellent mobile, tablet, and desktop experiences.
@@ -55,6 +71,35 @@ Then use:
 - API documentation: <http://localhost:8000/docs>
 - liveness: <http://localhost:8000/v1/health/live>
 - readiness: <http://localhost:8000/v1/health/ready>
+
+For the complete user journey and known boundaries, see
+[`docs/LOCAL_WEB_PROTOTYPE_GUIDE.md`](docs/LOCAL_WEB_PROTOTYPE_GUIDE.md).
+
+## Logs and troubleshooting
+
+Inspect long-running services by name; do not guess at detached container state:
+
+```powershell
+docker compose logs --tail 80 web
+docker compose logs --tail 80 frontend
+docker compose ps
+docker stats --no-stream
+```
+
+If curriculum files change, restart `web` so the immutable coverage snapshot is rebuilt. If the
+frontend appears stale, recreate it with `docker compose up -d --build --wait frontend`.
+The browser gate uses the dedicated Playwright image, not the lightweight development image:
+
+```powershell
+docker compose --profile test run --rm browser-tests
+```
+
+## Release and deployment state
+
+Release Please owns version and changelog automation. The footer links to the repository Releases
+page rather than hard-coding a version that can go stale. Automatic Vercel deployments are disabled
+in `vercel.json`; no production deployment is authorized until the deployment checkpoint, privacy
+review, curriculum evidence gate, and protected promotion workflow are complete.
 
 Analytics and search indexing are disabled by default. An operator may exercise the ephemeral,
 property-free aggregate analytics contract locally by setting `GAPSENSE_ANALYTICS_MODE` to

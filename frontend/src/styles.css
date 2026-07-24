@@ -1056,6 +1056,16 @@ a {
   margin-top: var(--space-5);
   max-width: 42rem;
 }
+.attribution-link {
+  color: inherit;
+  font-weight: 800;
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.18em;
+}
+.release-link {
+  color: var(--green-700);
+  font-weight: 760;
+}
 .starter-builder label {
   display: grid;
   gap: var(--space-2);
@@ -1085,6 +1095,16 @@ a {
   gap: var(--space-4);
   align-items: start;
 }
+.starter-activity__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.share-status {
+  margin: var(--space-3) 0 0;
+  color: var(--green-700) !important;
+  font-weight: 700;
+}
 .starter-activity h4 {
   margin: 0.35rem 0 0;
   font-size: 1.25rem;
@@ -1103,9 +1123,58 @@ a {
   margin-top: var(--space-4);
   color: var(--ink-700);
 }
+.activity-provenance {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border-left: 3px solid var(--green-500);
+  background: var(--surface-subtle);
+  color: var(--ink-700);
+  font-size: 0.78rem;
+}
+.activity-provenance strong {
+  color: var(--ink-900);
+}
 .starter-activity__note {
   font-size: 0.78rem !important;
   color: var(--ink-600) !important;
+}
+
+.curriculum-map {
+  margin-top: var(--space-5);
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-4);
+}
+.curriculum-map summary {
+  cursor: pointer;
+  color: var(--ink-800);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+.curriculum-map__body {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  color: var(--ink-700);
+  font-size: 0.8rem;
+}
+.curriculum-map__body ol {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.4rem;
+}
+.curriculum-map__body li::marker {
+  color: var(--green-700);
+  font-weight: 760;
+}
+.curriculum-map__body p {
+  margin: 0;
+}
+.curriculum-map__body a {
+  color: var(--green-700);
+  font-weight: 760;
 }
 @media (max-width: 40rem) {
   .starter-activity__header {
@@ -1695,6 +1764,77 @@ a {
   .hero__actions,
   .planner__form {
     display: none;
+  }
+
+  .site-header,
+  .hero__actions,
+  .button,
+  .text-button,
+  .coverage-alert,
+  .readiness-banner,
+  .country-panel__status,
+  .curriculum-map summary {
+    display: none !important;
+  }
+
+  .site-main,
+  .hero,
+  .planner,
+  .country-coverage,
+  .country-showcase,
+  .plan-review,
+  .starter-activity {
+    display: block;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .hero__inner,
+  .section-shell,
+  .country-showcase {
+    padding: 1rem 0;
+  }
+
+  .country-showcase {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .curriculum-map,
+  .curriculum-map__body,
+  .starter-activity details,
+  .starter-activity details[open] {
+    display: block;
+  }
+
+  .starter-activity details > summary {
+    display: block;
+    margin-top: 1rem;
+    font-weight: 700;
+  }
+
+  .starter-activity details > summary::after {
+    content: " (included in this printout)";
+    font-weight: 400;
+  }
+
+  .starter-activity__header {
+    border-bottom: 2px solid #000;
+    padding-bottom: 0.75rem;
+  }
+
+  .starter-activity__note {
+    border-top: 1px solid #000;
+    padding-top: 0.75rem;
+  }
+
+  .plan-review,
+  .starter-activity {
+    break-inside: avoid;
   }
 
   body {

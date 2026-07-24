@@ -101,10 +101,15 @@ describe("GapSense web entry experience", () => {
     const { container } = renderReadyApp();
 
     expect(await screen.findByText("Curriculum evidence connected")).toBeVisible();
-    expect(screen.getByText("Built by Maku for Africa.")).toBeVisible();
-    expect(
-      screen.getByText("Built by Maku for Africa, grounded first in Ghana and Uganda."),
-    ).toBeVisible();
+    expect(screen.getAllByRole("link", { name: "Maku" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Maku" })[0]).toHaveAttribute(
+      "href",
+      "https://startuptribunal.com/maku",
+    );
+    expect(screen.getByRole("link", { name: /Latest version/ })).toHaveAttribute(
+      "href",
+      "https://github.com/ma-za-kpe/gapsense-platform/releases",
+    );
     expect(container).not.toHaveTextContent(/UNICEF/i);
   });
 
@@ -215,6 +220,32 @@ describe("GapSense web entry experience", () => {
     await user.click(screen.getByRole("button", { name: "Print / save PDF" }));
     expect(print).toHaveBeenCalledOnce();
     print.mockRestore();
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", { configurable: true, value: share });
+    await user.click(screen.getByRole("button", { name: "Share" }));
+    expect(share).toHaveBeenCalledOnce();
+    expect(await screen.findByRole("status")).toHaveTextContent("Share sheet opened");
+    Reflect.deleteProperty(navigator, "share");
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    await user.click(screen.getByRole("button", { name: "Share" }));
+    expect(writeText).toHaveBeenCalledOnce();
+    expect(await screen.findByRole("status")).toHaveTextContent("copied to your clipboard");
+    Reflect.deleteProperty(navigator, "clipboard");
+    const shareRejected = vi.fn().mockRejectedValue(new Error("share dismissed"));
+    Object.defineProperty(navigator, "share", { configurable: true, value: shareRejected });
+    await user.click(screen.getByRole("button", { name: "Share" }));
+    await waitFor(() => expect(shareRejected).toHaveBeenCalledOnce());
+    Reflect.deleteProperty(navigator, "share");
+    const writeRejected = vi.fn().mockRejectedValue(new Error("clipboard denied"));
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: writeRejected },
+    });
+    await user.click(screen.getByRole("button", { name: "Share" }));
+    await waitFor(() => expect(writeRejected).toHaveBeenCalledOnce());
+    Reflect.deleteProperty(navigator, "clipboard");
+    await user.click(screen.getByRole("button", { name: "Share" }));
     await user.click(screen.getByText("Show answer guidance"));
     expect(screen.getByText("liquid")).toBeVisible();
   });

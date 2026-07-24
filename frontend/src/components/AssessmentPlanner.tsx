@@ -72,6 +72,7 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
   const [level, setLevel] = useState("Basic 1");
   const [subject, setSubject] = useState<keyof typeof starterQuestions>("Mathematics");
   const [generated, setGenerated] = useState(false);
+  const [shareStatus, setShareStatus] = useState<"idle" | "shared" | "copied">("idle");
   const complete = isPlanComplete(state);
   const reviewedPlan = state.reviewed && complete ? state : null;
   const catalog = state.country === null ? starterCatalog.ghana : starterCatalog[state.country];
@@ -143,6 +144,7 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
                     setLevel(starterCatalog[value].levels[0]);
                     setSubject(starterCatalog[value].subjects[0]);
                     setGenerated(false);
+                    setShareStatus("idle");
                     dispatch({ type: "select-country", country: value });
                   }}
                 />
@@ -264,13 +266,39 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
                       {subject} {goalProfiles[reviewedPlan.goal].label}
                     </h4>
                   </div>
-                  <button
-                    className="button button--secondary"
-                    type="button"
-                    onClick={() => window.print()}
-                  >
-                    Print / save PDF
-                  </button>
+                  <div className="starter-activity__actions">
+                    <button
+                      className="button button--secondary"
+                      type="button"
+                      onClick={() => window.print()}
+                    >
+                      Print / save PDF
+                    </button>
+                    <button
+                      className="button button--secondary"
+                      type="button"
+                      onClick={() => {
+                        const shareText = `GapSense ${countryProfiles[reviewedPlan.country].name} ${level} ${subject} ${goalProfiles[reviewedPlan.goal].label} · local prototype`;
+                        if (typeof navigator.share === "function") {
+                          void navigator
+                            .share({ title: "GapSense starter activity", text: shareText })
+                            .then(() => setShareStatus("shared"))
+                            .catch(() => undefined);
+                        } else {
+                          const clipboard = Reflect.get(navigator, "clipboard") as
+                            { readonly writeText?: (text: string) => Promise<void> } | undefined;
+                          if (typeof clipboard?.writeText === "function") {
+                            void clipboard
+                              .writeText(shareText)
+                              .then(() => setShareStatus("copied"))
+                              .catch(() => undefined);
+                          }
+                        }
+                      }}
+                    >
+                      Share
+                    </button>
+                  </div>
                 </div>
                 <ol>
                   {starterQuestions[subject].map((question) => (
@@ -280,6 +308,17 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
                     </li>
                   ))}
                 </ol>
+                <aside className="activity-provenance" aria-label="Question organization">
+                  <strong>How this draft is organised</strong>
+                  <span>
+                    Country: {countryProfiles[reviewedPlan.country].name} · Authority:{" "}
+                    {countryProfiles[reviewedPlan.country].authority}
+                  </span>
+                  <span>
+                    Level: {level} · Subject: {subject}
+                  </span>
+                  <span>Source status: local prototype bank; educator review pending</span>
+                </aside>
                 <details>
                   <summary>Show answer guidance</summary>
                   <ol>
@@ -292,6 +331,13 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
                   Prototype content for local testing. Curriculum alignment and educator review are
                   tracked separately in the evidence repository.
                 </p>
+                {shareStatus !== "idle" ? (
+                  <p className="share-status" role="status">
+                    {shareStatus === "shared"
+                      ? "Share sheet opened."
+                      : "Share text copied to your clipboard."}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -301,6 +347,7 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
             onClick={() => {
               analytics.track("planner_reset");
               setGenerated(false);
+              setShareStatus("idle");
               dispatch({ type: "reset" });
             }}
           >

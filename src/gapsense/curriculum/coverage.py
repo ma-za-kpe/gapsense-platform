@@ -70,8 +70,8 @@ COUNTRY_DEFINITIONS: tuple[CountryDefinition, ...] = (
             EducationLevel("kindergarten", "Kindergarten", "Key Phase 1"),
             EducationLevel("lower_primary", "Lower Primary", "Key Phase 2 (Basic 1–3)"),
             EducationLevel("upper_primary", "Upper Primary", "Key Phase 3 (Basic 4–6)"),
-            EducationLevel("junior_high", "Junior High School", "Key Phase 4"),
-            EducationLevel("senior_high", "Senior High School", "Key Phase 5"),
+            EducationLevel("junior_high", "JHS (Basic 7–9)", "Key Phase 4"),
+            EducationLevel("senior_high", "SHS", "Key Phase 5"),
         ),
     ),
     CountryDefinition(
@@ -85,8 +85,8 @@ COUNTRY_DEFINITIONS: tuple[CountryDefinition, ...] = (
             EducationLevel("primary_1_3", "Primary One–Three", "Primary Phase 1"),
             EducationLevel("primary_4", "Primary Four", "Primary Phase 2 transition"),
             EducationLevel("primary_5_7", "Primary Five–Seven", "Primary Phase 3"),
-            EducationLevel("lower_secondary", "Lower Secondary", "UCE cycle"),
-            EducationLevel("upper_secondary", "Upper Secondary", "UACE cycle"),
+            EducationLevel("lower_secondary", "O-Level (S1–S4)", "UCE cycle"),
+            EducationLevel("upper_secondary", "A-Level (S5–S6)", "UACE cycle"),
         ),
     ),
 )

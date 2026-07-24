@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible product or engineering defect
+title: "bug: "
+labels: [bug, needs-triage]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the failure and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Give exact Docker commands, URL, inputs, and smallest reproduction.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Release or commit
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add logs, screenshots, traces, and failing tests. Never include secrets or personal data.
+    validations:
+      required: true

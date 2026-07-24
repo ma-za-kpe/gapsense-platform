@@ -45,10 +45,11 @@ test("renders a truthful, accessible Ghana and Uganda entry experience", async (
   await expect(
     page.getByText("No account. No learner data. No hidden AI dependency."),
   ).toBeVisible();
-  await expect(page.getByText(/Built by Maku for Africa\./)).toBeVisible();
-  await expect(
-    page.getByText("Built by Maku for Africa, grounded first in Ghana and Uganda."),
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Maku" })).toHaveCount(2);
+  await expect(page.getByRole("link", { name: "Maku" }).first()).toHaveAttribute(
+    "href",
+    "https://startuptribunal.com/maku",
+  );
   await expect(page.locator("body")).not.toContainText(/UNICEF/i);
 
   const accessibility = await new AxeBuilder({ page })
