@@ -14,6 +14,33 @@ const fileStatus = (country: CountryCoverage): string => {
   return `${String(country.repository_file_count)} repository ${country.repository_file_count === 1 ? "file" : "files"} located`;
 };
 
+const organizationExamples = {
+  GH: {
+    title: "NaCCA standards-based structure",
+    steps: [
+      "Country and authority",
+      "Key phase / Basic level",
+      "Subject",
+      "Strand and sub-strand",
+      "Content standard and indicator",
+      "Question, answer key, and review record",
+    ],
+    note: "Ghana evidence is being catalogued from NaCCA standards and official subject documents.",
+  },
+  UG: {
+    title: "NCDC phase-based structure",
+    steps: [
+      "Country and authority",
+      "Curriculum phase / primary level",
+      "Learning area or subject",
+      "Theme, topic, or strand",
+      "Learning outcome and prerequisite",
+      "Question, answer key, and review record",
+    ],
+    note: "Uganda Primary 1–3 uses thematic learning; later primary and secondary phases use more subject-based structures.",
+  },
+} as const;
+
 function LoadedCountryPanel({ country }: { readonly country: CountryCoverage }): React.JSX.Element {
   const accent = country.code === "GH" ? "gold" : "coral";
   const authorityLabel = country.code === "GH" ? "NaCCA" : "NCDC";
@@ -40,6 +67,21 @@ function LoadedCountryPanel({ country }: { readonly country: CountryCoverage }):
           <small>Extraction and educator review not verified</small>
         </div>
       </div>
+      <details className="curriculum-map">
+        <summary>See how questions are organised</summary>
+        <div className="curriculum-map__body">
+          <strong>{organizationExamples[country.code].title}</strong>
+          <ol>
+            {organizationExamples[country.code].steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+          <p>{organizationExamples[country.code].note}</p>
+          <a href={country.authority_url} target="_blank" rel="noreferrer">
+            Open {country.name} authority source <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </details>
     </article>
   );
 }

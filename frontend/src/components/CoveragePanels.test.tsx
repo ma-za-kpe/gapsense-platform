@@ -57,6 +57,24 @@ describe("coverage panels", () => {
     expect(screen.getAllByText("Extraction and educator review not verified")).toHaveLength(2);
   });
 
+  it("explains the evidence-to-question organization for teachers", async () => {
+    const user = userEvent.setup();
+    render(<CoveragePanels state={{ status: "loaded", report }} onRetry={vi.fn()} />);
+
+    const firstToggle = screen.getAllByText("See how questions are organised").at(0);
+    if (firstToggle === undefined) {
+      throw new Error("Ghana curriculum map toggle was not rendered");
+    }
+    await user.click(firstToggle);
+
+    expect(screen.getByText("NaCCA standards-based structure")).toBeVisible();
+    expect(screen.getByText("Content standard and indicator")).toBeVisible();
+    expect(screen.getByRole("link", { name: /Open Ghana authority source/ })).toHaveAttribute(
+      "href",
+      "https://nacca.gov.gh/curriculum/",
+    );
+  });
+
   it("keeps country context visible and supports recovery when unavailable", async () => {
     const user = userEvent.setup();
     const onRetry = vi.fn();

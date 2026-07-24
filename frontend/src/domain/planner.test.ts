@@ -69,5 +69,9 @@ describe("assessment planner domain", () => {
       readiness: "inventory-in-progress",
     });
     expect(countryProfiles.ghana.levels).not.toEqual(countryProfiles.uganda.levels);
+    expect(countryProfiles.ghana.levels).toContain("JHS (Basic 7–9)");
+    expect(countryProfiles.ghana.levels).toContain("SHS");
+    expect(countryProfiles.uganda.levels).toContain("O-Level (S1–S4)");
+    expect(countryProfiles.uganda.levels).toContain("A-Level (S5–S6)");
   });
 });
