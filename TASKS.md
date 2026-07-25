@@ -719,6 +719,10 @@ Rules:
 - [ ] Implement country, phase, subject, and curriculum-version selection.
 - [ ] Implement the full curriculum explorer page with interactive prerequisite visualization
   beyond the current planner lineage panel.
+- [ ] Move generated assessment output to a focused `/assessment` workspace so the landing page
+  remains an entry point, not the document viewer; preserve print, download, share, and lineage.
+- [ ] Expand the `/curriculum` workspace into the complete country × phase × level × subject
+  evidence catalogue, with explicit source-document links and a visible per-cell completion queue.
 - [ ] Implement teacher class and learner setup using synthetic/local data.
 - [ ] Implement web-based diagnostic-session creation and continuation.
 - [ ] Implement response capture for text and structured answers first.

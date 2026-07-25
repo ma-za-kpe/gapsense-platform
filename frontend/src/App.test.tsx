@@ -35,6 +35,17 @@ const coveragePayload = {
           review_status: "not_verified",
         },
       ],
+      coverage_matrix: [
+        {
+          level_identifier: "lower_primary",
+          level_name: "Lower Primary",
+          phase: "primary",
+          subject_identifier: "mathematics",
+          subject_name: "Mathematics",
+          status: "located",
+          evidence_scope: "phase_only",
+        },
+      ],
     },
     {
       code: "UG",
@@ -50,6 +61,17 @@ const coveragePayload = {
           name: "Primary One–Three",
           official_phase: "Primary Phase 1",
           review_status: "not_verified",
+        },
+      ],
+      coverage_matrix: [
+        {
+          level_identifier: "primary_1_3",
+          level_name: "Primary One–Three",
+          phase: "primary",
+          subject_identifier: "mathematics",
+          subject_name: "Mathematics",
+          status: "missing",
+          evidence_scope: "phase_only",
         },
       ],
     },
@@ -151,6 +173,7 @@ describe("GapSense web entry experience", () => {
   });
 
   it("introduces both countries and reports connected local evidence", async () => {
+    const user = userEvent.setup();
     renderReadyApp();
 
     expect(
@@ -162,15 +185,50 @@ describe("GapSense web entry experience", () => {
     expect(await screen.findByText("Curriculum evidence connected")).toBeVisible();
     expect(await screen.findByText("74 repository files located")).toBeVisible();
     expect(screen.getByText("23 repository files located")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Curriculum" })).toHaveAttribute("href", "#curriculum");
+    const matrixSummary = screen.getAllByText("See level and subject evidence matrix")[0];
+    if (matrixSummary === undefined) throw new Error("matrix summary missing");
+    await user.click(matrixSummary);
+    await user.click(matrixSummary);
+    expect(screen.getByRole("link", { name: "Curriculum" })).toHaveAttribute("href", "/curriculum");
     expect(
       screen.getByRole("heading", { level: 2, name: "Everything useful is one click away." }),
     ).toBeVisible();
     expect(screen.getByRole("link", { name: /Inspect curriculum evidence/ })).toHaveAttribute(
       "href",
-      "#curriculum",
+      "/curriculum",
     );
     expect(screen.getByRole("heading", { level: 2, name: /See what is located/ })).toBeVisible();
+  });
+
+  it("renders the curriculum workspace as a separate page", async () => {
+    window.history.pushState({}, "", "/curriculum");
+    renderReadyApp();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: /Every level, subject/ }),
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: /Back to GapSense home/ })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    window.history.pushState({}, "", "/");
+  });
+
+  it("can retry coverage from the standalone curriculum workspace", async () => {
+    window.history.pushState({}, "", "/curriculum");
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn<typeof fetch>()
+        .mockImplementation((input) =>
+          requestUrl(input).includes("/curriculum/coverage")
+            ? Promise.reject(new TypeError("offline"))
+            : Promise.resolve(readyResponse()),
+        ),
+    );
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: "Retry coverage details" }));
+    window.history.pushState({}, "", "/");
   });
 
   it("uses Maku's Africa-first attribution without institutional branding", async () => {
