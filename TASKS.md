@@ -1,6 +1,6 @@
 # GapSense Working List
 
-**Canonical project execution list.** Last reconciled: 2026-07-23.
+**Canonical project execution list.** Last reconciled: 2026-07-24.
 
 This list is deliberately never finished. A completed task stays as evidence; every
 research finding, validation failure, user observation, curriculum gap, design debt
@@ -55,10 +55,12 @@ Rules:
 - [ ] After every three reviewed milestones, run a deployment checkpoint: reconcile release
   version, CI evidence, privacy/security status, runtime logs, rollback target, and Vercel
   promotion approval before deploying.
-- [ ] Rewrite `README.md` to professional-grade current-state documentation: accurately describe
+- [x] Rewrite `README.md` to professional-grade current-state documentation: accurately describe
   implemented workflows, known limitations, local commands, Docker services, validation evidence,
   release/deployment state, troubleshooting, logs, privacy boundaries, and links to the canonical
-  operating documents. Keep it synchronized after each milestone.
+  operating documents. Keep it synchronized after each milestone. Evidence: current `README.md`
+  documents the local web workflow, Docker runtime, logs, troubleshooting, release/deployment hold,
+  privacy boundaries, local AI, repository split, and canonical operating documents.
 - [~] Raise CI/CD to open-source professional standard: split fast checks from expensive Docker
   gates, use dependency and Docker-layer caching safely, cancel superseded branch runs, pin every
   action by immutable SHA, publish test/coverage/security artifacts, surface flaky-test and runtime
@@ -69,9 +71,10 @@ Rules:
   artifact measurements only after baseline runtime evidence exists. Evidence for this slice:
   changed-file classification now uses explicit Bash predicates (no overlapping shell `case` arms),
   and Docker policy, actionlint, secret scan, Markdown lint, and whitespace checks pass locally.
-- [!] Full local pre-commit rebuild is currently slow/hanging in `docker compose build web` after
-  the existing image was removed; reproduce and resolve the Docker build-time baseline before
-  claiming this CI optimization slice complete. Do not bypass the hook in normal work.
+- [x] Resolve the local Docker rebuild stall that previously blocked strict contribution hooks.
+  Evidence: Docker Desktop recovery plus cache reuse restored the complete pre-commit and pre-push
+  gates; the subject-inventory and secondary-planner branches both passed the strict gate and hosted
+  Required checks. The validation hook now pins visual tests to the public fixture data boundary.
 - [ ] Measure the current CI Docker rebuild/runtime baseline and add a bounded cache strategy only if
   it reduces hosted minutes without weakening reproducibility or leaking dependency state.
 - [x] Establish professional contribution hygiene: pull-request and issue templates, reproducible
