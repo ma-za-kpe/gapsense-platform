@@ -23,7 +23,7 @@ def test_detail_projects_standards_indicators_and_strands(tmp_path: Path) -> Non
         json.dumps(
             {
                 "strands": {"1": {"name": "Number"}, "bad": "ignored"},
-                "sub_strands_by_phase": {"B1_B3": {"1.1": "Whole numbers"}},
+                "sub_strands_by_phase": {"B1_B3": {"1.1": "Whole numbers"}, "bad": "ignored"},
                 "nodes": {
                     "B1.1.1.1": {
                         "code": "B1.1.1.1",
