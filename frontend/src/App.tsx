@@ -4,6 +4,7 @@ import { browserAnalytics, type Analytics } from "./analytics/client";
 import { AssessmentPlanner } from "./components/AssessmentPlanner";
 import { BrandMark } from "./components/BrandMark";
 import { CoveragePanels } from "./components/CoveragePanels";
+import { CurriculumExplorer } from "./components/CurriculumExplorer";
 import { ReadinessBanner } from "./components/ReadinessBanner";
 import { useCoverage } from "./hooks/useCoverage";
 import { useReadiness } from "./hooks/useReadiness";
@@ -17,6 +18,7 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
   const readiness = useReadiness();
   const coverage = useCoverage();
   const entryRecorded = useRef(false);
+  const curriculumPage = window.location.pathname === "/curriculum";
 
   useEffect(() => {
     if (entryRecorded.current) {
@@ -46,6 +48,8 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
             >
               Countries
             </a>
+            <a href="/curriculum">Curriculum</a>
+            <a href="#features">What you can do</a>
             <a
               href="#principles"
               onClick={() => {
@@ -68,182 +72,291 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
       </header>
 
       <main id="main-content">
-        <section className="hero" id="top" aria-labelledby="hero-title">
-          <div className="hero__wash" aria-hidden="true" />
-          <div className="hero__inner section-shell">
-            <div className="hero__copy">
-              <div className="hero__kicker reveal reveal--one">
-                <span className="status-orb" aria-hidden="true" />
-                Built by{" "}
-                <a
-                  className="attribution-link"
-                  href="https://startuptribunal.com/maku"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Maku
-                </a>{" "}
-                for Africa, grounded first in Ghana and Uganda.
+        {curriculumPage ? (
+          <section
+            className="curriculum-page section-shell"
+            aria-labelledby="curriculum-page-title"
+          >
+            <a className="quiet-link" href="/">
+              ← Back to GapSense home
+            </a>
+            <div className="section-heading section-heading--split">
+              <div>
+                <span className="eyebrow">Curriculum evidence explorer</span>
+                <h1 id="curriculum-page-title">Every level, subject, and evidence boundary.</h1>
               </div>
-              <h1 id="hero-title" className="reveal reveal--two">
-                Find the next <span>learning step.</span>
-              </h1>
-              <p className="hero__lead reveal reveal--three">
-                Plan focused practice and curriculum-aligned assessment with evidence you can see,
-                language that protects learner dignity, and no personal data required.
-              </p>
-              <div className="hero__actions reveal reveal--four">
-                <a
-                  className="button button--primary button--large"
-                  href="#planner"
-                  onClick={() => {
-                    analytics.track("navigation_planner_selected");
-                  }}
-                >
-                  Plan a free assessment <span aria-hidden="true">→</span>
-                </a>
-                <a
-                  className="quiet-link"
-                  href="#countries"
-                  onClick={() => {
-                    analytics.track("navigation_countries_selected");
-                  }}
-                >
-                  Explore country coverage
-                </a>
-              </div>
-              <p className="hero__privacy reveal reveal--four">
-                No account. No learner data. No hidden AI dependency.
+              <p>
+                This is the detailed evidence workspace. A missing cell means the repository does
+                not yet contain a level-specific record; it is a work item, never an invented claim.
               </p>
             </div>
+            <CurriculumExplorer
+              state={coverage.state}
+              onRetry={() => {
+                analytics.track("coverage_retry_selected");
+                coverage.retry();
+              }}
+            />
+          </section>
+        ) : (
+          <>
+            <section className="hero" id="top" aria-labelledby="hero-title">
+              <div className="hero__wash" aria-hidden="true" />
+              <div className="hero__inner section-shell">
+                <div className="hero__copy">
+                  <div className="hero__kicker reveal reveal--one">
+                    <span className="status-orb" aria-hidden="true" />
+                    Built by{" "}
+                    <a
+                      className="attribution-link"
+                      href="https://startuptribunal.com/maku"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Maku
+                    </a>{" "}
+                    for Africa, grounded first in Ghana and Uganda.
+                  </div>
+                  <h1 id="hero-title" className="reveal reveal--two">
+                    Find the next <span>learning step.</span>
+                  </h1>
+                  <p className="hero__lead reveal reveal--three">
+                    Plan focused practice and curriculum-aligned assessment with evidence you can
+                    see, language that protects learner dignity, and no personal data required.
+                  </p>
+                  <div className="hero__actions reveal reveal--four">
+                    <a
+                      className="button button--primary button--large"
+                      href="#planner"
+                      onClick={() => {
+                        analytics.track("navigation_planner_selected");
+                      }}
+                    >
+                      Plan a free assessment <span aria-hidden="true">→</span>
+                    </a>
+                    <a
+                      className="quiet-link"
+                      href="#countries"
+                      onClick={() => {
+                        analytics.track("navigation_countries_selected");
+                      }}
+                    >
+                      Explore country coverage
+                    </a>
+                  </div>
+                  <p className="hero__privacy reveal reveal--four">
+                    No account. No learner data. No hidden AI dependency.
+                  </p>
+                </div>
 
-            <div className="hero-visual reveal reveal--three" aria-hidden="true">
-              <div className="map-card">
-                <div className="map-card__header">
-                  <span>Learning path</span>
-                  <span className="map-card__live">Evidence linked</span>
-                </div>
-                <div className="learning-map">
-                  <svg viewBox="0 0 520 330" role="presentation">
-                    <path className="map-line map-line--one" d="M90 245C150 245 148 170 215 170" />
-                    <path className="map-line map-line--two" d="M250 170C322 170 315 85 400 85" />
-                    <path
-                      className="map-line map-line--three"
-                      d="M250 170C322 170 320 250 420 250"
-                    />
-                  </svg>
-                  <div className="map-node map-node--start">
-                    <span>Observed</span>
-                    <strong>Fractions</strong>
+                <div className="hero-visual reveal reveal--three" aria-hidden="true">
+                  <div className="map-card">
+                    <div className="map-card__header">
+                      <span>Learning path</span>
+                      <span className="map-card__live">Evidence linked</span>
+                    </div>
+                    <div className="learning-map">
+                      <svg viewBox="0 0 520 330" role="presentation">
+                        <path
+                          className="map-line map-line--one"
+                          d="M90 245C150 245 148 170 215 170"
+                        />
+                        <path
+                          className="map-line map-line--two"
+                          d="M250 170C322 170 315 85 400 85"
+                        />
+                        <path
+                          className="map-line map-line--three"
+                          d="M250 170C322 170 320 250 420 250"
+                        />
+                      </svg>
+                      <div className="map-node map-node--start">
+                        <span>Observed</span>
+                        <strong>Fractions</strong>
+                      </div>
+                      <div className="map-node map-node--root">
+                        <span>Earliest gap</span>
+                        <strong>Equal groups</strong>
+                        <small>Start here</small>
+                      </div>
+                      <div className="map-node map-node--upper">
+                        <span>Prerequisite</span>
+                        <strong>Counting</strong>
+                      </div>
+                      <div className="map-node map-node--next">
+                        <span>Next step</span>
+                        <strong>Visual practice</strong>
+                      </div>
+                    </div>
+                    <div className="map-card__footer">
+                      <span className="confidence-ring">92</span>
+                      <div>
+                        <strong>Reasoning stays visible</strong>
+                        <span>Sources, confidence, and uncertainty travel together.</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="map-node map-node--root">
-                    <span>Earliest gap</span>
-                    <strong>Equal groups</strong>
-                    <small>Start here</small>
+                  <div className="floating-note floating-note--ghana">
+                    <span>GH</span>
+                    <div>
+                      <strong>Ghana</strong>
+                      <small>NaCCA structure</small>
+                    </div>
                   </div>
-                  <div className="map-node map-node--upper">
-                    <span>Prerequisite</span>
-                    <strong>Counting</strong>
-                  </div>
-                  <div className="map-node map-node--next">
-                    <span>Next step</span>
-                    <strong>Visual practice</strong>
-                  </div>
-                </div>
-                <div className="map-card__footer">
-                  <span className="confidence-ring">92</span>
-                  <div>
-                    <strong>Reasoning stays visible</strong>
-                    <span>Sources, confidence, and uncertainty travel together.</span>
+                  <div className="floating-note floating-note--uganda">
+                    <span>UG</span>
+                    <div>
+                      <strong>Uganda</strong>
+                      <small>NCDC structure</small>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="floating-note floating-note--ghana">
-                <span>GH</span>
+            </section>
+
+            <div className="readiness-shell section-shell">
+              <ReadinessBanner
+                status={readiness.status}
+                onRetry={() => {
+                  analytics.track("readiness_retry_selected");
+                  readiness.retry();
+                }}
+              />
+            </div>
+
+            <section
+              className="features section-shell"
+              id="features"
+              aria-labelledby="features-title"
+            >
+              <div className="section-heading section-heading--split">
                 <div>
-                  <strong>Ghana</strong>
-                  <small>NaCCA structure</small>
+                  <span className="eyebrow">Product map</span>
+                  <h2 id="features-title">Everything useful is one click away.</h2>
                 </div>
+                <p>
+                  This local prototype already supports a complete, private planning loop. The map
+                  makes each capability discoverable while deeper diagnostic and classroom workflows
+                  are built.
+                </p>
               </div>
-              <div className="floating-note floating-note--uganda">
-                <span>UG</span>
+              <div className="feature-directory" aria-label="GapSense capabilities">
+                <a className="feature-card" href="#planner">
+                  <span className="feature-card__number">01</span>
+                  <strong>Create a free activity</strong>
+                  <span>
+                    Choose role, country, goal, level, and subject, then generate a local draft.
+                  </span>
+                </a>
+                <a className="feature-card" href="/curriculum">
+                  <span className="feature-card__number">02</span>
+                  <strong>Inspect curriculum evidence</strong>
+                  <span>
+                    See authorities, phases, subjects, level scope, and every unresolved boundary.
+                  </span>
+                </a>
+                <a className="feature-card" href="#planner">
+                  <span className="feature-card__number">03</span>
+                  <strong>Print, download, and share</strong>
+                  <span>
+                    Export a self-contained document or use device sharing after generating.
+                  </span>
+                </a>
+                <a className="feature-card" href="#principles">
+                  <span className="feature-card__number">04</span>
+                  <strong>Work privately and locally</strong>
+                  <span>
+                    No account or learner data is required; AI remains optional infrastructure.
+                  </span>
+                </a>
+              </div>
+            </section>
+
+            <AssessmentPlanner analytics={analytics} />
+
+            <section
+              className="countries section-shell"
+              id="countries"
+              aria-labelledby="countries-title"
+            >
+              <div className="section-heading section-heading--split">
                 <div>
-                  <strong>Uganda</strong>
-                  <small>NCDC structure</small>
+                  <span className="eyebrow">Country truth first</span>
+                  <h2 id="countries-title">One platform. Two distinct education systems.</h2>
+                </div>
+                <p>
+                  We preserve each authority’s terminology and curriculum structure. Coverage is
+                  only called ready after source, structure, automated checks, and expert review
+                  agree.
+                </p>
+              </div>
+
+              <a className="quiet-link" href="/curriculum">
+                Open the curriculum evidence explorer <span aria-hidden="true">â†’</span>
+              </a>
+            </section>
+
+            <section
+              className="curriculum section-shell"
+              id="curriculum"
+              aria-labelledby="curriculum-title"
+            >
+              <div className="section-heading section-heading--split">
+                <div>
+                  <span className="eyebrow">Curriculum evidence explorer</span>
+                  <h2 id="curriculum-title">See what is located, and what is still missing.</h2>
+                </div>
+                <p>
+                  Browse Ghana and Uganda by authority, phase, level, and subject. Every status is
+                  evidence-scoped; phase folders never become level claims by assumption.
+                </p>
+              </div>
+              <CoveragePanels
+                state={coverage.state}
+                onRetry={() => {
+                  analytics.track("coverage_retry_selected");
+                  coverage.retry();
+                }}
+              />
+            </section>
+
+            <section className="principles" id="principles" aria-labelledby="principles-title">
+              <div className="section-shell">
+                <div className="section-heading section-heading--centered">
+                  <span className="eyebrow eyebrow--light">
+                    A calmer kind of education technology
+                  </span>
+                  <h2 id="principles-title">Useful before it is impressive.</h2>
+                  <p>Every product decision has to earn trust in a real classroom or home.</p>
+                </div>
+                <div className="principle-grid">
+                  <article>
+                    <span className="principle-number">01</span>
+                    <h3>Free means complete</h3>
+                    <p>
+                      A usable learner activity and educator guide—not a teaser behind a paywall.
+                    </p>
+                  </article>
+                  <article>
+                    <span className="principle-number">02</span>
+                    <h3>Evidence stays visible</h3>
+                    <p>Curriculum versions, sources, reasoning, review state, and uncertainty.</p>
+                  </article>
+                  <article>
+                    <span className="principle-number">03</span>
+                    <h3>AI stays optional</h3>
+                    <p>Deterministic planning works locally even when Ollama is unavailable.</p>
+                  </article>
+                  <article>
+                    <span className="principle-number">04</span>
+                    <h3>Low bandwidth is premium UX</h3>
+                    <p>Fast, resumable, printable, keyboard-ready, and clear on a small screen.</p>
+                  </article>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="readiness-shell section-shell">
-          <ReadinessBanner
-            status={readiness.status}
-            onRetry={() => {
-              analytics.track("readiness_retry_selected");
-              readiness.retry();
-            }}
-          />
-        </div>
-
-        <AssessmentPlanner analytics={analytics} />
-
-        <section
-          className="countries section-shell"
-          id="countries"
-          aria-labelledby="countries-title"
-        >
-          <div className="section-heading section-heading--split">
-            <div>
-              <span className="eyebrow">Country truth first</span>
-              <h2 id="countries-title">One platform. Two distinct education systems.</h2>
-            </div>
-            <p>
-              We preserve each authority’s terminology and curriculum structure. Coverage is only
-              called ready after source, structure, automated checks, and expert review agree.
-            </p>
-          </div>
-
-          <CoveragePanels
-            state={coverage.state}
-            onRetry={() => {
-              analytics.track("coverage_retry_selected");
-              coverage.retry();
-            }}
-          />
-        </section>
-
-        <section className="principles" id="principles" aria-labelledby="principles-title">
-          <div className="section-shell">
-            <div className="section-heading section-heading--centered">
-              <span className="eyebrow eyebrow--light">A calmer kind of education technology</span>
-              <h2 id="principles-title">Useful before it is impressive.</h2>
-              <p>Every product decision has to earn trust in a real classroom or home.</p>
-            </div>
-            <div className="principle-grid">
-              <article>
-                <span className="principle-number">01</span>
-                <h3>Free means complete</h3>
-                <p>A usable learner activity and educator guide—not a teaser behind a paywall.</p>
-              </article>
-              <article>
-                <span className="principle-number">02</span>
-                <h3>Evidence stays visible</h3>
-                <p>Curriculum versions, sources, reasoning, review state, and uncertainty.</p>
-              </article>
-              <article>
-                <span className="principle-number">03</span>
-                <h3>AI stays optional</h3>
-                <p>Deterministic planning works locally even when Ollama is unavailable.</p>
-              </article>
-              <article>
-                <span className="principle-number">04</span>
-                <h3>Low bandwidth is premium UX</h3>
-                <p>Fast, resumable, printable, keyboard-ready, and clear on a small screen.</p>
-              </article>
-            </div>
-          </div>
-        </section>
+            </section>
+          </>
+        )}
       </main>
 
       <footer className="site-footer">

@@ -214,7 +214,15 @@ def _coverage_matrix(
             if subject.phase != phase:
                 continue
             level_subject_path = country_path / phase / level.identifier / subject.identifier
+            phase_subject_path = country_path / phase / subject.identifier
             has_level_evidence = level_subject_path.is_file() or level_subject_path.is_dir()
+            has_phase_evidence = phase_subject_path.is_file() or phase_subject_path.is_dir()
+            normalized = phase_subject_path / "populated_nodes_complete.json"
+            status: CoverageMatrixStatus = "located"
+            if normalized.is_file():
+                status = "extracted"
+            elif not has_level_evidence and not has_phase_evidence:
+                status = "missing"
             entries.append(
                 CoverageMatrixEntry(
                     level_identifier=level.identifier,
@@ -222,7 +230,7 @@ def _coverage_matrix(
                     phase=phase,
                     subject_identifier=subject.identifier,
                     subject_name=subject.name,
-                    status="located" if has_level_evidence else "missing",
+                    status=status,
                     evidence_scope="level" if has_level_evidence else "phase_only",
                 )
             )

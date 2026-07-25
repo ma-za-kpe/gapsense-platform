@@ -89,6 +89,12 @@ Rules:
   100% statements/branches/functions/lines.
 - [x] Document the current local web workflow, Docker startup, validation commands, prototype
   boundaries, and next evidence-backed slice in `docs/LOCAL_WEB_PROTOTYPE_GUIDE.md`.
+- [x] Replace the `/curriculum` summary with a dedicated responsive curriculum explorer: country,
+  level, subject, expandable strand/sub-strand/standard lineage, live API detail, and honest
+  unavailable states. Add UI regression, accessibility, strict coverage, and mobile layout tests;
+  deploy only after this milestone is reviewed. Evidence: commit `adce303`, Docker frontend
+  coverage 88 tests at 100% statements/branches/functions/lines, Docker desktop/mobile browser
+  gates 10/10, and production deployment `frontend-51wqk0fhx-popos-projects-fb891440.vercel.app`.
 - [ ] Make the web experience excellent on mobile, tablet, and desktop, including
   low-bandwidth and intermittent-connectivity conditions.
 - [ ] Support teachers first while researching the needs of learners, parents,
@@ -653,6 +659,11 @@ Rules:
   distinctly without stereotypes and never overstates curriculum readiness.
 - [x] Build the accessible public assessment-planning entry flow for role, country, and intended
   outcome while clearly separating currently available and still-being-reviewed coverage.
+- [x] Make the current web capabilities discoverable instead of burying them in one landing-page
+  scroll: add a product map for free activity generation, curriculum evidence, export/share, and
+  private local operation, plus a first-class `#curriculum` explorer section and navigation link.
+  Evidence: the tested web shell exposes the capability directory and the responsive curriculum
+  explorer; historical diagnostic/class/learner workflows remain explicitly pending below.
 - [x] Create the first reusable design tokens and components for typography, color, spacing,
   focus, motion, status, buttons, cards, and form controls.
 - [x] Add explicit loading, API-ready, API-unavailable, incomplete-curriculum, and recovery states.
@@ -702,12 +713,22 @@ Rules:
 - [x] Commit the truthful coverage slice on the reconciliation branch, merge the completed
   milestone into local `main`, and retain the no-push/no-deploy hold. Evidence: PRs #20, #22, and
   #23 passed the required hosted gate and were squash-merged; deployment remains explicitly held.
+- [x] Make generated free-assessment questions traceable to curriculum evidence. Evidence:
+  each local starter question exposes a trace action; the typed detail endpoint projects strands,
+  standards, prerequisites, indicators, extraction status, and source filenames; unavailable or
+  empty evidence fails closed; Docker frontend coverage remains 100% (81 tests) and backend
+  detail/API tests pass.
 
 - [x] Select the web frontend stack through an ADR and a tested prototype.
 - [x] Define the first browser/API boundary and typed curriculum-coverage contract.
 - [ ] Implement local mock authentication and role switching.
 - [ ] Implement country, phase, subject, and curriculum-version selection.
-- [ ] Implement a curriculum explorer with prerequisite visualization.
+- [ ] Implement the full curriculum explorer page with interactive prerequisite visualization
+  beyond the current planner lineage panel.
+- [ ] Move generated assessment output to a focused `/assessment` workspace so the landing page
+  remains an entry point, not the document viewer; preserve print, download, share, and lineage.
+- [ ] Expand the `/curriculum` workspace into the complete country × phase × level × subject
+  evidence catalogue, with explicit source-document links and a visible per-cell completion queue.
 - [ ] Implement teacher class and learner setup using synthetic/local data.
 - [ ] Implement web-based diagnostic-session creation and continuation.
 - [ ] Implement response capture for text and structured answers first.

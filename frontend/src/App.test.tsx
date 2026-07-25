@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
+import { curriculumApiPath } from "./domain/curriculumPath";
 import type { Analytics, AnalyticsEventName } from "./analytics/client";
 
 const readyResponse = () =>
@@ -34,6 +35,17 @@ const coveragePayload = {
           review_status: "not_verified",
         },
       ],
+      coverage_matrix: [
+        {
+          level_identifier: "lower_primary",
+          level_name: "Lower Primary",
+          phase: "primary",
+          subject_identifier: "mathematics",
+          subject_name: "Mathematics",
+          status: "located",
+          evidence_scope: "phase_only",
+        },
+      ],
     },
     {
       code: "UG",
@@ -51,12 +63,58 @@ const coveragePayload = {
           review_status: "not_verified",
         },
       ],
+      coverage_matrix: [
+        {
+          level_identifier: "primary_1_3",
+          level_name: "Primary One–Three",
+          phase: "primary",
+          subject_identifier: "mathematics",
+          subject_name: "Mathematics",
+          status: "missing",
+          evidence_scope: "phase_only",
+        },
+      ],
     },
   ],
 } as const;
 
 const coverageResponse = () =>
   new Response(JSON.stringify(coveragePayload), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+
+const detailResponsePayload = () => ({
+  country: "ghana",
+  phase: "primary",
+  level: "lower_primary",
+  subject: "science",
+  evidence_scope: "phase_only",
+  extraction_status: "extracted",
+  source_files: ["graph.json"],
+  strands: [{ identifier: "1", name: "Number", sub_strands: ["Whole numbers"] }],
+  nodes: [
+    {
+      code: "N1",
+      title: "Counting",
+      content_standard: "CS1",
+      prerequisites: ["N0"],
+      indicators: [
+        {
+          code: "I1",
+          title: "Count",
+          question_type: "oral",
+          difficulty: 1,
+          misconception_count: 0,
+        },
+      ],
+    },
+    { code: "N2", title: "Unmapped", content_standard: "", prerequisites: [], indicators: [] },
+  ],
+});
+
+const detailResponse = () =>
+  new Response(JSON.stringify(detailResponsePayload()), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
@@ -71,7 +129,11 @@ const renderReadyApp = (analytics?: Analytics) => {
       .fn<typeof fetch>()
       .mockImplementation((input) =>
         Promise.resolve(
-          requestUrl(input).includes("/curriculum/coverage") ? coverageResponse() : readyResponse(),
+          requestUrl(input).includes("/curriculum/coverage")
+            ? coverageResponse()
+            : requestUrl(input).includes("/curriculum/ghana/")
+              ? detailResponse()
+              : readyResponse(),
         ),
       ),
   );
@@ -83,7 +145,35 @@ afterEach(() => {
 });
 
 describe("GapSense web entry experience", () => {
+  it("maps every country phase and subject to a bounded curriculum endpoint", () => {
+    expect(curriculumApiPath("ghana", "Basic 1", "Mathematics")).toContain(
+      "/primary/lower_primary/mathematics",
+    );
+    expect(curriculumApiPath("ghana", "Basic 4", "English Language")).toContain(
+      "/primary/upper_primary/english",
+    );
+    expect(curriculumApiPath("ghana", "JHS (Basic 7â€“9)", "General Science")).toContain(
+      "/secondary/junior_high/general_science",
+    );
+    expect(curriculumApiPath("ghana", "SHS", "Science")).toContain(
+      "/secondary/senior_high/science",
+    );
+    expect(curriculumApiPath("uganda", "Primary 1", "Mathematics")).toContain(
+      "/primary/primary_1_3/mathematics",
+    );
+    expect(curriculumApiPath("uganda", "Primary 4", "Mathematics")).toContain(
+      "/primary/primary_4_7/mathematics",
+    );
+    expect(curriculumApiPath("uganda", "O-Level (S1â€“S4)", "Mathematics")).toContain(
+      "/secondary/lower_secondary/mathematics",
+    );
+    expect(curriculumApiPath("uganda", "A-Level (S5â€“S6)", "Mathematics")).toContain(
+      "/secondary/upper_secondary/mathematics",
+    );
+  });
+
   it("introduces both countries and reports connected local evidence", async () => {
+    const user = userEvent.setup();
     renderReadyApp();
 
     expect(
@@ -95,6 +185,50 @@ describe("GapSense web entry experience", () => {
     expect(await screen.findByText("Curriculum evidence connected")).toBeVisible();
     expect(await screen.findByText("74 repository files located")).toBeVisible();
     expect(screen.getByText("23 repository files located")).toBeVisible();
+    const matrixSummary = screen.getAllByText("See level and subject evidence matrix")[0];
+    if (matrixSummary === undefined) throw new Error("matrix summary missing");
+    await user.click(matrixSummary);
+    await user.click(matrixSummary);
+    expect(screen.getByRole("link", { name: "Curriculum" })).toHaveAttribute("href", "/curriculum");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Everything useful is one click away." }),
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: /Inspect curriculum evidence/ })).toHaveAttribute(
+      "href",
+      "/curriculum",
+    );
+    expect(screen.getByRole("heading", { level: 2, name: /See what is located/ })).toBeVisible();
+  });
+
+  it("renders the curriculum workspace as a separate page", async () => {
+    window.history.pushState({}, "", "/curriculum");
+    renderReadyApp();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: /Every level, subject/ }),
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: /Back to GapSense home/ })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    window.history.pushState({}, "", "/");
+  });
+
+  it("can retry coverage from the standalone curriculum workspace", async () => {
+    window.history.pushState({}, "", "/curriculum");
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn<typeof fetch>()
+        .mockImplementation((input) =>
+          requestUrl(input).includes("/curriculum/coverage")
+            ? Promise.reject(new TypeError("offline"))
+            : Promise.resolve(readyResponse()),
+        ),
+    );
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: "Retry coverage details" }));
+    window.history.pushState({}, "", "/");
   });
 
   it("uses Maku's Africa-first attribution without institutional branding", async () => {
@@ -234,6 +368,12 @@ describe("GapSense web entry experience", () => {
       screen.getByRole("heading", { level: 4, name: "Science Practice activity" }),
     ).toBeVisible();
     expect(screen.getByText("Name one source of light.")).toBeVisible();
+    const traceButton = screen.getAllByRole("button", { name: "Trace curriculum" })[0];
+    if (traceButton === undefined) throw new Error("trace button missing");
+    await user.click(traceButton);
+    expect(await screen.findByText("Curriculum lineage")).toBeVisible();
+    expect(await screen.findByText("Strands: Number")).toBeVisible();
+    expect(screen.getByText(/Content standard: CS1/)).toBeVisible();
     const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:assessment");
     const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
     const click = vi
@@ -278,6 +418,69 @@ describe("GapSense web entry experience", () => {
     await user.click(screen.getByRole("button", { name: "Share" }));
     await user.click(screen.getByText("Show answer guidance"));
     expect(screen.getByText("liquid")).toBeVisible();
+  });
+
+  it("fails closed when curriculum lineage is unavailable", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>().mockImplementation((input) => {
+        const url = requestUrl(input);
+        if (url.includes("/curriculum/coverage")) return Promise.resolve(coverageResponse());
+        if (url.includes("/curriculum/ghana/"))
+          return Promise.resolve(new Response("", { status: 404 }));
+        return Promise.resolve(readyResponse());
+      }),
+    );
+    render(<App />);
+    await user.click(screen.getByRole("radio", { name: /^Teacher/ }));
+    await user.click(screen.getByRole("radio", { name: /^Ghana/ }));
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
+    await user.click(screen.getByRole("button", { name: "Review my starting point" }));
+    await user.click(screen.getByRole("button", { name: /Generate starter activity/ }));
+    const traceButton = screen.getAllByRole("button", { name: "Trace curriculum" })[0];
+    if (traceButton === undefined) throw new Error("trace button missing");
+    await user.click(traceButton);
+    expect(
+      await screen.findByText("Lineage evidence is not available for this selection yet."),
+    ).toBeVisible();
+  });
+
+  it("renders an honest empty lineage without inventing standards", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>().mockImplementation((input) => {
+        const url = requestUrl(input);
+        if (url.includes("/curriculum/coverage")) return Promise.resolve(coverageResponse());
+        if (url.includes("/curriculum/ghana/")) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                ...detailResponsePayload(),
+                evidence_scope: "level",
+                source_files: [],
+                strands: [],
+                nodes: [],
+              }),
+              { status: 200 },
+            ),
+          );
+        }
+        return Promise.resolve(readyResponse());
+      }),
+    );
+    render(<App />);
+    await user.click(screen.getByRole("radio", { name: /^Teacher/ }));
+    await user.click(screen.getByRole("radio", { name: /^Ghana/ }));
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
+    await user.click(screen.getByRole("button", { name: "Review my starting point" }));
+    await user.click(screen.getByRole("button", { name: /Generate starter activity/ }));
+    const traceButton = screen.getAllByRole("button", { name: "Trace curriculum" })[0];
+    if (traceButton === undefined) throw new Error("trace button missing");
+    await user.click(traceButton);
+    expect(await screen.findByText(/Level evidence/)).toBeVisible();
+    expect(screen.getByText("Sources: No source file listed")).toBeVisible();
   });
 
   it("measures the complete anonymous entry funnel without selected values", async () => {
