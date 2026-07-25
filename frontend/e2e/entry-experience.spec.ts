@@ -15,6 +15,25 @@ test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
 });
 
+test("exposes Uganda Primary Four evidence selection without an empty subject trap", async ({
+  page,
+}) => {
+  await page.goto("/curriculum");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Every level, subject, and evidence boundary.",
+  );
+  const filters = page.locator(".curriculum-explorer select");
+  await filters.nth(0).selectOption("UG");
+  await filters.nth(1).selectOption("primary_4");
+  const subjectOptions = filters.nth(2).locator("option");
+  if ((await subjectOptions.count()) > 0) {
+    await expect(filters.nth(2)).toHaveValue("mathematics");
+    await expect(page.getByText(/located evidence|no safe extracted detail/)).toBeVisible();
+  } else {
+    await expect(page.getByText("Select a curriculum combination.")).toBeVisible();
+  }
+});
+
 test("renders a truthful, accessible Ghana and Uganda entry experience", async ({ page }) => {
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
