@@ -89,10 +89,12 @@ Rules:
   100% statements/branches/functions/lines.
 - [x] Document the current local web workflow, Docker startup, validation commands, prototype
   boundaries, and next evidence-backed slice in `docs/LOCAL_WEB_PROTOTYPE_GUIDE.md`.
-- [~] Replace the `/curriculum` summary with a dedicated responsive curriculum explorer: country,
+- [x] Replace the `/curriculum` summary with a dedicated responsive curriculum explorer: country,
   level, subject, expandable strand/sub-strand/standard lineage, live API detail, and honest
   unavailable states. Add UI regression, accessibility, strict coverage, and mobile layout tests;
-  deploy only after this milestone is reviewed.
+  deploy only after this milestone is reviewed. Evidence: commit `adce303`, Docker frontend
+  coverage 88 tests at 100% statements/branches/functions/lines, Docker desktop/mobile browser
+  gates 10/10, and production deployment `frontend-51wqk0fhx-popos-projects-fb891440.vercel.app`.
 - [ ] Make the web experience excellent on mobile, tablet, and desktop, including
   low-bandwidth and intermittent-connectivity conditions.
 - [ ] Support teachers first while researching the needs of learners, parents,
