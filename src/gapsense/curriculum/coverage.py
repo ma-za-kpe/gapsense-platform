@@ -24,6 +24,17 @@ class EducationLevel:
 
 
 @dataclass(frozen=True, slots=True)
+class CurriculumSubject:
+    """A subject or learning area discovered in the local evidence tree."""
+
+    identifier: str
+    name: str
+    phase: str
+    availability: AvailabilityStatus
+    review_status: ReviewStatus = "not_verified"
+
+
+@dataclass(frozen=True, slots=True)
 class CountryDefinition:
     """Stable country and curriculum-authority metadata."""
 
@@ -47,6 +58,7 @@ class CountryCoverage:
     review_status: ReviewStatus
     repository_file_count: int
     levels: tuple[EducationLevel, ...]
+    subjects: tuple[CurriculumSubject, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,6 +139,39 @@ def _count_repository_files(country_path: Path) -> int:
     return file_count
 
 
+def _display_subject_name(identifier: str) -> str:
+    """Turn a safe directory or file stem into a readable label."""
+    return identifier.replace("_", " ").replace("-", " ").strip().title()
+
+
+def _subject_inventory(country_path: Path) -> tuple[CurriculumSubject, ...]:
+    """Collect direct phase subject names without reading curriculum contents."""
+    subjects: dict[tuple[str, str], CurriculumSubject] = {}
+    for phase_path in country_path.iterdir():
+        if _is_ignored_entry(phase_path) or phase_path.is_symlink() or not phase_path.is_dir():
+            continue
+        for entry in phase_path.iterdir():
+            if _is_ignored_entry(entry) or entry.is_symlink():
+                continue
+            identifier = entry.stem if entry.is_file() else entry.name
+            if not identifier or identifier.lower() in {
+                "source",
+                "sources",
+                "source_documents",
+                "metadata",
+                "readme",
+            }:
+                continue
+            key = (phase_path.name, identifier.lower())
+            subjects[key] = CurriculumSubject(
+                identifier=identifier.lower().replace(" ", "_"),
+                name=_display_subject_name(identifier),
+                phase=phase_path.name,
+                availability="present_unverified",
+            )
+    return tuple(sorted(subjects.values(), key=lambda subject: (subject.phase, subject.identifier)))
+
+
 def canonical_repository_available(data_path: Path) -> bool:
     """Check only the canonical root structure used by service readiness."""
     curricula_path = data_path / "curricula"
@@ -150,6 +195,7 @@ def _missing_report(status: RepositoryStatus, warning: str) -> CoverageReport:
                 review_status="not_verified",
                 repository_file_count=0,
                 levels=country.levels,
+                subjects=(),
             )
             for country in COUNTRY_DEFINITIONS
         ),
@@ -189,6 +235,12 @@ def build_coverage_report(data_path: Path) -> CoverageReport:
             else:
                 safe_country_count += 1
 
+        try:
+            subjects = _subject_inventory(country_path) if file_count else ()
+        except OSError:
+            warnings.append(f"unreadable_subject_inventory:{country.slug}")
+            subjects = ()
+
         country_reports.append(
             CountryCoverage(
                 code=country.code,
@@ -199,6 +251,7 @@ def build_coverage_report(data_path: Path) -> CoverageReport:
                 review_status="not_verified",
                 repository_file_count=file_count,
                 levels=country.levels,
+                subjects=subjects,
             )
         )
 

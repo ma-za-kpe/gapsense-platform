@@ -63,7 +63,8 @@ async def test_coverage_endpoint_exposes_typed_non_sensitive_metadata(
     uganda_path = tmp_path / "curricula" / "uganda"
     ghana_path.mkdir(parents=True)
     uganda_path.mkdir()
-    (ghana_path / "evidence.json").write_text("{}", encoding="utf-8")
+    (ghana_path / "primary").mkdir()
+    (ghana_path / "primary" / "evidence.json").write_text("{}", encoding="utf-8")
 
     async with AsyncClient(
         transport=ASGITransport(app=create_app(data_path=tmp_path)),
@@ -78,6 +79,15 @@ async def test_coverage_endpoint_exposes_typed_non_sensitive_metadata(
     assert payload["warnings"] == []
     assert [country["code"] for country in payload["countries"]] == ["GH", "UG"]
     assert payload["countries"][0]["repository_file_count"] == 1
+    assert payload["countries"][0]["subjects"] == [
+        {
+            "identifier": "evidence",
+            "name": "Evidence",
+            "phase": "primary",
+            "availability": "present_unverified",
+            "review_status": "not_verified",
+        }
+    ]
     assert payload["countries"][0]["review_status"] == "not_verified"
     assert payload["countries"][1]["availability"] == "missing"
     assert "path" not in response.text.lower()

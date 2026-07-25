@@ -7,6 +7,10 @@ cd "$repository_root"
 # Git for Windows otherwise rewrites container paths such as /workspace into
 # host paths before handing them to the Docker CLI.
 export MSYS_NO_PATHCONV=1
+# Keep visual and application gates deterministic across machines. The sibling curriculum
+# repository remains the local development default; validation uses the reviewed public fixture,
+# matching hosted CI and preventing evidence-volume size from changing screenshots.
+export GAPSENSE_DATA_HOST_PATH="${GAPSENSE_DATA_HOST_PATH:-./fixtures/public-data}"
 
 echo "GapSense: validating GitHub Actions workflow syntax"
 docker run --rm \

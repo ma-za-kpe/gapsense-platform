@@ -23,6 +23,15 @@ const validCoveragePayload = {
           review_status: "not_verified",
         },
       ],
+      subjects: [
+        {
+          identifier: "mathematics",
+          name: "Mathematics",
+          phase: "primary",
+          availability: "present_unverified",
+          review_status: "not_verified",
+        },
+      ],
     },
     {
       code: "UG",
@@ -40,6 +49,7 @@ const validCoveragePayload = {
           review_status: "not_verified",
         },
       ],
+      subjects: [],
     },
   ],
 } as const;
@@ -86,6 +96,79 @@ describe("curriculum coverage client", () => {
     {
       ...validCoveragePayload,
       countries: [{ ...validCoveragePayload.countries[0], levels: [null] }],
+    },
+    {
+      ...validCoveragePayload,
+      countries: [{ ...validCoveragePayload.countries[0], subjects: [null] }],
+    },
+    {
+      ...validCoveragePayload,
+      countries: [{ ...validCoveragePayload.countries[0], subjects: [{}] }],
+    },
+    {
+      ...validCoveragePayload,
+      countries: [
+        {
+          ...validCoveragePayload.countries[0],
+          subjects: [{ identifier: "mathematics", name: "Mathematics" }],
+        },
+        validCoveragePayload.countries[1],
+      ],
+    },
+    {
+      ...validCoveragePayload,
+      countries: [
+        {
+          ...validCoveragePayload.countries[0],
+          subjects: [{ identifier: "mathematics", name: "Mathematics", phase: "primary" }],
+        },
+        validCoveragePayload.countries[1],
+      ],
+    },
+    {
+      ...validCoveragePayload,
+      countries: [
+        {
+          ...validCoveragePayload.countries[0],
+          subjects: [
+            {
+              identifier: "mathematics",
+              name: "Mathematics",
+              phase: "primary",
+              availability: "present_unverified",
+            },
+          ],
+        },
+        validCoveragePayload.countries[1],
+      ],
+    },
+    {
+      ...validCoveragePayload,
+      countries: [
+        {
+          ...validCoveragePayload.countries[0],
+          subjects: [
+            {
+              ...validCoveragePayload.countries[0].subjects[0],
+              identifier: 42,
+            },
+          ],
+        },
+        validCoveragePayload.countries[1],
+      ],
+    },
+    {
+      ...validCoveragePayload,
+      countries: [
+        {
+          ...validCoveragePayload.countries[0],
+          subjects: [
+            validCoveragePayload.countries[0].subjects[0],
+            validCoveragePayload.countries[0].subjects[0],
+          ],
+        },
+        validCoveragePayload.countries[1],
+      ],
     },
     {
       ...validCoveragePayload,

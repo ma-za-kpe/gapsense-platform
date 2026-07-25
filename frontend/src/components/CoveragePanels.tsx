@@ -60,6 +60,21 @@ function LoadedCountryPanel({ country }: { readonly country: CountryCoverage }):
           </li>
         ))}
       </ul>
+      <div className="country-panel__subjects">
+        <strong>Evidence subjects found</strong>
+        {country.subjects?.length ? (
+          <ul aria-label={`${country.name} subjects found in local evidence`}>
+            {country.subjects.map((subject) => (
+              <li key={`${subject.phase}:${subject.identifier}`}>
+                {subject.name} <small>({subject.phase})</small>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No subject folders are currently visible in the local evidence mount.</p>
+        )}
+        <small>Presence is not the same as extraction or educator review.</small>
+      </div>
       <div className="country-panel__status">
         <span className="country-panel__signal" aria-hidden="true" />
         <div>
