@@ -28,10 +28,34 @@ const goals = Object.entries(goalProfiles) as readonly (readonly [
 
 const starterCatalog = {
   ghana: {
-    levels: ["Basic 1", "Basic 2", "Basic 3", "Basic 4", "Basic 5", "Basic 6"],
-    subjects: ["Mathematics", "English Language", "Science"],
+    levels: [
+      "Basic 1",
+      "Basic 2",
+      "Basic 3",
+      "Basic 4",
+      "Basic 5",
+      "Basic 6",
+      "KG",
+      "JHS (Basic 7–9)",
+      "SHS",
+    ],
+    subjects: ["Mathematics", "English Language", "Science", "General Science"],
   },
-  uganda: { levels: ["Primary 1", "Primary 2", "Primary 3"], subjects: ["Mathematics"] },
+  uganda: {
+    levels: [
+      "Primary 1",
+      "Primary 2",
+      "Primary 3",
+      "Primary 4",
+      "Primary 5",
+      "Primary 6",
+      "Primary 7",
+      "Early Childhood",
+      "O-Level (S1–S4)",
+      "A-Level (S5–S6)",
+    ],
+    subjects: ["Mathematics"],
+  },
 } as const;
 
 const starterQuestions = {
@@ -56,11 +80,25 @@ const starterQuestions = {
     "Is water a solid, liquid, or gas at room temperature?",
     "Name one animal that lives in your community.",
   ],
+  "General Science": [
+    "Name one source of light.",
+    "Which sense do we use to hear sounds?",
+    "Name one thing a plant needs to grow.",
+    "Is water a solid, liquid, or gas at room temperature?",
+    "Name one animal that lives in your community.",
+  ],
 } as const;
 const answerGuidance: Record<keyof typeof starterQuestions, readonly string[]> = {
   Mathematics: ["20", "12 mangoes", "43", "4 pencils", "8, 10"],
   "English Language": ["Any clear sentence", "bird", "books", "Kojo is kind.", "bat (example)"],
   Science: ["The sun (example)", "hearing", "water (example)", "liquid", "Any local animal"],
+  "General Science": [
+    "The sun (example)",
+    "hearing",
+    "water (example)",
+    "liquid",
+    "Any local animal",
+  ],
 };
 
 type AssessmentPlannerProps = {
