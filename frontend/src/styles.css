@@ -699,6 +699,59 @@ a {
   text-underline-offset: 0.25rem;
 }
 
+.features {
+  padding-bottom: var(--space-8);
+  padding-top: var(--space-8);
+}
+
+.feature-directory {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 11rem;
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: rgb(255 255 255 / 72%);
+  color: var(--ink-700);
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.feature-card:hover,
+.feature-card:focus-visible {
+  border-color: var(--green-600);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.feature-card__number {
+  color: var(--green-700);
+  font-size: 0.76rem;
+  font-weight: 760;
+  letter-spacing: 0.12em;
+}
+
+.feature-card strong {
+  color: var(--ink-900);
+  font-size: 1rem;
+}
+
+.feature-card > span:last-child {
+  color: var(--ink-600);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .planner {
   padding-block: clamp(var(--space-20), 10vw, 8rem);
 }
@@ -1563,11 +1616,19 @@ a {
   .principle-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .feature-directory {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 52rem) {
   .site-header nav > a:not(.button) {
     display: none;
+  }
+
+  .site-header nav > a[href="#curriculum"] {
+    display: inline-flex;
   }
 
   .hero__inner {
@@ -1600,6 +1661,10 @@ a {
   }
 
   .choice-grid--goals {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-directory {
     grid-template-columns: 1fr;
   }
 

@@ -95,6 +95,15 @@ describe("GapSense web entry experience", () => {
     expect(await screen.findByText("Curriculum evidence connected")).toBeVisible();
     expect(await screen.findByText("74 repository files located")).toBeVisible();
     expect(screen.getByText("23 repository files located")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Curriculum" })).toHaveAttribute("href", "#curriculum");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Everything useful is one click away." }),
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: /Inspect curriculum evidence/ })).toHaveAttribute(
+      "href",
+      "#curriculum",
+    );
+    expect(screen.getByRole("heading", { level: 2, name: /See what is located/ })).toBeVisible();
   });
 
   it("uses Maku's Africa-first attribution without institutional branding", async () => {

@@ -46,6 +46,8 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
             >
               Countries
             </a>
+            <a href="#curriculum">Curriculum</a>
+            <a href="#features">What you can do</a>
             <a
               href="#principles"
               onClick={() => {
@@ -186,6 +188,48 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
           />
         </div>
 
+        <section className="features section-shell" id="features" aria-labelledby="features-title">
+          <div className="section-heading section-heading--split">
+            <div>
+              <span className="eyebrow">Product map</span>
+              <h2 id="features-title">Everything useful is one click away.</h2>
+            </div>
+            <p>
+              This local prototype already supports a complete, private planning loop. The map makes
+              each capability discoverable while deeper diagnostic and classroom workflows are
+              built.
+            </p>
+          </div>
+          <div className="feature-directory" aria-label="GapSense capabilities">
+            <a className="feature-card" href="#planner">
+              <span className="feature-card__number">01</span>
+              <strong>Create a free activity</strong>
+              <span>
+                Choose role, country, goal, level, and subject, then generate a local draft.
+              </span>
+            </a>
+            <a className="feature-card" href="#curriculum">
+              <span className="feature-card__number">02</span>
+              <strong>Inspect curriculum evidence</strong>
+              <span>
+                See authorities, phases, subjects, level scope, and every unresolved boundary.
+              </span>
+            </a>
+            <a className="feature-card" href="#planner">
+              <span className="feature-card__number">03</span>
+              <strong>Print, download, and share</strong>
+              <span>Export a self-contained document or use device sharing after generating.</span>
+            </a>
+            <a className="feature-card" href="#principles">
+              <span className="feature-card__number">04</span>
+              <strong>Work privately and locally</strong>
+              <span>
+                No account or learner data is required; AI remains optional infrastructure.
+              </span>
+            </a>
+          </div>
+        </section>
+
         <AssessmentPlanner analytics={analytics} />
 
         <section
@@ -204,6 +248,26 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
             </p>
           </div>
 
+          <a className="quiet-link" href="#curriculum">
+            Open the curriculum evidence explorer <span aria-hidden="true">â†’</span>
+          </a>
+        </section>
+
+        <section
+          className="curriculum section-shell"
+          id="curriculum"
+          aria-labelledby="curriculum-title"
+        >
+          <div className="section-heading section-heading--split">
+            <div>
+              <span className="eyebrow">Curriculum evidence explorer</span>
+              <h2 id="curriculum-title">See what is located, and what is still missing.</h2>
+            </div>
+            <p>
+              Browse Ghana and Uganda by authority, phase, level, and subject. Every status is
+              evidence-scoped; phase folders never become level claims by assumption.
+            </p>
+          </div>
           <CoveragePanels
             state={coverage.state}
             onRetry={() => {

@@ -653,6 +653,11 @@ Rules:
   distinctly without stereotypes and never overstates curriculum readiness.
 - [x] Build the accessible public assessment-planning entry flow for role, country, and intended
   outcome while clearly separating currently available and still-being-reviewed coverage.
+- [x] Make the current web capabilities discoverable instead of burying them in one landing-page
+  scroll: add a product map for free activity generation, curriculum evidence, export/share, and
+  private local operation, plus a first-class `#curriculum` explorer section and navigation link.
+  Evidence: the tested web shell exposes the capability directory and the responsive curriculum
+  explorer; historical diagnostic/class/learner workflows remain explicitly pending below.
 - [x] Create the first reusable design tokens and components for typography, color, spacing,
   focus, motion, status, buttons, cards, and form controls.
 - [x] Add explicit loading, API-ready, API-unavailable, incomplete-curriculum, and recovery states.
