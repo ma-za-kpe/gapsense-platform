@@ -11,6 +11,14 @@ if TYPE_CHECKING:
 RepositoryStatus = Literal["available", "partial", "missing", "invalid"]
 AvailabilityStatus = Literal["present_unverified", "missing"]
 ReviewStatus = Literal["not_verified"]
+CoverageMatrixStatus = Literal[
+    "missing",
+    "located",
+    "extracted",
+    "structurally_validated",
+    "human_reviewed",
+]
+EvidenceScope = Literal["level", "phase_only"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +40,19 @@ class CurriculumSubject:
     phase: str
     availability: AvailabilityStatus
     review_status: ReviewStatus = "not_verified"
+
+
+@dataclass(frozen=True, slots=True)
+class CoverageMatrixEntry:
+    """One explicit level/subject claim with its evidence boundary."""
+
+    level_identifier: str
+    level_name: str
+    phase: str
+    subject_identifier: str
+    subject_name: str
+    status: CoverageMatrixStatus
+    evidence_scope: EvidenceScope
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +80,7 @@ class CountryCoverage:
     repository_file_count: int
     levels: tuple[EducationLevel, ...]
     subjects: tuple[CurriculumSubject, ...]
+    coverage_matrix: tuple[CoverageMatrixEntry, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,6 +194,46 @@ def _subject_inventory(country_path: Path) -> tuple[CurriculumSubject, ...]:
     return tuple(sorted(subjects.values(), key=lambda subject: (subject.phase, subject.identifier)))
 
 
+def _level_phase(country: CountryDefinition, level: EducationLevel) -> str:
+    """Map official level groups to the repository's safe phase directories."""
+    if country.slug == "ghana":
+        return "secondary" if level.identifier in {"junior_high", "senior_high"} else "primary"
+    return "secondary" if level.identifier in {"lower_secondary", "upper_secondary"} else "primary"
+
+
+def _coverage_matrix(
+    country: CountryDefinition,
+    country_path: Path,
+    subjects: tuple[CurriculumSubject, ...],
+) -> tuple[CoverageMatrixEntry, ...]:
+    """Build a fail-closed level matrix without inferring level coverage from phase folders."""
+    entries: list[CoverageMatrixEntry] = []
+    for level in country.levels:
+        phase = _level_phase(country, level)
+        for subject in subjects:
+            if subject.phase != phase:
+                continue
+            level_subject_path = country_path / phase / level.identifier / subject.identifier
+            has_level_evidence = level_subject_path.is_file() or level_subject_path.is_dir()
+            entries.append(
+                CoverageMatrixEntry(
+                    level_identifier=level.identifier,
+                    level_name=level.name,
+                    phase=phase,
+                    subject_identifier=subject.identifier,
+                    subject_name=subject.name,
+                    status="located" if has_level_evidence else "missing",
+                    evidence_scope="level" if has_level_evidence else "phase_only",
+                )
+            )
+    return tuple(
+        sorted(
+            entries,
+            key=lambda entry: (entry.phase, entry.level_identifier, entry.subject_identifier),
+        )
+    )
+
+
 def canonical_repository_available(data_path: Path) -> bool:
     """Check only the canonical root structure used by service readiness."""
     curricula_path = data_path / "curricula"
@@ -196,6 +258,7 @@ def _missing_report(status: RepositoryStatus, warning: str) -> CoverageReport:
                 repository_file_count=0,
                 levels=country.levels,
                 subjects=(),
+                coverage_matrix=(),
             )
             for country in COUNTRY_DEFINITIONS
         ),
@@ -241,6 +304,8 @@ def build_coverage_report(data_path: Path) -> CoverageReport:
             warnings.append(f"unreadable_subject_inventory:{country.slug}")
             subjects = ()
 
+        matrix = _coverage_matrix(country, country_path, subjects) if file_count else ()
+
         country_reports.append(
             CountryCoverage(
                 code=country.code,
@@ -252,6 +317,7 @@ def build_coverage_report(data_path: Path) -> CoverageReport:
                 repository_file_count=file_count,
                 levels=country.levels,
                 subjects=subjects,
+                coverage_matrix=matrix,
             )
         )
 

@@ -88,6 +88,9 @@ async def test_coverage_endpoint_exposes_typed_non_sensitive_metadata(
             "review_status": "not_verified",
         }
     ]
+    assert payload["countries"][0]["coverage_matrix"]
+    assert payload["countries"][0]["coverage_matrix"][0]["status"] == "missing"
+    assert payload["countries"][0]["coverage_matrix"][0]["evidence_scope"] == "phase_only"
     assert payload["countries"][0]["review_status"] == "not_verified"
     assert payload["countries"][1]["availability"] == "missing"
     assert "path" not in response.text.lower()

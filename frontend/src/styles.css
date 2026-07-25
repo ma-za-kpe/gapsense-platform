@@ -1358,6 +1358,54 @@ a {
   line-height: 1.45;
 }
 
+.coverage-matrix {
+  border-top: 1px solid var(--line);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+.coverage-matrix summary {
+  color: var(--ink-800);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.coverage-matrix__body {
+  color: var(--ink-600);
+  font-size: 0.78rem;
+  margin-top: var(--space-3);
+}
+
+.coverage-matrix__table-wrap {
+  overflow-x: auto;
+}
+
+.coverage-matrix table {
+  border-collapse: collapse;
+  min-width: 34rem;
+  width: 100%;
+}
+
+.coverage-matrix caption {
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.coverage-matrix th,
+.coverage-matrix td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.55rem 0.4rem;
+  text-align: left;
+}
+
+.coverage-matrix th {
+  color: var(--ink-800);
+  font-weight: 700;
+}
+
 .country-panel__status {
   position: relative;
   z-index: 2;

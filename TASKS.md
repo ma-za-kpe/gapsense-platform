@@ -683,10 +683,13 @@ Rules:
   no private paths or file content.
 - [x] Add a typed `/v1/curriculum/coverage` API with explicit incomplete/unknown states and tests
   for present, partial, missing, malformed, and unexpected repository structures.
-- [ ] Evolve the country-level inventory into a machine-generated country/phase/level/subject
+- [x] Evolve the country-level inventory into a machine-generated country/phase/level/subject
   coverage matrix so the UI distinguishes existing secondary artifacts from primary artifacts
   and shows `missing`, `located`, `extracted`, `structurally validated`, and human-review states
-  without inferring any state from an aggregate file count.
+  without inferring any state from an aggregate file count. Evidence: the typed API emits explicit
+  matrix entries with `phase_only` versus exact `level` evidence scope; the web explorer renders an
+  accessible responsive matrix; Docker backend/frontend tests cover both fail-closed and located
+  paths with frontend coverage at 100% (76 tests).
 - [x] Update service readiness to require the canonical Ghana and Uganda roots while remaining
   independent of optional Ollama, authentication, deployment, and WhatsApp services.
 - [x] Consume the typed coverage contract in the port-3000 web shell without overstating
