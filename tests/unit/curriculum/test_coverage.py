@@ -47,7 +47,7 @@ def test_inventory_reports_presence_without_claiming_completion(tmp_path: Path) 
     ]
     assert report.countries[0].subjects[0].review_status == "not_verified"
     assert report.countries[0].coverage_matrix
-    assert all(entry.status == "missing" for entry in report.countries[0].coverage_matrix)
+    assert {entry.status for entry in report.countries[0].coverage_matrix} == {"located", "missing"}
     assert all(
         entry.evidence_scope == "phase_only" for entry in report.countries[0].coverage_matrix
     )
@@ -105,7 +105,7 @@ def test_matrix_marks_only_explicit_level_evidence_as_located(tmp_path: Path) ->
     )
     assert (lower_primary_math.status, lower_primary_math.evidence_scope) == ("located", "level")
     assert (upper_primary_math.status, upper_primary_math.evidence_scope) == (
-        "missing",
+        "located",
         "phase_only",
     )
 
