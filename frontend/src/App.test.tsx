@@ -234,6 +234,18 @@ describe("GapSense web entry experience", () => {
       screen.getByRole("heading", { level: 4, name: "Science Practice activity" }),
     ).toBeVisible();
     expect(screen.getByText("Name one source of light.")).toBeVisible();
+    const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:assessment");
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+    await user.click(screen.getByRole("button", { name: "Download document" }));
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(click).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:assessment");
+    click.mockRestore();
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
     const print = vi.spyOn(window, "print").mockImplementation(() => undefined);
     await user.click(screen.getByRole("button", { name: "Print / save PDF" }));
     expect(print).toHaveBeenCalledOnce();
