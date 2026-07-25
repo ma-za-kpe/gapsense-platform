@@ -271,6 +271,10 @@ Rules:
 - [x] Review and merge the data acquisition/provenance PR only when hashes, catalogues, policy,
   security checks, and hosted CI are green; keep extraction/review incompleteness explicit.
   Evidence: data PR #2 and hosted Required run `30050380590` passed before merge `f742937`.
+- [x] Add the data repository's current, ever-growing curriculum evidence work list without
+  disturbing its uncommitted Uganda P1-P3 extraction artifacts. Evidence: data PR #5 rebased onto
+  current `main`, passed the eight-step Docker gate and hosted Required check, then squash-merged;
+  the data task list records Ghana/Uganda subject and O/A-level gaps explicitly.
 - [x] Repair the first `gapsense-data` Release Please candidate without weakening Markdown policy:
   scope the generated-changelog MD012 allowance to `CHANGELOG.md`, policy-lock the one-file,
   one-rule exception, normalize workflow-policy input across LF/CRLF Docker mounts, and retain the
