@@ -32,6 +32,17 @@ const validCoveragePayload = {
           review_status: "not_verified",
         },
       ],
+      coverage_matrix: [
+        {
+          level_identifier: "lower_primary",
+          level_name: "Lower Primary",
+          phase: "primary",
+          subject_identifier: "mathematics",
+          subject_name: "Mathematics",
+          status: "missing",
+          evidence_scope: "phase_only",
+        },
+      ],
     },
     {
       code: "UG",
@@ -100,6 +111,18 @@ describe("curriculum coverage client", () => {
     {
       ...validCoveragePayload,
       countries: [{ ...validCoveragePayload.countries[0], subjects: [null] }],
+    },
+    {
+      ...validCoveragePayload,
+      countries: [
+        {
+          ...validCoveragePayload.countries[0],
+          coverage_matrix: [
+            { ...validCoveragePayload.countries[0].coverage_matrix[0], status: "unknown" },
+          ],
+        },
+        validCoveragePayload.countries[1],
+      ],
     },
     {
       ...validCoveragePayload,

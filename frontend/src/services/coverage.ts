@@ -18,6 +18,17 @@ export type CurriculumSubject = {
   readonly review_status: "not_verified";
 };
 
+export type CoverageMatrixEntry = {
+  readonly level_identifier: string;
+  readonly level_name: string;
+  readonly phase: string;
+  readonly subject_identifier: string;
+  readonly subject_name: string;
+  readonly status:
+    "missing" | "located" | "extracted" | "structurally_validated" | "human_reviewed";
+  readonly evidence_scope: "level" | "phase_only";
+};
+
 export type CountryCoverage = {
   readonly code: "GH" | "UG";
   readonly name: "Ghana" | "Uganda";
@@ -28,6 +39,7 @@ export type CountryCoverage = {
   readonly repository_file_count: number;
   readonly levels: readonly CurriculumLevel[];
   readonly subjects?: readonly CurriculumSubject[];
+  readonly coverage_matrix?: readonly CoverageMatrixEntry[];
 };
 
 export type CurriculumCoverageReport = {
@@ -70,6 +82,23 @@ const isSubjectCatalog = (value: unknown): value is readonly CurriculumSubject[]
   value.every(isSubject) &&
   new Set(value.map((subject) => `${subject.phase}:${subject.identifier}`)).size === value.length;
 
+const isCoverageMatrixEntry = (value: unknown): value is CoverageMatrixEntry =>
+  isRecord(value) &&
+  typeof value.level_identifier === "string" &&
+  typeof value.level_name === "string" &&
+  typeof value.phase === "string" &&
+  typeof value.subject_identifier === "string" &&
+  typeof value.subject_name === "string" &&
+  (
+    ["missing", "located", "extracted", "structurally_validated", "human_reviewed"] as const
+  ).includes(value.status as CoverageMatrixEntry["status"]) &&
+  (["level", "phase_only"] as const).includes(
+    value.evidence_scope as CoverageMatrixEntry["evidence_scope"],
+  );
+
+const isCoverageMatrix = (value: unknown): value is readonly CoverageMatrixEntry[] =>
+  Array.isArray(value) && value.every(isCoverageMatrixEntry);
+
 const isCountry = (value: unknown): value is CountryCoverage =>
   isRecord(value) &&
   hasExpectedCountryIdentity(value) &&
@@ -80,7 +109,8 @@ const isCountry = (value: unknown): value is CountryCoverage =>
   Number.isSafeInteger(value.repository_file_count) &&
   Number(value.repository_file_count) >= 0 &&
   isLevelCatalog(value.levels) &&
-  (value.subjects === undefined || isSubjectCatalog(value.subjects));
+  (value.subjects === undefined || isSubjectCatalog(value.subjects)) &&
+  (value.coverage_matrix === undefined || isCoverageMatrix(value.coverage_matrix));
 
 const isCoverageReport = (value: unknown): value is CurriculumCoverageReport => {
   if (!isRecord(value) || value.complete !== false) {

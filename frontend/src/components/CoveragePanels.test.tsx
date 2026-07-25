@@ -34,6 +34,26 @@ const report = {
           review_status: "not_verified",
         },
       ],
+      coverage_matrix: [
+        {
+          level_identifier: "lower_primary",
+          level_name: "Lower Primary",
+          phase: "primary",
+          subject_identifier: "mathematics",
+          subject_name: "Mathematics",
+          status: "missing",
+          evidence_scope: "phase_only",
+        },
+        {
+          level_identifier: "lower_primary_level",
+          level_name: "Lower Primary",
+          phase: "primary",
+          subject_identifier: "science",
+          subject_name: "Science",
+          status: "located",
+          evidence_scope: "level",
+        },
+      ],
     },
     {
       code: "UG",
@@ -57,13 +77,16 @@ describe("coverage panels", () => {
     expect(screen.getAllByText("Checking local coverage evidence…")).toHaveLength(2);
   });
 
-  it("renders file presence separately from unverified review", () => {
+  it("renders file presence separately from unverified review", async () => {
     render(<CoveragePanels state={{ status: "loaded", report }} onRetry={vi.fn()} />);
 
     expect(screen.getByText("1 repository file located")).toBeVisible();
     expect(screen.getByText("No canonical repository files located")).toBeVisible();
-    expect(screen.getByText("Lower Primary")).toBeVisible();
-    expect(screen.getByText("Mathematics")).toBeVisible();
+    expect(screen.getAllByText("Lower Primary").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Mathematics").length).toBeGreaterThan(0);
+    await userEvent.setup().click(screen.getByText("See level and subject evidence matrix"));
+    expect(screen.getByText("phase folder only")).toBeVisible();
+    expect(screen.getByText("level folder")).toBeVisible();
     expect(screen.getAllByText("Extraction and educator review not verified")).toHaveLength(2);
   });
 

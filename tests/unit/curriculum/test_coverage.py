@@ -46,6 +46,11 @@ def test_inventory_reports_presence_without_claiming_completion(tmp_path: Path) 
         ("secondary", "science"),
     ]
     assert report.countries[0].subjects[0].review_status == "not_verified"
+    assert report.countries[0].coverage_matrix
+    assert all(entry.status == "missing" for entry in report.countries[0].coverage_matrix)
+    assert all(
+        entry.evidence_scope == "phase_only" for entry in report.countries[0].coverage_matrix
+    )
     assert all(country.availability == "present_unverified" for country in report.countries)
     assert all(country.review_status == "not_verified" for country in report.countries)
     assert report.countries[0].authority == (
@@ -71,6 +76,37 @@ def test_inventory_reports_presence_without_claiming_completion(tmp_path: Path) 
         level.review_status == "not_verified"
         for country in report.countries
         for level in country.levels
+    )
+
+
+def test_matrix_marks_only_explicit_level_evidence_as_located(tmp_path: Path) -> None:
+    """A phase folder cannot inflate a level claim, but an exact level folder can be located."""
+    ghana_path, uganda_path = _create_country_roots(tmp_path)
+    (ghana_path / "primary" / "mathematics").mkdir(parents=True)
+    (ghana_path / "primary" / "mathematics" / "evidence.json").write_text("{}", encoding="utf-8")
+    (ghana_path / "primary" / "lower_primary" / "mathematics").mkdir(parents=True)
+    (ghana_path / "primary" / "lower_primary" / "mathematics" / "evidence.json").write_text(
+        "{}", encoding="utf-8"
+    )
+    (uganda_path / "primary").mkdir()
+
+    report = build_coverage_report(tmp_path)
+
+    matrix = report.countries[0].coverage_matrix
+    lower_primary_math = next(
+        entry
+        for entry in matrix
+        if entry.level_identifier == "lower_primary" and entry.subject_identifier == "mathematics"
+    )
+    upper_primary_math = next(
+        entry
+        for entry in matrix
+        if entry.level_identifier == "upper_primary" and entry.subject_identifier == "mathematics"
+    )
+    assert (lower_primary_math.status, lower_primary_math.evidence_scope) == ("located", "level")
+    assert (upper_primary_math.status, upper_primary_math.evidence_scope) == (
+        "missing",
+        "phase_only",
     )
 
 

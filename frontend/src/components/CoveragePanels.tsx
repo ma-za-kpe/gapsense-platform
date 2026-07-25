@@ -75,6 +75,45 @@ function LoadedCountryPanel({ country }: { readonly country: CountryCoverage }):
         )}
         <small>Presence is not the same as extraction or educator review.</small>
       </div>
+      {country.coverage_matrix?.length ? (
+        <details className="coverage-matrix">
+          <summary>See level and subject evidence matrix</summary>
+          <div className="coverage-matrix__body">
+            <p>
+              Level-specific evidence is shown separately from phase-level folders. A missing cell
+              can mean the evidence is only located at phase scope; it is never treated as
+              extracted.
+            </p>
+            <div className="coverage-matrix__table-wrap">
+              <table>
+                <caption>{country.name} level and subject evidence</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Level</th>
+                    <th scope="col">Subject</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Evidence scope</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {country.coverage_matrix.map((entry) => (
+                    <tr key={`${entry.level_identifier}:${entry.subject_identifier}`}>
+                      <th scope="row">{entry.level_name}</th>
+                      <td>{entry.subject_name}</td>
+                      <td>{entry.status.replaceAll("_", " ")}</td>
+                      <td>
+                        {entry.evidence_scope === "phase_only"
+                          ? "phase folder only"
+                          : "level folder"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+      ) : null}
       <div className="country-panel__status">
         <span className="country-panel__signal" aria-hidden="true" />
         <div>
