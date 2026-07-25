@@ -89,6 +89,10 @@ Rules:
   100% statements/branches/functions/lines.
 - [x] Document the current local web workflow, Docker startup, validation commands, prototype
   boundaries, and next evidence-backed slice in `docs/LOCAL_WEB_PROTOTYPE_GUIDE.md`.
+- [~] Replace the `/curriculum` summary with a dedicated responsive curriculum explorer: country,
+  level, subject, expandable strand/sub-strand/standard lineage, live API detail, and honest
+  unavailable states. Add UI regression, accessibility, strict coverage, and mobile layout tests;
+  deploy only after this milestone is reviewed.
 - [ ] Make the web experience excellent on mobile, tablet, and desktop, including
   low-bandwidth and intermittent-connectivity conditions.
 - [ ] Support teachers first while researching the needs of learners, parents,

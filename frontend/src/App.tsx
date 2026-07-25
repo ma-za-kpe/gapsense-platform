@@ -4,6 +4,7 @@ import { browserAnalytics, type Analytics } from "./analytics/client";
 import { AssessmentPlanner } from "./components/AssessmentPlanner";
 import { BrandMark } from "./components/BrandMark";
 import { CoveragePanels } from "./components/CoveragePanels";
+import { CurriculumExplorer } from "./components/CurriculumExplorer";
 import { ReadinessBanner } from "./components/ReadinessBanner";
 import { useCoverage } from "./hooks/useCoverage";
 import { useReadiness } from "./hooks/useReadiness";
@@ -89,7 +90,7 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
                 not yet contain a level-specific record; it is a work item, never an invented claim.
               </p>
             </div>
-            <CoveragePanels
+            <CurriculumExplorer
               state={coverage.state}
               onRetry={() => {
                 analytics.track("coverage_retry_selected");

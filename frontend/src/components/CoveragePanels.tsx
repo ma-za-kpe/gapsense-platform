@@ -16,7 +16,9 @@ const fileStatus = (country: CountryCoverage): string => {
   return `${String(country.repository_file_count)} repository ${country.repository_file_count === 1 ? "file" : "files"} located`;
 };
 
-const matrixSummary = (entries: readonly NonNullable<CountryCoverage["coverage_matrix"]>[number][]): string => {
+const matrixSummary = (
+  entries: readonly NonNullable<CountryCoverage["coverage_matrix"]>[number][],
+): string => {
   const extracted = entries.filter((entry) => entry.status === "extracted").length;
   const located = entries.filter((entry) => entry.status === "located").length;
   const missing = entries.filter((entry) => entry.status === "missing").length;
