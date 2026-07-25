@@ -82,8 +82,11 @@ Rules:
   evidence links for UX changes, curriculum provenance fields, and consistent labels/milestones.
   Evidence: `.github/PULL_REQUEST_TEMPLATE.md`, the bug/feature/curriculum issue forms, and the
   security advisory routing config are present on `main` and covered by the Docker docs gate.
-- [ ] Add a real assessment document export contract (PDF/download) with print-layout and
-  answer-key snapshots before calling generation production-ready.
+- [x] Add a real assessment document export contract (PDF/download) with print-layout and
+  answer-key snapshots before calling generation production-ready. Evidence: the web planner now
+  offers browser print/save-to-PDF plus a self-contained HTML document download with escaped content,
+  answer guidance, provenance, and a print-friendly layout; Docker frontend coverage is 75 tests at
+  100% statements/branches/functions/lines.
 - [x] Document the current local web workflow, Docker startup, validation commands, prototype
   boundaries, and next evidence-backed slice in `docs/LOCAL_WEB_PROTOTYPE_GUIDE.md`.
 - [ ] Make the web experience excellent on mobile, tablet, and desktop, including
@@ -689,8 +692,9 @@ Rules:
   development and 10/10 immutable-production browser checks, zero known dependency
   vulnerabilities, clean security/secret/type/lint/migration/package/docs gates, and reviewed
   desktop/Pixel 7 baselines.
-- [~] Commit the truthful coverage slice on the reconciliation branch, merge the completed
-  milestone into local `main`, and retain the no-push/no-deploy hold.
+- [x] Commit the truthful coverage slice on the reconciliation branch, merge the completed
+  milestone into local `main`, and retain the no-push/no-deploy hold. Evidence: PRs #20, #22, and
+  #23 passed the required hosted gate and were squash-merged; deployment remains explicitly held.
 
 - [x] Select the web frontend stack through an ADR and a tested prototype.
 - [x] Define the first browser/API boundary and typed curriculum-coverage contract.

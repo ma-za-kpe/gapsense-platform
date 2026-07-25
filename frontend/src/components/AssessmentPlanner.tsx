@@ -1,6 +1,7 @@
 import { useReducer, useState } from "react";
 
 import type { Analytics } from "../analytics/client";
+import { buildAssessmentDocument } from "../domain/assessmentDocument";
 import {
   countryProfiles,
   goalProfiles,
@@ -311,6 +312,30 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
                       onClick={() => window.print()}
                     >
                       Print / save PDF
+                    </button>
+                    <button
+                      className="button button--secondary"
+                      type="button"
+                      onClick={() => {
+                        const document = buildAssessmentDocument({
+                          title: `${subject} ${goalProfiles[reviewedPlan.goal].label}`,
+                          country: countryProfiles[reviewedPlan.country].name,
+                          authority: countryProfiles[reviewedPlan.country].authority,
+                          level,
+                          subject,
+                          questions: starterQuestions[subject],
+                          answers: answerGuidance[subject],
+                        });
+                        const blob = new Blob([document], { type: "text/html" });
+                        const url = URL.createObjectURL(blob);
+                        const link = window.document.createElement("a");
+                        link.href = url;
+                        link.download = "gapsense-assessment.html";
+                        link.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      Download document
                     </button>
                     <button
                       className="button button--secondary"
