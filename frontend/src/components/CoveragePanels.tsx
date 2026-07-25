@@ -16,6 +16,13 @@ const fileStatus = (country: CountryCoverage): string => {
   return `${String(country.repository_file_count)} repository ${country.repository_file_count === 1 ? "file" : "files"} located`;
 };
 
+const matrixSummary = (entries: readonly NonNullable<CountryCoverage["coverage_matrix"]>[number][]): string => {
+  const extracted = entries.filter((entry) => entry.status === "extracted").length;
+  const located = entries.filter((entry) => entry.status === "located").length;
+  const missing = entries.filter((entry) => entry.status === "missing").length;
+  return `${String(extracted)} extracted · ${String(located)} located at phase scope · ${String(missing)} missing subject folders`;
+};
+
 const organizationExamples = {
   GH: {
     title: "NaCCA standards-based structure",
@@ -94,10 +101,12 @@ function LoadedCountryPanel({
           <summary>See level and subject evidence matrix</summary>
           <div className="coverage-matrix__body">
             <p>
-              Level-specific evidence is shown separately from phase-level folders. A missing cell
-              can mean the evidence is only located at phase scope; it is never treated as
-              extracted.
+              Level-specific evidence is shown separately from phase-level folders. “Extracted”
+              means normalized curriculum nodes exist; “located” means an official subject folder
+              exists only at phase scope; “missing” means no subject folder exists in the local
+              evidence repository. No status implies educator review.
             </p>
+            <p className="coverage-matrix__summary">{matrixSummary(country.coverage_matrix)}</p>
             <div className="coverage-matrix__table-wrap">
               <table>
                 <caption>{country.name} level and subject evidence</caption>
@@ -125,6 +134,10 @@ function LoadedCountryPanel({
                 </tbody>
               </table>
             </div>
+            <p className="coverage-matrix__next-step">
+              The complete acquisition queue is maintained in the data repository and is being
+              closed subject by subject; unsupported questions remain disabled.
+            </p>
           </div>
         </details>
       ) : null}

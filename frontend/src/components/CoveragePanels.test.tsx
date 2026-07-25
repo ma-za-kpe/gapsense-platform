@@ -53,6 +53,15 @@ const report = {
           status: "located",
           evidence_scope: "level",
         },
+        {
+          level_identifier: "upper_primary",
+          level_name: "Upper Primary",
+          phase: "primary",
+          subject_identifier: "english",
+          subject_name: "English",
+          status: "extracted",
+          evidence_scope: "phase_only",
+        },
       ],
     },
     {
@@ -85,7 +94,7 @@ describe("coverage panels", () => {
     expect(screen.getAllByText("Lower Primary").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Mathematics").length).toBeGreaterThan(0);
     await userEvent.setup().click(screen.getByText("See level and subject evidence matrix"));
-    expect(screen.getByText("phase folder only")).toBeVisible();
+    expect(screen.getAllByText("phase folder only").length).toBeGreaterThan(0);
     expect(screen.getByText("level folder")).toBeVisible();
     expect(screen.getAllByText("Extraction and educator review not verified")).toHaveLength(2);
   });
