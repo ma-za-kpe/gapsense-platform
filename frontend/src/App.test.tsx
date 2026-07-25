@@ -200,6 +200,24 @@ describe("GapSense web entry experience", () => {
     expect(screen.getByText(/NCDC curriculum inventory is still being verified/)).toBeVisible();
   });
 
+  it("keeps Uganda O-Level and A-Level available in the local web planner", async () => {
+    const user = userEvent.setup();
+    renderReadyApp();
+
+    await user.click(screen.getByRole("radio", { name: /^Teacher/ }));
+    await user.click(screen.getByRole("radio", { name: /^Uganda/ }));
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
+    await user.click(screen.getByRole("button", { name: "Review my starting point" }));
+
+    await user.selectOptions(screen.getByLabelText("Level"), "O-Level (S1–S4)");
+    await user.click(screen.getByRole("button", { name: /Generate starter activity/ }));
+
+    expect(screen.getByText(/Local draft · O-Level \(S1–S4\)/)).toBeVisible();
+    expect(
+      screen.getByRole("heading", { level: 4, name: "Mathematics Practice activity" }),
+    ).toBeVisible();
+  });
+
   it("generates and prints a local starter activity after reviewing intent", async () => {
     const user = userEvent.setup();
     renderReadyApp();

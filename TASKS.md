@@ -93,6 +93,11 @@ Rules:
   explorer, grouped by evidence phase and explicitly separated from extraction/review status.
   Evidence: Docker Python coverage passed 95 tests at 100%; Docker frontend validation passed
   66 tests at 100%; the API now reports subject identifiers without exposing source contents.
+- [x] Keep the local web planner usable for all named Ghana and Uganda phases, including Ghana
+  JHS/SHS and Uganda Primary 4–7, O-Level, and A-Level selections. The deterministic starter bank
+  remains clearly labelled as a prototype and does not imply official extraction completion.
+  Evidence: the Uganda O-Level journey is covered by the frontend test suite at 100% coverage;
+  unsupported curriculum evidence remains visible as pending rather than invented.
 - [ ] Audit and model Uganda secondary as O’Level (lower secondary / UCE) and A’Level (advanced
   secondary / UACE), rather than generic “secondary”; inventory NCDC O-Level and A-Level sources,
   subjects, combinations, examination links, and curriculum-version dates. Research lead:
