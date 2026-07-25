@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.3.0...v0.4.0) (2026-07-25)
+
+
+### Features
+
+* **curriculum:** add truthful level coverage matrix ([bb8fbc8](https://github.com/ma-za-kpe/gapsense-platform/commit/bb8fbc85dcee6ab642a8c9b72b218769a3a63871))
+* **curriculum:** expose subject evidence inventory ([#20](https://github.com/ma-za-kpe/gapsense-platform/issues/20)) ([dc93cf5](https://github.com/ma-za-kpe/gapsense-platform/commit/dc93cf5e87c81f26edb552d71e79e0733e5ababe))
+* **web:** add downloadable assessment document export ([8948bf8](https://github.com/ma-za-kpe/gapsense-platform/commit/8948bf81a33687113ce64439f90814478a1e3991))
+* **web:** make secondary planner phases selectable ([#22](https://github.com/ma-za-kpe/gapsense-platform/issues/22)) ([59c1b04](https://github.com/ma-za-kpe/gapsense-platform/commit/59c1b04a6aa4c327c71e51e58e01844a62225a67))
+
+
+### Documentation
+
+* **tasks:** reconcile merged curriculum evidence work list ([815c26a](https://github.com/ma-za-kpe/gapsense-platform/commit/815c26a5ddfa7f52e6d2f50f38becf6204ecd32e))
+
 ## [0.3.0](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.2.0...v0.3.0) (2026-07-24)
 
 
