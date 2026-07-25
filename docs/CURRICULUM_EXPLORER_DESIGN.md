@@ -2,7 +2,7 @@
 
 Status: design baseline for the next web milestone.
 
-The current landing experience exposes a safe country and subject inventory. The next surface must
+The current landing experience exposes a safe country and subject inventory. The planner now also
 let educators inspect the curriculum hierarchy that question generation will consume, without
 pretending that a phase-level folder is a reviewed level or publishing restricted source content.
 
@@ -72,14 +72,14 @@ these records through a typed API rather than reading the repository directly fr
 
 ## API boundary
 
-The existing `GET /v1/curriculum/coverage` endpoint remains the overview contract. A future detail
-contract should be read-only and allowlisted, for example:
+The existing `GET /v1/curriculum/coverage` endpoint remains the overview contract. The read-only
+detail contract is now available and bounded, for example:
 
 ```text
 GET /v1/curriculum/ghana/primary/lower_primary/mathematics
 ```
 
-The response should contain normalized, versioned metadata and approved derived nodes. It must not
+The response contains normalized, versioned metadata and approved derived nodes. It must not
 return private filesystem paths, unbounded raw PDF text, hidden review notes, secrets, or a claim
 of human approval that the data repository has not recorded.
 

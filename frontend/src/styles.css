@@ -1172,6 +1172,28 @@ a {
   margin-top: 0.45rem;
   border-bottom: 1px solid var(--line);
 }
+
+.starter-activity li > .text-button {
+  display: block;
+  margin-top: 0.45rem;
+}
+
+.lineage-panel {
+  display: grid;
+  gap: 0.45rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--green-200);
+  border-radius: 0.75rem;
+  background: var(--green-50);
+}
+
+.lineage-panel div {
+  display: grid;
+  gap: 0.2rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--green-200);
+}
 .starter-activity details {
   margin-top: var(--space-4);
   color: var(--ink-700);

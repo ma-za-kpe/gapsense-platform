@@ -707,12 +707,18 @@ Rules:
 - [x] Commit the truthful coverage slice on the reconciliation branch, merge the completed
   milestone into local `main`, and retain the no-push/no-deploy hold. Evidence: PRs #20, #22, and
   #23 passed the required hosted gate and were squash-merged; deployment remains explicitly held.
+- [x] Make generated free-assessment questions traceable to curriculum evidence. Evidence:
+  each local starter question exposes a trace action; the typed detail endpoint projects strands,
+  standards, prerequisites, indicators, extraction status, and source filenames; unavailable or
+  empty evidence fails closed; Docker frontend coverage remains 100% (81 tests) and backend
+  detail/API tests pass.
 
 - [x] Select the web frontend stack through an ADR and a tested prototype.
 - [x] Define the first browser/API boundary and typed curriculum-coverage contract.
 - [ ] Implement local mock authentication and role switching.
 - [ ] Implement country, phase, subject, and curriculum-version selection.
-- [ ] Implement a curriculum explorer with prerequisite visualization.
+- [ ] Implement the full curriculum explorer page with interactive prerequisite visualization
+  beyond the current planner lineage panel.
 - [ ] Implement teacher class and learner setup using synthetic/local data.
 - [ ] Implement web-based diagnostic-session creation and continuation.
 - [ ] Implement response capture for text and structured answers first.

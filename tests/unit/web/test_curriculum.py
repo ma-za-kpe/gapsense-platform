@@ -109,3 +109,38 @@ async def test_coverage_endpoint_reports_missing_repository_without_a_server_err
     assert response.status_code == 200
     assert response.json()["repository_status"] == "missing"
     assert response.json()["warnings"] == ["missing_curricula_root"]
+
+
+async def test_curriculum_detail_endpoint_projects_safe_lineage(tmp_path: Path) -> None:
+    subject_path = tmp_path / "curricula" / "ghana" / "primary" / "mathematics"
+    subject_path.mkdir(parents=True)
+    (subject_path / "populated_nodes_complete.json").write_text(
+        '{"nodes_fully_populated":{"B1.1.1.1":{"title":"Count","indicators":{"I1":{"title":"Count"}}}}}',
+        encoding="utf-8",
+    )
+    (subject_path / "prerequisite_graph.json").write_text(
+        '{"strands":{"1":{"name":"Number"}},"nodes":{}}', encoding="utf-8"
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app(data_path=tmp_path)),
+        base_url="http://test",
+    ) as client:
+        response = await client.get("/v1/curriculum/ghana/primary/lower_primary/mathematics")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["evidence_scope"] == "phase_only"
+    assert payload["nodes"][0]["code"] == "B1.1.1.1"
+    assert payload["nodes"][0]["indicators"][0]["title"] == "Count"
+    assert "path" not in response.text.lower()
+
+
+async def test_curriculum_detail_endpoint_fails_closed_for_missing_subject(tmp_path: Path) -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app(data_path=tmp_path)),
+        base_url="http://test",
+    ) as client:
+        response = await client.get("/v1/curriculum/ghana/primary/basic_1/mathematics")
+
+    assert response.status_code == 404

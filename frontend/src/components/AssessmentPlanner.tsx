@@ -1,4 +1,4 @@
-import { useReducer, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 
 import type { Analytics } from "../analytics/client";
 import { buildAssessmentDocument } from "../domain/assessmentDocument";
@@ -13,6 +13,8 @@ import {
   type Goal,
   type Role,
 } from "../domain/planner";
+import { getCurriculumDetail, type CurriculumDetail } from "../services/details";
+import { curriculumApiPath } from "../domain/curriculumPath";
 
 const roles = Object.entries(roleProfiles) as readonly (readonly [
   Role,
@@ -112,9 +114,28 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
   const [subject, setSubject] = useState<keyof typeof starterQuestions>("Mathematics");
   const [generated, setGenerated] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "shared" | "copied">("idle");
+  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
+  const [lineage, setLineage] = useState<CurriculumDetail | null>(null);
+  const [lineageStatus, setLineageStatus] = useState<"idle" | "loading" | "loaded" | "unavailable">(
+    "idle",
+  );
   const complete = isPlanComplete(state);
   const reviewedPlan = state.reviewed && complete ? state : null;
   const catalog = state.country === null ? starterCatalog.ghana : starterCatalog[state.country];
+  useEffect(() => {
+    if (selectedQuestion === null || reviewedPlan === null) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- status tracks the asynchronous request lifecycle.
+    setLineageStatus("loading");
+    void getCurriculumDetail(curriculumApiPath(reviewedPlan.country, level, subject))
+      .then((detail) => {
+        setLineage(detail);
+        setLineageStatus("loaded");
+      })
+      .catch(() => {
+        setLineage(null);
+        setLineageStatus("unavailable");
+      });
+  }, [level, reviewedPlan, selectedQuestion, subject]);
 
   return (
     <section className="planner section-shell" id="planner" aria-labelledby="planner-heading">
@@ -366,11 +387,65 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
                 <ol>
                   {starterQuestions[subject].map((question) => (
                     <li key={question}>
-                      {question}
+                      <span>{question}</span>
+                      <button
+                        className="text-button"
+                        type="button"
+                        onClick={() => setSelectedQuestion(question)}
+                      >
+                        Trace curriculum
+                      </button>
                       <span className="answer-line" />
                     </li>
                   ))}
                 </ol>
+                {selectedQuestion !== null ? (
+                  <aside className="lineage-panel" aria-live="polite">
+                    <strong>Curriculum lineage</strong>
+                    <p>{selectedQuestion}</p>
+                    {lineageStatus === "loading" ? <span>Loading evidence…</span> : null}
+                    {lineageStatus === "unavailable" ? (
+                      <span>Lineage evidence is not available for this selection yet.</span>
+                    ) : null}
+                    {lineageStatus === "loaded" && lineage !== null ? (
+                      <>
+                        <span>
+                          {lineage.evidence_scope === "level"
+                            ? "Level evidence"
+                            : "Phase-level evidence"}{" "}
+                          · {lineage.extraction_status}
+                        </span>
+                        {lineage.strands.length ? (
+                          <span>
+                            Strands: {lineage.strands.map((strand) => strand.name).join(", ")}
+                          </span>
+                        ) : null}
+                        {lineage.nodes.map((node) => (
+                          <div key={node.code}>
+                            <strong>
+                              {node.code} · {node.title}
+                            </strong>
+                            <span>Content standard: {node.content_standard || "Not recorded"}</span>
+                            <span>
+                              Prerequisites:{" "}
+                              {node.prerequisites.length
+                                ? node.prerequisites.join(", ")
+                                : "None recorded"}
+                            </span>
+                            <span>
+                              Indicators:{" "}
+                              {node.indicators.map((indicator) => indicator.code).join(", ") ||
+                                "None recorded"}
+                            </span>
+                          </div>
+                        ))}
+                        <small>
+                          Sources: {lineage.source_files.join(", ") || "No source file listed"}
+                        </small>
+                      </>
+                    ) : null}
+                  </aside>
+                ) : null}
                 <aside className="activity-provenance" aria-label="Question organization">
                   <strong>How this draft is organised</strong>
                   <span>
@@ -410,6 +485,8 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
             onClick={() => {
               analytics.track("planner_reset");
               setGenerated(false);
+              setSelectedQuestion(null);
+              setLineage(null);
               setShareStatus("idle");
               dispatch({ type: "reset" });
             }}
