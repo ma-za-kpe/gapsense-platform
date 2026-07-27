@@ -16,6 +16,7 @@
     "test:coverage": "vitest run --coverage --configLoader runner",
     "test:e2e": "playwright test",
     "build": "tsc -b --pretty false && vite build --configLoader runner",
+    "build:vercel": "tsc -b --pretty false && vite build --configLoader runner --outDir ../public",
     "audit": "npm audit --audit-level=low",
     "validate": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run audit"
   },

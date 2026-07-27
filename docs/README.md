@@ -27,6 +27,7 @@
 - [Architecture decision record](architecture/gapsense_adr.md)
 - [ADR-001: Local Web Frontend Stack](decisions/ADR-001-web-frontend-stack.md)
 - [ADR-002: Analytics and Search Publication](decisions/ADR-002-analytics-and-search-publication.md)
+- [ADR-003: Vercel Production Topology](decisions/ADR-003-vercel-production-topology.md)
 - [API specification](specs/gapsense_api_spec.json)
 - [Database specification](specs/gapsense_data_model.sql)
 - [Test scenarios](specs/gapsense_test_scenarios.json)

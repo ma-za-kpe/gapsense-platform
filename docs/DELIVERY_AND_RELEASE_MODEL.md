@@ -1,8 +1,8 @@
 # Delivery, Branching, Versioning, and Release Model
 
-Date: 2026-07-23
-Status: Implemented release/CI candidate; remote contribution is authorized and production
-deployment remains on hold
+Date: 2026-07-25
+Status: Implemented release/CI model; remote contribution is authorized and Vercel production is
+an explicit operator promotion
 
 ## Outcome
 
@@ -73,14 +73,16 @@ that one-time generated note must be reconciled before the first public tag.
 - `push` to `main`: Release Please only, without duplicating the full application suite;
 - a bounded scheduled deep security/reproducibility run only when it adds evidence not already
   produced per change;
-- no deployment event while the deployment hold remains active.
+- no automatic deployment event; production promotion remains a separate, explicit operator
+  action.
 
-The inherited Vercel Git connection is not a release channel. Root `vercel.json` sets
-`git.deploymentEnabled` to `false`, carries no build or routing configuration, and is enforced by
-repository policy. This prevents both preview and production auto-deployments without relying on a
-stale external dashboard setting. The first reconciliation PR event exposed the missing guardrail
-when Vercel attempted and failed a preview deployment; no merge is allowed until a superseding
-candidate proves that automatic deployment is skipped.
+The inherited Vercel Git connection is not a release channel. Root `vercel.json` keeps
+`git.deploymentEnabled` set to `false` and is enforced by repository policy. Its reviewed build and
+routing configuration overrides the stale dashboard preset so the existing `gapsense` project can
+serve the Vite output and same-origin read-only FastAPI routes together. The first reconciliation
+PR event exposed the missing guardrail when Vercel attempted and failed a preview deployment.
+Production now follows the explicit preview, promotion, verification, and rollback contract in
+[ADR-003](decisions/ADR-003-vercel-production-topology.md).
 
 ### Required validation graph
 
@@ -171,4 +173,5 @@ and human merge decision as every other change.
 5. Enable appropriate branch protection/rulesets after the reconciled workflow has proved green.
 6. Let Release Please open a distinct release PR; review its version and changelog evidence rather
    than merging it automatically.
-7. Keep production deployment disabled. WhatsApp remains the final product programme.
+7. Keep automatic production deployment disabled. Promote the reviewed public slice only through
+   the explicit ADR-003 checkpoint; WhatsApp remains the final product programme.
