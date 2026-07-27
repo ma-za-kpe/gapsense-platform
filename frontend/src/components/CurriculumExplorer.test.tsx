@@ -144,7 +144,7 @@ describe("curriculum explorer", () => {
     await waitFor(() => expect(screen.getByText(/Level evidence/)).toBeInTheDocument());
   });
 
-  it("keeps empty catalogues explicit", () => {
+  it("replaces an empty public catalogue with a useful non-interactive boundary", () => {
     const emptyReport = {
       ...report,
       countries: report.countries.map((country) => ({ ...country, levels: [], subjects: [] })),
@@ -152,7 +152,17 @@ describe("curriculum explorer", () => {
     render(
       <CurriculumExplorer state={{ status: "loaded", report: emptyReport }} onRetry={vi.fn()} />,
     );
-    expect(screen.getByText("Select a curriculum combination.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "No public subject evidence is available yet",
+      }),
+    ).toBeVisible();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Read how evidence is published" })).toHaveAttribute(
+      "href",
+      "/about#evidence",
+    );
   });
 
   it("offers retry while coverage is not loaded", async () => {

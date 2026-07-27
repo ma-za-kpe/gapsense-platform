@@ -3,9 +3,9 @@ export type SearchPublication =
 
 const searchHeadMarker = "<!-- gapsense:search-head -->";
 const siteName = "GapSense";
-const title = "GapSense — Find the next learning step";
+const title = "GapSense — Evidence and honest activity samples";
 const description =
-  "GapSense helps Ghanaian and Ugandan learning communities plan curriculum-aligned assessments and find the next useful learning step.";
+  "Inspect public curriculum evidence for Ghana and Uganda, then try a clearly labelled illustrative activity sample.";
 
 function localHostname(hostname: string): boolean {
   const normalized = hostname.toLowerCase().replace(/\.+$/u, "");

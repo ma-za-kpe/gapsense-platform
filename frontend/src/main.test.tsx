@@ -15,7 +15,9 @@ describe("application bootstrap", () => {
 
     const module = await act(async () => import("./main"));
     await waitFor(() => {
-      expect(document.querySelector("h1")).toHaveTextContent("Find the next learning step.");
+      expect(document.querySelector("h1")).toHaveTextContent(
+        "See the evidence. Try an honest sample.",
+      );
     });
 
     act(() => {

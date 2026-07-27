@@ -18,5 +18,9 @@ describe("buildAssessmentDocument", () => {
     expect(html).toContain("What does A &amp; B mean?");
     expect(html).toContain("Answer guidance: Use &lt;example&gt;");
     expect(html).toContain("Answer guidance: Review with an educator");
+    expect(html).toContain(
+      "Illustrative GapSense sample; not curriculum-aligned or educator-reviewed.",
+    );
+    expect(html).not.toContain("Local prototype");
   });
 });

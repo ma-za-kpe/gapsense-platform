@@ -47,7 +47,7 @@ describe("search publication contract", () => {
       "@context": "https://schema.org",
       "@type": "WebSite",
       description:
-        "GapSense helps Ghanaian and Ugandan learning communities plan curriculum-aligned assessments and find the next useful learning step.",
+        "Inspect public curriculum evidence for Ghana and Uganda, then try a clearly labelled illustrative activity sample.",
       inLanguage: "en",
       name: "GapSense",
       url: "https://learn.gapsense.test/",

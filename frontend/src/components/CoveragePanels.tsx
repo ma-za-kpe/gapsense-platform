@@ -82,7 +82,7 @@ function LoadedCountryPanel({
       <div className="country-panel__subjects">
         <strong>Evidence subjects found</strong>
         {country.subjects?.length ? (
-          <ul aria-label={`${country.name} subjects found in local evidence`}>
+          <ul aria-label={`${country.name} subjects found in public evidence`}>
             {country.subjects.map((subject) => (
               <li key={`${subject.phase}:${subject.identifier}`}>
                 {subject.name} <small>({subject.phase})</small>
@@ -90,7 +90,7 @@ function LoadedCountryPanel({
             ))}
           </ul>
         ) : (
-          <p>No subject folders are currently visible in the local evidence mount.</p>
+          <p>No subject records are currently visible in the public evidence catalogue.</p>
         )}
         <small>Presence is not the same as extraction or educator review.</small>
       </div>
@@ -105,8 +105,8 @@ function LoadedCountryPanel({
             <p>
               Level-specific evidence is shown separately from phase-level folders. “Extracted”
               means normalized curriculum nodes exist; “located” means an official subject folder
-              exists only at phase scope; “missing” means no subject folder exists in the local
-              evidence repository. No status implies educator review.
+              exists only at phase scope; “missing” means no subject record exists in the public
+              evidence catalogue. No status implies educator review.
             </p>
             <p className="coverage-matrix__summary">{matrixSummary(country.coverage_matrix)}</p>
             <div className="coverage-matrix__table-wrap">
@@ -189,7 +189,7 @@ function PendingCountryPanels({ loading }: { readonly loading: boolean }): React
             <span className="country-panel__signal" aria-hidden="true" />
             <div>
               <strong>
-                {loading ? "Checking local coverage evidence…" : "Coverage details unavailable"}
+                {loading ? "Checking public coverage evidence…" : "Coverage details unavailable"}
               </strong>
               <small>Extraction and educator review not verified</small>
             </div>
@@ -222,7 +222,7 @@ export function CoveragePanels({ state, onRetry }: CoveragePanelsProps): React.J
       {state.status === "unavailable" ? (
         <div className="coverage-alert" role="alert">
           <div>
-            <strong>Live coverage details are unavailable</strong>
+            <strong>Public coverage details are unavailable</strong>
             <span> Country context stays visible, but no repository claim is being made.</span>
           </div>
           <button className="text-button" type="button" onClick={onRetry}>
