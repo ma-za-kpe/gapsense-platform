@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.5.2...v0.6.0) (2026-07-27)
+
+
+### Features
+
+* **web:** restore expressive accessible themes ([#37](https://github.com/ma-za-kpe/gapsense-platform/issues/37)) ([e221ba7](https://github.com/ma-za-kpe/gapsense-platform/commit/e221ba7b41a72a50af33ad84aab01fc9c4200ca3))
+
 ## [0.5.2](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.5.1...v0.5.2) (2026-07-27)
 
 
