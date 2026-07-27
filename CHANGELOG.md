@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.5.0...v0.5.1) (2026-07-27)
+
+
+### Bug Fixes
+
+* **deploy:** restore gapsense.org production topology ([#29](https://github.com/ma-za-kpe/gapsense-platform/issues/29)) ([4890754](https://github.com/ma-za-kpe/gapsense-platform/commit/48907541ea6cbb330aea3c1350f18422df531400))
+* **web:** make the public sample experience truthful ([#31](https://github.com/ma-za-kpe/gapsense-platform/issues/31)) ([7e54f91](https://github.com/ma-za-kpe/gapsense-platform/commit/7e54f91c61636fd202e2891e768343ef27b7f1d4))
+
 ## [0.5.0](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.4.0...v0.5.0) (2026-07-25)
 
 
