@@ -43,7 +43,7 @@ Rules:
   was promoted as production deployment `dpl_sq6XxbhCDevkgaH6qb8TM5FE93EQ`; and the live
   `gapsense.org` desktop/mobile Chromium gate passed 14/14 with the reviewed visual baselines,
   accessibility checks, public-fixture boundary, security headers, and immutable hashed assets.
-- [~] Deliver a complete, user-controlled GapSense theme system through TDD: support explicit
+- [x] Deliver a complete, user-controlled GapSense theme system through TDD: support explicit
   light, dark, and system modes; make the control keyboard-, touch-, and screen-reader-accessible;
   persist only the non-sensitive theme preference; honour the operating-system preference when
   “system” is selected; prevent an incorrect-theme flash during first paint; and preserve the
@@ -53,6 +53,13 @@ Rules:
   or using colour alone. Retain legible low-ink printing, reduced-motion behaviour, WCAG 2.2 AA
   contrast, 200% zoom, 320-pixel reflow, deterministic local operation, 100% executable line and
   branch coverage, and reviewed desktop/mobile visual baselines for all three preference paths.
+  Evidence: implementation PR #37 merged as `e221ba7` after required CI run `30313158641` and
+  GitGuardian passed; release PR #38 passed trusted CI run `30313522682`, produced `v0.6.0`, and
+  established exact-main release commit `310432e`; production deployment
+  `dpl_CwM7VYGUkELJ3UBf9FBCS7JKMgzM` was built from that clean `main` and aliased to
+  `gapsense.org`; 104 backend and 171 frontend tests retained 100% line and branch coverage; and
+  the live desktop/mobile Chromium gate passed 28/28 with all three theme paths, accessibility,
+  320-pixel reflow, security headers, immutable assets, and zero error, 4xx, or 5xx runtime logs.
 - [x] Correct every actionable release blocker from the 2026-07-27 live `gapsense.org` UI/UX
   audit through TDD: align public promises with the implemented sample workflow; remove unsupported
   diagnosis/confidence theatre; replace empty curriculum controls with an explicit evidence
