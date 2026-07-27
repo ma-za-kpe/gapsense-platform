@@ -5,11 +5,13 @@ is being designed to help learners, caregivers, teachers, and schools find and
 close curriculum-aligned learning gaps and to make high-quality assessment
 generation freely accessible.
 
-The current repository is an early engineering foundation, not a deployed or
-curriculum-complete product. Neither Ghana nor Uganda has complete, reviewed
-coverage across all subjects and levels yet. WhatsApp delivery and production
-deployment are explicitly on hold while the web product, curriculum evidence,
-safety controls, and user experience are built properly.
+The current repository is an early engineering foundation, not a
+curriculum-complete product. A bounded, read-only public slice is deployed from
+the existing `gapsense` Vercel project to `https://gapsense.org`; it is not a
+diagnostic service or proof of reviewed curriculum alignment. Neither Ghana nor
+Uganda has complete, reviewed coverage across all subjects and levels yet.
+WhatsApp delivery, real learner data, hosted authentication or AI, database
+writes, and any broader production capability remain explicitly on hold.
 
 ## Current product status
 
@@ -35,7 +37,8 @@ educator review, and production-grade generation remain open work in `TASKS.md`.
   source references, and review status.
 - Deterministic behavior for tests and core workflows; local Ollama is an
   optional AI capability, never a hidden startup or test requirement.
-- Local mock authentication and services until deployment is authorized.
+- Local mock authentication and services until each corresponding hosted capability is explicitly
+  authorized.
 - Security, child safety, privacy, accessibility, and dignity by design.
 - 100% line and branch coverage for application-owned executable code.
 

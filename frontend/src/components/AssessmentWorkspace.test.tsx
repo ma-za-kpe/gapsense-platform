@@ -15,6 +15,7 @@ const saveTeacherGhanaDraft = () => {
   saveSampleDraft(window.localStorage, {
     role: "teacher",
     country: "ghana",
+    goal: "practice",
     reviewed: true,
   });
 };
@@ -26,10 +27,12 @@ describe("focused sample activity workspace", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "No saved sample activity" }),
     ).toBeVisible();
-    expect(screen.getByText(/Choose a role and one illustrative country context/)).toBeVisible();
+    expect(
+      screen.getByText(/Choose a role, one illustrative country context, and an available purpose/),
+    ).toBeVisible();
   });
 
-  it("renders the distinct sample, guidance, provenance, and document actions", async () => {
+  it("keeps learner and answer artifacts separate and labels every action precisely", async () => {
     saveTeacherGhanaDraft();
     const user = userEvent.setup();
     const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:sample");
@@ -50,11 +53,12 @@ describe("focused sample activity workspace", () => {
     expect(screen.getByText("Name one source of light.")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Trace curriculum" })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Download HTML" }));
-    expect(createObjectURL).toHaveBeenCalledOnce();
-    expect(click).toHaveBeenCalledOnce();
+    await user.click(screen.getByRole("button", { name: "Download learner worksheet" }));
+    await user.click(screen.getByRole("button", { name: "Download answer guide" }));
+    expect(createObjectURL).toHaveBeenCalledTimes(2);
+    expect(click).toHaveBeenCalledTimes(2);
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:sample");
-    await user.click(screen.getByRole("button", { name: "Print / save PDF" }));
+    await user.click(screen.getByRole("button", { name: "Print learner worksheet" }));
     expect(print).toHaveBeenCalledOnce();
     await user.click(screen.getByText("Show answer guidance"));
     expect(screen.getByText(/sun, a lamp/i)).toBeVisible();
@@ -73,19 +77,19 @@ describe("focused sample activity workspace", () => {
     const view = render(
       <AssessmentWorkspace onReturnHome={vi.fn()} storage={window.localStorage} />,
     );
-    await user.click(screen.getByRole("button", { name: "Share" }));
+    await user.click(screen.getByRole("button", { name: "Share sample summary" }));
     expect(await screen.findByRole("status")).toHaveTextContent("Share sheet opened");
 
     Object.defineProperty(navigator, "share", {
       configurable: true,
       value: vi.fn().mockRejectedValue(new Error("cancelled")),
     });
-    await user.click(screen.getByRole("button", { name: "Share" }));
+    await user.click(screen.getByRole("button", { name: "Share sample summary" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Sharing did not finish. Download the activity instead",
     );
     Reflect.deleteProperty(navigator, "share");
-    await user.click(screen.getByRole("button", { name: "Share" }));
+    await user.click(screen.getByRole("button", { name: "Share sample summary" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Sharing is unavailable. Copy the summary or download the activity instead",
     );

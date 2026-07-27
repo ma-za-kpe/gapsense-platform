@@ -9,9 +9,11 @@ const minimumTargetPixels = 44;
 const maximumMobilePageViewports = 8.5;
 
 const expectCoverageEvidence = async (page: import("@playwright/test").Page): Promise<void> => {
-  await expect(page.getByText(/\d+ repository files? located/)).toHaveCount(2, {
-    timeout: coverageSettlingTimeoutMilliseconds,
-  });
+  await expect(
+    page.getByText(
+      /unreviewed subject record|Evidence files exist, but no subject is publishable yet/,
+    ),
+  ).toHaveCount(2, { timeout: coverageSettlingTimeoutMilliseconds });
 };
 
 const expectNoAccessibilityViolations = async (
@@ -35,13 +37,15 @@ test("never offers a blank curriculum combination", async ({ page }) => {
     "Inspect the public evidence boundary.",
   );
   const subject = page.getByRole("combobox", { name: "Subject" });
+  const emptyState = page.getByRole("heading", {
+    level: 2,
+    name: "No public subject evidence is available yet",
+  });
+  await expect(subject.or(emptyState)).toBeVisible({
+    timeout: coverageSettlingTimeoutMilliseconds,
+  });
   if ((await subject.count()) === 0) {
-    await expect(
-      page.getByRole("heading", {
-        level: 2,
-        name: "No public subject evidence is available yet",
-      }),
-    ).toBeVisible();
+    await expect(emptyState).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Read how evidence is published" }),
     ).toHaveAttribute("href", "/about#evidence");
@@ -62,7 +66,9 @@ test("never offers a blank curriculum combination", async ({ page }) => {
   await expectNoAccessibilityViolations(page);
 });
 
-test("renders a truthful, quiet Ghana and Uganda entry experience", async ({ page }) => {
+test("renders the prerequisite-gap mission without presenting the product model as a diagnosis", async ({
+  page,
+}) => {
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
   const analyticsRequests: string[] = [];
@@ -79,26 +85,38 @@ test("renders a truthful, quiet Ghana and Uganda entry experience", async ({ pag
   const response = await page.goto("/");
 
   expect(response?.ok()).toBe(true);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "See the evidence. Try an honest sample.",
-  );
-  await expect(page.getByText("Country coverage")).toBeVisible();
-  await expect(page.getByText("Illustrative activity", { exact: true })).toBeVisible();
-  await expect(page.getByText("Diagnosis", { exact: true })).toBeVisible();
-  await expect(page.getByText("Not available", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Find the next learning step.");
+  await expect(page.getByText("Find the gap. See the reason. Take the next step.")).toBeVisible();
+  await expect(
+    page.getByText(/help educators identify the earliest learning prerequisite/i),
+  ).toBeVisible();
+  const model = page.getByRole("figure", { name: "Illustrative learning path" });
+  await expect(model).toBeVisible();
+  await expect(model.getByText("Product model")).toBeVisible();
+  await expect(model.getByText("Fractions")).toBeVisible();
+  await expect(model.getByText("Equal groups")).toBeVisible();
+  await expect(model.getByText("Counting")).toBeVisible();
+  await expect(model.getByText("Visual grouping practice")).toBeVisible();
+  await expect(
+    model.getByText(
+      "Example only — not a learner diagnosis or a claim about current curriculum coverage.",
+    ),
+  ).toBeVisible();
+  await expect(model).not.toContainText(/92|confidence/i);
+  await expect(
+    page.getByText(/Today, the public release offers clearly labelled activity samples/i),
+  ).toBeVisible();
   await expect(page.getByText("Public evidence catalogue connected")).toBeVisible();
   await expectCoverageEvidence(page);
-  await expect(page.getByText("Extraction and educator review not verified")).toHaveCount(2);
+  await expect(page.getByText("No educator review has been recorded.")).toHaveCount(2);
   await expect(
-    page.getByText("No account, name, school, or learner response is requested."),
+    page.getByText("No account. No learner data. No hidden AI dependency."),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Maku" })).toHaveAttribute(
+  await expect(page.locator(".hero__kicker").getByRole("link", { name: "Maku" })).toHaveAttribute(
     "href",
     "https://startuptribunal.com/maku",
   );
-  await expect(page.locator("body")).not.toContainText(
-    /UNICEF|Find the next learning step|Earliest gap|local evidence mount|Ollama/i,
-  );
+  await expect(page.locator("body")).not.toContainText(/UNICEF|local evidence mount|Ollama/i);
 
   await expectNoAccessibilityViolations(page);
   expect(consoleErrors).toEqual([]);
@@ -113,6 +131,8 @@ test("persists an anonymous Uganda sample and supports a clean restart", async (
   await expect(review).toBeDisabled();
   await page.getByRole("radio", { name: /^Parent or caregiver/ }).check();
   await page.getByRole("radio", { name: /^Uganda/ }).check();
+  await expect(review).toBeDisabled();
+  await page.getByRole("radio", { name: /^Practice activity/ }).check();
   await expect(review).toBeEnabled();
   await review.click();
   await expect(
@@ -216,10 +236,10 @@ test("serves a hardened same-origin surface", async ({ page }) => {
   const robots = await page.request.get("/robots.txt");
   const sitemap = await page.request.get("/sitemap.xml");
 
-  await expect(page).toHaveTitle("GapSense \u2014 Evidence and honest activity samples");
+  await expect(page).toHaveTitle("GapSense \u2014 Find the next learning step");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    "Inspect public curriculum evidence for Ghana and Uganda, then try a clearly labelled illustrative activity sample.",
+    "See how GapSense connects observed difficulty, curriculum prerequisites, and practical next steps while keeping current evidence limits explicit.",
   );
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",

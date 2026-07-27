@@ -150,9 +150,10 @@ The Vite build has two modes.
 - returns a real `404 text/plain` for `/sitemap.xml`;
 - makes no network request and loads no third-party search script.
 
-This is the only permitted mode while deployment is on hold.
+This remains the required mode for the current bounded production surface. Deploying a reviewable
+public fixture does not authorize search indexing.
 
-### `public` (future approved release)
+### `public` (future approved indexing release)
 
 The build fails unless `GAPSENSE_PUBLIC_ORIGIN` is:
 
@@ -170,17 +171,18 @@ An accepted public build emits:
 - a root-only XML sitemap;
 - an exact SHA-256 CSP source for the generated JSON-LD block.
 
-The current site has one real public information route, so the future sitemap contains one URL.
-Country, phase, level, subject, assessment, and diagnostic URLs enter it only after those pages
-contain unique, useful, evidence-backed content. GapSense will not generate thin keyword pages,
-duplicate country variants, false curriculum-completeness claims, or structured data that is not
-supported by visible page content.
+The current site has multiple functional and trust routes, but only the root is presently modelled
+as a future canonical index target. Additional curriculum, country, phase, level, subject,
+assessment, diagnostic, and trust URLs enter a sitemap only after each page has a reviewed
+indexing decision and unique, useful, evidence-backed content. GapSense will not generate thin
+keyword pages, duplicate country variants, false curriculum-completeness claims, or structured
+data that is not supported by visible page content.
 
 ## Search Promotion Checklist
 
 Do not switch a build to `public` until all items are complete:
 
-- production deployment hold explicitly lifted;
+- search-indexing promotion explicitly authorized separately from the bounded deployment approval;
 - canonical domain ownership and HTTPS verified;
 - hosting choice, redirects, trailing slash, error pages, cache policy, and environment separation
   approved;

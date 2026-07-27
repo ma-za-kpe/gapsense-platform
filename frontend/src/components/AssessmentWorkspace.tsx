@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { buildAssessmentDocument } from "../domain/assessmentDocument";
+import { buildAssessmentDocument, type AssessmentDocumentKind } from "../domain/assessmentDocument";
 import { buildSampleActivity } from "../domain/sampleActivity";
 import { clearSampleDraft, type DraftStorage, readSampleDraft } from "../domain/sampleDraft";
 
@@ -15,6 +15,32 @@ type ActionState =
   | { readonly kind: "error"; readonly message: string };
 
 const idleAction: ActionState = { kind: "idle", message: "" };
+
+const downloadActivity = (
+  activity: ReturnType<typeof buildSampleActivity>,
+  kind: AssessmentDocumentKind,
+): void => {
+  const document = buildAssessmentDocument(
+    {
+      title: activity.title,
+      country: activity.country,
+      authority: activity.authority,
+      level: activity.level,
+      subject: activity.subject,
+      questions: activity.questions,
+      answers: activity.answers,
+    },
+    kind,
+  );
+  const blob = new Blob([document], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const link = window.document.createElement("a");
+  link.href = url;
+  link.download =
+    kind === "learner" ? "gapsense-learner-worksheet.html" : "gapsense-answer-guide.html";
+  link.click();
+  URL.revokeObjectURL(url);
+};
 
 export function AssessmentWorkspace({
   onReturnHome,
@@ -34,8 +60,8 @@ export function AssessmentWorkspace({
         <span className="eyebrow">Sample activity</span>
         <h1 id="workspace-empty-title">No saved sample activity</h1>
         <p>
-          Choose a role and one illustrative country context first. No learner identity or response
-          is needed.
+          Choose a role, one illustrative country context, and an available purpose first. No
+          learner identity or response is needed.
         </p>
         <button className="button button--primary" type="button" onClick={onReturnHome}>
           Choose a sample
@@ -88,31 +114,21 @@ export function AssessmentWorkspace({
               type="button"
               onClick={() => window.print()}
             >
-              Print / save PDF
+              Print learner worksheet
             </button>
             <button
               className="button button--secondary"
               type="button"
-              onClick={() => {
-                const document = buildAssessmentDocument({
-                  title: activity.title,
-                  country: activity.country,
-                  authority: activity.authority,
-                  level: activity.level,
-                  subject: activity.subject,
-                  questions: activity.questions,
-                  answers: activity.answers,
-                });
-                const blob = new Blob([document], { type: "text/html" });
-                const url = URL.createObjectURL(blob);
-                const link = window.document.createElement("a");
-                link.href = url;
-                link.download = "gapsense-sample-activity.html";
-                link.click();
-                URL.revokeObjectURL(url);
-              }}
+              onClick={() => downloadActivity(activity, "learner")}
             >
-              Download HTML
+              Download learner worksheet
+            </button>
+            <button
+              className="button button--secondary"
+              type="button"
+              onClick={() => downloadActivity(activity, "answer-guide")}
+            >
+              Download answer guide
             </button>
             <button
               className="button button--secondary"
@@ -137,7 +153,7 @@ export function AssessmentWorkspace({
                   );
               }}
             >
-              Share
+              Share sample summary
             </button>
             <button
               className="button button--secondary"
@@ -180,7 +196,7 @@ export function AssessmentWorkspace({
             </li>
           ))}
         </ol>
-        <details>
+        <details className="answer-guidance">
           <summary>Show answer guidance</summary>
           <ol>
             {activity.answers.map((answer) => (

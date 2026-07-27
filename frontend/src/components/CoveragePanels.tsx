@@ -9,12 +9,24 @@ type CoveragePanelsProps = {
   readonly onRetry: () => void;
 };
 
-const fileStatus = (country: CountryCoverage): string => {
+const publicationStatus = (country: CountryCoverage): string => {
   if (country.repository_file_count === 0) {
-    return "No canonical repository files located";
+    return "No public evidence is available yet";
   }
-  return `${String(country.repository_file_count)} repository ${country.repository_file_count === 1 ? "file" : "files"} located`;
+  const subjectCount = country.subjects === undefined ? 0 : country.subjects.length;
+  if (subjectCount === 0) {
+    return "Evidence files exist, but no subject is publishable yet";
+  }
+  return `${String(subjectCount)} unreviewed subject ${subjectCount === 1 ? "record is" : "records are"} visible`;
 };
+
+const formatSnapshotDate = (timestamp: string): string =>
+  new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(timestamp));
 
 const matrixSummary = (
   entries: readonly NonNullable<CountryCoverage["coverage_matrix"]>[number][],
@@ -27,7 +39,7 @@ const matrixSummary = (
 
 const organizationExamples = {
   GH: {
-    title: "NaCCA standards-based structure",
+    title: "Planned NaCCA evidence structure",
     steps: [
       "Country and authority",
       "Key phase / Basic level",
@@ -36,10 +48,10 @@ const organizationExamples = {
       "Content standard and indicator",
       "Question, answer key, and review record",
     ],
-    note: "Ghana evidence is being catalogued from NaCCA standards and official subject documents.",
+    note: "This is the intended organization for future reviewed Ghana evidence, not a claim that these layers are publicly available.",
   },
   UG: {
-    title: "NCDC phase-based structure",
+    title: "Planned NCDC evidence structure",
     steps: [
       "Country and authority",
       "Curriculum phase / primary level",
@@ -48,7 +60,7 @@ const organizationExamples = {
       "Learning outcome and prerequisite",
       "Question, answer key, and review record",
     ],
-    note: "Uganda Primary 1–3 uses thematic learning; later primary and secondary phases use more subject-based structures.",
+    note: "This is the intended organization for future reviewed Uganda evidence, not a claim that these layers are publicly available.",
   },
 } as const;
 
@@ -146,12 +158,12 @@ function LoadedCountryPanel({
       <div className="country-panel__status">
         <span className="country-panel__signal" aria-hidden="true" />
         <div>
-          <strong>{fileStatus(country)}</strong>
-          <small>Extraction and educator review not verified</small>
+          <strong>{publicationStatus(country)}</strong>
+          <small>No educator review has been recorded.</small>
         </div>
       </div>
       <details className="curriculum-map">
-        <summary>See how questions are organised</summary>
+        <summary>See planned evidence structure</summary>
         <div className="curriculum-map__body">
           <strong>{organizationExamples[country.code].title}</strong>
           <ol>
@@ -204,16 +216,33 @@ export function CoveragePanels({ state, onRetry }: CoveragePanelsProps): React.J
   const [openCountry, setOpenCountry] = useState<CountryCoverage["code"] | null>(null);
   if (state.status === "loaded") {
     return (
-      <div className="country-showcase">
-        {state.report.countries.map((country) => (
-          <LoadedCountryPanel
-            country={country}
-            key={country.code}
-            matrixOpen={openCountry === country.code}
-            onMatrixToggle={(open) => setOpenCountry(open ? country.code : null)}
-          />
-        ))}
-      </div>
+      <>
+        <aside className="coverage-provenance" role="note" aria-label="Evidence snapshot">
+          <strong>Evidence snapshot</strong>
+          <span>
+            Catalogue checked{" "}
+            <time dateTime={state.report.snapshot.generated_at}>
+              {formatSnapshotDate(state.report.snapshot.generated_at)}
+            </time>
+          </span>
+          <span>
+            {state.report.snapshot.source_version === null
+              ? "Official source version is not recorded"
+              : `Official source version: ${state.report.snapshot.source_version}`}
+          </span>
+          <span>No human review is recorded for this snapshot.</span>
+        </aside>
+        <div className="country-showcase">
+          {state.report.countries.map((country) => (
+            <LoadedCountryPanel
+              country={country}
+              key={country.code}
+              matrixOpen={openCountry === country.code}
+              onMatrixToggle={(open) => setOpenCountry(open ? country.code : null)}
+            />
+          ))}
+        </div>
+      </>
     );
   }
 

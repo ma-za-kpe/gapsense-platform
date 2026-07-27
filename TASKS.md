@@ -28,6 +28,26 @@ Rules:
 
 ## Current Product Direction
 
+- [~] Correct the product-positioning regression identified in co-founder review on 2026-07-27.
+  Restore the documented promise—**Find the gap. See the reason. Take the next step.**—and the
+  mission-led “Find the next learning step” entry experience, including an accessible,
+  explicitly illustrative Fractions → Equal groups prerequisite map. Preserve PR #31's evidence
+  boundary by labelling the map as a product model rather than a learner diagnosis, removing
+  numeric confidence theatre, keeping unsupported curriculum claims out of sample activities,
+  and distinguishing what GapSense is building from what the public fixture can do today. Retain
+  the reviewed planner step, canonical `/assessment` workspace, **Built by Maku for Africa**
+  attribution, separate learner/educator artifacts, source/review provenance, TDD, responsive
+  visual regression evidence, and exact-main production verification.
+- [ ] Deliver a complete, user-controlled GapSense theme system through TDD: support explicit
+  light, dark, and system modes; make the control keyboard-, touch-, and screen-reader-accessible;
+  persist only the non-sensitive theme preference; honour the operating-system preference when
+  “system” is selected; prevent an incorrect-theme flash during first paint; and preserve the
+  documented forest, green, Ghana-gold, Uganda-coral, warm-paper, status, focus, disabled, and
+  high-contrast semantics in every mode. Apply the theme to every route, component, loading/error/
+  empty state, curriculum view, assessment artifact, and overlay without hiding evidence boundaries
+  or using colour alone. Retain legible low-ink printing, reduced-motion behaviour, WCAG 2.2 AA
+  contrast, 200% zoom, 320-pixel reflow, deterministic local operation, 100% executable line and
+  branch coverage, and reviewed desktop/mobile visual baselines for all three preference paths.
 - [x] Correct every actionable release blocker from the 2026-07-27 live `gapsense.org` UI/UX
   audit through TDD: align public promises with the implemented sample workflow; remove unsupported
   diagnosis/confidence theatre; replace empty curriculum controls with an explicit evidence
@@ -68,10 +88,11 @@ Rules:
 - [ ] Add a manually triggered, environment-protected Vercel deployment workflow only after the
   deployment hold is explicitly lifted; keep `vercel.json` automatic deployments disabled and
   require hosted security, privacy, accessibility, and release checks before promotion.
-- [~] Three-milestone deployment checkpoint reached after `v0.3.0`. Authenticated Vercel access and
-  the existing `gapsense` project binding are restored; protected preview evidence now proves the
-  frontend, `/curriculum`, readiness, coverage, generated assets, and security headers. Complete
-  reviewed promotion, custom-domain verification, runtime log review, and rollback capture.
+- [x] Complete the deployment checkpoint triggered after `v0.3.0`: restore authenticated access
+  and the existing `gapsense` binding; prove the frontend, `/curriculum`, readiness, coverage,
+  generated assets, and security headers in preview; promote the reviewed build; verify the custom
+  domain and runtime; and retain rollback evidence. The current production restoration evidence is
+  recorded in the completed task above and ADR-003.
 - [ ] After every three reviewed milestones, run a deployment checkpoint: reconcile release
   version, CI evidence, privacy/security status, runtime logs, rollback target, and Vercel
   promotion approval before deploying.
@@ -491,9 +512,10 @@ Rules:
   reproducible release-artifact verification step before any public release.
 - [ ] Measure CI wall time, runner minutes, cache hit rate, flaky reruns, queue time, and cost per
   accepted change; add optimization work when thresholds regress.
-- [x] Lift the remote contribution hold only: the co-founder authorized branch pushes, pull
-  requests, and reviewed merges on 2026-07-23, while requiring CI-credit-aware batching. Production
-  deployment remains separately and explicitly on hold.
+- [x] Lift the remote contribution hold: the co-founder authorized branch pushes, pull requests,
+  and reviewed merges on 2026-07-23, while requiring CI-credit-aware batching. At that point,
+  production remained separately on hold; the later, bounded Vercel decision is recorded in
+  ADR-003 and the active Explicit Holds section.
 
 ## Clean Engineering and Mandatory TDD
 
@@ -991,8 +1013,8 @@ Rules:
 - [ ] Define incident response before any real user data is accepted.
 - [ ] Define vulnerability intake, triage, remediation SLAs, disclosure, notification,
   containment, recovery, evidence preservation, and post-incident learning.
-- [ ] Complete independent penetration testing and remediate findings before accepting real
-  child data or lifting the production deployment hold.
+- [ ] Complete independent penetration testing and remediate findings before accepting real child
+  data or expanding production beyond the anonymous, read-only public surface approved in ADR-003.
 - [ ] Review the security model and evidence at every milestone; security-critical follow-ups
   enter this never-finished list immediately.
 
@@ -1002,15 +1024,21 @@ Rules:
   the complete web product, Ghana and Uganda curriculum evidence, free assessment workflows,
   security/privacy, accessibility, performance, release engineering, local operations, and
   deployment-readiness gates are complete and reconciled; no earlier task may depend on it.
-- [!] Production deployment is on hold. Do not deploy to Firebase, AWS, or another host.
-- [~] Enforce the deployment hold in Vercel configuration as well as project policy; the inherited
-  Git integration attempted preview deployment `5578453910` on PR #10 before this missing
-  repository-level guardrail was discovered.
+- [x] The blanket production hold was lifted only for the anonymous, read-only public surface on
+  the existing `gapsense` Vercel project. ADR-003 is binding. Firebase, AWS, a new host, real learner
+  data, authentication, hosted AI, analytics collection, database writes, or broader capability
+  remain on hold until separately authorized and evidenced.
+- [x] Keep automatic Vercel Git deployment disabled in configuration and project policy. The
+  inherited Git integration attempted preview deployment `5578453910` on PR #10; the repository
+  guardrail now blocks implicit branch and pull-request publication, while reviewed releases use
+  explicit preview, promotion, live verification, and rollback.
 - [x] Remote contribution hold lifted by explicit co-founder direction on 2026-07-23. Push only
   locally green milestone branches, use reviewed PRs, batch changes to avoid duplicate CI, and do
   not interpret this as production-deployment authorization.
-- [ ] Before lifting deployment hold, write an ADR comparing hosting, API, database,
-  authentication, observability, privacy, cost, regional availability, and offline needs.
+- [x] Record the bounded hosting decision in ADR-003, including the Vercel project, same-origin API,
+  synthetic fixture, privacy boundary, manual promotion, verification, and rollback contract.
+  Database, authentication, observability expansion, regional requirements, and offline delivery
+  remain open decisions before their capabilities can be hosted.
 - [ ] Preserve channel-neutral domain boundaries so WhatsApp can be added later without
   rewriting diagnostic logic.
 

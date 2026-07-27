@@ -4,6 +4,11 @@
 **Date:** 2026-07-22
 **Supersedes:** the seven-day WhatsApp-first implementation plan for current execution
 
+**Deployment amendment (2026-07-25):** ADR-003 lifts the production-cloud and remote-promotion
+non-goals only for the anonymous, read-only `gapsense.org` Vercel surface. Automatic deployment,
+real learner data, hosted authentication or AI, writes, and broader production capabilities remain
+on hold. The original non-goal list below is retained as the historical phase boundary.
+
 ## Mission
 
 Help educators in Ghana and Uganda identify the earliest learning prerequisite that is

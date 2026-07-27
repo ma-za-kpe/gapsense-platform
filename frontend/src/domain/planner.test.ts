@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   countryProfiles,
+  goalProfiles,
   initialPlan,
   isPlanComplete,
   plannerReducer,
@@ -10,15 +11,16 @@ import {
 
 describe("assessment planner domain", () => {
   it("starts anonymous and incomplete", () => {
-    expect(initialPlan).toEqual({ role: null, country: null, reviewed: false });
+    expect(initialPlan).toEqual({ role: null, country: null, goal: null, reviewed: false });
     expect(isPlanComplete(initialPlan)).toBe(false);
   });
 
   it.each([
-    { role: null, country: "ghana", reviewed: false },
-    { role: "teacher", country: null, reviewed: false },
+    { role: null, country: "ghana", goal: "practice", reviewed: false },
+    { role: "teacher", country: null, goal: "practice", reviewed: false },
+    { role: "teacher", country: "ghana", goal: null, reviewed: false },
   ] satisfies readonly PlannerState[])(
-    "stays incomplete until both meaningful choices exist",
+    "stays incomplete until all three meaningful choices exist",
     (state) => {
       expect(isPlanComplete(state)).toBe(false);
       expect(plannerReducer(state, { type: "review" })).toBe(state);
@@ -31,11 +33,16 @@ describe("assessment planner domain", () => {
       type: "select-country",
       country: "ghana",
     });
-    const reviewed = plannerReducer(countrySelected, { type: "review" });
+    const goalSelected = plannerReducer(countrySelected, {
+      type: "select-goal",
+      goal: "practice",
+    });
+    const reviewed = plannerReducer(goalSelected, { type: "review" });
 
     expect(reviewed).toEqual({
       role: "teacher",
       country: "ghana",
+      goal: "practice",
       reviewed: true,
     });
     expect(isPlanComplete(reviewed)).toBe(true);
@@ -45,10 +52,31 @@ describe("assessment planner domain", () => {
     const state: PlannerState = {
       role: "caregiver",
       country: "uganda",
+      goal: "practice",
       reviewed: true,
     };
 
     expect(plannerReducer(state, { type: "reset" })).toEqual(initialPlan);
+  });
+
+  it("keeps the complete product intent visible without claiming unavailable workflows", () => {
+    expect(goalProfiles.practice).toMatchObject({
+      label: "Practice activity",
+      available: true,
+    });
+    expect(goalProfiles.diagnostic).toMatchObject({
+      label: "Diagnostic pathway",
+      available: false,
+      status: "In development",
+    });
+    expect(goalProfiles.assessment).toMatchObject({
+      label: "Assessment package",
+      available: false,
+      status: "Requires reviewed evidence",
+    });
+    expect(plannerReducer(initialPlan, { type: "select-goal", goal: "diagnostic" })).toBe(
+      initialPlan,
+    );
   });
 
   it("keeps country structures distinct and honest", () => {

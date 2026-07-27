@@ -41,4 +41,5 @@ does not download browsers.
 
 The next product slice replaces the starter bank with versioned, educator-reviewed evidence,
 starting with Ghana primary Mathematics and Uganda Primary 1–3 Mathematics. WhatsApp delivery,
-hosted authentication, hosted AI, and production deployment remain on hold.
+hosted authentication, hosted AI, real learner data, and expansion beyond ADR-003's anonymous,
+read-only `gapsense.org` surface remain on hold.

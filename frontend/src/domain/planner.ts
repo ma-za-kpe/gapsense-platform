@@ -1,21 +1,24 @@
 export type Role = "teacher" | "caregiver" | "learner" | "tutor";
 export type Country = "ghana" | "uganda";
+export type Goal = "practice" | "diagnostic" | "assessment";
 
 export type PlannerState = {
   readonly role: Role | null;
   readonly country: Country | null;
+  readonly goal: Goal | null;
   readonly reviewed: boolean;
 };
 
 export type CompletePlannerState = PlannerState & {
   readonly role: Role;
   readonly country: Country;
-  readonly reviewed: true;
+  readonly goal: Goal;
 };
 
 export type PlannerAction =
   | { readonly type: "select-role"; readonly role: Role }
   | { readonly type: "select-country"; readonly country: Country }
+  | { readonly type: "select-goal"; readonly goal: Goal }
   | { readonly type: "review" }
   | { readonly type: "reset" };
 
@@ -31,6 +34,7 @@ export type CountryProfile = {
 export const initialPlan: PlannerState = {
   role: null,
   country: null,
+  goal: null,
   reviewed: false,
 };
 
@@ -41,6 +45,36 @@ export const roleProfiles: Readonly<
   caregiver: { label: "Parent or caregiver", note: "Support learning beyond the classroom" },
   learner: { label: "Learner", note: "Practise independently at your pace" },
   tutor: { label: "Tutor", note: "Prepare focused support sessions" },
+};
+
+export const goalProfiles: Readonly<
+  Record<
+    Goal,
+    {
+      readonly label: string;
+      readonly note: string;
+      readonly available: boolean;
+      readonly status?: string;
+    }
+  >
+> = {
+  practice: {
+    label: "Practice activity",
+    note: "Try a clearly labelled illustrative activity now",
+    available: true,
+  },
+  diagnostic: {
+    label: "Diagnostic pathway",
+    note: "Trace learner evidence through prerequisites to a practical next step",
+    available: false,
+    status: "In development",
+  },
+  assessment: {
+    label: "Assessment package",
+    note: "Generate separate learner and educator artifacts from a reviewed blueprint",
+    available: false,
+    status: "Requires reviewed evidence",
+  },
 };
 
 export const countryProfiles: Readonly<Record<Country, CountryProfile>> = {
@@ -63,7 +97,7 @@ export const countryProfiles: Readonly<Record<Country, CountryProfile>> = {
 };
 
 export function isPlanComplete(state: PlannerState): state is CompletePlannerState {
-  return state.role !== null && state.country !== null;
+  return state.role !== null && state.country !== null && state.goal !== null;
 }
 
 export function plannerReducer(state: PlannerState, action: PlannerAction): PlannerState {
@@ -72,6 +106,10 @@ export function plannerReducer(state: PlannerState, action: PlannerAction): Plan
       return { ...state, role: action.role, reviewed: false };
     case "select-country":
       return { ...state, country: action.country, reviewed: false };
+    case "select-goal":
+      return goalProfiles[action.goal].available
+        ? { ...state, goal: action.goal, reviewed: false }
+        : state;
     case "review":
       return isPlanComplete(state) ? { ...state, reviewed: true } : state;
     case "reset":
