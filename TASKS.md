@@ -1,6 +1,6 @@
 # GapSense Working List
 
-**Canonical project execution list.** Last reconciled: 2026-07-25.
+**Canonical project execution list.** Last reconciled: 2026-07-27.
 
 This list is deliberately never finished. A completed task stays as evidence; every
 research finding, validation failure, user observation, curriculum gap, design debt
@@ -28,7 +28,7 @@ Rules:
 
 ## Current Product Direction
 
-- [~] Correct every actionable release blocker from the 2026-07-27 live `gapsense.org` UI/UX
+- [x] Correct every actionable release blocker from the 2026-07-27 live `gapsense.org` UI/UX
   audit through TDD: align public promises with the implemented sample workflow; remove unsupported
   diagnosis/confidence theatre; replace empty curriculum controls with an explicit evidence
   boundary; persist and recover non-PII drafts; move generated work to a focused assessment route;
@@ -37,11 +37,16 @@ Rules:
   with public trust copy; add trust/navigation surfaces; and make production-target browser tests
   fail on the defects that the former permissive checks missed. Do not invent official curriculum
   content or imply educator validation while the reviewed public evidence slice remains absent.
-- [~] Restore the existing `gapsense` Vercel production project and `gapsense.org` after the
+  Evidence: 104 backend and 124 frontend tests reached 100% coverage; development and production
+  Docker browser gates passed 14/14 on desktop/mobile; PR #31 passed required CI and GitGuardian.
+- [x] Restore the existing `gapsense` Vercel production project and `gapsense.org` after the
   repository split left the domain on a 128-day-old deployment. Keep automatic Git deployments
   disabled; explicitly promote one reviewed build that serves the Vite frontend and same-origin
   FastAPI curriculum routes, then verify GitHub CI, Vercel build/runtime evidence, custom-domain
-  routing, security headers, responsive rendering, and rollback.
+  routing, security headers, responsive rendering, and rollback. Evidence: release `v0.5.1`
+  targets `main` SHA `7985cce`; verified preview `dpl_95jjoAx5MtcaTC2wuHr3iCsrE1Ez` was promoted
+  as production deployment `dpl_9FvyjjEkG1WkzULZGj7C5R3ajYgg`; the custom domain serves the fresh
+  bundle and both same-origin public APIs return JSON `200`.
 - [~] Build a local-first, web-first GapSense experience for Ghana and Uganda.
 - [ ] Make free, curriculum-aligned assessment generation a public web entry product for
   learners, parents/caregivers, teachers, school leaders, and other legitimate users.

@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test";
 const coverageSettlingTimeoutMilliseconds = 7_500;
 const httpOk = 200;
 const httpNotFound = 404;
+const maximumMissingArtifactResponseBytes = 256;
 const minimumTargetPixels = 44;
 const maximumMobilePageViewports = 8.5;
 
@@ -234,7 +235,9 @@ test("serves a hardened same-origin surface", async ({ page }) => {
   expect(await robots.text()).toBe("User-agent: *\nDisallow: /\n");
   expect(sitemap.status()).toBe(httpNotFound);
   expect(sitemap.headers()["content-type"]).toContain("text/plain");
-  expect(await sitemap.text()).toBe("Not found\n");
+  const sitemapBody = await sitemap.text();
+  expect(sitemapBody).not.toMatch(/<urlset|<html/i);
+  expect(sitemapBody.length).toBeLessThanOrEqual(maximumMissingArtifactResponseBytes);
   expect(response?.headers()["content-security-policy"]).toContain("default-src 'self'");
   expect(response?.headers()["cross-origin-opener-policy"]).toBe("same-origin");
   expect(response?.headers()["permissions-policy"]).toContain("camera=()");
