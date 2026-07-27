@@ -15,9 +15,9 @@ const allEvents: readonly AnalyticsEventName[] = [
   "navigation_planner_selected",
   "planner_role_selected",
   "planner_country_selected",
-  "planner_goal_selected",
   "planner_reviewed",
   "planner_reset",
+  "sample_opened",
   "readiness_retry_selected",
   "coverage_retry_selected",
 ];

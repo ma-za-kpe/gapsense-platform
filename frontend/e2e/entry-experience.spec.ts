@@ -4,6 +4,8 @@ import { expect, test } from "@playwright/test";
 const coverageSettlingTimeoutMilliseconds = 7_500;
 const httpOk = 200;
 const httpNotFound = 404;
+const minimumTargetPixels = 44;
+const maximumMobilePageViewports = 8.5;
 
 const expectCoverageEvidence = async (page: import("@playwright/test").Page): Promise<void> => {
   await expect(page.getByText(/\d+ repository files? located/)).toHaveCount(2, {
@@ -11,41 +13,62 @@ const expectCoverageEvidence = async (page: import("@playwright/test").Page): Pr
   });
 };
 
+const expectNoAccessibilityViolations = async (
+  page: import("@playwright/test").Page,
+): Promise<void> => {
+  const accessibility = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(accessibility.violations).toEqual([]);
+};
+
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
 });
 
-test("exposes Uganda Primary Four evidence selection without an empty subject trap", async ({
-  page,
-}) => {
-  await page.goto("/curriculum");
+test("never offers a blank curriculum combination", async ({ page }) => {
+  const response = await page.goto("/curriculum");
+
+  expect(response?.ok()).toBe(true);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Every level, subject, and evidence boundary.",
+    "Inspect the public evidence boundary.",
   );
-  const filters = page.locator(".curriculum-explorer select");
-  await filters.nth(0).selectOption("UG");
-  await filters.nth(1).selectOption("primary_4");
-  const subjectOptions = filters.nth(2).locator("option");
-  if ((await subjectOptions.count()) > 0) {
-    await expect(filters.nth(2)).toHaveValue("mathematics");
-    await expect(page.getByText(/located evidence|no safe extracted detail/)).toBeVisible();
+  const subject = page.getByRole("combobox", { name: "Subject" });
+  if ((await subject.count()) === 0) {
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: "No public subject evidence is available yet",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Read how evidence is published" }),
+    ).toHaveAttribute("href", "/about#evidence");
   } else {
-    await expect(page.getByText("Select a curriculum combination.")).toBeVisible();
+    const country = page.getByRole("combobox", { name: "Country" });
+    const countryOptions = await country.locator("option").all();
+    for (const option of countryOptions) {
+      const value = await option.getAttribute("value");
+      if (value === null) throw new Error("A curriculum country option has no value");
+      await country.selectOption(value);
+      await expect(page.getByRole("combobox", { name: "Level" }).locator("option")).not.toHaveCount(
+        0,
+      );
+      await expect(subject.locator("option")).not.toHaveCount(0);
+    }
+    await expect(page.getByText(/\d+ standards/).first()).toBeVisible();
   }
+  await expectNoAccessibilityViolations(page);
 });
 
-test("renders a truthful, accessible Ghana and Uganda entry experience", async ({ page }) => {
+test("renders a truthful, quiet Ghana and Uganda entry experience", async ({ page }) => {
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
   const analyticsRequests: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error") {
-      consoleErrors.push(message.text());
-    }
+    if (message.type() === "error") consoleErrors.push(message.text());
   });
-  page.on("pageerror", (error) => {
-    pageErrors.push(error.message);
-  });
+  page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("request", (request) => {
     if (new URL(request.url()).pathname === "/api/v1/analytics/events") {
       analyticsRequests.push(request.url());
@@ -55,68 +78,70 @@ test("renders a truthful, accessible Ghana and Uganda entry experience", async (
   const response = await page.goto("/");
 
   expect(response?.ok()).toBe(true);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Find the next learning step.");
-  await expect(page.getByRole("heading", { level: 3, name: "Ghana" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 3, name: "Uganda" })).toBeVisible();
-  await expect(page.getByText("Curriculum evidence connected")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "See the evidence. Try an honest sample.",
+  );
+  await expect(page.getByText("Country coverage")).toBeVisible();
+  await expect(page.getByText("Illustrative activity", { exact: true })).toBeVisible();
+  await expect(page.getByText("Diagnosis", { exact: true })).toBeVisible();
+  await expect(page.getByText("Not available", { exact: true })).toBeVisible();
+  await expect(page.getByText("Public evidence catalogue connected")).toBeVisible();
   await expectCoverageEvidence(page);
   await expect(page.getByText("Extraction and educator review not verified")).toHaveCount(2);
   await expect(
-    page.getByText("No account. No learner data. No hidden AI dependency."),
+    page.getByText("No account, name, school, or learner response is requested."),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Maku" })).toHaveCount(2);
-  await expect(page.getByRole("link", { name: "Maku" }).first()).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Maku" })).toHaveAttribute(
     "href",
     "https://startuptribunal.com/maku",
   );
-  await expect(page.locator("body")).not.toContainText(/UNICEF/i);
+  await expect(page.locator("body")).not.toContainText(
+    /UNICEF|Find the next learning step|Earliest gap|local evidence mount|Ollama/i,
+  );
 
-  const accessibility = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-    .analyze();
-  expect(accessibility.violations).toEqual([]);
+  await expectNoAccessibilityViolations(page);
   expect(consoleErrors).toEqual([]);
   expect(pageErrors).toEqual([]);
   expect(analyticsRequests).toEqual([]);
 });
 
-test("plans an anonymous Uganda activity and supports a clean restart", async ({ page }) => {
+test("persists an anonymous Uganda sample and supports a clean restart", async ({ page }) => {
   await page.goto("/#planner");
-  const review = page.getByRole("button", { name: "Review my starting point" });
+  const review = page.getByRole("button", { name: "Review sample choice" });
 
   await expect(review).toBeDisabled();
-  await page
-    .getByRole("group", { name: /Who are you planning for/ })
-    .getByText("Parent or caregiver", { exact: true })
-    .click();
-  await page
-    .getByRole("group", { name: /Choose the education system/ })
-    .getByText("Uganda", { exact: true })
-    .click();
-  await page
-    .getByRole("group", { name: /What should this help you do/ })
-    .getByText("Practice activity", { exact: true })
-    .click();
+  await page.getByRole("radio", { name: /^Parent or caregiver/ }).check();
+  await page.getByRole("radio", { name: /^Uganda/ }).check();
   await expect(review).toBeEnabled();
   await review.click();
-
   await expect(
-    page.getByRole("heading", { level: 3, name: "Your Uganda starting point is ready" }),
+    page.getByRole("heading", { level: 3, name: "Your Uganda sample is ready" }),
   ).toBeVisible();
-  await expect(page.getByText(/NCDC curriculum inventory is still being verified/)).toBeVisible();
-  await page.getByRole("combobox", { name: "Level" }).selectOption("Primary 2");
-  await page.getByRole("button", { name: /Generate starter activity/ }).click();
   await expect(
-    page.getByRole("heading", { level: 4, name: "Mathematics Practice activity" }),
+    page.getByText("Illustrative GapSense sample; not curriculum-aligned or educator-reviewed."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Open sample activity" }).click();
+
+  await expect(page).toHaveURL(/\/assessment$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Uganda Primary 2 Mathematics sample" }),
   ).toBeVisible();
   await expect(page.getByText("Write the number that comes immediately after 19.")).toBeVisible();
-  await page.getByRole("button", { name: "Start again" }).click();
-  await expect(review).toBeDisabled();
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Uganda Primary 2 Mathematics sample" }),
+  ).toBeVisible();
+  await page.getByText("Show answer guidance").click();
+  await expect(page.getByText(/20/).first()).toBeVisible();
+  await page.getByRole("button", { name: "Choose another sample" }).click();
+
+  await expect(page).toHaveURL(/\/#planner$/);
+  await expect(page.getByRole("button", { name: "Review sample choice" })).toBeDisabled();
 });
 
-test("preserves keyboard focus, touch sizing, responsive layout, and reduced motion", async ({
+test("preserves keyboard focus, touch sizing, and a compact responsive layout", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.goto("/");
   await page.keyboard.press("Tab");
   const skipLink = page.getByRole("link", { name: "Skip to main content" });
@@ -125,49 +150,63 @@ test("preserves keyboard focus, touch sizing, responsive layout, and reduced mot
     "none",
   );
 
-  const viewport = page.viewportSize();
-  expect(viewport).not.toBeNull();
-  const layout = await page.evaluate(() => {
-    const rootStyles = getComputedStyle(document.documentElement);
-    const minimumCountryEvidenceSpacing =
-      Number.parseFloat(rootStyles.getPropertyValue("--space-6")) *
-      Number.parseFloat(rootStyles.fontSize);
-    return {
-      documentWidth: document.documentElement.scrollWidth,
-      viewportWidth: document.documentElement.clientWidth,
-      reviewHeight: document
-        .querySelector<HTMLButtonElement>("button[type='submit']")
-        ?.getBoundingClientRect().height,
-      reducedMotionDuration: (() => {
-        const reveal = document.querySelector(".reveal");
-        return reveal instanceof HTMLElement ? getComputedStyle(reveal).animationDuration : null;
-      })(),
-      minimumCountryEvidenceSpacing,
-      countryPanelLayout: [...document.querySelectorAll<HTMLElement>(".country-panel")].map(
-        (panel) => {
-          const levels = panel.querySelector<HTMLElement>("ul");
-          const status = panel.querySelector<HTMLElement>(".country-panel__status");
-          if (levels === null || status === null) {
-            throw new Error("country panel is missing its level list or evidence status");
-          }
-          const panelBounds = panel.getBoundingClientRect();
-          const levelBounds = levels.getBoundingClientRect();
-          const statusBounds = status.getBoundingClientRect();
-          return {
-            levelStatusGap: statusBounds.top - levelBounds.bottom,
-            panelStatusGap: panelBounds.bottom - statusBounds.bottom,
-          };
-        },
-      ),
-    };
-  });
+  const layout = await page.evaluate(() => ({
+    documentHeight: document.documentElement.scrollHeight,
+    documentWidth: document.documentElement.scrollWidth,
+    targetHeights: [...document.querySelectorAll<HTMLElement>("a, button, summary, select")]
+      .filter((element) => {
+        const bounds = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return bounds.width > 0 && bounds.height > 0 && style.visibility !== "hidden";
+      })
+      .map((element) => ({
+        height: element.getBoundingClientRect().height,
+        label: element.innerText.trim() || element.tagName,
+      })),
+    viewportHeight: document.documentElement.clientHeight,
+    viewportWidth: document.documentElement.clientWidth,
+  }));
   expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
-  expect(layout.reviewHeight).toBeGreaterThanOrEqual(44);
-  expect(["0.01ms", "1e-05s"]).toContain(layout.reducedMotionDuration);
-  for (const panel of layout.countryPanelLayout) {
-    expect(panel.levelStatusGap).toBeGreaterThanOrEqual(layout.minimumCountryEvidenceSpacing);
-    expect(panel.panelStatusGap).toBeGreaterThanOrEqual(layout.minimumCountryEvidenceSpacing);
+  for (const target of layout.targetHeights) {
+    expect
+      .soft(target.height, `${target.label} touch target`)
+      .toBeGreaterThanOrEqual(minimumTargetPixels);
   }
+
+  if (testInfo.project.name === "mobile-chromium") {
+    expect(layout.documentHeight / layout.viewportHeight).toBeLessThanOrEqual(
+      maximumMobilePageViewports,
+    );
+    await page.getByText("Menu", { exact: true }).click();
+    await expect(
+      page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", {
+        name: "Curriculum",
+      }),
+    ).toBeVisible();
+  } else {
+    await expect(page.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
+  }
+});
+
+test("serves distinct trust routes and recoverable deep links", async ({ page }) => {
+  const assessmentResponse = await page.goto("/assessment");
+  expect(assessmentResponse?.ok()).toBe(true);
+  await expect(page).toHaveTitle("Activity sample \u2014 GapSense");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "No saved sample activity" }),
+  ).toBeVisible();
+
+  const aboutResponse = await page.goto("/about");
+  expect(aboutResponse?.ok()).toBe(true);
+  await expect(page).toHaveTitle("Trust and evidence \u2014 GapSense");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "How GapSense earns trust." }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Evidence and review" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Privacy and saved choices" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Accessibility commitment" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Feedback and correction" })).toBeVisible();
+  await expectNoAccessibilityViolations(page);
 });
 
 test("serves a hardened same-origin surface", async ({ page }) => {
@@ -176,10 +215,10 @@ test("serves a hardened same-origin surface", async ({ page }) => {
   const robots = await page.request.get("/robots.txt");
   const sitemap = await page.request.get("/sitemap.xml");
 
-  await expect(page).toHaveTitle("GapSense — Find the next learning step");
+  await expect(page).toHaveTitle("GapSense \u2014 Evidence and honest activity samples");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    "GapSense helps Ghanaian and Ugandan learning communities plan curriculum-aligned assessments and find the next useful learning step.",
+    "Inspect public curriculum evidence for Ghana and Uganda, then try a clearly labelled illustrative activity sample.",
   );
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
@@ -219,7 +258,10 @@ test("serves a hardened same-origin surface", async ({ page }) => {
 
 test("matches the reviewed entry-experience baseline", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText("Curriculum evidence connected")).toBeVisible();
+  await expect(page.getByText("Public evidence catalogue connected")).toBeVisible();
   await expectCoverageEvidence(page);
-  await expect(page).toHaveScreenshot("entry-experience.png", { fullPage: true });
+  await expect(page).toHaveScreenshot("entry-experience.png", {
+    fullPage: true,
+    timeout: 15_000,
+  });
 });

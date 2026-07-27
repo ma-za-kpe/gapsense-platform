@@ -11,8 +11,8 @@ export function ReadinessBanner({ status, onRetry }: ReadinessBannerProps): Reac
       <aside className="readiness readiness--checking" aria-live="polite">
         <span className="readiness__signal" aria-hidden="true" />
         <div>
-          <strong>Checking local curriculum evidence</strong>
-          <span> Your planning choices stay on this device.</span>
+          <strong>Checking public evidence</strong>
+          <span> The activity sample remains available while this check runs.</span>
         </div>
       </aside>
     );
@@ -23,8 +23,8 @@ export function ReadinessBanner({ status, onRetry }: ReadinessBannerProps): Reac
       <aside className="readiness readiness--ready" aria-live="polite">
         <span className="readiness__signal" aria-hidden="true" />
         <div>
-          <strong>Curriculum evidence connected</strong>
-          <span> The local, read-only evidence repository is available.</span>
+          <strong>Public evidence catalogue connected</strong>
+          <span> The read-only public snapshot is available.</span>
         </div>
       </aside>
     );
@@ -34,8 +34,8 @@ export function ReadinessBanner({ status, onRetry }: ReadinessBannerProps): Reac
     <aside className="readiness readiness--offline" aria-live="polite">
       <span className="readiness__signal" aria-hidden="true" />
       <div>
-        <strong>Planning still works locally</strong>
-        <span> Curriculum evidence is temporarily unavailable.</span>
+        <strong>Sample activity still works on this device</strong>
+        <span> Public evidence is temporarily unavailable.</span>
       </div>
       <button className="text-button" type="button" onClick={onRetry}>
         Check connection again

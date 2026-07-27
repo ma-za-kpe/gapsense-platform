@@ -20,6 +20,14 @@
     {
       "source": "/curriculum",
       "destination": "/"
+    },
+    {
+      "source": "/assessment",
+      "destination": "/"
+    },
+    {
+      "source": "/about",
+      "destination": "/"
     }
   ],
   "headers": [

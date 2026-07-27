@@ -10,15 +10,15 @@ import {
 
 describe("assessment planner domain", () => {
   it("starts anonymous and incomplete", () => {
-    expect(initialPlan).toEqual({ role: null, country: null, goal: null, reviewed: false });
+    expect(initialPlan).toEqual({ role: null, country: null, reviewed: false });
     expect(isPlanComplete(initialPlan)).toBe(false);
   });
 
   it.each([
-    { role: "teacher", country: null, goal: null, reviewed: false },
-    { role: "teacher", country: "ghana", goal: null, reviewed: false },
+    { role: null, country: "ghana", reviewed: false },
+    { role: "teacher", country: null, reviewed: false },
   ] satisfies readonly PlannerState[])(
-    "stays incomplete until every required choice exists",
+    "stays incomplete until both meaningful choices exist",
     (state) => {
       expect(isPlanComplete(state)).toBe(false);
       expect(plannerReducer(state, { type: "review" })).toBe(state);
@@ -31,16 +31,11 @@ describe("assessment planner domain", () => {
       type: "select-country",
       country: "ghana",
     });
-    const goalSelected = plannerReducer(countrySelected, {
-      type: "select-goal",
-      goal: "diagnostic",
-    });
-    const reviewed = plannerReducer(goalSelected, { type: "review" });
+    const reviewed = plannerReducer(countrySelected, { type: "review" });
 
     expect(reviewed).toEqual({
       role: "teacher",
       country: "ghana",
-      goal: "diagnostic",
       reviewed: true,
     });
     expect(isPlanComplete(reviewed)).toBe(true);
@@ -50,7 +45,6 @@ describe("assessment planner domain", () => {
     const state: PlannerState = {
       role: "caregiver",
       country: "uganda",
-      goal: "practice",
       reviewed: true,
     };
 

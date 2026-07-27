@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { CoverageState } from "../hooks/useCoverage";
 import {
@@ -24,17 +24,24 @@ const nodeBelongsToStrand = (node: CurriculumNode, strandIdentifier: string): bo
 export function CurriculumExplorer({ state, onRetry }: CurriculumExplorerProps): React.JSX.Element {
   const countries = state.status === "loaded" ? state.report.countries : [];
   const [countryCode, setCountryCode] = useState<"GH" | "UG">("GH");
-  const country = countries.find((item) => item.code === countryCode) ?? countries[0];
-  const levels = country?.levels ?? [];
+  const availableCountries = countries.filter((item) =>
+    item.levels.some((level) =>
+      item.subjects?.some((subject) => subject.phase === phaseFor(level.identifier)),
+    ),
+  );
+  const country =
+    availableCountries.find((item) => item.code === countryCode) ?? availableCountries[0];
+  const levels =
+    country?.levels.filter((item) =>
+      country.subjects?.some((subject) => subject.phase === phaseFor(item.identifier)),
+    ) ?? [];
   const [level, setLevel] = useState("");
   const [subject, setSubject] = useState("");
   const firstLevel = levels.at(0);
   const firstLevelIdentifier = firstLevel === undefined ? "" : firstLevel.identifier;
   const selectedLevel = level === "" ? firstLevelIdentifier : level;
-  const subjects = useMemo(
-    () => country?.subjects?.filter((item) => item.phase === phaseFor(selectedLevel)) ?? [],
-    [country, selectedLevel],
-  );
+  const subjects =
+    country?.subjects?.filter((item) => item.phase === phaseFor(selectedLevel)) ?? [];
   const firstSubject = subjects.at(0);
   const firstSubjectIdentifier = firstSubject === undefined ? "" : firstSubject.identifier;
   const selectedSubject = subject === "" ? firstSubjectIdentifier : subject;
@@ -71,6 +78,23 @@ export function CurriculumExplorer({ state, onRetry }: CurriculumExplorerProps):
     );
   }
 
+  if (country === undefined) {
+    return (
+      <section className="curriculum-empty" aria-labelledby="curriculum-empty-title">
+        <span className="eyebrow">Public evidence boundary</span>
+        <h2 id="curriculum-empty-title">No public subject evidence is available yet</h2>
+        <p>
+          Country-level presence records are available, but no subject record has passed the
+          publication boundary for this public catalogue. Empty controls would imply a choice that
+          does not exist.
+        </p>
+        <a className="quiet-link" href="/about#evidence">
+          Read how evidence is published
+        </a>
+      </section>
+    );
+  }
+
   return (
     <div className="curriculum-explorer">
       <div className="curriculum-explorer__intro">
@@ -78,24 +102,28 @@ export function CurriculumExplorer({ state, onRetry }: CurriculumExplorerProps):
           Choose a country, level, and subject to inspect the evidence tree from authority source to
           question-ready standard.
         </p>
-        <small>
+        <p className="supporting-copy">
           Only extracted or located evidence is shown. Unsupported combinations stay visibly
           unavailable.
-        </small>
+        </p>
       </div>
-      <div className="curriculum-explorer__controls" aria-label="Curriculum filters">
+      <fieldset className="curriculum-explorer__controls">
+        <legend className="visually-hidden">Curriculum filters</legend>
         <label>
           Country
           <select
-            value={countryCode}
+            value={country.code}
             onChange={(event) => {
               setCountryCode(event.target.value as "GH" | "UG");
               setLevel("");
               setSubject("");
             }}
           >
-            <option value="GH">Ghana - NaCCA</option>
-            <option value="UG">Uganda - NCDC</option>
+            {availableCountries.map((item) => (
+              <option value={item.code} key={item.code}>
+                {item.name} - {item.code === "GH" ? "NaCCA" : "NCDC"}
+              </option>
+            ))}
           </select>
         </label>
         <label>
@@ -124,7 +152,7 @@ export function CurriculumExplorer({ state, onRetry }: CurriculumExplorerProps):
             ))}
           </select>
         </label>
-      </div>
+      </fieldset>
       <div className="curriculum-explorer__status" aria-live="polite">
         {detailState === "idle" ? "Select a curriculum combination." : null}
         {detailState === "loading" ? "Loading the selected curriculum tree..." : null}

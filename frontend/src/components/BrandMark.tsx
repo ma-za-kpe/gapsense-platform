@@ -1,6 +1,6 @@
 export function BrandMark(): React.JSX.Element {
   return (
-    <span className="brand" aria-label="GapSense">
+    <span className="brand">
       <svg className="brand__mark" viewBox="0 0 40 40" aria-hidden="true">
         <path d="M8 8h10v10H8z" />
         <path d="M22 8h10v10H22z" />

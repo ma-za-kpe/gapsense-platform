@@ -83,7 +83,7 @@ describe("coverage panels", () => {
 
     expect(screen.getByRole("heading", { level: 3, name: "Ghana" })).toBeVisible();
     expect(screen.getByRole("heading", { level: 3, name: "Uganda" })).toBeVisible();
-    expect(screen.getAllByText("Checking local coverage evidence…")).toHaveLength(2);
+    expect(screen.getAllByText("Checking public coverage evidence…")).toHaveLength(2);
   });
 
   it("renders file presence separately from unverified review", async () => {
@@ -97,6 +97,17 @@ describe("coverage panels", () => {
     expect(screen.getAllByText("phase folder only").length).toBeGreaterThan(0);
     expect(screen.getByText("level folder")).toBeVisible();
     expect(screen.getAllByText("Extraction and educator review not verified")).toHaveLength(2);
+    await userEvent.setup().click(screen.getByText("See level and subject evidence matrix"));
+  });
+
+  it("uses correct plural file language", () => {
+    const pluralReport = {
+      ...report,
+      countries: [{ ...report.countries[0], repository_file_count: 2 }],
+    };
+    render(<CoveragePanels state={{ status: "loaded", report: pluralReport }} onRetry={vi.fn()} />);
+
+    expect(screen.getByText("2 repository files located")).toBeVisible();
   });
 
   it("explains the evidence-to-question organization for teachers", async () => {
@@ -122,7 +133,7 @@ describe("coverage panels", () => {
     const onRetry = vi.fn();
     render(<CoveragePanels state={{ status: "unavailable" }} onRetry={onRetry} />);
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Live coverage details are unavailable");
+    expect(screen.getByRole("alert")).toHaveTextContent("Public coverage details are unavailable");
     await user.click(screen.getByRole("button", { name: "Retry coverage details" }));
     expect(onRetry).toHaveBeenCalledOnce();
   });

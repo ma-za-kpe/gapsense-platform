@@ -1,20 +1,23 @@
-import { useEffect, useReducer, useState } from "react";
+import { useReducer, useState } from "react";
 
 import type { Analytics } from "../analytics/client";
-import { buildAssessmentDocument } from "../domain/assessmentDocument";
+import { buildSampleActivity, publicSampleProfiles } from "../domain/sampleActivity";
+import {
+  clearSampleDraft,
+  type DraftStorage,
+  readSampleDraft,
+  saveSampleDraft,
+  type SampleDraftRecovery,
+} from "../domain/sampleDraft";
 import {
   countryProfiles,
-  goalProfiles,
-  initialPlan,
   isPlanComplete,
   plannerReducer,
   roleProfiles,
   type Country,
-  type Goal,
+  type PlannerAction,
   type Role,
 } from "../domain/planner";
-import { getCurriculumDetail, type CurriculumDetail } from "../services/details";
-import { curriculumApiPath } from "../domain/curriculumPath";
 
 const roles = Object.entries(roleProfiles) as readonly (readonly [
   Role,
@@ -24,144 +27,75 @@ const countries = Object.entries(countryProfiles) as readonly (readonly [
   Country,
   (typeof countryProfiles)[Country],
 ])[];
-const goals = Object.entries(goalProfiles) as readonly (readonly [
-  Goal,
-  (typeof goalProfiles)[Goal],
-])[];
-
-const starterCatalog = {
-  ghana: {
-    levels: [
-      "Basic 1",
-      "Basic 2",
-      "Basic 3",
-      "Basic 4",
-      "Basic 5",
-      "Basic 6",
-      "KG",
-      "JHS (Basic 7–9)",
-      "SHS",
-    ],
-    subjects: ["Mathematics", "English Language", "Science", "General Science"],
-  },
-  uganda: {
-    levels: [
-      "Primary 1",
-      "Primary 2",
-      "Primary 3",
-      "Primary 4",
-      "Primary 5",
-      "Primary 6",
-      "Primary 7",
-      "Early Childhood",
-      "O-Level (S1–S4)",
-      "A-Level (S5–S6)",
-    ],
-    subjects: ["Mathematics"],
-  },
-} as const;
-
-const starterQuestions = {
-  Mathematics: [
-    "Write the number that comes immediately after 19.",
-    "Amina has 7 mangoes and receives 5 more. How many mangoes does she have now?",
-    "Circle the greater number: 34 or 43.",
-    "Share 12 pencils equally between 3 learners. How many does each learner get?",
-    "Complete the pattern: 2, 4, 6, __, __.",
-  ],
-  "English Language": [
-    "Write one sentence that uses the word ‘school’.",
-    "Circle the noun: The bright bird sings.",
-    "Write the plural of ‘book’.",
-    "Put these words in order: is / kind / Kojo.",
-    "Write one word that rhymes with ‘cat’.",
-  ],
-  Science: [
-    "Name one source of light.",
-    "Which sense do we use to hear sounds?",
-    "Name one thing a plant needs to grow.",
-    "Is water a solid, liquid, or gas at room temperature?",
-    "Name one animal that lives in your community.",
-  ],
-  "General Science": [
-    "Name one source of light.",
-    "Which sense do we use to hear sounds?",
-    "Name one thing a plant needs to grow.",
-    "Is water a solid, liquid, or gas at room temperature?",
-    "Name one animal that lives in your community.",
-  ],
-} as const;
-const answerGuidance: Record<keyof typeof starterQuestions, readonly string[]> = {
-  Mathematics: ["20", "12 mangoes", "43", "4 pencils", "8, 10"],
-  "English Language": ["Any clear sentence", "bird", "books", "Kojo is kind.", "bat (example)"],
-  Science: ["The sun (example)", "hearing", "water (example)", "liquid", "Any local animal"],
-  "General Science": [
-    "The sun (example)",
-    "hearing",
-    "water (example)",
-    "liquid",
-    "Any local animal",
-  ],
-};
 
 type AssessmentPlannerProps = {
   readonly analytics: Analytics;
+  readonly onOpenAssessment: () => void;
+  readonly storage?: DraftStorage;
 };
 
-export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.JSX.Element {
-  const [state, dispatch] = useReducer(plannerReducer, initialPlan);
-  const [level, setLevel] = useState("Basic 1");
-  const [subject, setSubject] = useState<keyof typeof starterQuestions>("Mathematics");
-  const [generated, setGenerated] = useState(false);
-  const [shareStatus, setShareStatus] = useState<"idle" | "shared" | "copied">("idle");
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
-  const [lineage, setLineage] = useState<CurriculumDetail | null>(null);
-  const [lineageStatus, setLineageStatus] = useState<"idle" | "loading" | "loaded" | "unavailable">(
-    "idle",
-  );
+const recoveryMessage = (recovery: SampleDraftRecovery): string | null => {
+  switch (recovery) {
+    case "restored":
+      return "Restored your saved sample choice on this device.";
+    case "discarded":
+      return "A saved choice could not be restored and was safely cleared.";
+    case "unavailable":
+      return "This browser cannot save your choice; keep this tab open.";
+    case "empty":
+      return null;
+  }
+};
+
+export function AssessmentPlanner({
+  analytics,
+  onOpenAssessment,
+  storage = window.localStorage,
+}: AssessmentPlannerProps): React.JSX.Element {
+  const [restored] = useState(() => readSampleDraft(storage));
+  const [state, dispatch] = useReducer(plannerReducer, restored.draft);
+  const [recovery, setRecovery] = useState<SampleDraftRecovery>(restored.recovery);
   const complete = isPlanComplete(state);
   const reviewedPlan = state.reviewed && complete ? state : null;
-  const catalog = state.country === null ? starterCatalog.ghana : starterCatalog[state.country];
-  useEffect(() => {
-    if (selectedQuestion === null || reviewedPlan === null) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- status tracks the asynchronous request lifecycle.
-    setLineageStatus("loading");
-    void getCurriculumDetail(curriculumApiPath(reviewedPlan.country, level, subject))
-      .then((detail) => {
-        setLineage(detail);
-        setLineageStatus("loaded");
-      })
-      .catch(() => {
-        setLineage(null);
-        setLineageStatus("unavailable");
-      });
-  }, [level, reviewedPlan, selectedQuestion, subject]);
+  const sample =
+    reviewedPlan === null ? null : buildSampleActivity(reviewedPlan.role, reviewedPlan.country);
+
+  const updatePlan = (action: PlannerAction): void => {
+    const nextState = plannerReducer(state, action);
+    dispatch(action);
+    if (!saveSampleDraft(storage, nextState)) setRecovery("unavailable");
+  };
 
   return (
     <section className="planner section-shell" id="planner" aria-labelledby="planner-heading">
       <div className="section-heading planner__heading">
-        <span className="eyebrow">Free assessment planner</span>
-        <h2 id="planner-heading">Start with intent, not a blank prompt.</h2>
+        <span className="eyebrow">Illustrative activity preview</span>
+        <h2 id="planner-heading">Try one honest sample.</h2>
         <p>
-          Tell us three things. GapSense will preserve the country, curriculum, and purpose behind
-          every future activity or assessment—without asking who the learner is.
+          Choose who will use it and one country context. Each choice changes the guidance or
+          activity. The samples are clearly separated from official curriculum evidence.
         </p>
       </div>
+
+      {recoveryMessage(recovery) === null ? null : (
+        <p className="draft-recovery" role="status">
+          {recoveryMessage(recovery)}
+        </p>
+      )}
 
       <form
         className="planner__form"
         onSubmit={(event) => {
           event.preventDefault();
-          if (complete) {
-            analytics.track("planner_reviewed");
-          }
-          dispatch({ type: "review" });
+          if (!complete) return;
+          analytics.track("planner_reviewed");
+          updatePlan({ type: "review" });
         }}
       >
         <fieldset className="choice-group">
           <legend>
             <span className="step-number">01</span>
-            Who are you planning for?
+            Who will use the sample?
           </legend>
           <div className="choice-grid choice-grid--roles">
             {roles.map(([value, profile]) => (
@@ -173,7 +107,7 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
                   checked={state.role === value}
                   onChange={() => {
                     analytics.track("planner_role_selected");
-                    dispatch({ type: "select-role", role: value });
+                    updatePlan({ type: "select-role", role: value });
                   }}
                 />
                 <span className="choice-card__body">
@@ -189,305 +123,85 @@ export function AssessmentPlanner({ analytics }: AssessmentPlannerProps): React.
         <fieldset className="choice-group">
           <legend>
             <span className="step-number">02</span>
-            Choose the education system
+            Choose an illustrative context
           </legend>
           <div className="choice-grid choice-grid--countries">
-            {countries.map(([value, profile]) => (
-              <label className={`country-choice country-choice--${profile.accent}`} key={value}>
-                <input
-                  type="radio"
-                  name="country"
-                  value={value}
-                  checked={state.country === value}
-                  onChange={() => {
-                    analytics.track("planner_country_selected");
-                    setLevel(starterCatalog[value].levels[0]);
-                    setSubject(starterCatalog[value].subjects[0]);
-                    setGenerated(false);
-                    setShareStatus("idle");
-                    dispatch({ type: "select-country", country: value });
-                  }}
-                />
-                <span className="country-choice__body">
-                  <span className="country-choice__topline">
-                    <strong>{profile.name}</strong>
-                    <span>{profile.authority}</span>
+            {countries.map(([value, profile]) => {
+              const sampleProfile = publicSampleProfiles[value];
+              return (
+                <label className={`country-choice country-choice--${profile.accent}`} key={value}>
+                  <input
+                    type="radio"
+                    name="country"
+                    value={value}
+                    checked={state.country === value}
+                    onChange={() => {
+                      analytics.track("planner_country_selected");
+                      updatePlan({ type: "select-country", country: value });
+                    }}
+                  />
+                  <span className="country-choice__body">
+                    <span className="country-choice__topline">
+                      <strong>{profile.name}</strong>
+                      <span>{profile.authority}</span>
+                    </span>
+                    <small>{profile.authorityLongName}</small>
+                    <span className="sample-context">
+                      Sample context: {sampleProfile.level} {sampleProfile.subject}
+                    </span>
+                    <span className="coverage-note">
+                      <span aria-hidden="true" /> Not curriculum-aligned or educator-reviewed
+                    </span>
                   </span>
-                  <small>{profile.authorityLongName}</small>
-                  <span className="level-list">{profile.levels.join(" · ")}</span>
-                  <span className="coverage-note">
-                    <span aria-hidden="true" /> Inventory and review in progress
-                  </span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <fieldset className="choice-group">
-          <legend>
-            <span className="step-number">03</span>
-            What should this help you do?
-          </legend>
-          <div className="choice-grid choice-grid--goals">
-            {goals.map(([value, profile]) => (
-              <label className="choice-card choice-card--goal" key={value}>
-                <input
-                  type="radio"
-                  name="goal"
-                  value={value}
-                  checked={state.goal === value}
-                  onChange={() => {
-                    analytics.track("planner_goal_selected");
-                    dispatch({ type: "select-goal", goal: value });
-                  }}
-                />
-                <span className="choice-card__body">
-                  <span className="choice-card__check" aria-hidden="true" />
-                  <strong>{profile.label}</strong>
-                  <small>{profile.note}</small>
-                </span>
-              </label>
-            ))}
+                </label>
+              );
+            })}
           </div>
         </fieldset>
 
         <div className="planner__action-row">
           <p>
-            <span className="privacy-dot" aria-hidden="true" /> No name, phone number, school, or
-            account required.
+            <span className="privacy-dot" aria-hidden="true" /> Saved on this device. No name,
+            school, account, or learner response.
           </p>
           <button className="button button--primary" type="submit" disabled={!complete}>
-            Review my starting point
-            <span aria-hidden="true">→</span>
+            Review sample choice
           </button>
         </div>
       </form>
 
-      {reviewedPlan === null ? null : (
+      {reviewedPlan === null || sample === null ? null : (
         <article className="plan-review" aria-live="polite">
           <div className="plan-review__icon" aria-hidden="true">
             <span />
           </div>
           <div className="plan-review__content">
-            <span className="eyebrow">Private local plan</span>
-            <h3>Your {countryProfiles[reviewedPlan.country].name} starting point is ready</h3>
+            <span className="eyebrow">Saved sample choice</span>
+            <h3>Your {sample.country} sample is ready</h3>
             <p className="plan-review__selection">
-              {roleProfiles[reviewedPlan.role].label} · {goalProfiles[reviewedPlan.goal].label}
+              {roleProfiles[reviewedPlan.role].label} · {sample.level} {sample.subject}
             </p>
-            <p>
-              {countryProfiles[reviewedPlan.country].authority} curriculum inventory is still being
-              verified. This local prototype uses a small, deterministic starter bank while that
-              work continues; it never presents this draft as an official examination.
-            </p>
-            <div className="starter-builder" aria-label="Build a starter activity">
-              <label>
-                Level
-                <select
-                  value={level}
-                  onChange={(event) => {
-                    setLevel(event.target.value);
-                    setGenerated(false);
-                  }}
-                >
-                  {catalog.levels.map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Subject
-                <select
-                  value={subject}
-                  onChange={(event) => {
-                    setSubject(event.target.value as keyof typeof starterQuestions);
-                    setGenerated(false);
-                  }}
-                >
-                  {catalog.subjects.map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-              <button
-                className="button button--primary"
-                type="button"
-                onClick={() => setGenerated(true)}
-              >
-                Generate starter activity <span aria-hidden="true">→</span>
-              </button>
-            </div>
-            {generated ? (
-              <div className="starter-activity" aria-live="polite">
-                <div className="starter-activity__header">
-                  <div>
-                    <span className="eyebrow">Local draft · {level}</span>
-                    <h4>
-                      {subject} {goalProfiles[reviewedPlan.goal].label}
-                    </h4>
-                  </div>
-                  <div className="starter-activity__actions">
-                    <button
-                      className="button button--secondary"
-                      type="button"
-                      onClick={() => window.print()}
-                    >
-                      Print / save PDF
-                    </button>
-                    <button
-                      className="button button--secondary"
-                      type="button"
-                      onClick={() => {
-                        const document = buildAssessmentDocument({
-                          title: `${subject} ${goalProfiles[reviewedPlan.goal].label}`,
-                          country: countryProfiles[reviewedPlan.country].name,
-                          authority: countryProfiles[reviewedPlan.country].authority,
-                          level,
-                          subject,
-                          questions: starterQuestions[subject],
-                          answers: answerGuidance[subject],
-                        });
-                        const blob = new Blob([document], { type: "text/html" });
-                        const url = URL.createObjectURL(blob);
-                        const link = window.document.createElement("a");
-                        link.href = url;
-                        link.download = "gapsense-assessment.html";
-                        link.click();
-                        URL.revokeObjectURL(url);
-                      }}
-                    >
-                      Download document
-                    </button>
-                    <button
-                      className="button button--secondary"
-                      type="button"
-                      onClick={() => {
-                        const shareText = `GapSense ${countryProfiles[reviewedPlan.country].name} ${level} ${subject} ${goalProfiles[reviewedPlan.goal].label} · local prototype`;
-                        if (typeof navigator.share === "function") {
-                          void navigator
-                            .share({ title: "GapSense starter activity", text: shareText })
-                            .then(() => setShareStatus("shared"))
-                            .catch(() => undefined);
-                        } else {
-                          const clipboard = Reflect.get(navigator, "clipboard") as
-                            { readonly writeText?: (text: string) => Promise<void> } | undefined;
-                          if (typeof clipboard?.writeText === "function") {
-                            void clipboard
-                              .writeText(shareText)
-                              .then(() => setShareStatus("copied"))
-                              .catch(() => undefined);
-                          }
-                        }
-                      }}
-                    >
-                      Share
-                    </button>
-                  </div>
-                </div>
-                <ol>
-                  {starterQuestions[subject].map((question) => (
-                    <li key={question}>
-                      <span>{question}</span>
-                      <button
-                        className="text-button"
-                        type="button"
-                        onClick={() => setSelectedQuestion(question)}
-                      >
-                        Trace curriculum
-                      </button>
-                      <span className="answer-line" />
-                    </li>
-                  ))}
-                </ol>
-                {selectedQuestion !== null ? (
-                  <aside className="lineage-panel" aria-live="polite">
-                    <strong>Curriculum lineage</strong>
-                    <p>{selectedQuestion}</p>
-                    {lineageStatus === "loading" ? <span>Loading evidence…</span> : null}
-                    {lineageStatus === "unavailable" ? (
-                      <span>Lineage evidence is not available for this selection yet.</span>
-                    ) : null}
-                    {lineageStatus === "loaded" && lineage !== null ? (
-                      <>
-                        <span>
-                          {lineage.evidence_scope === "level"
-                            ? "Level evidence"
-                            : "Phase-level evidence"}{" "}
-                          · {lineage.extraction_status}
-                        </span>
-                        {lineage.strands.length ? (
-                          <span>
-                            Strands: {lineage.strands.map((strand) => strand.name).join(", ")}
-                          </span>
-                        ) : null}
-                        {lineage.nodes.map((node) => (
-                          <div key={node.code}>
-                            <strong>
-                              {node.code} · {node.title}
-                            </strong>
-                            <span>Content standard: {node.content_standard || "Not recorded"}</span>
-                            <span>
-                              Prerequisites:{" "}
-                              {node.prerequisites.length
-                                ? node.prerequisites.join(", ")
-                                : "None recorded"}
-                            </span>
-                            <span>
-                              Indicators:{" "}
-                              {node.indicators.map((indicator) => indicator.code).join(", ") ||
-                                "None recorded"}
-                            </span>
-                          </div>
-                        ))}
-                        <small>
-                          Sources: {lineage.source_files.join(", ") || "No source file listed"}
-                        </small>
-                      </>
-                    ) : null}
-                  </aside>
-                ) : null}
-                <aside className="activity-provenance" aria-label="Question organization">
-                  <strong>How this draft is organised</strong>
-                  <span>
-                    Country: {countryProfiles[reviewedPlan.country].name} · Authority:{" "}
-                    {countryProfiles[reviewedPlan.country].authority}
-                  </span>
-                  <span>
-                    Level: {level} · Subject: {subject}
-                  </span>
-                  <span>Source status: local prototype bank; educator review pending</span>
-                </aside>
-                <details>
-                  <summary>Show answer guidance</summary>
-                  <ol>
-                    {answerGuidance[subject].map((answer) => (
-                      <li key={answer}>{answer}</li>
-                    ))}
-                  </ol>
-                </details>
-                <p className="starter-activity__note">
-                  Prototype content for local testing. Curriculum alignment and educator review are
-                  tracked separately in the evidence repository.
-                </p>
-                {shareStatus !== "idle" ? (
-                  <p className="share-status" role="status">
-                    {shareStatus === "shared"
-                      ? "Share sheet opened."
-                      : "Share text copied to your clipboard."}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
+            <p>{sample.roleGuidance}</p>
+            <p className="evidence-boundary">{sample.provenance}</p>
+            <button
+              className="button button--primary"
+              type="button"
+              onClick={() => {
+                if (!saveSampleDraft(storage, reviewedPlan)) setRecovery("unavailable");
+                analytics.track("sample_opened");
+                onOpenAssessment();
+              }}
+            >
+              Open sample activity
+            </button>
           </div>
           <button
             className="button button--secondary"
             type="button"
             onClick={() => {
               analytics.track("planner_reset");
-              setGenerated(false);
-              setSelectedQuestion(null);
-              setLineage(null);
-              setShareStatus("idle");
+              clearSampleDraft(storage);
+              setRecovery("empty");
               dispatch({ type: "reset" });
             }}
           >

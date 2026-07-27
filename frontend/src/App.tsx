@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { browserAnalytics, type Analytics } from "./analytics/client";
 import { AssessmentPlanner } from "./components/AssessmentPlanner";
+import { AssessmentWorkspace } from "./components/AssessmentWorkspace";
 import { BrandMark } from "./components/BrandMark";
 import { CoveragePanels } from "./components/CoveragePanels";
 import { CurriculumExplorer } from "./components/CurriculumExplorer";
@@ -14,380 +15,368 @@ type AppProps = {
   readonly analytics?: Analytics;
 };
 
+type RouteMetadata = {
+  readonly title: string;
+  readonly description: string;
+};
+
+const routeMetadata = (path: string): RouteMetadata => {
+  switch (path) {
+    case "/":
+      return {
+        title: "GapSense — Evidence and honest activity samples",
+        description:
+          "Inspect public curriculum evidence for Ghana and Uganda, then try a clearly labelled illustrative activity sample.",
+      };
+    case "/curriculum":
+      return {
+        title: "Curriculum evidence — GapSense",
+        description:
+          "Inspect the public curriculum evidence boundary, including available subjects and missing records.",
+      };
+    case "/assessment":
+      return {
+        title: "Activity sample — GapSense",
+        description:
+          "Use, print, or download a clearly labelled GapSense illustrative activity sample.",
+      };
+    case "/about":
+      return {
+        title: "Trust and evidence — GapSense",
+        description:
+          "Read how GapSense handles evidence, review, saved choices, privacy, accessibility, and corrections.",
+      };
+    default:
+      return {
+        title: "Page not available — GapSense",
+        description: "Return to GapSense public evidence and illustrative activity samples.",
+      };
+  }
+};
+
+const normalizePath = (path: string): string =>
+  path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+
+function Header(): React.JSX.Element {
+  return (
+    <header className="site-header">
+      <div className="site-header__inner">
+        <a className="brand-link" href="/" aria-label="GapSense home">
+          <BrandMark />
+        </a>
+        <nav className="desktop-nav" aria-label="Primary navigation">
+          <a href="/#countries">Coverage</a>
+          <a href="/curriculum">Curriculum</a>
+          <a href="/about">About</a>
+          <a className="button button--compact" href="/#planner">
+            Try a sample
+          </a>
+        </nav>
+        <details className="mobile-nav">
+          <summary>Menu</summary>
+          <nav aria-label="Mobile navigation">
+            <a href="/#countries">Coverage</a>
+            <a href="/curriculum">Curriculum</a>
+            <a href="/about">About</a>
+            <a href="/#planner">Try a sample</a>
+          </nav>
+        </details>
+      </div>
+    </header>
+  );
+}
+
+function HomePage({
+  analytics,
+  onOpenAssessment,
+  readiness,
+  coverage,
+}: {
+  readonly analytics: Analytics;
+  readonly onOpenAssessment: () => void;
+  readonly readiness: ReturnType<typeof useReadiness>;
+  readonly coverage: ReturnType<typeof useCoverage>;
+}): React.JSX.Element {
+  return (
+    <>
+      <section className="hero" id="top" aria-labelledby="hero-title">
+        <div className="hero__inner section-shell">
+          <div className="hero__copy">
+            <span className="eyebrow">Public evidence · private sample choices</span>
+            <h1 id="hero-title">See the evidence. Try an honest sample.</h1>
+            <p className="hero__lead">
+              Inspect current Ghana and Uganda coverage, then preview a clearly labelled activity.
+              Missing curriculum evidence stays missing; a sample never becomes a diagnosis.
+            </p>
+            <div className="hero__actions">
+              <a className="button button--primary" href="#planner">
+                Try a sample activity
+              </a>
+              <a className="quiet-link" href="/curriculum">
+                Inspect curriculum evidence
+              </a>
+            </div>
+            <p className="hero__privacy">
+              No account, name, school, or learner response is requested.
+            </p>
+          </div>
+          <aside className="hero-evidence" aria-label="Current GapSense capability boundary">
+            <span className="eyebrow">What is available now</span>
+            <dl>
+              <div>
+                <dt>Country coverage</dt>
+                <dd>Presence records available</dd>
+              </div>
+              <div>
+                <dt>Illustrative activity</dt>
+                <dd>Two clearly labelled samples</dd>
+              </div>
+              <div>
+                <dt>Diagnosis</dt>
+                <dd>Not available</dd>
+              </div>
+            </dl>
+            <p>
+              Country and authority names provide context. They do not imply official endorsement,
+              alignment, or educator review.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <div className="readiness-shell section-shell">
+        <ReadinessBanner
+          status={readiness.status}
+          onRetry={() => {
+            analytics.track("readiness_retry_selected");
+            readiness.retry();
+          }}
+        />
+      </div>
+
+      <AssessmentPlanner analytics={analytics} onOpenAssessment={onOpenAssessment} />
+
+      <section className="countries section-shell" id="countries" aria-labelledby="countries-title">
+        <div className="section-heading section-heading--split">
+          <div>
+            <span className="eyebrow">Public coverage catalogue</span>
+            <h2 id="countries-title">Evidence presence, without inflated claims.</h2>
+          </div>
+          <div>
+            <p>
+              File presence, extraction, and human review are separate states. Unsupported
+              level-and-subject combinations remain visibly unavailable.
+            </p>
+            <a className="quiet-link" href="/curriculum">
+              Open the curriculum explorer
+            </a>
+          </div>
+        </div>
+        <CoveragePanels
+          state={coverage.state}
+          onRetry={() => {
+            analytics.track("coverage_retry_selected");
+            coverage.retry();
+          }}
+        />
+      </section>
+    </>
+  );
+}
+
+function CurriculumPage({
+  coverage,
+}: {
+  readonly coverage: ReturnType<typeof useCoverage>;
+}): React.JSX.Element {
+  return (
+    <section className="page-shell section-shell" aria-labelledby="curriculum-page-title">
+      <span className="eyebrow">Curriculum evidence explorer</span>
+      <h1 id="curriculum-page-title">Inspect the public evidence boundary.</h1>
+      <p className="page-lead">
+        Browse only subject evidence currently exposed by the public catalogue. A missing record is
+        a publication boundary, not permission to infer a curriculum claim.
+      </p>
+      <CurriculumExplorer state={coverage.state} onRetry={coverage.retry} />
+    </section>
+  );
+}
+
+function AboutPage(): React.JSX.Element {
+  return (
+    <section className="page-shell trust-page section-shell" aria-labelledby="about-title">
+      <span className="eyebrow">Trust centre</span>
+      <h1 id="about-title">How GapSense earns trust.</h1>
+      <p className="page-lead">
+        Claims stay smaller than the evidence. This public experience separates repository presence,
+        extraction, human review, and illustrative product samples.
+      </p>
+      <div className="trust-grid">
+        <article id="evidence">
+          <h2>Evidence and review</h2>
+          <p>
+            The public catalogue reports only records returned by the GapSense evidence API.
+            Presence does not mean alignment, approval, or educator review. Human-reviewed
+            curriculum activities are not available yet.
+          </p>
+        </article>
+        <article id="privacy">
+          <h2>Privacy and saved choices</h2>
+          <p>
+            The sample asks for a role and country context only. Those choices are saved in this
+            browser so the activity can reopen; no account, name, school, learner identity, or
+            answer is collected by this flow. Clearing the sample removes the saved choice.
+          </p>
+        </article>
+        <article id="accessibility">
+          <h2>Accessibility commitment</h2>
+          <p>
+            GapSense supports keyboard navigation, visible focus, reduced motion, readable text,
+            semantic landmarks, printable activities, and compact layouts. Report a barrier and
+            include the device, browser, and page when possible.
+          </p>
+        </article>
+        <article id="feedback">
+          <h2>Feedback and correction</h2>
+          <p>
+            Evidence gaps and accessibility problems should be visible and correctable. Report an
+            issue publicly without including learner or school personal information.
+          </p>
+          <a
+            className="quiet-link"
+            href="https://github.com/ma-za-kpe/gapsense-platform/issues/new"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Report a correction or barrier
+          </a>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function NotFoundPage(): React.JSX.Element {
+  return (
+    <section className="page-shell section-shell" aria-labelledby="not-found-title">
+      <span className="eyebrow">404</span>
+      <h1 id="not-found-title">This page is not available</h1>
+      <p className="page-lead">
+        The address may have changed, or the requested public page does not exist.
+      </p>
+      <a className="button button--primary" href="/">
+        Return to GapSense
+      </a>
+    </section>
+  );
+}
+
+function Footer(): React.JSX.Element {
+  return (
+    <footer className="site-footer">
+      <div className="site-footer__inner section-shell">
+        <div>
+          <BrandMark />
+          <p>
+            Built by{" "}
+            <a
+              className="attribution-link"
+              href="https://startuptribunal.com/maku"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Maku
+            </a>{" "}
+            for Africa. Not an official curriculum authority or examination provider.
+          </p>
+        </div>
+        <nav aria-label="Trust links">
+          <a href="/about">About</a>
+          <a href="/about#privacy">Privacy</a>
+          <a href="/about#accessibility">Accessibility</a>
+          <a href="/about#feedback">Feedback</a>
+        </nav>
+        <a
+          className="release-link"
+          href="https://github.com/ma-za-kpe/gapsense-platform/releases"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Releases
+        </a>
+      </div>
+    </footer>
+  );
+}
+
 export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Element {
   const readiness = useReadiness();
   const coverage = useCoverage();
   const entryRecorded = useRef(false);
-  const curriculumPage = window.location.pathname === "/curriculum";
+  const [path, setPath] = useState(() => normalizePath(window.location.pathname));
+
+  const navigate = useCallback((destination: string) => {
+    window.history.pushState({}, "", destination);
+    setPath(normalizePath(window.location.pathname));
+  }, []);
 
   useEffect(() => {
-    if (entryRecorded.current) {
-      return;
+    const handlePopState = () => setPath(normalizePath(window.location.pathname));
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const metadata = routeMetadata(path);
+    document.title = metadata.title;
+    let description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    if (description === null) {
+      description = document.createElement("meta");
+      description.name = "description";
+      document.head.append(description);
     }
+    description.content = metadata.description;
+  }, [path]);
+
+  useEffect(() => {
+    if (entryRecorded.current) return;
     entryRecorded.current = true;
     analytics.track("entry_viewed");
   }, [analytics]);
+
+  let page: React.JSX.Element;
+  switch (path) {
+    case "/":
+      page = (
+        <HomePage
+          analytics={analytics}
+          onOpenAssessment={() => navigate("/assessment")}
+          readiness={readiness}
+          coverage={coverage}
+        />
+      );
+      break;
+    case "/curriculum":
+      page = <CurriculumPage coverage={coverage} />;
+      break;
+    case "/assessment":
+      page = <AssessmentWorkspace onReturnHome={() => navigate("/#planner")} />;
+      break;
+    case "/about":
+      page = <AboutPage />;
+      break;
+    default:
+      page = <NotFoundPage />;
+  }
 
   return (
     <>
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
-
-      <header className="site-header">
-        <div className="site-header__inner">
-          <a className="brand-link" href="#top" aria-label="GapSense home">
-            <BrandMark />
-          </a>
-          <nav aria-label="Primary navigation">
-            <a
-              href="#countries"
-              onClick={() => {
-                analytics.track("navigation_countries_selected");
-              }}
-            >
-              Countries
-            </a>
-            <a href="/curriculum">Curriculum</a>
-            <a href="#features">What you can do</a>
-            <a
-              href="#principles"
-              onClick={() => {
-                analytics.track("navigation_principles_selected");
-              }}
-            >
-              Why GapSense
-            </a>
-            <a
-              className="button button--compact"
-              href="#planner"
-              onClick={() => {
-                analytics.track("navigation_planner_selected");
-              }}
-            >
-              Start free
-            </a>
-          </nav>
-        </div>
-      </header>
-
-      <main id="main-content">
-        {curriculumPage ? (
-          <section
-            className="curriculum-page section-shell"
-            aria-labelledby="curriculum-page-title"
-          >
-            <a className="quiet-link" href="/">
-              ← Back to GapSense home
-            </a>
-            <div className="section-heading section-heading--split">
-              <div>
-                <span className="eyebrow">Curriculum evidence explorer</span>
-                <h1 id="curriculum-page-title">Every level, subject, and evidence boundary.</h1>
-              </div>
-              <p>
-                This is the detailed evidence workspace. A missing cell means the repository does
-                not yet contain a level-specific record; it is a work item, never an invented claim.
-              </p>
-            </div>
-            <CurriculumExplorer
-              state={coverage.state}
-              onRetry={() => {
-                analytics.track("coverage_retry_selected");
-                coverage.retry();
-              }}
-            />
-          </section>
-        ) : (
-          <>
-            <section className="hero" id="top" aria-labelledby="hero-title">
-              <div className="hero__wash" aria-hidden="true" />
-              <div className="hero__inner section-shell">
-                <div className="hero__copy">
-                  <div className="hero__kicker reveal reveal--one">
-                    <span className="status-orb" aria-hidden="true" />
-                    Built by{" "}
-                    <a
-                      className="attribution-link"
-                      href="https://startuptribunal.com/maku"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Maku
-                    </a>{" "}
-                    for Africa, grounded first in Ghana and Uganda.
-                  </div>
-                  <h1 id="hero-title" className="reveal reveal--two">
-                    Find the next <span>learning step.</span>
-                  </h1>
-                  <p className="hero__lead reveal reveal--three">
-                    Plan focused practice and curriculum-aligned assessment with evidence you can
-                    see, language that protects learner dignity, and no personal data required.
-                  </p>
-                  <div className="hero__actions reveal reveal--four">
-                    <a
-                      className="button button--primary button--large"
-                      href="#planner"
-                      onClick={() => {
-                        analytics.track("navigation_planner_selected");
-                      }}
-                    >
-                      Plan a free assessment <span aria-hidden="true">→</span>
-                    </a>
-                    <a
-                      className="quiet-link"
-                      href="#countries"
-                      onClick={() => {
-                        analytics.track("navigation_countries_selected");
-                      }}
-                    >
-                      Explore country coverage
-                    </a>
-                  </div>
-                  <p className="hero__privacy reveal reveal--four">
-                    No account. No learner data. No hidden AI dependency.
-                  </p>
-                </div>
-
-                <div className="hero-visual reveal reveal--three" aria-hidden="true">
-                  <div className="map-card">
-                    <div className="map-card__header">
-                      <span>Learning path</span>
-                      <span className="map-card__live">Evidence linked</span>
-                    </div>
-                    <div className="learning-map">
-                      <svg viewBox="0 0 520 330" role="presentation">
-                        <path
-                          className="map-line map-line--one"
-                          d="M90 245C150 245 148 170 215 170"
-                        />
-                        <path
-                          className="map-line map-line--two"
-                          d="M250 170C322 170 315 85 400 85"
-                        />
-                        <path
-                          className="map-line map-line--three"
-                          d="M250 170C322 170 320 250 420 250"
-                        />
-                      </svg>
-                      <div className="map-node map-node--start">
-                        <span>Observed</span>
-                        <strong>Fractions</strong>
-                      </div>
-                      <div className="map-node map-node--root">
-                        <span>Earliest gap</span>
-                        <strong>Equal groups</strong>
-                        <small>Start here</small>
-                      </div>
-                      <div className="map-node map-node--upper">
-                        <span>Prerequisite</span>
-                        <strong>Counting</strong>
-                      </div>
-                      <div className="map-node map-node--next">
-                        <span>Next step</span>
-                        <strong>Visual practice</strong>
-                      </div>
-                    </div>
-                    <div className="map-card__footer">
-                      <span className="confidence-ring">92</span>
-                      <div>
-                        <strong>Reasoning stays visible</strong>
-                        <span>Sources, confidence, and uncertainty travel together.</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="floating-note floating-note--ghana">
-                    <span>GH</span>
-                    <div>
-                      <strong>Ghana</strong>
-                      <small>NaCCA structure</small>
-                    </div>
-                  </div>
-                  <div className="floating-note floating-note--uganda">
-                    <span>UG</span>
-                    <div>
-                      <strong>Uganda</strong>
-                      <small>NCDC structure</small>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <div className="readiness-shell section-shell">
-              <ReadinessBanner
-                status={readiness.status}
-                onRetry={() => {
-                  analytics.track("readiness_retry_selected");
-                  readiness.retry();
-                }}
-              />
-            </div>
-
-            <section
-              className="features section-shell"
-              id="features"
-              aria-labelledby="features-title"
-            >
-              <div className="section-heading section-heading--split">
-                <div>
-                  <span className="eyebrow">Product map</span>
-                  <h2 id="features-title">Everything useful is one click away.</h2>
-                </div>
-                <p>
-                  This local prototype already supports a complete, private planning loop. The map
-                  makes each capability discoverable while deeper diagnostic and classroom workflows
-                  are built.
-                </p>
-              </div>
-              <div className="feature-directory" aria-label="GapSense capabilities">
-                <a className="feature-card" href="#planner">
-                  <span className="feature-card__number">01</span>
-                  <strong>Create a free activity</strong>
-                  <span>
-                    Choose role, country, goal, level, and subject, then generate a local draft.
-                  </span>
-                </a>
-                <a className="feature-card" href="/curriculum">
-                  <span className="feature-card__number">02</span>
-                  <strong>Inspect curriculum evidence</strong>
-                  <span>
-                    See authorities, phases, subjects, level scope, and every unresolved boundary.
-                  </span>
-                </a>
-                <a className="feature-card" href="#planner">
-                  <span className="feature-card__number">03</span>
-                  <strong>Print, download, and share</strong>
-                  <span>
-                    Export a self-contained document or use device sharing after generating.
-                  </span>
-                </a>
-                <a className="feature-card" href="#principles">
-                  <span className="feature-card__number">04</span>
-                  <strong>Work privately and locally</strong>
-                  <span>
-                    No account or learner data is required; AI remains optional infrastructure.
-                  </span>
-                </a>
-              </div>
-            </section>
-
-            <AssessmentPlanner analytics={analytics} />
-
-            <section
-              className="countries section-shell"
-              id="countries"
-              aria-labelledby="countries-title"
-            >
-              <div className="section-heading section-heading--split">
-                <div>
-                  <span className="eyebrow">Country truth first</span>
-                  <h2 id="countries-title">One platform. Two distinct education systems.</h2>
-                </div>
-                <p>
-                  We preserve each authority’s terminology and curriculum structure. Coverage is
-                  only called ready after source, structure, automated checks, and expert review
-                  agree.
-                </p>
-              </div>
-
-              <a className="quiet-link" href="/curriculum">
-                Open the curriculum evidence explorer <span aria-hidden="true">â†’</span>
-              </a>
-            </section>
-
-            <section
-              className="curriculum section-shell"
-              id="curriculum"
-              aria-labelledby="curriculum-title"
-            >
-              <div className="section-heading section-heading--split">
-                <div>
-                  <span className="eyebrow">Curriculum evidence explorer</span>
-                  <h2 id="curriculum-title">See what is located, and what is still missing.</h2>
-                </div>
-                <p>
-                  Browse Ghana and Uganda by authority, phase, level, and subject. Every status is
-                  evidence-scoped; phase folders never become level claims by assumption.
-                </p>
-              </div>
-              <CoveragePanels
-                state={coverage.state}
-                onRetry={() => {
-                  analytics.track("coverage_retry_selected");
-                  coverage.retry();
-                }}
-              />
-            </section>
-
-            <section className="principles" id="principles" aria-labelledby="principles-title">
-              <div className="section-shell">
-                <div className="section-heading section-heading--centered">
-                  <span className="eyebrow eyebrow--light">
-                    A calmer kind of education technology
-                  </span>
-                  <h2 id="principles-title">Useful before it is impressive.</h2>
-                  <p>Every product decision has to earn trust in a real classroom or home.</p>
-                </div>
-                <div className="principle-grid">
-                  <article>
-                    <span className="principle-number">01</span>
-                    <h3>Free means complete</h3>
-                    <p>
-                      A usable learner activity and educator guide—not a teaser behind a paywall.
-                    </p>
-                  </article>
-                  <article>
-                    <span className="principle-number">02</span>
-                    <h3>Evidence stays visible</h3>
-                    <p>Curriculum versions, sources, reasoning, review state, and uncertainty.</p>
-                  </article>
-                  <article>
-                    <span className="principle-number">03</span>
-                    <h3>AI stays optional</h3>
-                    <p>Deterministic planning works locally even when Ollama is unavailable.</p>
-                  </article>
-                  <article>
-                    <span className="principle-number">04</span>
-                    <h3>Low bandwidth is premium UX</h3>
-                    <p>Fast, resumable, printable, keyboard-ready, and clear on a small screen.</p>
-                  </article>
-                </div>
-              </div>
-            </section>
-          </>
-        )}
-      </main>
-
-      <footer className="site-footer">
-        <div className="section-shell site-footer__inner">
-          <BrandMark />
-          <p>
-            <strong>
-              Built by{" "}
-              <a
-                className="attribution-link"
-                href="https://startuptribunal.com/maku"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Maku
-              </a>{" "}
-              for Africa.
-            </strong>{" "}
-            Not an official examination provider.
-          </p>
-          <a href="#top">Back to top ↑</a>
-          <a
-            className="release-link"
-            href="https://github.com/ma-za-kpe/gapsense-platform/releases"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Latest version <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-      </footer>
+      <Header />
+      <main id="main-content">{page}</main>
+      <Footer />
     </>
   );
 }
