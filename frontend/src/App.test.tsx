@@ -128,6 +128,8 @@ describe("truthful public GapSense experience", () => {
     stubReadyApi();
     const { container } = render(<App />);
 
+    expect(container.querySelector(".site-header__inner")).toHaveClass("section-shell");
+    expect(screen.getByRole("group", { name: "Theme" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 1, name: "Find the next learning step." }),
     ).toBeVisible();
@@ -170,8 +172,9 @@ describe("truthful public GapSense experience", () => {
   it("renders a real curriculum tree only when public subject evidence exists", async () => {
     window.history.pushState({}, "", "/curriculum");
     stubReadyApi();
-    render(<App />);
+    const { container } = render(<App />);
 
+    expect(container.querySelector(".page-shell--curriculum")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 1, name: "Inspect the public evidence boundary." }),
     ).toBeVisible();
@@ -256,6 +259,11 @@ describe("truthful public GapSense experience", () => {
     ).toBeVisible();
     expect(screen.getByRole("heading", { name: "Evidence and review" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Privacy and saved choices" })).toBeVisible();
+    expect(
+      screen.getByText(
+        /sample stores only the role, country context, and available purpose; the appearance control stores only your theme preference/i,
+      ),
+    ).toBeVisible();
     expect(screen.getByRole("heading", { name: "Accessibility commitment" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Feedback and correction" })).toBeVisible();
     expect(container).not.toHaveTextContent(/UNICEF/i);
@@ -283,9 +291,10 @@ describe("truthful public GapSense experience", () => {
   it("renders a recoverable not-found page for unsupported routes", async () => {
     window.history.pushState({}, "", "/missing");
     stubReadyApi(false);
-    render(<App />);
+    const { container } = render(<App />);
     await settleBackgroundRequests();
 
+    expect(container.querySelector(".page-shell--not-found")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 1, name: "This page is not available" }),
     ).toBeVisible();

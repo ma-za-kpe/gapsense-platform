@@ -11,18 +11,21 @@ docker compose up -d --build --wait web frontend
 
 Open [http://localhost:3000/](http://localhost:3000/).
 
+Use the header appearance control to choose **Light**, **Dark**, or **System**. The system setting
+follows the device preference, and the browser stores only this non-sensitive appearance choice.
+
 ## Use the first workflow
 
 1. Choose a role: teacher, caregiver, learner, or tutor.
-2. Choose Ghana or Uganda.
-3. Choose the purpose: practice, diagnostic check, or assessment plan.
-4. Review the private local plan.
-5. Choose an available level and subject.
-6. Generate the five-question starter activity.
-7. Open answer guidance or use **Print / save PDF**.
+2. Choose the illustrative Ghana or Uganda sample context.
+3. Choose the available **Practice activity** purpose. The future diagnostic and assessment-plan
+   options remain visibly locked.
+4. Review the anonymous choice and open the sample activity.
+5. Use the separate learner worksheet and answer guidance.
+6. Print, download, share, or copy the clearly labelled sample.
 
 The starter bank is deterministic prototype content. It is deliberately labelled as a local
-draft and is not presented as an official examination while curriculum evidence is reviewed.
+sample and is not presented as an official examination while curriculum evidence is reviewed.
 Unsupported curriculum combinations remain out of scope rather than being invented.
 
 ## Validate it

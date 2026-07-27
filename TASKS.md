@@ -43,7 +43,7 @@ Rules:
   was promoted as production deployment `dpl_sq6XxbhCDevkgaH6qb8TM5FE93EQ`; and the live
   `gapsense.org` desktop/mobile Chromium gate passed 14/14 with the reviewed visual baselines,
   accessibility checks, public-fixture boundary, security headers, and immutable hashed assets.
-- [ ] Deliver a complete, user-controlled GapSense theme system through TDD: support explicit
+- [~] Deliver a complete, user-controlled GapSense theme system through TDD: support explicit
   light, dark, and system modes; make the control keyboard-, touch-, and screen-reader-accessible;
   persist only the non-sensitive theme preference; honour the operating-system preference when
   “system” is selected; prevent an incorrect-theme flash during first paint; and preserve the

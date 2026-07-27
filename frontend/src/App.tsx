@@ -7,6 +7,7 @@ import { BrandMark } from "./components/BrandMark";
 import { CoveragePanels } from "./components/CoveragePanels";
 import { CurriculumExplorer } from "./components/CurriculumExplorer";
 import { ReadinessBanner } from "./components/ReadinessBanner";
+import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { useCoverage } from "./hooks/useCoverage";
 import { useReadiness } from "./hooks/useReadiness";
 import "./styles.css";
@@ -60,27 +61,30 @@ const normalizePath = (path: string): string =>
 function Header(): React.JSX.Element {
   return (
     <header className="site-header">
-      <div className="site-header__inner">
+      <div className="site-header__inner section-shell">
         <a className="brand-link" href="/" aria-label="GapSense home">
           <BrandMark />
         </a>
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          <a href="/#countries">Coverage</a>
-          <a href="/curriculum">Curriculum</a>
-          <a href="/about">About</a>
-          <a className="button button--compact" href="/#planner">
-            Try a sample
-          </a>
-        </nav>
-        <details className="mobile-nav">
-          <summary>Menu</summary>
-          <nav aria-label="Mobile navigation">
+        <div className="header-actions">
+          <nav className="desktop-nav" aria-label="Primary navigation">
             <a href="/#countries">Coverage</a>
             <a href="/curriculum">Curriculum</a>
             <a href="/about">About</a>
-            <a href="/#planner">Try a sample</a>
+            <a className="button button--compact" href="/#planner">
+              Try a sample
+            </a>
           </nav>
-        </details>
+          <ThemeSwitcher />
+          <details className="mobile-nav">
+            <summary>Menu</summary>
+            <nav aria-label="Mobile navigation">
+              <a href="/#countries">Coverage</a>
+              <a href="/curriculum">Curriculum</a>
+              <a href="/about">About</a>
+              <a href="/#planner">Try a sample</a>
+            </nav>
+          </details>
+        </div>
       </div>
     </header>
   );
@@ -250,7 +254,10 @@ function CurriculumPage({
   readonly coverage: ReturnType<typeof useCoverage>;
 }): React.JSX.Element {
   return (
-    <section className="page-shell section-shell" aria-labelledby="curriculum-page-title">
+    <section
+      className="page-shell page-shell--curriculum section-shell"
+      aria-labelledby="curriculum-page-title"
+    >
       <span className="eyebrow">Curriculum evidence explorer</span>
       <h1 id="curriculum-page-title">Inspect the public evidence boundary.</h1>
       <p className="page-lead">
@@ -283,9 +290,10 @@ function AboutPage(): React.JSX.Element {
         <article id="privacy">
           <h2>Privacy and saved choices</h2>
           <p>
-            The sample asks for a role and country context only. Those choices are saved in this
-            browser so the activity can reopen; no account, name, school, learner identity, or
-            answer is collected by this flow. Clearing the sample removes the saved choice.
+            The sample stores only the role, country context, and available purpose; the appearance
+            control stores only your theme preference. These choices stay in this browser so the
+            experience can reopen; no account, name, school, learner identity, or answer is
+            collected by this flow. Clearing the sample removes its saved choice.
           </p>
         </article>
         <article id="accessibility">
@@ -318,7 +326,10 @@ function AboutPage(): React.JSX.Element {
 
 function NotFoundPage(): React.JSX.Element {
   return (
-    <section className="page-shell section-shell" aria-labelledby="not-found-title">
+    <section
+      className="page-shell page-shell--not-found section-shell"
+      aria-labelledby="not-found-title"
+    >
       <span className="eyebrow">404</span>
       <h1 id="not-found-title">This page is not available</h1>
       <p className="page-lead">

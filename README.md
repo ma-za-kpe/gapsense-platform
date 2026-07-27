@@ -17,12 +17,14 @@ writes, and any broader production capability remain explicitly on hold.
 
 The local web prototype currently supports an anonymous planning journey for Ghana and Uganda:
 
-- role, country, purpose, level, and subject selection;
+- role, illustrative country context, and available practice-purpose selection;
 - a deterministic five-question starter activity with answer guidance;
 - visible question-organization and provenance notes;
 - whole-page print/save-to-PDF styling;
 - native device sharing with a privacy-safe clipboard fallback;
 - expandable country evidence maps and official authority links;
+- an accessible light, dark, and system appearance control that stores only the selected theme
+  preference in the browser;
 - explicit Ghana KG, Basic, JHS, and SHS labels and Uganda Early Childhood, Primary, O-Level,
   and A-Level labels.
 
