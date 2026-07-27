@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.6.0...v0.6.1) (2026-07-27)
+
+
+### Documentation
+
+* **tasks:** record theme production evidence ([#39](https://github.com/ma-za-kpe/gapsense-platform/issues/39)) ([af093bd](https://github.com/ma-za-kpe/gapsense-platform/commit/af093bd5c9e932852e9d967c8b101c240b9263e5))
+
 ## [0.6.0](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.5.2...v0.6.0) (2026-07-27)
 
 
