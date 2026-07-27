@@ -24,6 +24,7 @@ describe("versioned anonymous sample draft", () => {
     const draft = {
       role: "teacher",
       country: "ghana",
+      goal: "practice",
       reviewed: true,
     } as const;
 
@@ -33,21 +34,41 @@ describe("versioned anonymous sample draft", () => {
       recovery: "restored",
     });
     expect(window.localStorage.getItem(sampleDraftStorageKey)).toBe(
+      '{"version":2,"role":"teacher","country":"ghana","goal":"practice","reviewed":true}',
+    );
+  });
+
+  it("restores the former activity-only draft as an explicit practice goal", () => {
+    window.localStorage.setItem(
+      sampleDraftStorageKey,
       '{"version":1,"role":"teacher","country":"ghana","reviewed":true}',
     );
+
+    expect(readSampleDraft(window.localStorage)).toEqual({
+      draft: {
+        role: "teacher",
+        country: "ghana",
+        goal: "practice",
+        reviewed: true,
+      },
+      recovery: "restored",
+    });
   });
 
   it.each([
     "{not-json",
     "null",
     "42",
-    '{"version":2,"role":"teacher","country":"ghana","reviewed":true}',
-    '{"version":1,"role":"unknown","country":"ghana","reviewed":true}',
-    '{"version":1,"role":"teacher","country":"unknown","reviewed":true}',
-    '{"version":1,"role":null,"country":null,"reviewed":true}',
-    '{"version":1,"role":42,"country":"ghana","reviewed":false}',
-    '{"version":1,"role":"teacher","country":42,"reviewed":false}',
-    '{"version":1,"role":"teacher","country":"ghana","reviewed":"yes"}',
+    '{"version":3,"role":"teacher","country":"ghana","goal":"practice","reviewed":true}',
+    '{"version":2,"role":"unknown","country":"ghana","goal":"practice","reviewed":true}',
+    '{"version":2,"role":"teacher","country":"unknown","goal":"practice","reviewed":true}',
+    '{"version":2,"role":"teacher","country":"ghana","goal":"unknown","reviewed":true}',
+    '{"version":2,"role":"teacher","country":"ghana","goal":"diagnostic","reviewed":true}',
+    '{"version":2,"role":null,"country":null,"goal":null,"reviewed":true}',
+    '{"version":2,"role":42,"country":"ghana","goal":"practice","reviewed":false}',
+    '{"version":2,"role":"teacher","country":42,"goal":"practice","reviewed":false}',
+    '{"version":2,"role":"teacher","country":"ghana","goal":42,"reviewed":false}',
+    '{"version":2,"role":"teacher","country":"ghana","goal":"practice","reviewed":"yes"}',
   ])("discards an unsafe or incompatible draft: %s", (value) => {
     window.localStorage.setItem(sampleDraftStorageKey, value);
 

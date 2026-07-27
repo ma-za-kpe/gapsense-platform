@@ -11,10 +11,12 @@ import {
 } from "../domain/sampleDraft";
 import {
   countryProfiles,
+  goalProfiles,
   isPlanComplete,
   plannerReducer,
   roleProfiles,
   type Country,
+  type Goal,
   type PlannerAction,
   type Role,
 } from "../domain/planner";
@@ -26,6 +28,10 @@ const roles = Object.entries(roleProfiles) as readonly (readonly [
 const countries = Object.entries(countryProfiles) as readonly (readonly [
   Country,
   (typeof countryProfiles)[Country],
+])[];
+const goals = Object.entries(goalProfiles) as readonly (readonly [
+  Goal,
+  (typeof goalProfiles)[Goal],
 ])[];
 
 type AssessmentPlannerProps = {
@@ -69,11 +75,12 @@ export function AssessmentPlanner({
   return (
     <section className="planner section-shell" id="planner" aria-labelledby="planner-heading">
       <div className="section-heading planner__heading">
-        <span className="eyebrow">Illustrative activity preview</span>
-        <h2 id="planner-heading">Try one honest sample.</h2>
+        <span className="eyebrow">Start with intent</span>
+        <h2 id="planner-heading">Choose the learning job before the material.</h2>
         <p>
-          Choose who will use it and one country context. Each choice changes the guidance or
-          activity. The samples are clearly separated from official curriculum evidence.
+          Choose who it is for, the country context, and what you need. Practice is available as an
+          illustrative sample today. Diagnostic reasoning and complete assessment packages stay
+          visible, but locked until their evidence and review gates pass.
         </p>
       </div>
 
@@ -159,6 +166,41 @@ export function AssessmentPlanner({
           </div>
         </fieldset>
 
+        <fieldset className="choice-group">
+          <legend>
+            <span className="step-number">03</span>
+            What should this help you do?
+          </legend>
+          <div className="choice-grid choice-grid--goals">
+            {goals.map(([value, profile]) => (
+              <label
+                className={`choice-card choice-card--goal${profile.available ? "" : " choice-card--unavailable"}`}
+                key={value}
+              >
+                <input
+                  type="radio"
+                  name="goal"
+                  value={value}
+                  checked={state.goal === value}
+                  disabled={!profile.available}
+                  onChange={() => {
+                    analytics.track("planner_goal_selected");
+                    updatePlan({ type: "select-goal", goal: value });
+                  }}
+                />
+                <span className="choice-card__body">
+                  <span className="choice-card__check" aria-hidden="true" />
+                  <strong>{profile.label}</strong>
+                  <small>{profile.note}</small>
+                  {profile.status === undefined ? null : (
+                    <span className="choice-card__status">{profile.status}</span>
+                  )}
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
         <div className="planner__action-row">
           <p>
             <span className="privacy-dot" aria-hidden="true" /> Saved on this device. No name,
@@ -179,9 +221,11 @@ export function AssessmentPlanner({
             <span className="eyebrow">Saved sample choice</span>
             <h3>Your {sample.country} sample is ready</h3>
             <p className="plan-review__selection">
-              {roleProfiles[reviewedPlan.role].label} · {sample.level} {sample.subject}
+              {roleProfiles[reviewedPlan.role].label} · {goalProfiles[reviewedPlan.goal].label}
             </p>
-            <p>{sample.roleGuidance}</p>
+            <p>
+              {sample.level} {sample.subject} · {sample.roleGuidance}
+            </p>
             <p className="evidence-boundary">{sample.provenance}</p>
             <button
               className="button button--primary"

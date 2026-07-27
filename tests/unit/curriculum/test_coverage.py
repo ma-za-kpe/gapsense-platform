@@ -39,6 +39,9 @@ def test_inventory_reports_presence_without_claiming_completion(tmp_path: Path) 
     assert report.repository_status == "available"
     assert report.complete is False
     assert report.warnings == ()
+    assert report.snapshot.generated_at.endswith("Z")
+    assert report.snapshot.source_version is None
+    assert report.snapshot.review_status == "not_verified"
     assert [country.code for country in report.countries] == ["GH", "UG"]
     assert [country.repository_file_count for country in report.countries] == [1, 1]
     assert [(subject.phase, subject.identifier) for subject in report.countries[0].subjects] == [

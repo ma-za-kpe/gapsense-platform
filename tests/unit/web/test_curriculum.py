@@ -77,6 +77,9 @@ async def test_coverage_endpoint_exposes_typed_non_sensitive_metadata(
     assert payload["complete"] is False
     assert payload["repository_status"] == "available"
     assert payload["warnings"] == []
+    assert payload["snapshot"]["generated_at"].endswith("Z")
+    assert payload["snapshot"]["source_version"] is None
+    assert payload["snapshot"]["review_status"] == "not_verified"
     assert [country["code"] for country in payload["countries"]] == ["GH", "UG"]
     assert payload["countries"][0]["repository_file_count"] == 1
     assert payload["countries"][0]["subjects"] == [

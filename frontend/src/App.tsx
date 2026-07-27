@@ -24,9 +24,9 @@ const routeMetadata = (path: string): RouteMetadata => {
   switch (path) {
     case "/":
       return {
-        title: "GapSense — Evidence and honest activity samples",
+        title: "GapSense — Find the next learning step",
         description:
-          "Inspect public curriculum evidence for Ghana and Uganda, then try a clearly labelled illustrative activity sample.",
+          "See how GapSense connects observed difficulty, curriculum prerequisites, and practical next steps while keeping current evidence limits explicit.",
       };
     case "/curriculum":
       return {
@@ -102,45 +102,105 @@ function HomePage({
       <section className="hero" id="top" aria-labelledby="hero-title">
         <div className="hero__inner section-shell">
           <div className="hero__copy">
-            <span className="eyebrow">Public evidence · private sample choices</span>
-            <h1 id="hero-title">See the evidence. Try an honest sample.</h1>
+            <div className="hero__kicker">
+              <span className="status-orb" aria-hidden="true" />
+              Built by{" "}
+              <a
+                className="attribution-link"
+                href="https://startuptribunal.com/maku"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Maku
+              </a>{" "}
+              for Africa, grounded first in Ghana and Uganda.
+            </div>
+            <h1 id="hero-title">
+              Find the next <span>learning step.</span>
+            </h1>
+            <p className="hero__promise">Find the gap. See the reason. Take the next step.</p>
             <p className="hero__lead">
-              Inspect current Ghana and Uganda coverage, then preview a clearly labelled activity.
-              Missing curriculum evidence stays missing; a sample never becomes a diagnosis.
+              GapSense is being built to help educators identify the earliest learning prerequisite
+              that may be blocking progress, understand why it matters, and choose a practical next
+              action—without reducing a learner to a score or deficit.
+            </p>
+            <p className="hero__boundary">
+              Today, the public release offers clearly labelled activity samples and an inspectable
+              Ghana and Uganda evidence catalogue. It does not diagnose a learner or claim reviewed
+              curriculum alignment.
             </p>
             <div className="hero__actions">
-              <a className="button button--primary" href="#planner">
-                Try a sample activity
+              <a className="button button--primary button--large" href="#planner">
+                Plan a sample activity <span aria-hidden="true">→</span>
               </a>
               <a className="quiet-link" href="/curriculum">
-                Inspect curriculum evidence
+                Explore curriculum evidence
               </a>
             </div>
-            <p className="hero__privacy">
-              No account, name, school, or learner response is requested.
-            </p>
+            <p className="hero__privacy">No account. No learner data. No hidden AI dependency.</p>
           </div>
-          <aside className="hero-evidence" aria-label="Current GapSense capability boundary">
-            <span className="eyebrow">What is available now</span>
-            <dl>
-              <div>
-                <dt>Country coverage</dt>
-                <dd>Presence records available</dd>
+          <figure
+            className="hero-visual"
+            aria-labelledby="learning-path-title"
+            aria-describedby="learning-path-note"
+          >
+            <div className="map-card">
+              <div className="map-card__header">
+                <strong id="learning-path-title">Illustrative learning path</strong>
+                <span className="map-card__model">Product model</span>
               </div>
-              <div>
-                <dt>Illustrative activity</dt>
-                <dd>Two clearly labelled samples</dd>
+              <div className="learning-map" role="list" aria-label="Example prerequisite path">
+                <svg viewBox="0 0 520 330" aria-hidden="true" focusable="false">
+                  <path className="map-line map-line--one" d="M90 245C150 245 148 170 215 170" />
+                  <path className="map-line map-line--two" d="M250 170C322 170 315 85 400 85" />
+                  <path className="map-line map-line--three" d="M250 170C322 170 320 250 420 250" />
+                </svg>
+                <div className="map-node map-node--start" role="listitem">
+                  <span>Observed topic</span>
+                  <strong>Fractions</strong>
+                </div>
+                <div className="map-node map-node--root" role="listitem">
+                  <span>Earliest gap</span>
+                  <strong>Equal groups</strong>
+                  <small>Start here</small>
+                </div>
+                <div className="map-node map-node--upper" role="listitem">
+                  <span>Foundation</span>
+                  <strong>Counting</strong>
+                </div>
+                <div className="map-node map-node--next" role="listitem">
+                  <span>Next action</span>
+                  <strong>Visual grouping practice</strong>
+                </div>
               </div>
-              <div>
-                <dt>Diagnosis</dt>
-                <dd>Not available</dd>
+              <div className="map-card__footer">
+                <span className="reasoning-mark" aria-hidden="true">
+                  ↳
+                </span>
+                <div>
+                  <strong>Reasoning should stay visible</strong>
+                  <span>Sources, review state, and uncertainty travel together.</span>
+                </div>
               </div>
-            </dl>
-            <p>
-              Country and authority names provide context. They do not imply official endorsement,
-              alignment, or educator review.
-            </p>
-          </aside>
+            </div>
+            <figcaption className="learning-model-note" id="learning-path-note">
+              Example only — not a learner diagnosis or a claim about current curriculum coverage.
+            </figcaption>
+            <div className="floating-note floating-note--ghana" aria-hidden="true">
+              <span>GH</span>
+              <div>
+                <strong>Ghana</strong>
+                <small>NaCCA structure</small>
+              </div>
+            </div>
+            <div className="floating-note floating-note--uganda" aria-hidden="true">
+              <span>UG</span>
+              <div>
+                <strong>Uganda</strong>
+                <small>NCDC structure</small>
+              </div>
+            </div>
+          </figure>
         </div>
       </section>
 

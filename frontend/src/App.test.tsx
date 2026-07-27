@@ -1,6 +1,6 @@
 import axe from "axe-core";
 import { StrictMode } from "react";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -52,6 +52,11 @@ const coveragePayload = (withSubjects = true) => ({
   repository_status: "available",
   complete: false,
   warnings: [],
+  snapshot: {
+    generated_at: "2026-07-27T17:00:00Z",
+    source_version: null,
+    review_status: "not_verified",
+  },
   countries: [country("GH", withSubjects), country("UG", withSubjects)],
 });
 
@@ -119,23 +124,40 @@ afterEach(() => {
 });
 
 describe("truthful public GapSense experience", () => {
-  it("states the current capability and evidence boundary without diagnosis theatre", async () => {
+  it("states the mission and keeps the illustrative product model separate from current evidence", async () => {
     stubReadyApi();
     const { container } = render(<App />);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "See the evidence. Try an honest sample." }),
+      screen.getByRole("heading", { level: 1, name: "Find the next learning step." }),
     ).toBeVisible();
-    expect(screen.getByText("Country coverage")).toBeVisible();
-    expect(screen.getByText("Illustrative activity")).toBeVisible();
-    expect(screen.getByText("Diagnosis")).toBeVisible();
-    expect(screen.getByText("Not available")).toBeVisible();
-    expect(container).not.toHaveTextContent(
-      /Find the next learning step|Earliest gap|92|curriculum-aligned assessment/i,
+    expect(screen.getByText("Find the gap. See the reason. Take the next step.")).toBeVisible();
+    expect(
+      screen.getByText(/help educators identify the earliest learning prerequisite/i),
+    ).toBeVisible();
+
+    const model = screen.getByRole("figure", { name: "Illustrative learning path" });
+    expect(within(model).getByText("Fractions")).toBeVisible();
+    expect(within(model).getByText("Equal groups")).toBeVisible();
+    expect(within(model).getByText("Counting")).toBeVisible();
+    expect(within(model).getByText("Visual grouping practice")).toBeVisible();
+    const modelNote = within(model).getByText(
+      "Example only — not a learner diagnosis or a claim about current curriculum coverage.",
     );
+    expect(modelNote).toBeVisible();
+    expect(modelNote.tagName).toBe("FIGCAPTION");
+    expect(modelNote.parentElement).toBe(model);
+    expect(within(model).getByText("Product model")).toBeVisible();
+    expect(model).not.toHaveTextContent(/92|confidence/i);
+
+    expect(
+      screen.getByText(/Today, the public release offers clearly labelled activity samples/i),
+    ).toBeVisible();
     expect(container).not.toHaveTextContent(/local evidence mount|Ollama/i);
     expect(await screen.findByText("Public evidence catalogue connected")).toBeVisible();
-    expect((await screen.findAllByText("1 repository file located")).length).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByText("1 unreviewed subject record is visible")).length,
+    ).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "Curriculum" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "About" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/about#privacy");
@@ -182,6 +204,7 @@ describe("truthful public GapSense experience", () => {
     render(<App />);
     await user.click(screen.getByRole("radio", { name: /^Teacher/ }));
     await user.click(screen.getByRole("radio", { name: /^Ghana/ }));
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
     await user.click(screen.getByRole("button", { name: "Review sample choice" }));
     await user.click(screen.getByRole("button", { name: "Open sample activity" }));
 
@@ -218,7 +241,7 @@ describe("truthful public GapSense experience", () => {
 
     expect(window.location.pathname).toBe("/");
     expect(
-      screen.getByRole("heading", { level: 1, name: "See the evidence. Try an honest sample." }),
+      screen.getByRole("heading", { level: 1, name: "Find the next learning step." }),
     ).toBeVisible();
   });
 
@@ -239,7 +262,7 @@ describe("truthful public GapSense experience", () => {
   });
 
   it.each([
-    ["/", "GapSense — Evidence and honest activity samples"],
+    ["/", "GapSense — Find the next learning step"],
     ["/curriculum", "Curriculum evidence — GapSense"],
     ["/assessment", "Activity sample — GapSense"],
     ["/about", "Trust and evidence — GapSense"],
@@ -316,7 +339,10 @@ describe("truthful public GapSense experience", () => {
     await user.click(screen.getByRole("button", { name: "Check connection again" }));
     await user.click(screen.getByRole("button", { name: "Retry coverage details" }));
     expect(await screen.findByText("Public evidence catalogue connected")).toBeVisible();
-    expect((await screen.findAllByText("1 repository file located")).length).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByText("Evidence files exist, but no subject is publishable yet"))
+        .length,
+    ).toBeGreaterThan(0);
   });
 
   it("records one anonymous entry event through StrictMode", async () => {
@@ -339,6 +365,7 @@ describe("truthful public GapSense experience", () => {
         saveSampleDraft(window.localStorage, {
           role: "teacher",
           country: "ghana",
+          goal: "practice",
           reviewed: true,
         });
       }

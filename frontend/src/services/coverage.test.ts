@@ -6,6 +6,11 @@ const validCoveragePayload = {
   repository_status: "available",
   complete: false,
   warnings: ["review_state_not_complete"],
+  snapshot: {
+    generated_at: "2026-07-27T17:00:00Z",
+    source_version: null,
+    review_status: "not_verified",
+  },
   countries: [
     {
       code: "GH",
@@ -82,6 +87,21 @@ describe("curriculum coverage client", () => {
     expect(call?.[1]?.signal).toBeInstanceOf(AbortSignal);
   });
 
+  it("accepts a non-empty recorded source version", async () => {
+    const payload = {
+      ...validCoveragePayload,
+      snapshot: { ...validCoveragePayload.snapshot, source_version: "NaCCA 2019" },
+    };
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(getCurriculumCoverage(fetcher)).resolves.toEqual(payload);
+  });
+
   it("fails closed on an unsuccessful response", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 503 }));
 
@@ -94,6 +114,12 @@ describe("curriculum coverage client", () => {
     { ...validCoveragePayload, complete: true },
     { ...validCoveragePayload, repository_status: "complete" },
     { ...validCoveragePayload, warnings: "none" },
+    { ...validCoveragePayload, snapshot: null },
+    {
+      ...validCoveragePayload,
+      snapshot: { ...validCoveragePayload.snapshot, generated_at: "soon" },
+    },
+    { ...validCoveragePayload, snapshot: { ...validCoveragePayload.snapshot, source_version: 1 } },
     { ...validCoveragePayload, countries: {} },
     { ...validCoveragePayload, countries: [null] },
     {

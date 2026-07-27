@@ -14,6 +14,11 @@ const report = {
   repository_status: "available",
   complete: false,
   warnings: [],
+  snapshot: {
+    generated_at: "2026-07-27T17:00:00Z",
+    source_version: null,
+    review_status: "not_verified",
+  },
   countries: [
     {
       code: "GH",

@@ -42,11 +42,18 @@ export type CountryCoverage = {
   readonly coverage_matrix?: readonly CoverageMatrixEntry[];
 };
 
+export type CoverageSnapshot = {
+  readonly generated_at: string;
+  readonly source_version: string | null;
+  readonly review_status: "not_verified";
+};
+
 export type CurriculumCoverageReport = {
   readonly repository_status: RepositoryStatus;
   readonly complete: false;
   readonly countries: readonly CountryCoverage[];
   readonly warnings: readonly string[];
+  readonly snapshot: CoverageSnapshot;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -99,6 +106,16 @@ const isCoverageMatrixEntry = (value: unknown): value is CoverageMatrixEntry =>
 const isCoverageMatrix = (value: unknown): value is readonly CoverageMatrixEntry[] =>
   Array.isArray(value) && value.every(isCoverageMatrixEntry);
 
+const utcTimestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+
+const isCoverageSnapshot = (value: unknown): value is CoverageSnapshot =>
+  isRecord(value) &&
+  typeof value.generated_at === "string" &&
+  utcTimestamp.test(value.generated_at) &&
+  (value.source_version === null ||
+    (typeof value.source_version === "string" && value.source_version.length > 0)) &&
+  value.review_status === "not_verified";
+
 const isCountry = (value: unknown): value is CountryCoverage =>
   isRecord(value) &&
   hasExpectedCountryIdentity(value) &&
@@ -127,6 +144,9 @@ const isCoverageReport = (value: unknown): value is CurriculumCoverageReport => 
     !Array.isArray(value.warnings) ||
     !value.warnings.every((warning) => typeof warning === "string")
   ) {
+    return false;
+  }
+  if (!isCoverageSnapshot(value.snapshot)) {
     return false;
   }
   if (

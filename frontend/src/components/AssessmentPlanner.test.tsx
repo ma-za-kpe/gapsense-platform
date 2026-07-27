@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 describe("resumable public sample planner", () => {
-  it("asks only choices that change the sample and opens a focused workspace", async () => {
+  it("restores intent while distinguishing the available practice sample from future workflows", async () => {
     const user = userEvent.setup();
     const onOpenAssessment = vi.fn();
     render(
@@ -24,7 +24,12 @@ describe("resumable public sample planner", () => {
 
     expect(screen.getByRole("group", { name: /Who will use the sample/ })).toBeVisible();
     expect(screen.getByRole("group", { name: /Choose an illustrative context/ })).toBeVisible();
-    expect(screen.queryByText(/Diagnostic check|Assessment plan/)).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: /What should this help you do/ })).toBeVisible();
+    expect(screen.getByRole("radio", { name: /^Practice activity/ })).toBeEnabled();
+    expect(screen.getByRole("radio", { name: /^Diagnostic pathway/ })).toBeDisabled();
+    expect(screen.getByRole("radio", { name: /^Assessment package/ })).toBeDisabled();
+    expect(screen.getByText("In development")).toBeVisible();
+    expect(screen.getByText("Requires reviewed evidence")).toBeVisible();
     const review = screen.getByRole("button", { name: "Review sample choice" });
     expect(review).toBeDisabled();
     const form = review.closest("form");
@@ -33,6 +38,8 @@ describe("resumable public sample planner", () => {
 
     await user.click(screen.getByRole("radio", { name: /^Teacher/ }));
     await user.click(screen.getByRole("radio", { name: /^Ghana/ }));
+    expect(review).toBeDisabled();
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
     expect(review).toBeEnabled();
     await user.click(review);
 
@@ -40,6 +47,7 @@ describe("resumable public sample planner", () => {
       screen.getByRole("heading", { level: 3, name: "Your Ghana sample is ready" }),
     ).toBeVisible();
     expect(screen.getAllByText(/Basic 3 Science/).length).toBeGreaterThan(0);
+    expect(screen.getByText("Teacher · Practice activity")).toBeVisible();
     expect(
       screen.getAllByText(/not curriculum-aligned or educator-reviewed/i).length,
     ).toBeGreaterThan(0);
@@ -58,6 +66,7 @@ describe("resumable public sample planner", () => {
     );
     await user.click(screen.getByRole("radio", { name: /^Tutor/ }));
     await user.click(screen.getByRole("radio", { name: /^Uganda/ }));
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
     await user.click(screen.getByRole("button", { name: "Review sample choice" }));
     await waitFor(() => expect(window.localStorage.getItem(sampleDraftStorageKey)).not.toBeNull());
     first.unmount();
@@ -71,6 +80,7 @@ describe("resumable public sample planner", () => {
     );
     expect(screen.getByRole("radio", { name: /^Tutor/ })).toBeChecked();
     expect(screen.getByRole("radio", { name: /^Uganda/ })).toBeChecked();
+    expect(screen.getByRole("radio", { name: /^Practice activity/ })).toBeChecked();
     expect(screen.getByRole("status")).toHaveTextContent("Restored your saved sample choice");
     await user.click(screen.getByRole("button", { name: "Start again" }));
     expect(window.localStorage.getItem(sampleDraftStorageKey)).toBeNull();
@@ -127,6 +137,7 @@ describe("resumable public sample planner", () => {
 
     await user.click(screen.getByRole("radio", { name: /^Learner/ }));
     await user.click(screen.getByRole("radio", { name: /^Uganda/ }));
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
     await user.click(screen.getByRole("button", { name: "Review sample choice" }));
     await user.click(screen.getByRole("button", { name: "Open sample activity" }));
     await user.click(screen.getByRole("button", { name: "Start again" }));
@@ -134,6 +145,7 @@ describe("resumable public sample planner", () => {
     expect(events).toEqual([
       "planner_role_selected",
       "planner_country_selected",
+      "planner_goal_selected",
       "planner_reviewed",
       "sample_opened",
       "planner_reset",
@@ -161,6 +173,7 @@ describe("resumable public sample planner", () => {
 
     await user.click(screen.getByRole("radio", { name: /^Teacher/ }));
     await user.click(screen.getByRole("radio", { name: /^Ghana/ }));
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
     await user.click(screen.getByRole("button", { name: "Review sample choice" }));
     await user.click(screen.getByRole("button", { name: "Open sample activity" }));
 

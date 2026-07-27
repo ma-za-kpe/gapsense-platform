@@ -8,6 +8,11 @@ const report = {
   repository_status: "available",
   complete: false,
   warnings: [],
+  snapshot: {
+    generated_at: "2026-07-27T17:00:00Z",
+    source_version: null,
+    review_status: "not_verified",
+  },
   countries: [
     {
       code: "GH",
@@ -86,45 +91,109 @@ describe("coverage panels", () => {
     expect(screen.getAllByText("Checking public coverage evidence…")).toHaveLength(2);
   });
 
-  it("renders file presence separately from unverified review", async () => {
+  it("explains publishable evidence separately from internal file presence", async () => {
     render(<CoveragePanels state={{ status: "loaded", report }} onRetry={vi.fn()} />);
 
-    expect(screen.getByText("1 repository file located")).toBeVisible();
-    expect(screen.getByText("No canonical repository files located")).toBeVisible();
+    expect(screen.getByText("1 unreviewed subject record is visible")).toBeVisible();
+    expect(screen.getByText("No public evidence is available yet")).toBeVisible();
+    expect(screen.queryByText(/repository files? located/)).not.toBeInTheDocument();
     expect(screen.getAllByText("Lower Primary").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Mathematics").length).toBeGreaterThan(0);
     await userEvent.setup().click(screen.getByText("See level and subject evidence matrix"));
     expect(screen.getAllByText("phase folder only").length).toBeGreaterThan(0);
     expect(screen.getByText("level folder")).toBeVisible();
-    expect(screen.getAllByText("Extraction and educator review not verified")).toHaveLength(2);
+    expect(screen.getAllByText("No educator review has been recorded.")).toHaveLength(2);
     await userEvent.setup().click(screen.getByText("See level and subject evidence matrix"));
   });
 
-  it("uses correct plural file language", () => {
-    const pluralReport = {
+  it("explains when files exist but no subject is publishable", () => {
+    const unpublishedReport = {
       ...report,
-      countries: [{ ...report.countries[0], repository_file_count: 2 }],
+      countries: [{ ...report.countries[0], subjects: [] }],
     };
-    render(<CoveragePanels state={{ status: "loaded", report: pluralReport }} onRetry={vi.fn()} />);
+    render(
+      <CoveragePanels state={{ status: "loaded", report: unpublishedReport }} onRetry={vi.fn()} />,
+    );
 
-    expect(screen.getByText("2 repository files located")).toBeVisible();
+    expect(
+      screen.getByText("Evidence files exist, but no subject is publishable yet"),
+    ).toBeVisible();
+  });
+
+  it("treats a legacy report without a subjects field as unpublished", () => {
+    const legacyCountry = { ...report.countries[0] };
+    Reflect.deleteProperty(legacyCountry, "subjects");
+    const legacyReport = {
+      ...report,
+      countries: [legacyCountry],
+    };
+
+    render(<CoveragePanels state={{ status: "loaded", report: legacyReport }} onRetry={vi.fn()} />);
+
+    expect(
+      screen.getByText("Evidence files exist, but no subject is publishable yet"),
+    ).toBeVisible();
   });
 
   it("explains the evidence-to-question organization for teachers", async () => {
     const user = userEvent.setup();
     render(<CoveragePanels state={{ status: "loaded", report }} onRetry={vi.fn()} />);
 
-    const firstToggle = screen.getAllByText("See how questions are organised").at(0);
+    const firstToggle = screen.getAllByText("See planned evidence structure").at(0);
     if (firstToggle === undefined) {
       throw new Error("Ghana curriculum map toggle was not rendered");
     }
     await user.click(firstToggle);
 
-    expect(screen.getByText("NaCCA standards-based structure")).toBeVisible();
+    expect(screen.getByText("Planned NaCCA evidence structure")).toBeVisible();
     expect(screen.getByText("Content standard and indicator")).toBeVisible();
+    expect(
+      screen.getByText(/intended organization for future reviewed Ghana evidence/i),
+    ).toBeVisible();
     expect(screen.getByRole("link", { name: /Open Ghana authority source/ })).toHaveAttribute(
       "href",
       "https://nacca.gov.gh/curriculum/",
+    );
+  });
+
+  it("surfaces snapshot freshness and missing source-version provenance", () => {
+    render(<CoveragePanels state={{ status: "loaded", report }} onRetry={vi.fn()} />);
+
+    expect(screen.getByRole("note", { name: "Evidence snapshot" })).toHaveTextContent(
+      "Catalogue checked 27 Jul 2026",
+    );
+    expect(screen.getByRole("note", { name: "Evidence snapshot" })).toHaveTextContent(
+      "Official source version is not recorded",
+    );
+  });
+
+  it("shows a recorded source version and plural publishable-subject count", () => {
+    const firstCountry = report.countries[0];
+    const versionedReport = {
+      ...report,
+      snapshot: { ...report.snapshot, source_version: "NaCCA 2019" },
+      countries: [
+        {
+          ...firstCountry,
+          subjects: [
+            ...firstCountry.subjects,
+            {
+              ...firstCountry.subjects[0],
+              identifier: "science",
+              name: "Science",
+            },
+          ],
+        },
+      ],
+    };
+
+    render(
+      <CoveragePanels state={{ status: "loaded", report: versionedReport }} onRetry={vi.fn()} />,
+    );
+
+    expect(screen.getByText("2 unreviewed subject records are visible")).toBeVisible();
+    expect(screen.getByRole("note", { name: "Evidence snapshot" })).toHaveTextContent(
+      "Official source version: NaCCA 2019",
     );
   });
 

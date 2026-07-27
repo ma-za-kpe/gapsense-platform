@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
@@ -84,6 +85,15 @@ class CountryCoverage:
 
 
 @dataclass(frozen=True, slots=True)
+class CoverageSnapshot:
+    """When the catalogue was checked and which source version it represents."""
+
+    generated_at: str
+    source_version: str | None
+    review_status: ReviewStatus
+
+
+@dataclass(frozen=True, slots=True)
 class CoverageReport:
     """Deterministic two-country repository report."""
 
@@ -91,6 +101,7 @@ class CoverageReport:
     complete: Literal[False]
     countries: tuple[CountryCoverage, ...]
     warnings: tuple[str, ...]
+    snapshot: CoverageSnapshot
 
 
 COUNTRY_DEFINITIONS: tuple[CountryDefinition, ...] = (
@@ -250,7 +261,21 @@ def canonical_repository_available(data_path: Path) -> bool:
     )
 
 
-def _missing_report(status: RepositoryStatus, warning: str) -> CoverageReport:
+def _new_snapshot() -> CoverageSnapshot:
+    """Describe this immutable application-start inventory without inventing source metadata."""
+    generated_at = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return CoverageSnapshot(
+        generated_at=generated_at,
+        source_version=None,
+        review_status="not_verified",
+    )
+
+
+def _missing_report(
+    status: RepositoryStatus,
+    warning: str,
+    snapshot: CoverageSnapshot,
+) -> CoverageReport:
     """Build a report when no country root is safe to inspect."""
     return CoverageReport(
         repository_status=status,
@@ -271,16 +296,18 @@ def _missing_report(status: RepositoryStatus, warning: str) -> CoverageReport:
             for country in COUNTRY_DEFINITIONS
         ),
         warnings=(warning,),
+        snapshot=snapshot,
     )
 
 
 def build_coverage_report(data_path: Path) -> CoverageReport:
     """Inspect canonical Ghana/Uganda roots without inferring extraction completion."""
+    snapshot = _new_snapshot()
     curricula_path = data_path / "curricula"
     if not curricula_path.exists():
-        return _missing_report("missing", "missing_curricula_root")
+        return _missing_report("missing", "missing_curricula_root", snapshot)
     if not _is_safe_directory(curricula_path):
-        return _missing_report("invalid", "invalid_curricula_root")
+        return _missing_report("invalid", "invalid_curricula_root", snapshot)
 
     warnings: list[str] = []
     country_reports: list[CountryCoverage] = []
@@ -347,4 +374,5 @@ def build_coverage_report(data_path: Path) -> CoverageReport:
         complete=False,
         countries=tuple(country_reports),
         warnings=tuple(warnings),
+        snapshot=snapshot,
     )

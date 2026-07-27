@@ -105,10 +105,12 @@ The current product channel is the web.
 - Use local mock authentication and local synthetic data.
 - Keep domain services independent of presentation channel.
 - Keep WhatsApp implementation on hold.
-- Keep production deployment on hold.
+- Keep automatic deployment and every production capability outside ADR-003's anonymous,
+  read-only Vercel surface on hold. Promote that bounded surface only after the strict local gate,
+  reviewed GitHub pull request, green hosted checks, explicit operator action, and live verification.
 
-Why: the team needs to validate the diagnostic value and user experience before taking on
-channel, infrastructure, compliance, and operational complexity.
+Why: the team needs a truthful public review surface without treating deployment as authorization
+for learner data, diagnosis, new channels, or unreviewed infrastructure and compliance complexity.
 
 ## Official Sources Before Generated Content
 
