@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.2](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.5.1...v0.5.2) (2026-07-27)
+
+
+### Bug Fixes
+
+* **deploy:** cache fingerprinted assets immutably ([#35](https://github.com/ma-za-kpe/gapsense-platform/issues/35)) ([272bf7f](https://github.com/ma-za-kpe/gapsense-platform/commit/272bf7f284a7ffd0b284312970b85f0169438b10))
+* **web:** restore the prerequisite-gap product promise ([#33](https://github.com/ma-za-kpe/gapsense-platform/issues/33)) ([251161e](https://github.com/ma-za-kpe/gapsense-platform/commit/251161e8310fb2b7d4dacb595e19e6c06fb43fda))
+
+
+### Documentation
+
+* **tasks:** record production restoration evidence ([#36](https://github.com/ma-za-kpe/gapsense-platform/issues/36)) ([440d3a9](https://github.com/ma-za-kpe/gapsense-platform/commit/440d3a9b7d3df498d13e9c2eb3d6f14c96eac394))
+
 ## [0.5.1](https://github.com/ma-za-kpe/gapsense-platform/compare/v0.5.0...v0.5.1) (2026-07-27)
 
 
