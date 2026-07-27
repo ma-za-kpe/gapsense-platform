@@ -14,6 +14,15 @@ def test_vercel_configuration_keeps_promotion_explicit_and_routes_the_full_stack
     assert configuration["outputDirectory"] == "public"
     assert configuration["buildCommand"].endswith("npm --prefix frontend run build:vercel")
     assert configuration["functions"]["api/index.py"]["includeFiles"] == ("fixtures/public-data/**")
+    assert {
+        "source": "/assets/(.*)",
+        "headers": [
+            {
+                "key": "Cache-Control",
+                "value": "public, max-age=31536000, immutable",
+            }
+        ],
+    } in configuration["headers"]
     assert configuration["rewrites"] == [
         {
             "source": "/api/(.*)",
