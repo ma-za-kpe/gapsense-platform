@@ -28,7 +28,7 @@ Rules:
 
 ## Current Product Direction
 
-- [~] Correct the product-positioning regression identified in co-founder review on 2026-07-27.
+- [x] Correct the product-positioning regression identified in co-founder review on 2026-07-27.
   Restore the documented promise—**Find the gap. See the reason. Take the next step.**—and the
   mission-led “Find the next learning step” entry experience, including an accessible,
   explicitly illustrative Fractions → Equal groups prerequisite map. Preserve PR #31's evidence
@@ -37,7 +37,12 @@ Rules:
   and distinguishing what GapSense is building from what the public fixture can do today. Retain
   the reviewed planner step, canonical `/assessment` workspace, **Built by Maku for Africa**
   attribution, separate learner/educator artifacts, source/review provenance, TDD, responsive
-  visual regression evidence, and exact-main production verification.
+  visual regression evidence, and exact-main production verification. Evidence: implementation
+  PR #33 merged as `251161e`; Vercel cache correction PR #35 merged as `272bf7f`; required CI runs
+  `30297820910` and `30300040322` passed; preview `dpl_FJi3Cgm7Wt9KxniQGFT9KhM7frSv`
+  was promoted as production deployment `dpl_sq6XxbhCDevkgaH6qb8TM5FE93EQ`; and the live
+  `gapsense.org` desktop/mobile Chromium gate passed 14/14 with the reviewed visual baselines,
+  accessibility checks, public-fixture boundary, security headers, and immutable hashed assets.
 - [ ] Deliver a complete, user-controlled GapSense theme system through TDD: support explicit
   light, dark, and system modes; make the control keyboard-, touch-, and screen-reader-accessible;
   persist only the non-sensitive theme preference; honour the operating-system preference when
