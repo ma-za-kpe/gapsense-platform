@@ -1,6 +1,6 @@
 # GapSense Working List
 
-**Canonical project execution list.** Last reconciled: 2026-07-24.
+**Canonical project execution list.** Last reconciled: 2026-07-25.
 
 This list is deliberately never finished. A completed task stays as evidence; every
 research finding, validation failure, user observation, curriculum gap, design debt
@@ -24,10 +24,15 @@ Rules:
 6. Commit completed milestones only after the local CI-equivalent pipeline is green; push once,
    review the resulting hosted evidence, and merge by pull request.
 7. Remote contribution is authorized as of 2026-07-23. Batch coherent green milestones to
-   minimize CI runs. Production deployment remains separately prohibited.
+   minimize CI runs. Production promotion is a separate, explicit operator action.
 
 ## Current Product Direction
 
+- [~] Restore the existing `gapsense` Vercel production project and `gapsense.org` after the
+  repository split left the domain on a 128-day-old deployment. Keep automatic Git deployments
+  disabled; explicitly promote one reviewed build that serves the Vite frontend and same-origin
+  FastAPI curriculum routes, then verify GitHub CI, Vercel build/runtime evidence, custom-domain
+  routing, security headers, responsive rendering, and rollback.
 - [~] Build a local-first, web-first GapSense experience for Ghana and Uganda.
 - [ ] Make free, curriculum-aligned assessment generation a public web entry product for
   learners, parents/caregivers, teachers, school leaders, and other legitimate users.
@@ -49,9 +54,10 @@ Rules:
 - [ ] Add a manually triggered, environment-protected Vercel deployment workflow only after the
   deployment hold is explicitly lifted; keep `vercel.json` automatic deployments disabled and
   require hosted security, privacy, accessibility, and release checks before promotion.
-- [!] Three-milestone deployment checkpoint reached after `v0.3.0`, but Docker `vercel --prod`
-  failed closed because the available Vercel token is invalid. Obtain a fresh scoped token and
-  project/org binding, then rerun the same command only after verifying the target and rollback.
+- [~] Three-milestone deployment checkpoint reached after `v0.3.0`. Authenticated Vercel access and
+  the existing `gapsense` project binding are restored; protected preview evidence now proves the
+  frontend, `/curriculum`, readiness, coverage, generated assets, and security headers. Complete
+  reviewed promotion, custom-domain verification, runtime log review, and rollback capture.
 - [ ] After every three reviewed milestones, run a deployment checkpoint: reconcile release
   version, CI evidence, privacy/security status, runtime logs, rollback target, and Vercel
   promotion approval before deploying.
@@ -119,7 +125,8 @@ Rules:
 - [ ] Use local mock services and local authentication until deployment is approved.
 - [~] Use local Ollama as the active AI runtime behind a provider abstraction; never make a local
   model a hidden requirement for deterministic tests.
-- [~] Keep WhatsApp delivery and production deployment on hold.
+- [~] Keep WhatsApp delivery on hold. Keep Vercel deployment manual, reviewed, and limited to the
+  read-only public fixture boundary approved in ADR-003.
 
 ## Current Analytics and Search Slice
 

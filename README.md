@@ -97,9 +97,14 @@ docker compose --profile test run --rm browser-tests
 ## Release and deployment state
 
 Release Please owns version and changelog automation. The footer links to the repository Releases
-page rather than hard-coding a version that can go stale. Automatic Vercel deployments are disabled
-in `vercel.json`; no production deployment is authorized until the deployment checkpoint, privacy
-review, curriculum evidence gate, and protected promotion workflow are complete.
+page rather than hard-coding a version that can go stale. The reviewed public slice is hosted on
+the existing `gapsense` Vercel project at `https://gapsense.org`. Automatic Vercel deployments
+remain disabled in `vercel.json`; production changes require an explicit operator promotion after
+the strict local gate, reviewed GitHub pull request, green hosted checks, protected preview, and
+live-domain verification. The production function bundles only `fixtures/public-data`; private
+curriculum evidence, learner data, hosted analytics, authentication, WhatsApp, and database writes
+remain outside the deployed boundary. See
+[`ADR-003`](docs/decisions/ADR-003-vercel-production-topology.md).
 
 Analytics and search indexing are disabled by default. An operator may exercise the ephemeral,
 property-free aggregate analytics contract locally by setting `GAPSENSE_ANALYTICS_MODE` to
@@ -166,8 +171,9 @@ run the full Docker gate and review the complete diff. Use conventional commit
 messages. Do not bypass hooks. Batch each coherent milestone into one locally
 green feature-branch push, require a reviewed pull request and green hosted
 checks, never push directly to `main` or `develop`, and let Release Please own
-release tags. Production deployment remains prohibited, and committed Vercel
-configuration disables automatic preview and production deployments.
+release tags. Vercel production promotion is explicit and operator-controlled;
+committed configuration continues to disable automatic preview and production
+deployments.
 
 ## License
 

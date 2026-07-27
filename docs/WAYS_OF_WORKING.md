@@ -57,7 +57,8 @@ Every milestone uses a focused branch created from the current reviewed integrat
 - Let Release Please own product version tags and changelog release pull requests.
 - Reconcile the local integration branch after the reviewed remote merge.
 - Do not mix unrelated user-owned changes into a milestone commit.
-- Keep production deployment prohibited until that separate hold is explicitly lifted.
+- Keep production deployment explicit and operator-controlled; do not restore automatic Git
+  deployments.
 
 Why: small branches make evidence review, rollback, and historical reasoning possible.
 The current project contains a necessary large history-reconciliation change as well as long-lived
@@ -394,4 +395,5 @@ A milestone is complete only when:
    check is green.
 9. The pull request is merged without bypassing protection and local integration state is
    reconciled.
-10. No production deployment has occurred.
+10. Any production state matches an explicit promotion decision and has verified rollback
+    evidence.

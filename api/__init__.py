@@ -1,0 +1,1 @@
+"""Vercel function entry points."""
