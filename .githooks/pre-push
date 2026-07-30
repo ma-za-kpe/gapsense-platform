@@ -1,14 +1,16 @@
 #!/bin/sh
 set -eu
 
+saw_ref=false
 while read -r local_ref local_sha remote_ref remote_sha; do
-  case "$local_ref" in
-    refs/heads/main|refs/heads/develop)
-      echo "Direct pushes to protected integration branches are prohibited: $local_ref" >&2
+  saw_ref=true
+  case "$local_ref:$remote_ref" in
+    refs/heads/main:*|refs/heads/develop:*|*:refs/heads/main|*:refs/heads/develop)
+      echo "Direct updates to protected integration branches are prohibited: $local_ref -> $remote_ref" >&2
       exit 1
       ;;
-    refs/tags/*)
-      echo "Local tag pushes are prohibited; Release Please owns version tags." >&2
+    refs/tags/*:*|*:refs/tags/*)
+      echo "Local tag updates are prohibited; Release Please owns version tags." >&2
       exit 1
       ;;
   esac
@@ -16,6 +18,11 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   test -n "$remote_ref"
   test -n "$remote_sha"
 done
+
+if [ "$saw_ref" != true ]; then
+  echo "Refusing a push with no ref update evidence." >&2
+  exit 1
+fi
 
 if test -n "$(git status --porcelain)"; then
   echo "Refusing to push a dirty worktree; commit and validate one coherent milestone." >&2

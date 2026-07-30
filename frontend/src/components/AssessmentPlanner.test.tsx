@@ -11,6 +11,39 @@ afterEach(() => {
 });
 
 describe("resumable public sample planner", () => {
+  it.each([
+    ["Teacher", "Ghana", "Your Ghana sample is ready"],
+    ["Teacher", "Uganda", "Your Uganda sample is ready"],
+    ["Parent or caregiver", "Ghana", "Your Ghana sample is ready"],
+    ["Parent or caregiver", "Uganda", "Your Uganda sample is ready"],
+    ["Learner", "Ghana", "Your Ghana sample is ready"],
+    ["Learner", "Uganda", "Your Uganda sample is ready"],
+    ["Tutor", "Ghana", "Your Ghana sample is ready"],
+    ["Tutor", "Uganda", "Your Uganda sample is ready"],
+  ])(
+    "creates and opens the %s, %s practice path",
+    async (roleLabel, countryLabel, readyHeading) => {
+      const user = userEvent.setup();
+      const onOpenAssessment = vi.fn();
+      render(
+        <AssessmentPlanner
+          analytics={{ track: vi.fn() }}
+          onOpenAssessment={onOpenAssessment}
+          storage={window.localStorage}
+        />,
+      );
+
+      await user.click(screen.getByRole("radio", { name: new RegExp(`^${roleLabel}`) }));
+      await user.click(screen.getByRole("radio", { name: new RegExp(`^${countryLabel}`) }));
+      await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
+      await user.click(screen.getByRole("button", { name: "Review sample choice" }));
+
+      expect(screen.getByRole("heading", { level: 3, name: readyHeading })).toBeVisible();
+      await user.click(screen.getByRole("button", { name: "Open sample activity" }));
+      expect(onOpenAssessment).toHaveBeenCalledOnce();
+    },
+  );
+
   it("restores intent while distinguishing the available practice sample from future workflows", async () => {
     const user = userEvent.setup();
     const onOpenAssessment = vi.fn();
@@ -85,6 +118,30 @@ describe("resumable public sample planner", () => {
     await user.click(screen.getByRole("button", { name: "Start again" }));
     expect(window.localStorage.getItem(sampleDraftStorageKey)).toBeNull();
     expect(screen.getByRole("button", { name: "Review sample choice" })).toBeDisabled();
+  });
+
+  it("invalidates a reviewed plan when any selection changes", async () => {
+    const user = userEvent.setup();
+    render(
+      <AssessmentPlanner
+        analytics={{ track: vi.fn() }}
+        onOpenAssessment={vi.fn()}
+        storage={window.localStorage}
+      />,
+    );
+    await user.click(screen.getByRole("radio", { name: /^Teacher/ }));
+    await user.click(screen.getByRole("radio", { name: /^Ghana/ }));
+    await user.click(screen.getByRole("radio", { name: /^Practice activity/ }));
+    await user.click(screen.getByRole("button", { name: "Review sample choice" }));
+    expect(screen.getByRole("heading", { name: "Your Ghana sample is ready" })).toBeVisible();
+
+    await user.click(screen.getByRole("radio", { name: /^Tutor/ }));
+    expect(screen.queryByRole("heading", { name: "Your Ghana sample is ready" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Review sample choice" }));
+    expect(screen.getByText("Tutor · Practice activity")).toBeVisible();
+
+    await user.click(screen.getByRole("radio", { name: /^Uganda/ }));
+    expect(screen.queryByRole("heading", { name: "Your Uganda sample is ready" })).toBeNull();
   });
 
   it("explains discarded or unavailable storage without blocking the sample", () => {

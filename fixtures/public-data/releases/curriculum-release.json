@@ -1,0 +1,4323 @@
+{
+  "schema_version": "1.0.0",
+  "release_id": "curriculum-2026-07-30-public-boundary.1",
+  "release_status": "candidate",
+  "generated_on": "2026-07-30",
+  "data_commit_sha": null,
+  "complete": false,
+  "countries": [
+    "GH",
+    "UG"
+  ],
+  "catalog": {
+    "path": "catalog/curriculum-catalog.json",
+    "sha256": "05dacc064ae00a1ec6853fbc42d3df5c8881af82580489e4ba86eaf2414d0198"
+  },
+  "source_catalog": {
+    "path": "sources/official-curriculum-sources.json",
+    "sha256": "7f7b915f556d446e4fccfaef02a5896c9de10782f8bcfe75053e66f68fea5691"
+  },
+  "source_cell_mapping": {
+    "path": "catalog/source-cell-mapping.json",
+    "sha256": "743c767bc23bc1ce64178a26025dce172b3269237f26e9f3f12906d7d49094d5"
+  },
+  "record_count": 176,
+  "records": [
+    {
+      "id": "gh-primary-kindergarten-language-and-literacy",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "kindergarten",
+      "subject": "language-and-literacy",
+      "subject_name": "Language and Literacy",
+      "source_edition": "NaCCA Standards-Based Kindergarten Curriculum 2019",
+      "source_ids": [
+        "gh-kindergarten-curriculum-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-kindergarten-numeracy",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "kindergarten",
+      "subject": "numeracy",
+      "subject_name": "Numeracy",
+      "source_edition": "NaCCA Standards-Based Kindergarten Curriculum 2019",
+      "source_ids": [
+        "gh-kindergarten-curriculum-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-kindergarten-creative-arts",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "kindergarten",
+      "subject": "creative-arts",
+      "subject_name": "Creative Arts",
+      "source_edition": "NaCCA Standards-Based Kindergarten Curriculum 2019",
+      "source_ids": [
+        "gh-kindergarten-curriculum-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-kindergarten-our-world-our-people",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "kindergarten",
+      "subject": "our-world-our-people",
+      "subject_name": "Our World and Our People",
+      "source_edition": "NaCCA Standards-Based Kindergarten Curriculum 2019",
+      "source_ids": [
+        "gh-kindergarten-curriculum-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-lower-primary-mathematics",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "lower_primary",
+      "subject": "mathematics",
+      "subject_name": "Mathematics",
+      "source_edition": "2019 standards-based primary curriculum",
+      "source_ids": [
+        "gh-primary-lower-mathematics-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-lower-primary-english-language",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "lower_primary",
+      "subject": "english-language",
+      "subject_name": "English Language",
+      "source_edition": "2019 standards-based primary curriculum",
+      "source_ids": [
+        "gh-primary-lower-english-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-lower-primary-ghanaian-language",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "lower_primary",
+      "subject": "ghanaian-language",
+      "subject_name": "Ghanaian Language",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-ghanaian-language-lower-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-lower-primary-science",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "lower_primary",
+      "subject": "science",
+      "subject_name": "Science",
+      "source_edition": "2019 standards-based primary curriculum",
+      "source_ids": [
+        "gh-primary-lower-science-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-lower-primary-history",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "lower_primary",
+      "subject": "history",
+      "subject_name": "History",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-history-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-lower-primary-physical-education",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "lower_primary",
+      "subject": "physical-education",
+      "subject_name": "Physical Education",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-physical-education-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-lower-primary-creative-arts",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "lower_primary",
+      "subject": "creative-arts",
+      "subject_name": "Creative Arts",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-creative-arts-lower-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-lower-primary-religious-and-moral-education",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "lower_primary",
+      "subject": "religious-and-moral-education",
+      "subject_name": "Religious and Moral Education",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-religious-and-moral-education-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-mathematics",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "mathematics",
+      "subject_name": "Mathematics",
+      "source_edition": "2019 standards-based primary curriculum",
+      "source_ids": [
+        "gh-primary-upper-mathematics-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-english-language",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "english-language",
+      "subject_name": "English Language",
+      "source_edition": "2019 standards-based primary curriculum",
+      "source_ids": [
+        "gh-primary-upper-english-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-ghanaian-language",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "ghanaian-language",
+      "subject_name": "Ghanaian Language",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-ghanaian-language-upper-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-science",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "science",
+      "subject_name": "Science",
+      "source_edition": "2019 standards-based primary curriculum",
+      "source_ids": [
+        "gh-primary-upper-science-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-french-language",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "french-language",
+      "subject_name": "French Language",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-french-upper-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-computing",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "computing",
+      "subject_name": "Computing",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-computing-upper-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-history",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "history",
+      "subject_name": "History",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-history-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-physical-education",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "physical-education",
+      "subject_name": "Physical Education",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-physical-education-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-creative-arts",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "creative-arts",
+      "subject_name": "Creative Arts",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-creative-arts-upper-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-primary-upper-primary-religious-and-moral-education",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "primary",
+      "level": "upper_primary",
+      "subject": "religious-and-moral-education",
+      "subject_name": "Religious and Moral Education",
+      "source_edition": "NaCCA Standards-Based Curriculum 2019",
+      "source_ids": [
+        "gh-primary-religious-and-moral-education-2019"
+      ],
+      "valid_from": "2019-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-english-language",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "english-language",
+      "subject_name": "English Language",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-english-language-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-mathematics",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "mathematics",
+      "subject_name": "Mathematics",
+      "source_edition": "September 2020 Common Core Programme",
+      "source_ids": [
+        "gh-jhs-mathematics-ccp-2020"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-science",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "science",
+      "subject_name": "Science",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-science-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-social-studies",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "social-studies",
+      "subject_name": "Social Studies",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-social-studies-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-french-language",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "french-language",
+      "subject_name": "French Language",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-french-language-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-arabic",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "arabic",
+      "subject_name": "Arabic",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-arabic-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-ghanaian-language",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "ghanaian-language",
+      "subject_name": "Ghanaian Language",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-ghanaian-language-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-physical-education-and-health",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "physical-education-and-health",
+      "subject_name": "Physical Education and Health",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-physical-education-and-health-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-religious-and-moral-education",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "religious-and-moral-education",
+      "subject_name": "Religious and Moral Education",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-religious-and-moral-education-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-creative-arts-and-design",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "creative-arts-and-design",
+      "subject_name": "Creative Arts and Design",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-creative-arts-and-design-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-career-technology",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "career-technology",
+      "subject_name": "Career Technology",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-career-technology-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-junior-high-computing",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "junior_high",
+      "subject": "computing",
+      "subject_name": "Computing",
+      "source_edition": "current NaCCA Common Core Programme artifact",
+      "source_ids": [
+        "gh-jhs-computing-current"
+      ],
+      "valid_from": "2020-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-additional-mathematics",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "additional-mathematics",
+      "subject_name": "Additional Mathematics",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-additional-mathematics"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-agricultural-science",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "agricultural-science",
+      "subject_name": "Agricultural Science",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-agricultural-science-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-agriculture",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "agriculture",
+      "subject_name": "Agriculture",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-agriculture-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-applied-technology",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "applied-technology",
+      "subject_name": "Applied Technology",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-applied-technology-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-arabic",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "arabic",
+      "subject_name": "Arabic",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-arabic-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-art-and-design-foundation",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "art-and-design-foundation",
+      "subject_name": "Art and Design Foundation",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-art-and-design-foundation-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-art-and-design-studio",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "art-and-design-studio",
+      "subject_name": "Art and Design Studio",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-art-and-design-studio-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-aviation-and-aerospace-engineering",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "aviation-and-aerospace-engineering",
+      "subject_name": "Aviation and Aerospace Engineering",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-aviation-and-aerospace-engineering-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-biology",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "biology",
+      "subject_name": "Biology",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-biology-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-biomedical-science",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "biomedical-science",
+      "subject_name": "Biomedical Science",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-biomedical-science-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-chemistry",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "chemistry",
+      "subject_name": "Chemistry",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-chemistry-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-computing",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "computing",
+      "subject_name": "Computing",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-computing-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-design-communication-technology",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "design-communication-technology",
+      "subject_name": "Design Communication Technology",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-design-communication-technology-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-economics",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "economics",
+      "subject_name": "Economics",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-economics-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-engineering",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "engineering",
+      "subject_name": "Engineering",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-engineering-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-english-language",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "english-language",
+      "subject_name": "English Language",
+      "source_edition": "September 2023 SHS curriculum; byte-identical to current NaCCA 2025 artifact",
+      "source_ids": [
+        "gh-shs-english-language-2023-legacy"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-french",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "french",
+      "subject_name": "French",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-french-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-general-science",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "general-science",
+      "subject_name": "General Science",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-general-science"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-government",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "government",
+      "subject_name": "Government",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-government-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-history",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "history",
+      "subject_name": "History",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-history-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-information-and-communications-technology",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "information-and-communications-technology",
+      "subject_name": "Information and Communications Technology",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-information-and-communications-technology-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-literature-in-english",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "literature-in-english",
+      "subject_name": "Literature in English",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-literature-in-english-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-manufacturing-engineering",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "manufacturing-engineering",
+      "subject_name": "Manufacturing Engineering",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-manufacturing-engineering-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-mathematics",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "mathematics",
+      "subject_name": "Mathematics",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-mathematics"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-performing-arts",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "performing-arts",
+      "subject_name": "Performing Arts",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-performing-arts-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-physical-education-and-health-core",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "physical-education-and-health-core",
+      "subject_name": "Physical Education and Health (Core)",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-physical-education-and-health-core-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-physical-education-and-health-elective",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "physical-education-and-health-elective",
+      "subject_name": "Physical Education and Health (Elective)",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-physical-education-and-health-elective-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-physics",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "physics",
+      "subject_name": "Physics",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-physics-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-religious-and-moral-education",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "religious-and-moral-education",
+      "subject_name": "Religious and Moral Education",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-religious-and-moral-education-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-robotics",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "robotics",
+      "subject_name": "Robotics",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-robotics-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-social-studies",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "social-studies",
+      "subject_name": "Social Studies",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-social-studies-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-spanish",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "spanish",
+      "subject_name": "Spanish",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-spanish-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "gh-secondary-senior-high-geography",
+      "country": "GH",
+      "country_slug": "ghana",
+      "authority": "National Council for Curriculum and Assessment (NaCCA)",
+      "phase": "secondary",
+      "level": "senior_high",
+      "subject": "geography",
+      "subject_name": "Geography",
+      "source_edition": "2025 standards-based Senior High School Curriculum",
+      "source_ids": [
+        "gh-shs-geography-2025"
+      ],
+      "valid_from": "2024-09-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-early-childhood-language-and-communication",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "early_childhood",
+      "subject": "language-and-communication",
+      "subject_name": "Language and Communication",
+      "source_edition": "NCDC Learning Framework for Early Childhood Development 3-6 years",
+      "source_ids": [
+        "ug-early-childhood-learning-framework"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-early-childhood-social-emotional-development",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "early_childhood",
+      "subject": "social-emotional-development",
+      "subject_name": "Social-emotional Development",
+      "source_edition": "NCDC Learning Framework for Early Childhood Development 3-6 years",
+      "source_ids": [
+        "ug-early-childhood-learning-framework"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-early-childhood-physical-development",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "early_childhood",
+      "subject": "physical-development",
+      "subject_name": "Physical Development",
+      "source_edition": "NCDC Learning Framework for Early Childhood Development 3-6 years",
+      "source_ids": [
+        "ug-early-childhood-learning-framework"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-early-childhood-cognitive-and-early-mathematical-concepts",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "early_childhood",
+      "subject": "cognitive-and-early-mathematical-concepts",
+      "subject_name": "Cognitive and Early Mathematical Concepts",
+      "source_edition": "NCDC Learning Framework for Early Childhood Development 3-6 years",
+      "source_ids": [
+        "ug-early-childhood-learning-framework"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-early-childhood-creative-expression",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "early_childhood",
+      "subject": "creative-expression",
+      "subject_name": "Creative Expression",
+      "source_edition": "NCDC Learning Framework for Early Childhood Development 3-6 years",
+      "source_ids": [
+        "ug-early-childhood-learning-framework"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-early-childhood-environmental-awareness-and-life-skills",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "early_childhood",
+      "subject": "environmental-awareness-and-life-skills",
+      "subject_name": "Environmental Awareness and Life Skills",
+      "source_edition": "NCDC Learning Framework for Early Childhood Development 3-6 years",
+      "source_ids": [
+        "ug-early-childhood-learning-framework"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-1-3-mathematics",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_1_3",
+      "subject": "mathematics",
+      "subject_name": "Mathematics",
+      "source_edition": "retained official Primary One curriculum; June 2011 thematic curriculum; November 2007 edited thematic curriculum",
+      "source_ids": [
+        "ug-primary-one-thematic-curriculum",
+        "ug-primary-two-thematic-curriculum",
+        "ug-primary-three-thematic-curriculum"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-1-3-english",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_1_3",
+      "subject": "english",
+      "subject_name": "English",
+      "source_edition": "retained official Primary One curriculum; June 2011 thematic curriculum; November 2007 edited thematic curriculum",
+      "source_ids": [
+        "ug-primary-one-thematic-curriculum",
+        "ug-primary-two-thematic-curriculum",
+        "ug-primary-three-thematic-curriculum"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-1-3-literacy-i",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_1_3",
+      "subject": "literacy-i",
+      "subject_name": "Literacy I",
+      "source_edition": "retained official Primary One curriculum; June 2011 thematic curriculum; November 2007 edited thematic curriculum",
+      "source_ids": [
+        "ug-primary-one-thematic-curriculum",
+        "ug-primary-two-thematic-curriculum",
+        "ug-primary-three-thematic-curriculum"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-1-3-literacy-ii",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_1_3",
+      "subject": "literacy-ii",
+      "subject_name": "Literacy II",
+      "source_edition": "retained official Primary One curriculum; June 2011 thematic curriculum; November 2007 edited thematic curriculum",
+      "source_ids": [
+        "ug-primary-one-thematic-curriculum",
+        "ug-primary-two-thematic-curriculum",
+        "ug-primary-three-thematic-curriculum"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-1-3-physical-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_1_3",
+      "subject": "physical-education",
+      "subject_name": "Physical Education",
+      "source_edition": "retained official Primary One curriculum; June 2011 thematic curriculum; November 2007 edited thematic curriculum",
+      "source_ids": [
+        "ug-primary-one-thematic-curriculum",
+        "ug-primary-two-thematic-curriculum",
+        "ug-primary-three-thematic-curriculum"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-1-3-religious-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_1_3",
+      "subject": "religious-education",
+      "subject_name": "Religious Education (CRE and IRE)",
+      "source_edition": "retained official Primary One curriculum; June 2011 thematic curriculum; November 2007 edited thematic curriculum",
+      "source_ids": [
+        "ug-primary-one-thematic-curriculum",
+        "ug-primary-two-thematic-curriculum",
+        "ug-primary-three-thematic-curriculum"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-1-3-creative-performing-arts",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_1_3",
+      "subject": "creative-performing-arts",
+      "subject_name": "Creative Performing Arts",
+      "source_edition": "retained official Primary One curriculum; June 2011 thematic curriculum; November 2007 edited thematic curriculum",
+      "source_ids": [
+        "ug-primary-one-thematic-curriculum",
+        "ug-primary-two-thematic-curriculum",
+        "ug-primary-three-thematic-curriculum"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-1-3-news",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_1_3",
+      "subject": "news",
+      "subject_name": "News",
+      "source_edition": "retained official Primary One curriculum; June 2011 thematic curriculum; November 2007 edited thematic curriculum",
+      "source_ids": [
+        "ug-primary-one-thematic-curriculum",
+        "ug-primary-two-thematic-curriculum",
+        "ug-primary-three-thematic-curriculum"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-english",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "english",
+      "subject_name": "English",
+      "source_edition": "NCDC Primary Four syllabus 2010",
+      "source_ids": [
+        "ug-primary-four-english"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-mathematics",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "mathematics",
+      "subject_name": "Mathematics",
+      "source_edition": "NCDC Primary Four syllabus 2010",
+      "source_ids": [
+        "ug-primary-four-mathematics"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-social-studies",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "social-studies",
+      "subject_name": "Social Studies",
+      "source_edition": "NCDC Primary Four syllabus 2010",
+      "source_ids": [
+        "ug-primary-four-social-studies"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-integrated-science",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "integrated-science",
+      "subject_name": "Integrated Science",
+      "source_edition": "NCDC Primary Four syllabus 2010",
+      "source_ids": [
+        "ug-primary-four-integrated-science"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-local-language",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "local-language",
+      "subject_name": "Local Language",
+      "source_edition": "NCDC Orange Book 2023, corrected June 2025 web edition",
+      "source_ids": [
+        "ug-primary-official-publication-catalogue-2025"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "CATALOG."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-music-dance-and-drama",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "music-dance-and-drama",
+      "subject_name": "Music, Dance and Drama",
+      "source_edition": "NCDC Orange Book 2023, corrected June 2025 web edition",
+      "source_ids": [
+        "ug-primary-official-publication-catalogue-2025"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "CATALOG."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-physical-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "physical-education",
+      "subject_name": "Physical Education",
+      "source_edition": "NCDC Orange Book 2023, corrected June 2025 web edition",
+      "source_ids": [
+        "ug-primary-official-publication-catalogue-2025"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "CATALOG."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-art-and-technology",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "art-and-technology",
+      "subject_name": "Art and Technology",
+      "source_edition": "NCDC Orange Book 2023, corrected June 2025 web edition",
+      "source_ids": [
+        "ug-primary-official-publication-catalogue-2025"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "CATALOG."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-christian-religious-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "christian-religious-education",
+      "subject_name": "Christian Religious Education",
+      "source_edition": "NCDC Primary Four syllabus 2009, ISBN 978-9970-117-61-1",
+      "source_ids": [
+        "ug-primary-four-cre-archival-copy"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-4-islamic-religious-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_4",
+      "subject": "islamic-religious-education",
+      "subject_name": "Islamic Religious Education",
+      "source_edition": "NCDC Primary Four syllabus 2009, ISBN 978-9970-117-64-2",
+      "source_ids": [
+        "ug-primary-four-ire-archival-copy"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-english",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "english",
+      "subject_name": "English",
+      "source_edition": "NCDC Primary Five Curriculum Set One 2010; NCDC Primary Six Curriculum Set One 2010; July 2024 Primary Seven Set One materials",
+      "source_ids": [
+        "ug-primary-five-set-one",
+        "ug-primary-six-set-one",
+        "ug-primary-seven-set-one"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-mathematics",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "mathematics",
+      "subject_name": "Mathematics",
+      "source_edition": "NCDC Primary Five Curriculum Set One 2010; NCDC Primary Six Curriculum Set One 2010; July 2024 Primary Seven Set One materials",
+      "source_ids": [
+        "ug-primary-five-set-one",
+        "ug-primary-six-set-one",
+        "ug-primary-seven-set-one"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-social-studies",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "social-studies",
+      "subject_name": "Social Studies",
+      "source_edition": "NCDC Primary Five Curriculum Set One 2010; NCDC Primary Six Curriculum Set One 2010; July 2024 Primary Seven Set One materials",
+      "source_ids": [
+        "ug-primary-five-set-one",
+        "ug-primary-six-set-one",
+        "ug-primary-seven-set-one"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-integrated-science",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "integrated-science",
+      "subject_name": "Integrated Science",
+      "source_edition": "NCDC Primary Five Curriculum Set One 2010; NCDC Primary Six Curriculum Set One 2010; July 2024 Primary Seven Set One materials",
+      "source_ids": [
+        "ug-primary-five-set-one",
+        "ug-primary-six-set-one",
+        "ug-primary-seven-set-one"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-local-language",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "local-language",
+      "subject_name": "Local Language",
+      "source_edition": "NCDC Primary Five Curriculum Set One 2010; NCDC Primary Six Curriculum Set One 2010; July 2024 Primary Seven Set One materials",
+      "source_ids": [
+        "ug-primary-five-set-one",
+        "ug-primary-six-set-one",
+        "ug-primary-seven-set-one"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-music-dance-and-drama",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "music-dance-and-drama",
+      "subject_name": "Music, Dance and Drama",
+      "source_edition": "NCDC Primary Five Curriculum Set Two 2010; NCDC Primary Six Curriculum Set Two 2010; NCDC Primary Seven Curriculum Set Two 2011",
+      "source_ids": [
+        "ug-primary-five-set-two",
+        "ug-primary-six-set-two",
+        "ug-primary-seven-set-two"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-physical-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "physical-education",
+      "subject_name": "Physical Education",
+      "source_edition": "NCDC Primary Five Curriculum Set Two 2010; NCDC Primary Six Curriculum Set Two 2010; NCDC Primary Seven Curriculum Set Two 2011",
+      "source_ids": [
+        "ug-primary-five-set-two",
+        "ug-primary-six-set-two",
+        "ug-primary-seven-set-two"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-art-and-technology",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "art-and-technology",
+      "subject_name": "Art and Technology",
+      "source_edition": "NCDC Primary Five Curriculum Set Two 2010; NCDC Primary Six Curriculum Set Two 2010; NCDC Primary Seven Curriculum Set Two 2011",
+      "source_ids": [
+        "ug-primary-five-set-two",
+        "ug-primary-six-set-two",
+        "ug-primary-seven-set-two"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-christian-religious-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "christian-religious-education",
+      "subject_name": "Christian Religious Education",
+      "source_edition": "NCDC Primary Five Curriculum Set One 2010; NCDC Primary Six Curriculum Set One 2010; July 2024 Primary Seven Set One materials",
+      "source_ids": [
+        "ug-primary-five-set-one",
+        "ug-primary-six-set-one",
+        "ug-primary-seven-set-one"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-primary-primary-5-7-islamic-religious-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "primary",
+      "level": "primary_5_7",
+      "subject": "islamic-religious-education",
+      "subject_name": "Islamic Religious Education",
+      "source_edition": "NCDC Primary Five Curriculum Set One 2010; NCDC Primary Six Curriculum Set One 2010; July 2024 Primary Seven Set One materials",
+      "source_ids": [
+        "ug-primary-five-set-one",
+        "ug-primary-six-set-one",
+        "ug-primary-seven-set-one"
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "S1.",
+        "S2.",
+        "S3."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-english-language",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "english-language",
+      "subject_name": "English Language",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-english"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-mathematics",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "mathematics",
+      "subject_name": "Mathematics",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-mathematics"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-history-and-political-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "history-and-political-education",
+      "subject_name": "History and Political Education",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum, June 2023 revision",
+      "source_ids": [
+        "ug-lower-secondary-history-political-education"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-geography",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "geography",
+      "subject_name": "Geography",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-geography"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-physics",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "physics",
+      "subject_name": "Physics",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-physics"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-biology",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "biology",
+      "subject_name": "Biology",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-biology"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-chemistry",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "chemistry",
+      "subject_name": "Chemistry",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-chemistry"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-general-science",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "general-science",
+      "subject_name": "General Science",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-general-science"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-physical-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "physical-education",
+      "subject_name": "Physical Education",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-physical-education"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-christian-religious-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "christian-religious-education",
+      "subject_name": "Christian Religious Education",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-cre"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-islamic-religious-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "islamic-religious-education",
+      "subject_name": "Islamic Religious Education",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-ire"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-entrepreneurship",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "entrepreneurship",
+      "subject_name": "Entrepreneurship",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-entrepreneurship"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-kiswahili",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "kiswahili",
+      "subject_name": "Kiswahili",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-kiswahili"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-agriculture",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "agriculture",
+      "subject_name": "Agriculture",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-agriculture"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-information-and-communications-technology",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "information-and-communications-technology",
+      "subject_name": "Information and Communications Technology",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-ict"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-french",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "french",
+      "subject_name": "French",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-foreign-languages"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-german",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "german",
+      "subject_name": "German",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-foreign-languages"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-latin",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "latin",
+      "subject_name": "Latin",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-latin"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-arabic",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "arabic",
+      "subject_name": "Arabic",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-arabic"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-chinese",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "chinese",
+      "subject_name": "Chinese",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-chinese"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-literature-in-english",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "literature-in-english",
+      "subject_name": "Literature in English",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-literature"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-art-and-design",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "art-and-design",
+      "subject_name": "Art and Design",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-art-design"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-performing-arts",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "performing-arts",
+      "subject_name": "Performing Arts",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-performing-arts"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-technology-and-design",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "technology-and-design",
+      "subject_name": "Technology and Design",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-technology-design"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-nutrition-and-food-technology",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "nutrition-and-food-technology",
+      "subject_name": "Nutrition and Food Technology",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-food-nutrition"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-ateso",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "ateso",
+      "subject_name": "Ateso",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-dhopadhola",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "dhopadhola",
+      "subject_name": "Dhopadhola",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-leb-acoli",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "leb-acoli",
+      "subject_name": "Leb Acoli",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-leb-lango",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "leb-lango",
+      "subject_name": "Leb Lango",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-luganda",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "luganda",
+      "subject_name": "Luganda",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-lugbarati",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "lugbarati",
+      "subject_name": "Lugbarati",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-lumasaaba",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "lumasaaba",
+      "subject_name": "Lumasaaba",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-lusoga",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "lusoga",
+      "subject_name": "Lusoga",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-runyoro-rutooro",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "runyoro-rutooro",
+      "subject_name": "Runyoro-Rutooro",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-lower-secondary-runyankore-rukiga",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "lower_secondary",
+      "subject": "runyankore-rukiga",
+      "subject_name": "Runyankore-Rukiga",
+      "source_edition": "2019 competency-based Lower Secondary Curriculum",
+      "source_ids": [
+        "ug-lower-secondary-local-language-framework"
+      ],
+      "valid_from": "2020-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-agriculture",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "agriculture",
+      "subject_name": "Agriculture",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-agriculture"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-arabic",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "arabic",
+      "subject_name": "Arabic",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-arabic"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-art-and-design",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "art-and-design",
+      "subject_name": "Art and Design",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-art-design"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-biology",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "biology",
+      "subject_name": "Biology",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-biology"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-chemistry",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "chemistry",
+      "subject_name": "Chemistry",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-chemistry"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-chinese",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "chinese",
+      "subject_name": "Chinese",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-chinese"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-christian-religious-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "christian-religious-education",
+      "subject_name": "Christian Religious Education",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-cre"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-clothing-and-textile",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "clothing-and-textile",
+      "subject_name": "Clothing and Textile",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-clothing-textile"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-economics",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "economics",
+      "subject_name": "Economics",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-economics"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-entrepreneurship-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "entrepreneurship-education",
+      "subject_name": "Entrepreneurship Education",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-entrepreneurship"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-foods-and-nutrition",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "foods-and-nutrition",
+      "subject_name": "Foods and Nutrition",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-foods-nutrition"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-french",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "french",
+      "subject_name": "French",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-french"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-general-paper",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "general-paper",
+      "subject_name": "General Paper",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-general-paper"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-geography",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "geography",
+      "subject_name": "Geography",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-geography"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-german",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "german",
+      "subject_name": "German",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-german"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-history",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "history",
+      "subject_name": "History",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-history"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-islamic-religious-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "islamic-religious-education",
+      "subject_name": "Islamic Religious Education",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-ire"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-kiswahili",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "kiswahili",
+      "subject_name": "Kiswahili",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-kiswahili"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-latin",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "latin",
+      "subject_name": "Latin",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-latin"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-literature",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "literature",
+      "subject_name": "Literature",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-literature-english"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-mathematics",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "mathematics",
+      "subject_name": "Mathematics",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-principal-mathematics"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-metalwork",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "metalwork",
+      "subject_name": "Metalwork",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-metalwork"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-music",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "music",
+      "subject_name": "Music",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-music"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-physics",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "physics",
+      "subject_name": "Physics",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-physics"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-subsidiary-ict",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "subsidiary-ict",
+      "subject_name": "Subsidiary ICT",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-subsidiary-ict"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-subsidiary-mathematics",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "subsidiary-mathematics",
+      "subject_name": "Subsidiary Mathematics",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-subsidiary-mathematics"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-technical-drawing",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "technical-drawing",
+      "subject_name": "Technical Drawing",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-technical-drawing"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-woodwork",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "woodwork",
+      "subject_name": "Woodwork",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-woodwork"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-ateso",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "ateso",
+      "subject_name": "Ateso",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-dhopadhola",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "dhopadhola",
+      "subject_name": "Dhopadhola",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-leb-acoli",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "leb-acoli",
+      "subject_name": "Leb Acoli",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-leb-lango",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "leb-lango",
+      "subject_name": "Leb Lango",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-luganda",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "luganda",
+      "subject_name": "Luganda",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-lugbarati",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "lugbarati",
+      "subject_name": "Lugbarati",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-lumasaaba",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "lumasaaba",
+      "subject_name": "Lumasaaba",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-lusoga",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "lusoga",
+      "subject_name": "Lusoga",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-runyoro-rutooro",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "runyoro-rutooro",
+      "subject_name": "Runyoro-Rutooro",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-runyankore-rukiga",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "runyankore-rukiga",
+      "subject_name": "Runyankore-Rukiga",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-local-language-framework"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "DOC."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-physical-education",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "physical-education",
+      "subject_name": "Physical Education",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-official-index-2025"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "CATALOG."
+      ],
+      "projection": null
+    },
+    {
+      "id": "ug-secondary-upper-secondary-principal-ict",
+      "country": "UG",
+      "country_slug": "uganda",
+      "authority": "National Curriculum Development Centre (NCDC)",
+      "phase": "secondary",
+      "level": "upper_secondary",
+      "subject": "principal-ict",
+      "subject_name": "Principal ICT",
+      "source_edition": "2025 reviewed Advanced Secondary Curriculum",
+      "source_ids": [
+        "ug-advanced-secondary-official-index-2025"
+      ],
+      "valid_from": "2025-02-01",
+      "valid_to": null,
+      "maturity": "missing",
+      "review_status": "not_verified",
+      "licensing_status": "all_rights_reserved_permission_required",
+      "publication_profile": "local_only",
+      "node_code_prefixes": [
+        "CATALOG."
+      ],
+      "projection": null
+    }
+  ]
+}

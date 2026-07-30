@@ -13,6 +13,15 @@ afterEach(() => {
 });
 
 describe("versioned anonymous sample draft", () => {
+  const supportedDrafts = (["teacher", "caregiver", "learner", "tutor"] as const).flatMap((role) =>
+    (["ghana", "uganda"] as const).map((country) => ({
+      role,
+      country,
+      goal: "practice" as const,
+      reviewed: true,
+    })),
+  );
+
   it("starts empty without inventing a selection", () => {
     expect(readSampleDraft(window.localStorage)).toEqual({
       draft: initialSampleDraft,
@@ -36,6 +45,28 @@ describe("versioned anonymous sample draft", () => {
     expect(window.localStorage.getItem(sampleDraftStorageKey)).toBe(
       '{"version":2,"role":"teacher","country":"ghana","goal":"practice","reviewed":true}',
     );
+  });
+
+  it.each(supportedDrafts)("round-trips the $role and $country creation path", (draft) => {
+    expect(saveSampleDraft(window.localStorage, draft)).toBe(true);
+    expect(readSampleDraft(window.localStorage)).toEqual({
+      draft,
+      recovery: "restored",
+    });
+  });
+
+  it.each([
+    { role: null, country: null, goal: null, reviewed: false },
+    { role: "teacher", country: null, goal: null, reviewed: false },
+    { role: null, country: "uganda", goal: null, reviewed: false },
+    { role: null, country: null, goal: "practice", reviewed: false },
+    { role: "tutor", country: "ghana", goal: null, reviewed: false },
+  ] as const)("restores a safe incomplete draft without marking it reviewed", (draft) => {
+    expect(saveSampleDraft(window.localStorage, draft)).toBe(true);
+    expect(readSampleDraft(window.localStorage)).toEqual({
+      draft,
+      recovery: "restored",
+    });
   });
 
   it("restores the former activity-only draft as an explicit practice goal", () => {

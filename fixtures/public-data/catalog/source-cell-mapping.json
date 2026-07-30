@@ -1,0 +1,2344 @@
+{
+  "schema_version": "1.0.0",
+  "as_of": "2026-07-30",
+  "catalog_cell_count": 176,
+  "mapped_cell_count": 176,
+  "mappings": [
+    {
+      "source_id": "gh-jhs-arabic-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "arabic"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-career-technology-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "career-technology"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-computing-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "computing"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-creative-arts-and-design-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "creative-arts-and-design"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-english-language-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "english-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-french-language-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "french-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-ghanaian-language-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "ghanaian-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-mathematics-ccp-2020",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "mathematics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-physical-education-and-health-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "physical-education-and-health"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-religious-and-moral-education-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "religious-and-moral-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-science-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "science"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-jhs-social-studies-current",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "junior_high",
+          "subject": "social-studies"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-kindergarten-curriculum-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "kindergarten",
+          "subject": "creative-arts"
+        },
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "kindergarten",
+          "subject": "language-and-literacy"
+        },
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "kindergarten",
+          "subject": "numeracy"
+        },
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "kindergarten",
+          "subject": "our-world-our-people"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-computing-upper-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "computing"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-creative-arts-lower-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "lower_primary",
+          "subject": "creative-arts"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-creative-arts-upper-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "creative-arts"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-french-upper-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "french-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-ghanaian-language-lower-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "lower_primary",
+          "subject": "ghanaian-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-ghanaian-language-upper-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "ghanaian-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-history-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "lower_primary",
+          "subject": "history"
+        },
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "history"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-lower-english-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "lower_primary",
+          "subject": "english-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-lower-mathematics-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "lower_primary",
+          "subject": "mathematics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-lower-science-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "lower_primary",
+          "subject": "science"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-physical-education-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "lower_primary",
+          "subject": "physical-education"
+        },
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "physical-education"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-religious-and-moral-education-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "lower_primary",
+          "subject": "religious-and-moral-education"
+        },
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "religious-and-moral-education"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-upper-english-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "english-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-upper-mathematics-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "mathematics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-primary-upper-science-2019",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "primary",
+          "level": "upper_primary",
+          "subject": "science"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2019-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-additional-mathematics",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "additional-mathematics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-agricultural-science-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "agricultural-science"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-agriculture-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "agriculture"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-applied-technology-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "applied-technology"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-arabic-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "arabic"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-art-and-design-foundation-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "art-and-design-foundation"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-art-and-design-studio-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "art-and-design-studio"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-aviation-and-aerospace-engineering-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "aviation-and-aerospace-engineering"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-biology-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "biology"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-biomedical-science-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "biomedical-science"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-chemistry-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "chemistry"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-computing-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "computing"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-design-communication-technology-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "design-communication-technology"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-economics-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "economics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-engineering-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "engineering"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-english-language-2023-legacy",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "english-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-french-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "french"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-general-science",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "general-science"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-geography-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "geography"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-government-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "government"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-history-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "history"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-information-and-communications-technology-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "information-and-communications-technology"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-literature-in-english-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "literature-in-english"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-manufacturing-engineering-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "manufacturing-engineering"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-mathematics",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "mathematics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-performing-arts-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "performing-arts"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-physical-education-and-health-core-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "physical-education-and-health-core"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-physical-education-and-health-elective-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "physical-education-and-health-elective"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-physics-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "physics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-religious-and-moral-education-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "religious-and-moral-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-robotics-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "robotics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-social-studies-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "social-studies"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "gh-shs-spanish-2025",
+      "cells": [
+        {
+          "country": "GH",
+          "phase": "secondary",
+          "level": "senior_high",
+          "subject": "spanish"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-agriculture",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "agriculture"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-arabic",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "arabic"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-art-design",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "art-and-design"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-biology",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "biology"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-chemistry",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "chemistry"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-chinese",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "chinese"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-clothing-textile",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "clothing-and-textile"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-cre",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "christian-religious-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-economics",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "economics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-entrepreneurship",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "entrepreneurship-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-foods-nutrition",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "foods-and-nutrition"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-french",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "french"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-general-paper",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "general-paper"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-geography",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "geography"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-german",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "german"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-history",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "history"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-ire",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "islamic-religious-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-kiswahili",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "kiswahili"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-latin",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "latin"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-literature-english",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "literature"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-local-language-framework",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "ateso"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "dhopadhola"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "leb-acoli"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "leb-lango"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "luganda"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "lugbarati"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "lumasaaba"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "lusoga"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "runyankore-rukiga"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "runyoro-rutooro"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-metalwork",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "metalwork"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-music",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "music"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-official-index-2025",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "physical-education"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "principal-ict"
+        }
+      ],
+      "document_role": "authority_catalogue",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-physics",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "physics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-principal-mathematics",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "mathematics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-subsidiary-ict",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "subsidiary-ict"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-subsidiary-mathematics",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "subsidiary-mathematics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-technical-drawing",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "technical-drawing"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-advanced-secondary-woodwork",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "upper_secondary",
+          "subject": "woodwork"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2025-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-early-childhood-learning-framework",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "early_childhood",
+          "subject": "cognitive-and-early-mathematical-concepts"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "early_childhood",
+          "subject": "creative-expression"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "early_childhood",
+          "subject": "environmental-awareness-and-life-skills"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "early_childhood",
+          "subject": "language-and-communication"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "early_childhood",
+          "subject": "physical-development"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "early_childhood",
+          "subject": "social-emotional-development"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-agriculture",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "agriculture"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-arabic",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "arabic"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-art-design",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "art-and-design"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-biology",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "biology"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-chemistry",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "chemistry"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-chinese",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "chinese"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-cre",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "christian-religious-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-english",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "english-language"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-entrepreneurship",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "entrepreneurship"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-food-nutrition",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "nutrition-and-food-technology"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-foreign-languages",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "french"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "german"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-general-science",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "general-science"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-geography",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "geography"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-history-political-education",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "history-and-political-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-ict",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "information-and-communications-technology"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-ire",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "islamic-religious-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-kiswahili",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "kiswahili"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-latin",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "latin"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-literature",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "literature-in-english"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-local-language-framework",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "ateso"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "dhopadhola"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "leb-acoli"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "leb-lango"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "luganda"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "lugbarati"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "lumasaaba"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "lusoga"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "runyankore-rukiga"
+        },
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "runyoro-rutooro"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-mathematics",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "mathematics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-performing-arts",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "performing-arts"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-physical-education",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "physical-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-physics",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "physics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-lower-secondary-technology-design",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "secondary",
+          "level": "lower_secondary",
+          "subject": "technology-and-design"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2020-02-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-five-set-one",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "christian-religious-education"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "english"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "integrated-science"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "islamic-religious-education"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "local-language"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "mathematics"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "social-studies"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-five-set-two",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "art-and-technology"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "music-dance-and-drama"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "physical-education"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-four-cre-archival-copy",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "christian-religious-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-four-english",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "english"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-four-integrated-science",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "integrated-science"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-four-ire-archival-copy",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "islamic-religious-education"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-four-mathematics",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "mathematics"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-four-social-studies",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "social-studies"
+        }
+      ],
+      "document_role": "subject_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-official-publication-catalogue-2025",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "art-and-technology"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "local-language"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "music-dance-and-drama"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_4",
+          "subject": "physical-education"
+        }
+      ],
+      "document_role": "authority_catalogue",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-one-thematic-curriculum",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "creative-performing-arts"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "english"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "literacy-i"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "literacy-ii"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "mathematics"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "news"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "physical-education"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "religious-education"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-seven-set-one",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "christian-religious-education"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "english"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "integrated-science"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "islamic-religious-education"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "local-language"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "mathematics"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "social-studies"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-seven-set-two",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "art-and-technology"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "music-dance-and-drama"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "physical-education"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-six-set-one",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "christian-religious-education"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "english"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "integrated-science"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "islamic-religious-education"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "local-language"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "mathematics"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "social-studies"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-six-set-two",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "art-and-technology"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "music-dance-and-drama"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_5_7",
+          "subject": "physical-education"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-three-thematic-curriculum",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "creative-performing-arts"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "english"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "literacy-i"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "literacy-ii"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "mathematics"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "news"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "physical-education"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "religious-education"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    },
+    {
+      "source_id": "ug-primary-two-thematic-curriculum",
+      "cells": [
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "creative-performing-arts"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "english"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "literacy-i"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "literacy-ii"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "mathematics"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "news"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "physical-education"
+        },
+        {
+          "country": "UG",
+          "phase": "primary",
+          "level": "primary_1_3",
+          "subject": "religious-education"
+        }
+      ],
+      "document_role": "level_or_framework_curriculum",
+      "valid_from": "2007-01-01",
+      "valid_to": null
+    }
+  ]
+}

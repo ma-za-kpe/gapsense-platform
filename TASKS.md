@@ -1,6 +1,6 @@
 # GapSense Working List
 
-**Canonical project execution list.** Last reconciled: 2026-07-27.
+**Canonical project execution list.** Last reconciled: 2026-07-30.
 
 This list is deliberately never finished. A completed task stays as evidence; every
 research finding, validation failure, user observation, curriculum gap, design debt
@@ -25,6 +25,91 @@ Rules:
    review the resulting hosted evidence, and merge by pull request.
 7. Remote contribution is authorized as of 2026-07-23. Batch coherent green milestones to
    minimize CI runs. Production promotion is a separate, explicit operator action.
+
+## Active Paired Curriculum-Integrity Milestone
+
+The dated product evidence below remains useful history. This section is the current checkpoint
+and supersedes older pending counts where they differ.
+
+- [x] Work on the paired `fix/curriculum-data-integrity` branches without committing, pushing,
+  merging, releasing, or deploying the unreviewed candidate.
+- [x] Consume and represent all 176 exact official catalogue cells: 67 Ghana and 109 Uganda across
+  all 11 levels.
+- [x] Expose all 170 locally extracted combinations through deterministic country/level/subject
+  controls and complete country-native trees: 67/67 Ghana and 103/109 Uganda.
+- [x] Render all 140 official source records, 135 artifact states, 15,140 official source-page
+  totals, 25,999 projected page records, and 16,192 page-traced structural sections with
+  purposeful provenance and review boundaries.
+- [x] Replace misleading `None recorded` and unsafe-detail language with explicit
+  authority-statement and publication-boundary copy. Never invent a tree for an authority-only
+  cell.
+- [x] Preserve Ghana standards-based and Uganda phase-specific structures through one validated,
+  polymorphic detail contract that can add future section kinds without dropping native titles,
+  paths, source IDs, or pages.
+- [x] Keep every active control deterministic, abort superseded requests, reject stale or
+  mismatched payload identities, and ensure every rendered control has a visible intended result.
+- [x] Restore compact mobile home-page behavior with progressive disclosure while keeping all 52
+  Ghana and 70 Uganda evidence-subject records accessible.
+- [x] Maintain the projection-empty public fixture separately from the complete local/private
+  candidate. The fixture carries the same 176-cell catalogue and sanitized 140-source ledger but
+  no raw PDFs, source text, or normalized projections.
+- [x] Add and pass the major E2E instrumentation milestone: exhaustive all-176-cell desktop and
+  mobile traversal plus every role/country sample path, persistence/reset, distinct learner and
+  educator downloads, accessibility, keyboard/touch, forced colours, themes, 320-pixel reflow,
+  routes, security headers, and reviewed screenshots. Evidence: 32/32 browser tests.
+- [x] Exceed the requested 85% coverage floor in both projects. Evidence: backend 212 tests and
+  100%; frontend 280 tests and 100%; data 64 tests and 100%.
+- [x] Add `docs/ADDING_A_COUNTRY.md` to both repositories and document the paired contract,
+  country adapter, source/release lineage, fixture, UI, and exhaustive-test steps.
+- [x] Publish the evidence and limitations white paper in repository documentation and as the
+  tested `/evidence` trust page.
+- [x] Add dated, table-of-contents trust pages for `/privacy` and `/terms`; keep accessibility,
+  correction, releases, and evidence links visible in the site footer and GitHub README.
+- [!] Keep the six NCDC authority-only cells visible until authoritative bytes are available:
+  four Primary 4 areas, Advanced Physical Education, and Advanced Principal ICT.
+- [~] Reconcile affected replacement glyphs and complex table reading order against exact PDF page
+  renders; preserve machine-extracted/not-reviewed status until this is complete.
+- [ ] Obtain Ghanaian and Ugandan curriculum-specialist, educator, cultural, rights, and pilot
+  review before changing any tree to reviewed or public.
+- [ ] Replace illustrative assessment banks with a reviewed curriculum-to-assessment domain
+  service. Test all roles, countries, levels, subjects, question types, empty/partial inputs,
+  invalid/stale state, retries, offline behavior, separate artifacts, accessibility, and
+  adversarial edge cases.
+- [ ] Repeat the complete data/backend/frontend/browser gates and a second human visual/data audit
+  after each extraction-fidelity, review, or assessment-consumer milestone.
+
+## Final Cleanup, Publication, and Production Sequence
+
+Execute these steps in order. A later step cannot compensate for a failure or unresolved item in an
+earlier step.
+
+- [ ] Reconcile the canonical list before committing: remove superseded, duplicated, and completed
+  working-list entries only after their useful evidence is retained in `PROGRESS.md`, a release
+  note, or a focused audit document. Keep unresolved product, curriculum, rights, review, security,
+  accessibility, and production risks; do not preserve obsolete task text merely because it is old.
+- [ ] Complete every relevant repository TODO before committing. The current audit found no
+  executable-code `TODO` or `FIXME` marker in the platform. Re-audit source, tests, configuration,
+  scripts, and active documentation; complete actionable debt and convert every genuine external
+  dependency into one explicit blocked task with an owner and next check.
+- [ ] Perform bounded code and project cleanup: remove dead repository-owned code, obsolete
+  generated intermediates, unused dependencies and assets, stale routes, redundant documentation,
+  temporary browser artifacts, stopped validation containers, and superseded images. Preserve
+  migrations, reviewed visual baselines, user-owned work, database volumes, public-fixture lineage,
+  and the private-data boundary.
+- [ ] Double-audit the complete paired diff and working trees. Require no staged surprises, no
+  whitespace errors, no secrets, no unresolved relevant TODOs, exact 100% backend/frontend/data
+  line and branch coverage, all 176 catalogue cells, all real user journeys, and both repositories'
+  strict pre-commit and pre-push gates green.
+- [ ] Create separate coherent conventional commits in data and platform, including reconciled
+  `PROGRESS.md`; push each `fix/curriculum-data-integrity` branch once without force.
+- [ ] Use `gh` to monitor both hosted GitHub Actions runs through terminal success. Record workflow
+  URLs, run IDs, commit SHAs, conclusions, and annotations in the paired progress ledgers; fix and
+  repeat locally before any new push if either run is not green.
+- [ ] Only after both hosted runs are green, run `vercel --prod` from the verified platform commit.
+  Confirm the deployment excludes private curriculum artifacts, record the deployment ID and URL,
+  verify the custom domain, same-origin APIs, catalogue boundary, assessment downloads, security
+  headers, accessibility, desktop/mobile user flows, runtime logs, and rollback target, then record
+  the production evidence in `PROGRESS.md`.
 
 ## Current Product Direction
 
@@ -773,6 +858,198 @@ Rules:
   standards, prerequisites, indicators, extraction status, and source filenames; unavailable or
   empty evidence fails closed; Docker frontend coverage remains 100% (81 tests) and backend
   detail/API tests pass.
+
+### Corrective programme - curriculum data integrity audit (2026-07-29)
+
+The initial cross-repository and runtime audit found that the public boundary was appropriately
+empty, but the private local catalogue turned phase-level file presence into unsupported level
+coverage. Before this corrective branch, the local UI labelled Ghana Kindergarten English as
+`extracted` with 58 standards even though the returned codes are Basic 1 (`B1...`); Uganda
+P1-P3 Mathematics was labelled `located` but returned zero strands and zero nodes. This programme
+records the implemented correction and the work still required before a reviewed slice is
+published.
+
+- [x] Require a root `PROGRESS.md` evidence ledger and tighten the local governance gate in both
+  repositories. Fail closed when `TASKS.md`, `PROGRESS.md`, or `WAYS_OF_WORKING.md` is absent;
+  require every coherent commit to reconcile progress; pin the Markdown runtime; and make data
+  commit-message/pre-push protection equivalent to the platform controls. Evidence: isolated-index
+  tests reject ordinary and deletion-only commits without staged progress; pre-push rejects local
+  and remote protected-ref updates, tags, dirty worktrees, and missing ref evidence; the complete
+  platform pre-commit gate and complete data gate passed on 2026-07-29.
+- [x] Execute every shared contract correction on paired focused branches in
+  `gapsense-platform` and `gapsense-data`. Maintain one compatibility matrix and do not consider,
+  merge, or release either milestone independently until both Docker gates and the
+  cross-repository consumer contract pass. Evidence: both worktrees use
+  `fix/curriculum-data-integrity`; their manifests pin identical curriculum/source hashes; no
+  commit, push, merge, release, or deployment was performed.
+- [x] Represent the complete researched Ghana/Uganda general-school curriculum menu on
+  `/curriculum`: 11 levels and 176 exact country/phase/level/subject cells, comprising 67 Ghana
+  and 109 Uganda cells. Evidence: an independently enumerated data test, backend fixture parity
+  test, and live browser API-to-DOM identity comparison all require the exact identity set.
+- [x] Represent every known official source record and every PDF artifact in the data repository.
+  Evidence: the page renders 77 unique source identities with phase, edition, official link,
+  retrieval date, artifact state, extraction state, rights state, review state, and known gap;
+  data policy byte-verifies all 73 PDFs and rejects any uncatalogued PDF anywhere in the tree.
+- [x] Correct current-scope semantics: keep Our World and Our People as a standalone Ghana
+  Kindergarten area but model its 2024/25 lower/upper-primary integration as an explicit scope
+  note; label Uganda ECCE and all primary/secondary levels independently; preserve all 12 Ghana
+  JHS, 33 Ghana SHS, 35 Uganda lower-secondary, and 40 Uganda upper-secondary menu entries.
+
+#### Release and schema contract
+
+- [~] Replace runtime directory inference with a deterministic, versioned data release manifest.
+  Include schema version, release ID, data Git SHA, source edition and validity dates, country,
+  authority, phase, exact level or grade, learning area or subject, artifact hashes, actual counts,
+  maturity, reviewer evidence, licensing status, and publication profile.
+- [~] Pin the platform to an explicit compatible data schema and release hash. Expose the release
+  ID through the API, cache validators, logs, and UI; reject incompatible releases and label
+  dirty/unreleased local data explicitly instead of returning `source_version: null`. Evidence:
+  schema, catalogue, source, and projection hashes now fail closed; the API/UI expose the
+  candidate or empty-fixture release ID. Cache-validator and structured-log propagation remain.
+- [ ] Define country-faithful curriculum variants in one canonical contract: Ghana
+  strand/sub-strand/content-standard/indicator structures; Uganda ECCE learning frameworks;
+  Uganda P1-P3 thematic learning areas/outcomes/competences; and Uganda P4-secondary
+  subject-based curricula. Do not force all variants into a Ghana-style standards tree.
+- [ ] Add edition states including `draft_under_consultation`, `active`, `superseded`, and
+  `historical`, with `valid_from`, `valid_to`, and authority publication evidence. A newly
+  discovered draft must not silently replace the curriculum currently in force.
+- [ ] Build a deterministic compiler from immutable source receipts through extraction,
+  normalization, graph construction, review, and a bounded public projection. The platform must
+  never choose a graph by lexicographic filename order or consume backup/intermediate files.
+
+#### Coverage, detail API, and readiness corrections
+
+- [x] Make every coverage cell manifest-driven and exact. Phase evidence must not be copied to
+  every level in that phase; expected-but-missing subjects must remain visible; arbitrary safe
+  level strings must return 404. Add regressions for Ghana KG versus B1-B6 and Uganda ECCE,
+  P1-P3, P4, and P5-P7. Evidence: all 176 cells originate in the pinned catalogue; only two exact
+  Ghana Mathematics records overlay evidence; all other cells remain explicitly missing.
+- [x] Load coverage and detail from the same immutable release snapshot. Coverage and detail share
+  the one startup-validated manifest; detail rechecks pinned bytes at consumption time and fails
+  closed if the underlying file changes.
+- [x] Merge normalized nodes and graph relationships by stable IDs instead of choosing
+  `populated_nodes_complete.json` over the prerequisite graph. Preserve explicit strand,
+  sub-strand, parent, prerequisite, edge, source-locator, and review relationships. Evidence:
+  detail tests cover merged lineage, partial/malformed values, explicit unassigned nodes, and
+  level-bounded code prefixes without substring placement.
+- [ ] Bound and harden curriculum detail reads: reject symlinked evidence files, enforce byte,
+  node, depth, and response limits, paginate large trees, perform file I/O outside the async event
+  loop, and return only allowlisted public provenance fields.
+- [x] Split liveness, service readiness, and catalogue state. Empty Ghana/Uganda directories or
+  README-only fixtures must report `empty`, not a connected evidence catalogue; partial and
+  invalid releases need distinct states. Permit the web shell to present recovery UI even when an
+  optional local catalogue is absent. Evidence: release-backed readiness, missing/invalid coverage
+  reports, the explicit empty public fixture, and frontend recovery states have contract tests.
+- [ ] Remove PostgreSQL from the read-only curriculum profile or move it to an explicit durable
+  workflow profile. Current curriculum routes do not use the database, but Compose blocks web
+  startup on database health.
+
+#### Frontend correctness
+
+- [x] Generate or share a runtime-validated client contract that checks nested strands, nodes,
+  indicators, IDs, counts, and requested response identity. Top-level array checks are
+  insufficient for untrusted data. Evidence: the frontend rejects malformed nested detail,
+  catalogue, source, date, rights, review, duplicate, count, authority, and identity states.
+- [~] Drive country, level, and subject controls from exact manifest cells and their states. Show
+  disabled missing combinations with a reason; never infer all primary or secondary levels from
+  one phase folder. Evidence: active controls now contain only exact non-missing cells and cannot
+  lead to blank detail; the complete missing matrix is rendered below. Disabled in-control
+  missing options remain a UX decision.
+- [x] Replace substring-based strand membership with explicit `strand_id`/`parent_id`
+  relationships and render a safe unassigned group. Current local data produces 163 placements
+  for 58 Ghana primary English nodes, while Ghana secondary English and General Science hide all
+  41 and 28 nodes because they have no projected strands. Evidence: exact identifiers replace
+  substring matching, and unassigned nodes remain visible rather than disappearing.
+- [x] Abort superseded detail requests, prevent stale country fallback from constructing a request
+  for the wrong country, and verify that a returned detail record matches the current selection.
+  Evidence: abort/stale-response tests and exhaustive release/country/phase/level/subject mismatch
+  tests fail closed.
+- [x] Strengthen browser assertions to reject `0 standards`, duplicate placements, hidden nodes,
+  wrong-grade codes, identity mismatches, and phase-only evidence presented as exact-level
+  coverage. Evidence: desktop and mobile tests compare all 176 live API cell identities and all 77
+  source identities with unique rendered DOM identities and run WCAG 2.2 AA automated checks.
+
+#### Data validation and review gates
+
+- [ ] Replace the tracked CommonJS curriculum consistency script with a fail-closed validator and
+  include it in the canonical data `npm test`/Docker gate. It must fail on zero successful loads,
+  bad base paths, schema variants, metadata/count disagreement, duplicate IDs, dangling
+  prerequisites, invalid levels, cycles, malformed source locators, and unreviewed release claims.
+- [ ] Validate every normalized Ghana and Uganda artifact, not two selected Ghana subjects. Add
+  cross-repository consumer contract tests and educator-reviewed golden fixtures for the first
+  Ghana primary Mathematics and Uganda P1-P3 Mathematics release slices.
+- [ ] Add a versioned many-to-many source-to-catalog mapping. A framework, combined curriculum,
+  grade-set PDF, teacher guide, or language framework may support multiple catalogue cells, and
+  raw source-record counts must not be treated as subject-document coverage until this mapping is
+  explicit and tested.
+- [ ] Require two-person source-to-node reconciliation plus a qualified Ghanaian or Ugandan
+  curriculum/subject review before `domain_reviewed`; keep structural, cultural, pilot, and release
+  states separate.
+- [ ] Treat downloadable as access, not a redistribution licence. Preserve the authorities'
+  all-rights-reserved notices, keep raw documents private, and publish only reviewed,
+  legally-approved projections.
+
+#### Ghana official-inventory reconciliation
+
+- [ ] Catalogue the current NaCCA KG/primary index as 18 downloadable curriculum artifacts.
+  Byte-verify and receipt the six retained English, Mathematics, and Science lower/upper-primary
+  PDFs; acquire the missing 12 artifacts covering KG, Ghanaian Language, History, Physical
+  Education, Religious and Moral Education, Creative Arts, French, Computing, and the two
+  Our World and Our People grade bands. Model the 2024/2025 OWOP integration change by edition
+  rather than deleting its historical curriculum.
+- [ ] Reconcile all 12 current JHS Common Core subjects. The retained Mathematics artifact is
+  byte-identical to the current official file: 5,590,851 bytes with SHA-256
+  `220a7c1d435ecb4d81bd90bd081c44038aeab3a28a5e9f888128a4b450ef4bd2`. Acquire the other
+  11 current artifacts. In particular, the current official B7-B9 English PDF is 1,302,185 bytes with
+  SHA-256 `591295cce071d3021e5b9259594a0733000be081693e2c7ece2a12ba0605b961`,
+  not the retained 2,944,948-byte B7-B10 artifact.
+- [ ] Reconcile all 33 current SHS/SHTS/STEM curriculum PDFs and the subject-combination rules.
+  Only Additional Mathematics, General Science, and Mathematics are retained, and none is
+  normalized or reviewed; acquire/catalogue the other 30. Keep SHS English blocked until NaCCA
+  corrects or confirms the current URL, which presently resolves to the same old JHS bytes.
+- [ ] Create separately scoped inventories for the harmonised Ghanaian Sign Language,
+  inclusive/special-needs, supplementary, and TVET curricula so general-school completeness never
+  silently claims those programmes.
+
+#### Uganda official-inventory reconciliation
+
+- [ ] Catalogue the ECCE Learning Framework for ages 3-6 and its caregiver guide separately from
+  primary education. Track the July 2026 pre-primary development work as a future edition.
+- [ ] Reconcile the P1-P3 thematic curricula by grade and all eight official learning areas:
+  Mathematics, English, Literacy I, Literacy II, Physical Education, Religious Education,
+  Creative Performing Arts, and News. Convert the current unreviewed Mathematics worktree mapping
+  to the canonical thematic schema, and track the July 2026 draft lower-primary revision without
+  treating consultation material as active curriculum.
+- [ ] Catalogue all ten P4 learning areas and their official transition-year sources: English,
+  Mathematics, Integrated Science, Social Studies, Local Language, CRE, IRE, CAPE 1, CAPE 2, and
+  CAPE 3. Include the approved P4 Kiswahili rollout as a dated curriculum amendment.
+- [ ] Acquire and receipt the six P5-P7 grade-set curricula (set one and set two for each grade);
+  reconcile the one retained P7 set-one file and acquire the five absent sets. Normalize each
+  subject/learning area from the set documents without multiplying one file into unsupported
+  level claims.
+- [ ] Expand the 27 retained Lower Secondary curriculum/framework artifacts into the current
+  35-subject menu, including the ten local-language subjects and separate French/German records.
+  Preserve compulsory/elective rules by S1-S2 and S3-S4; deterministically extract, normalize,
+  validate, and review every record.
+- [ ] Expand the retained Advanced Secondary artifacts into the current 40-subject menu. Locate
+  authoritative current Physical Education and Principal ICT curricula, distinguish Principal
+  from Subsidiary ICT and Mathematics, and map the local-language framework to its ten subject
+  records.
+- [ ] Catalogue the July 2026 Advanced Secondary assessment guidelines as a separate assessment
+  layer, not curriculum nodes, and track the proposed upper-secondary framework as a possible
+  future edition until NCDC publishes an implementation decision.
+
+#### Product and documentation reconciliation
+
+- [ ] Replace the two hard-coded five-question samples with versioned reviewed item-bank releases
+  only after their curriculum lineage passes the contract. Keep illustrative samples explicitly
+  non-aligned until then.
+- [ ] Mark the historical AWS/WhatsApp architecture ADR and broad API specification as superseded
+  or future-state; remove unsupported accuracy, partnership, endpoint, and completeness claims
+  from quick-reference material. Generate all coverage counts from the release manifest.
+- [ ] Before publishing the first reviewed slices, rerun the full Docker backend, frontend,
+  contract, browser, accessibility, security, and low-bandwidth gates against both an empty public
+  fixture and a pinned private candidate release.
 
 - [x] Select the web frontend stack through an ADR and a tested prototype.
 - [x] Define the first browser/API boundary and typed curriculum-coverage contract.

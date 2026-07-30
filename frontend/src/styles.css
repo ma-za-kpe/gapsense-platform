@@ -1398,7 +1398,7 @@ h3 {
 }
 
 .country-panel > ul,
-.country-panel__subjects > ul {
+.country-panel__subject-list > ul {
   display: flex;
   padding: 0;
   margin: 0.75rem 0;
@@ -1408,7 +1408,7 @@ h3 {
 }
 
 .country-panel > ul li,
-.country-panel__subjects > ul li,
+.country-panel__subject-list > ul li,
 .curriculum-tree__sub-strands span {
   padding: 0.45rem 0.65rem;
   border: 1px solid var(--line);
@@ -1424,6 +1424,18 @@ h3 {
 
 .country-panel__subjects p {
   color: var(--muted);
+}
+
+.country-panel__subject-list {
+  margin-top: 0.5rem;
+}
+
+.country-panel__subject-list summary {
+  min-height: 44px;
+  align-content: center;
+  color: var(--green-dark);
+  cursor: pointer;
+  font-weight: 750;
 }
 
 .country-panel__status {
@@ -1658,16 +1670,38 @@ td {
 }
 
 .curriculum-tree__strand,
+.curriculum-tree__section,
 .curriculum-tree__nodes details {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
 }
 
-.curriculum-tree__strand {
+.curriculum-tree__strand,
+.curriculum-tree__section {
   overflow: hidden;
   border-top: 0.3rem solid var(--gold);
   box-shadow: 0 0.65rem 1.5rem rgb(var(--shadow-rgb) / 7%);
+}
+
+.curriculum-tree__model {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.75rem;
+  background: linear-gradient(120deg, var(--green-wash), var(--gold-wash));
+}
+
+.curriculum-tree__model h2,
+.curriculum-tree__model p {
+  margin-block: 0.35rem 0;
+}
+
+.curriculum-tree__section .curriculum-tree__section {
+  margin: 0.6rem 0.75rem;
+  border-top-width: 1px;
+  border-left: 0.3rem solid var(--green);
+  box-shadow: none;
 }
 
 .curriculum-tree__nodes details:nth-child(odd) {
@@ -1678,15 +1712,24 @@ td {
   background: linear-gradient(120deg, var(--gold-wash), var(--surface) 45%);
 }
 
-.curriculum-tree__strand + .curriculum-tree__strand {
+.curriculum-tree__strand + .curriculum-tree__strand,
+.curriculum-tree__section + .curriculum-tree__section {
   margin-top: 0.75rem;
 }
 
-.curriculum-tree__strand > summary {
+.curriculum-tree__strand > summary,
+.curriculum-tree__section > summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.curriculum-tree__section-source {
+  padding-inline: 1rem;
+  margin-block: 0.4rem;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
 }
 
 .curriculum-tree__sub-strands,
@@ -1708,6 +1751,47 @@ td {
   gap: 0.4rem;
 }
 
+.curriculum-tree__markers {
+  padding-top: 0.35rem;
+}
+
+.curriculum-tree__markers ul {
+  display: grid;
+  padding: 0;
+  margin: 0.4rem 0 0;
+  gap: 0.35rem;
+  list-style: none;
+}
+
+.curriculum-tree__markers li {
+  display: grid;
+  padding: 0.5rem;
+  border-left: 0.2rem solid var(--gold);
+  background: var(--paper-muted);
+  gap: 0.2rem;
+}
+
+.curriculum-tree__markers p {
+  margin: 0;
+}
+
+.curriculum-tree__source-text {
+  margin-top: 0.4rem;
+}
+
+.curriculum-tree__source-text pre {
+  max-height: 30rem;
+  padding: 0.75rem;
+  overflow: auto;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--paper);
+  font: inherit;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 .curriculum-empty {
   max-width: var(--reading);
   padding: clamp(1.25rem, 4vw, 2.5rem);
@@ -1722,6 +1806,241 @@ td {
 .curriculum-empty h2 {
   margin: 0.6rem 0 0;
   font-size: clamp(1.75rem, 4vw, 2.6rem);
+}
+
+.curriculum-catalogue {
+  padding-top: clamp(1.5rem, 4vw, 2.5rem);
+  border-top: 1px solid var(--line);
+  margin-top: clamp(2rem, 5vw, 3.5rem);
+}
+
+.curriculum-catalogue__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.curriculum-catalogue__header h2 {
+  max-width: 20ch;
+  margin: 0.5rem 0 0;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.curriculum-catalogue__header p {
+  max-width: 28rem;
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.curriculum-catalogue > .supporting-copy {
+  max-width: var(--reading);
+  margin: 1rem 0 0;
+  text-align: left;
+}
+
+.curriculum-catalogue__countries {
+  display: grid;
+  margin-top: 1.5rem;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.curriculum-catalogue__country {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--wash);
+}
+
+.curriculum-catalogue__country h3 {
+  margin: 0 0 1rem;
+}
+
+.curriculum-catalogue__country h3 span {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.curriculum-catalogue__levels {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.curriculum-catalogue__levels details {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.curriculum-catalogue__levels summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem;
+  gap: 1rem;
+}
+
+.curriculum-catalogue__levels details > a {
+  display: inline-block;
+  margin: 0 0.8rem 0.7rem;
+  font-size: 0.875rem;
+  font-weight: 750;
+}
+
+.curriculum-catalogue__scope-note {
+  margin: 0 0.8rem 0.7rem;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+}
+
+.curriculum-catalogue__levels ul {
+  display: grid;
+  padding: 0 0.8rem 0.8rem;
+  margin: 0;
+  gap: 0.4rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+}
+
+.curriculum-catalogue__levels li {
+  display: flex;
+  min-width: 0;
+  align-items: start;
+  justify-content: space-between;
+  padding: 0.55rem;
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+  gap: 0.5rem;
+}
+
+.curriculum-catalogue__levels li strong {
+  flex: 0 0 auto;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+}
+
+.curriculum-catalogue__levels li strong[data-status="missing"] {
+  color: var(--coral-ink);
+}
+
+.curriculum-catalogue__levels li strong[data-status="human_reviewed"] {
+  color: var(--green-dark);
+}
+
+.source-inventory {
+  padding-top: clamp(1.5rem, 4vw, 2.5rem);
+  border-top: 1px solid var(--line);
+  margin-top: clamp(2rem, 5vw, 3.5rem);
+}
+
+.source-inventory__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.source-inventory__header h2 {
+  max-width: 20ch;
+  margin: 0.5rem 0 0;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.source-inventory__header p {
+  max-width: 30rem;
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.source-inventory > .supporting-copy {
+  max-width: var(--reading);
+  margin: 1rem 0 0;
+  text-align: left;
+}
+
+.source-inventory__countries {
+  display: grid;
+  margin-top: 1.5rem;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.source-inventory__countries article {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--wash);
+}
+
+.source-inventory__countries h3 {
+  margin: 0 0 1rem;
+}
+
+.source-inventory__countries details {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.source-inventory__countries details + details {
+  margin-top: 0.65rem;
+}
+
+.source-inventory__countries summary {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.8rem;
+  gap: 1rem;
+}
+
+.source-inventory__countries ul {
+  display: grid;
+  padding: 0 0.8rem 0.8rem;
+  margin: 0;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.source-inventory__countries li {
+  display: grid;
+  padding: 0.7rem;
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  gap: 0.35rem;
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, auto);
+}
+
+.source-inventory__countries li > div {
+  display: grid;
+}
+
+.source-inventory__countries li > div strong {
+  color: var(--ink);
+}
+
+.source-inventory__countries li p {
+  margin: 0;
+  grid-column: 1 / -1;
+}
+
+.source-inventory__countries .source-inventory__provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.8rem;
+}
+
+.source-inventory__provenance code {
+  color: var(--ink);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
 }
 
 .trust-grid {
@@ -1936,6 +2255,8 @@ td {
   .choice-grid--countries,
   .choice-grid--goals,
   .country-showcase,
+  .curriculum-catalogue__countries,
+  .source-inventory__countries,
   .curriculum-explorer__controls {
     grid-template-columns: 1fr;
   }
@@ -2098,12 +2419,29 @@ td {
   }
 
   .curriculum-explorer__intro,
-  .curriculum-tree__strand > summary {
+  .curriculum-catalogue__header,
+  .curriculum-catalogue__levels summary,
+  .source-inventory__header,
+  .source-inventory__countries summary,
+  .curriculum-tree__strand > summary,
+  .curriculum-tree__section > summary {
     display: grid;
+  }
+
+  .curriculum-tree__section .curriculum-tree__section {
+    margin-inline: 0.35rem;
   }
 
   .supporting-copy {
     text-align: left;
+  }
+
+  .curriculum-catalogue__levels ul {
+    grid-template-columns: 1fr;
+  }
+
+  .source-inventory__countries li {
+    grid-template-columns: 1fr;
   }
 
   .page-shell--curriculum,

@@ -6,12 +6,22 @@ import pytest
 from pydantic import ValidationError
 
 from gapsense.config import Settings
+from tests.curriculum_release import write_release_manifest
+
+
+def write_valid_repository(path: Path) -> None:
+    """Write the smallest explicit two-country publication boundary."""
+    write_release_manifest(
+        path,
+        [],
+        release_id="curriculum-public-empty-1",
+        release_status="empty",
+    )
 
 
 def test_settings_accept_valid_curriculum_repository(tmp_path: Path) -> None:
-    """A repository with the required curriculum directory is accepted."""
-    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
-    (tmp_path / "curricula" / "uganda").mkdir()
+    """A repository with a validated immutable release boundary is accepted."""
+    write_valid_repository(tmp_path)
 
     configured = Settings(GAPSENSE_DATA_PATH=tmp_path)
 
@@ -29,8 +39,7 @@ def test_settings_accept_valid_curriculum_repository(tmp_path: Path) -> None:
 
 def test_settings_report_production_environment(tmp_path: Path) -> None:
     """Environment helpers distinguish production from local development."""
-    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
-    (tmp_path / "curricula" / "uganda").mkdir()
+    write_valid_repository(tmp_path)
 
     configured = Settings(
         ENVIRONMENT="production",
@@ -44,8 +53,7 @@ def test_settings_report_production_environment(tmp_path: Path) -> None:
 
 def test_settings_allow_aggregate_analytics_only_in_local_environment(tmp_path: Path) -> None:
     """The collection route cannot be enabled by staging or production configuration."""
-    (tmp_path / "curricula" / "ghana").mkdir(parents=True)
-    (tmp_path / "curricula" / "uganda").mkdir()
+    write_valid_repository(tmp_path)
 
     local = Settings(
         ENVIRONMENT="local",
@@ -76,17 +84,13 @@ def test_settings_reject_missing_data_repository(tmp_path: Path) -> None:
 
 def test_settings_reject_repository_without_curriculum(tmp_path: Path) -> None:
     """An unrelated directory cannot masquerade as the data repository."""
-    with pytest.raises(
-        ValidationError, match="missing canonical curricula/ghana and curricula/uganda"
-    ):
+    with pytest.raises(ValidationError, match="no valid byte-pinned curriculum release manifest"):
         Settings(GAPSENSE_DATA_PATH=tmp_path)
 
 
 def test_settings_reject_repository_with_only_one_country(tmp_path: Path) -> None:
-    """Ghana-only or Uganda-only data cannot satisfy the two-country runtime contract."""
+    """Legacy country folders cannot replace the explicit release contract."""
     (tmp_path / "curricula" / "ghana").mkdir(parents=True)
 
-    with pytest.raises(
-        ValidationError, match="missing canonical curricula/ghana and curricula/uganda"
-    ):
+    with pytest.raises(ValidationError, match="no valid byte-pinned curriculum release manifest"):
         Settings(GAPSENSE_DATA_PATH=tmp_path)

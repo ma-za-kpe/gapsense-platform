@@ -23,29 +23,40 @@ const country = (code: "GH" | "UG", withSubject: boolean) => ({
       : "National Curriculum Development Centre (NCDC)",
   authority_url:
     code === "GH" ? "https://nacca.gov.gh/curriculum/" : "https://ncdc.go.ug/directorates/",
-  availability: "present_unverified",
+  availability: withSubject ? "present_unverified" : "missing",
   review_status: "not_verified",
-  repository_file_count: 1,
+  repository_file_count: withSubject ? 2 : 0,
   levels: [
     {
       identifier: code === "GH" ? "lower_primary" : "primary_1_3",
       name: code === "GH" ? "Lower Primary" : "Primary One–Three",
       official_phase: code === "GH" ? "Key Phase 2" : "Primary Phase 1",
+      scope_note: "Official scope statement.",
       review_status: "not_verified",
     },
   ],
-  subjects: withSubject
-    ? [
-        {
-          identifier: "mathematics",
-          name: "Mathematics",
-          phase: "primary",
-          availability: "present_unverified",
-          review_status: "not_verified",
-        },
-      ]
-    : [],
-  coverage_matrix: [],
+  subjects: [
+    {
+      identifier: "mathematics",
+      name: "Mathematics",
+      phase: "primary",
+      availability: withSubject ? "present_unverified" : "missing",
+      review_status: "not_verified",
+    },
+  ],
+  coverage_matrix: [
+    {
+      level_identifier: code === "GH" ? "lower_primary" : "primary_1_3",
+      level_name: code === "GH" ? "Lower Primary" : "Primary One–Three",
+      phase: "primary",
+      subject_identifier: "mathematics",
+      subject_name: "Mathematics",
+      status: withSubject ? "extracted" : "missing",
+      evidence_scope: "level",
+      source_url:
+        code === "GH" ? "https://nacca.gov.gh/curriculum/" : "https://ncdc.go.ug/directorates/",
+    },
+  ],
 });
 
 const coveragePayload = (withSubjects = true) => ({
@@ -54,27 +65,95 @@ const coveragePayload = (withSubjects = true) => ({
   warnings: [],
   snapshot: {
     generated_at: "2026-07-27T17:00:00Z",
-    source_version: null,
+    source_version: "curriculum-test-candidate.1",
     review_status: "not_verified",
+  },
+  catalog: {
+    as_of: "2026-07-29",
+    scope_status: "official_authority_inventory",
+    represented_cells: 2,
+    total_cells: 2,
+    evidence_cells: withSubjects ? 2 : 0,
+  },
+  source_inventory: {
+    as_of: "2026-07-23",
+    total_records: 2,
+    acquired_artifacts: 1,
+    records: [
+      {
+        identifier: "gh-jhs-official-index-current",
+        country: "GH",
+        phase: "secondary",
+        level: "JHS1-JHS3",
+        subject: "all",
+        edition: "current index",
+        source_url: "https://nacca.gov.gh/common-core-programme-ccp/",
+        retrieved_on: "2026-07-23",
+        license_status: "official_index_only_document_not_licensed_for_redistribution",
+        artifact_available: false,
+        artifact_pages: null,
+        extraction_status: "index_only",
+        review_status: "official_index_verified",
+        known_gap: "Document records remain.",
+      },
+      {
+        identifier: "ug-lower-secondary-mathematics",
+        country: "UG",
+        phase: "secondary",
+        level: "S1-S4",
+        subject: "mathematics",
+        edition: "2019",
+        source_url: "https://ncdc.go.ug/resource/lower-secondary-mathematics/",
+        retrieved_on: "2026-07-23",
+        license_status: "all_rights_reserved_permission_required",
+        artifact_available: true,
+        artifact_pages: 48,
+        extraction_status: "not_extracted",
+        review_status: "official_artifact_byte_verified",
+        known_gap: "Structured extraction remains.",
+      },
+    ],
   },
   countries: [country("GH", withSubjects), country("UG", withSubjects)],
 });
 
 const detailPayload = {
+  release_id: "curriculum-test-candidate.1",
   country: "ghana",
   phase: "primary",
   level: "lower_primary",
   subject: "mathematics",
-  evidence_scope: "phase_only",
+  evidence_scope: "level",
   extraction_status: "extracted",
+  extraction_method: "lossless-page-and-native-heading-projection",
   source_files: ["standards.json"],
+  curriculum_model: "ghana-standards-based",
+  structure_status: "machine_extracted_not_human_verified",
+  sections: [
+    {
+      identifier: "SEC.00000",
+      parent_identifier: null,
+      kind: "document",
+      title: "Mathematics official curriculum",
+      source_id: "gh-primary-mathematics",
+      source_page: 1,
+    },
+  ],
   strands: [{ identifier: "Number", name: "Number", sub_strands: ["Counting"] }],
   nodes: [
     {
       code: "B1.Number.1",
       title: "Count objects",
+      record_kind: "source_page",
       content_standard: "Count to 100",
+      source_id: "gh-primary-mathematics",
+      source_page: 42,
+      curriculum_path: ["SEC.00000"],
+      section_identifier: "SEC.00000",
+      strand_identifier: "Number",
+      prerequisite_status: "not_stated_by_authority",
       prerequisites: [],
+      evidence_items: [],
       indicators: [],
     },
   ],
@@ -162,7 +241,9 @@ describe("truthful public GapSense experience", () => {
     ).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "Curriculum" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "About" }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/about#privacy");
+    expect(screen.getByRole("link", { name: "Evidence" })).toHaveAttribute("href", "/evidence");
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
     expect(screen.getByRole("link", { name: "Accessibility" })).toHaveAttribute(
       "href",
       "/about#accessibility",
@@ -179,26 +260,23 @@ describe("truthful public GapSense experience", () => {
       screen.getByRole("heading", { level: 1, name: "Inspect the public evidence boundary." }),
     ).toBeVisible();
     expect(await screen.findByRole("combobox", { name: "Subject" })).toHaveValue("mathematics");
-    expect((await screen.findAllByText(/1 standards/)).length).toBeGreaterThan(0);
+    expect(await screen.findByText(/Country-native curriculum model/)).toBeVisible();
+    expect(
+      screen.getByText(/1 traced structural sections index 1 complete source pages/),
+    ).toBeVisible();
   });
 
-  it("replaces empty curriculum controls with an explicit, useful boundary", async () => {
+  it("keeps complete curriculum controls usable while showing an explicit evidence boundary", async () => {
     window.history.pushState({}, "", "/curriculum");
     stubReadyApi(false);
     render(<App />);
 
-    expect(
-      await screen.findByRole("heading", {
-        level: 2,
-        name: "No public subject evidence is available yet",
-      }),
-    ).toBeVisible();
-    expect(screen.queryByRole("combobox", { name: "Subject" })).not.toBeInTheDocument();
-    expect(screen.getByText(/Country-level presence records are available/)).toBeVisible();
-    expect(screen.getByRole("link", { name: "Read how evidence is published" })).toHaveAttribute(
-      "href",
-      "/about#evidence",
-    );
+    expect(await screen.findByRole("combobox", { name: "Country" })).toHaveValue("GH");
+    expect(screen.getByRole("combobox", { name: "Level" })).toHaveValue("lower_primary");
+    expect(screen.getByRole("combobox", { name: "Subject" })).toHaveValue("mathematics");
+    expect(await screen.findByText(/release-qualified detail is unavailable/)).toBeVisible();
+    expect(screen.getByText(/Every declared combination is selectable/)).toBeVisible();
+    expect(screen.getByText(/2 of 2/)).toBeVisible();
   });
 
   it("opens and reloads a focused assessment route from a persisted choice", async () => {
@@ -270,11 +348,31 @@ describe("truthful public GapSense experience", () => {
   });
 
   it.each([
+    ["/evidence", "Evidence, limitations, and known blockers.", "Known issues and blockers"],
+    ["/privacy", "Privacy without surveillance.", "Browser storage"],
+    ["/terms", "Use GapSense with evidence and care.", "Acceptable use"],
+  ])("publishes the complete professional trust page at %s", async (path, title, section) => {
+    window.history.pushState({}, "", path);
+    stubReadyApi(false);
+    render(<App />);
+    await settleBackgroundRequests();
+
+    expect(screen.getByRole("heading", { level: 1, name: title })).toBeVisible();
+    expect(screen.getByRole("heading", { name: section })).toBeVisible();
+    expect(
+      screen.getByRole("navigation", { name: /page contents|policy contents|terms/i }),
+    ).toBeVisible();
+  });
+
+  it.each([
     ["/", "GapSense — Find the next learning step"],
     ["/curriculum", "Curriculum evidence — GapSense"],
     ["/assessment", "Activity sample — GapSense"],
     ["/about", "Trust and evidence — GapSense"],
     ["/about/", "Trust and evidence — GapSense"],
+    ["/evidence", "Evidence and limitations — GapSense"],
+    ["/privacy", "Privacy policy — GapSense"],
+    ["/terms", "Terms of use — GapSense"],
   ])("publishes distinct route metadata on %s", async (path, expectedTitle) => {
     window.history.pushState({}, "", path);
     stubReadyApi(false);
@@ -349,8 +447,7 @@ describe("truthful public GapSense experience", () => {
     await user.click(screen.getByRole("button", { name: "Retry coverage details" }));
     expect(await screen.findByText("Public evidence catalogue connected")).toBeVisible();
     expect(
-      (await screen.findAllByText("Evidence files exist, but no subject is publishable yet"))
-        .length,
+      (await screen.findAllByText("No public evidence is available yet")).length,
     ).toBeGreaterThan(0);
   });
 
@@ -366,7 +463,7 @@ describe("truthful public GapSense experience", () => {
     await waitFor(() => expect(events).toEqual(["entry_viewed"]));
   });
 
-  it.each(["/", "/curriculum", "/about", "/assessment"])(
+  it.each(["/", "/curriculum", "/about", "/evidence", "/privacy", "/terms", "/assessment"])(
     "has no automatically detectable accessibility violation on %s",
     async (path) => {
       window.history.pushState({}, "", path);
@@ -383,6 +480,9 @@ describe("truthful public GapSense experience", () => {
       await waitFor(() =>
         expect(screen.queryByText(/Checking public evidence/)).not.toBeInTheDocument(),
       );
+      if (path === "/curriculum") {
+        expect(await screen.findByText(/release-qualified detail is unavailable/)).toBeVisible();
+      }
 
       const results = await axe.run(container, {
         runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"] },

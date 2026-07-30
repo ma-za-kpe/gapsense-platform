@@ -1,127 +1,100 @@
 # Ghana and Uganda Curriculum Coverage Audit
 
-**Audit date:** 2026-07-22
-**Answer:** No. Neither country's curriculum extraction is complete under the current goal
-of covering all official subjects and education levels.
+Audit date: 2026-07-30
 
-## What This Audit Means by Complete
+Conclusion: the local `/curriculum` page represents all 176 official catalogue cells, all
+140 source records, and complete country-native trees for all 170 cells with available official
+source bytes. Six NCDC catalogue areas remain authority-only because the current public indexes do
+not expose complete syllabus artifacts. Nothing is educator reviewed or approved for public
+curriculum-text distribution.
 
-A country is not complete because one subject has deep data or because a README says
-“100%.” Completion requires:
+## Exact Local Scope
 
-1. an authoritative inventory of official levels, phases, subjects, and pathways;
-2. source documents and version provenance;
-3. normalized learning outcomes for every in-scope subject;
-4. prerequisite and diagnostic enrichment where GapSense claims diagnostic coverage;
-5. structural validation and internally consistent counts;
-6. domain, cultural, and pilot validation;
-7. a versioned release manifest consumable by the platform.
+| Country | Levels | Catalogue cells | Extracted cells | Authority-only cells | Source records | Artifacts | Official pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Ghana | 5 | 67 | 67 | 0 | 63 | 61 | 9,052 |
+| Uganda | 6 | 109 | 103 | 6 | 77 | 74 | 6,088 |
+| **Total** | **11** | **176** | **170** | **6** | **140** | **135** | **15,140** |
 
-This audit inspected repository structure and machine-readable node containers. It did not
-endorse the educational validity of the existing prerequisite judgments.
+Candidate `curriculum-2026-07-30-candidate.4` retains 25,999 projected page records and
+16,192 page-traced sections across the 170 extracted cells.
 
-## Repository Coverage Found
+## Consumption Path
 
-### Ghana
+```text
+gapsense-data release manifest
+  -> exact catalogue + source ledger + page projections + native graphs
+    -> backend startup validation and immutable snapshot
+      -> exact 176-cell coverage matrix and detail API
+        -> frontend runtime validation
+          -> deterministic selectors, complete selected tree, catalogue, and source inventory
+```
 
-| Repository folder | Claimed level | Machine-observed state | Audit conclusion |
-| --- | --- | --- | --- |
-| `primary/mathematics` | Primary B1-B6, with some JHS material | Six expected artifact families exist, but the populated-node container has 11 keys while README and metadata claims refer to several different totals | Extracted/enriched subset; reconciliation required |
-| `primary/english` | Primary B1-B6 | Six artifact families; 58 machine-observed node keys versus metadata claiming 60 | Substantial, not reconciled or externally validated |
-| `primary/science` | Primary B1-B6 | Six artifact families; 54 machine-observed node keys | Substantial, not externally validated |
-| `secondary/mathematics` | JHS B7-B9 | Six artifact families; 59 machine-observed node keys; README also contains conflicting 47/59 claims | Substantial, reconciliation required |
-| `secondary/english` | SHS 1-3 | Six artifact families; 41 machine-observed node keys; explicitly says JHS English is missing | SHS subset; JHS gap remains |
-| `secondary/general-science` | SHS 1-3 | Six artifact families; 28 machine-observed node keys; README says 0 populated while data metadata says complete | Reconciliation required |
+1. Local Docker mounts the sibling private data repository read-only.
+2. The backend validates hashes, exact case, paths, page counts, identities, dates, source
+   locators, hierarchy, extraction methods, rights, and review states.
+3. Coverage begins with all 176 catalogue cells and overlays only the exact matching release
+   record. No folder or phase-wide inference creates availability.
+4. Detail responses retain country-native section kinds, titles, paths, complete page evidence,
+   source IDs/pages, extraction method, review state, and honest prerequisite status.
+5. The frontend rejects malformed, duplicate, detached, mismatched, or stale payloads before
+   rendering.
+6. Selector changes abort superseded requests. Every selectable extracted combination renders
+   exact API section/page counts; authority-only cells render a publication boundary and zero
+   invented nodes.
 
-No structured coverage was found for Kindergarten or most official Primary, JHS, SHS,
-SHTS, STEM, TVET, or tertiary subjects and pathways.
+The API snapshot is immutable for one process lifetime. Restart `web` after data changes; rebuild
+and recreate the frontend after UI changes.
 
-The official NaCCA curriculum overview defines five phases: Kindergarten, lower Primary,
-upper Primary, JHS, and SHS. It lists Primary curricula beyond the current three folders,
-including History, Creative Arts, Religious and Moral Education, Physical Education,
-French, Ghanaian Language, and Computing. NaCCA also notes a 2024/25 integration change
-for Our World Our People. See the [NaCCA curriculum overview](https://nacca.gov.gh/curriculum/).
+## Local and Public Behavior
 
-NaCCA's current [secondary curriculum catalogue](https://nacca.gov.gh/secondary-education-curriculum/)
-contains a much wider SHS/SHTS/STEM menu, including additional mathematics, agriculture,
-languages, arts, sciences, computing, engineering, humanities, social studies, physical
-education, robotics, and other pathways. The exact authoritative inventory and subject
-combination rules must be captured before child extraction tasks are generated.
+The local candidate exposes 170 private machine-extracted trees. The bundled public fixture carries
+the same 176-cell official catalogue and sanitized 140-source ledger but an explicit zero-record
+projection manifest. It contains no raw PDFs or official curriculum text.
 
-### Uganda
+This distinction explains why local Docker can display complete candidate trees while a hosted
+public-fixture build remains a truthful catalogue/source boundary.
 
-| Repository folder | Claimed level | Machine-observed state | Audit conclusion |
-| --- | --- | --- | --- |
-| `primary/mathematics` | P1-P3 thematic Mathematics | One prerequisite-style graph plus thematic mappings and extraction summaries; it does not have the six canonical artifact families or a populated-node release file | Extraction milestone in uncommitted work; validation and normalization pending |
-| `secondary/mathematics` | Unspecified | Empty | Not started |
+## User-Facing Behavior
 
-No structured coverage was found for Pre-primary, other P1-P3 learning areas, P4, P5-P7,
-Lower Secondary subjects, A-Level subjects, TVET, or tertiary curricula.
+- Country, level, and subject controls expose every release-qualified local combination.
+- The selected tree displays native hierarchy and complete source pages through progressive
+  disclosure.
+- `None recorded` is not used for unstated prerequisites; the UI says the authority does not state
+  a relationship.
+- `no safe extracted detail` is not shown for an extracted combination.
+- Authority-only areas remain catalogue-visible and explain why no tree is invented.
+- All 176 catalogue cells and 140 source records have deterministic DOM identities.
+- The home page keeps all 52 Ghana and 70 Uganda evidence-subject records available behind explicit
+  controls while staying compact on mobile.
 
-The NCDC describes Primary as three phases: P1-P3 thematic, P4 transition, and P5-P7
-subject-based. P4-P7 includes English, Mathematics, Social Studies, Integrated Science,
-Local Language, Creative Arts and Physical Education learning areas, and Religious
-Education. See the [NCDC directorates and curriculum structure](https://ncdc.go.ug/directorates/)
-and [NCDC Primary FAQ](https://ncdc.go.ug/faq/).
+## Validation
 
-NCDC describes 35 subjects in the Lower Secondary menu, with compulsory and elective
-combinations varying between S1-S2 and S3-S4. The official
-[Lower Secondary Curriculum Framework](https://ncdc.go.ug/wp-content/uploads/2024/03/Curriculum_Framework.pdf)
-and [secondary catalogue](https://ncdc.go.ug/book-category/secondary/) are the starting
-points. NCDC also published aligned A-Level curriculum materials in 2025, so S5-S6 must be
-inventoried against the current catalogue rather than legacy assumptions.
+- Backend: 212 tests, 100% line and branch coverage.
+- Frontend: 280 tests, 100% statements/branches/functions/lines; formatting, lint, typing, build,
+  and dependency audit pass.
+- Data: 64 tests, 100% line/branch/function coverage; 176 release records, 140 sources,
+  135 artifacts, and 342 pinned artifacts validated.
+- Browser: 32 tests across desktop and mobile. Two traverse all 176 cells and compare live API
+  identity/status/method/counts with rendered output. Thirty cover role/country sample paths,
+  persistence/reset, real learner and educator downloads, accessibility, keyboard/touch, forced
+  colours, themes, 320-pixel reflow, routes, security headers, and reviewed screenshots.
 
-## Important Status Distinctions
+## Remaining Holds
 
-The Uganda P1-P3 Mathematics artifacts describe themselves as production-ready while also
-listing teacher, NCDC, UWEZO, and learner validation as future work. Under the current Ways
-of Working, that material can be described as extracted and partially structured, not
-released.
+- The 170 trees are machine extracted and not educator reviewed.
+- Replacement glyphs and complex multi-column reading order require source-render reconciliation
+  on affected pages.
+- Rights review blocks public redistribution of raw PDFs and substantial extracted text.
+- Assessment generation remains illustrative and does not yet consume unreviewed trees.
+- Six NCDC areas have no complete public artifact: four Primary 4 areas, Advanced Physical
+  Education, and Advanced Principal ICT.
 
-The Ghana datasets have significant depth, but contradictory counts and stale status text
-mean completion must be recomputed from data. Structural completion would still not prove
-domain or pilot validity.
+## Official Scope References
 
-## Live Coverage Contract
-
-As of 2026-07-23, the local web API exposes a read-only
-`GET /v1/curriculum/coverage` contract sourced only from the canonical
-`curricula/ghana` and `curricula/uganda` roots.
-
-The contract:
-
-- identifies NaCCA and NCDC and lists their official education phases;
-- reports canonical repository file presence separately for Ghana and Uganda;
-- always reports extraction and educator review as `not_verified` at this stage;
-- always reports overall `complete: false`;
-- ignores hidden, transient, backup, symlinked, and special-file entries;
-- fails closed for missing, partial, invalid, or unsafe repository structures; and
-- never exposes private paths, curriculum content, or inferred completion.
-
-The observed counts of 74 Ghana files and 23 Uganda files are inventory signals, not
-coverage percentages. They combine different levels and artifact types and will change as
-the data repository evolves. The next coverage-contract generation must replace these
-aggregate counts with a machine-generated country, phase, level, subject, source-version,
-extraction-state, and review-state matrix. That matrix must make the existing Ghana
-secondary subsets and Uganda's current secondary gaps independently visible.
-
-## Required Next Actions
-
-The canonical tasks live in [`TASKS.md`](../TASKS.md). Immediate curriculum actions are:
-
-1. Define the canonical curriculum schema and maturity states.
-2. Build machine-generated inventories from current official authority catalogues.
-3. Reconcile all existing Ghana counts and statuses.
-4. Validate and normalize the uncommitted Uganda P1-P3 Mathematics work on its own branch.
-5. Generate one child task per official country/phase/subject combination.
-6. Acquire official sources and proceed depth-first through those child tasks.
-7. Recruit country and subject reviewers before any release claim.
-
-## Audit Limitations
-
-- Official catalogues change; inventories must record access and curriculum version dates.
-- “All subjects” can differ between compulsory, elective, language, vocational, and school
-  pathway menus.
-- Tertiary institutions may not share one national outcome-level curriculum; scope must be
-  researched with the relevant authorities.
-- This audit did not reproduce or validate copyrighted curriculum text.
+- [NaCCA standards-based curriculum](https://nacca.gov.gh/learning-areas-subjects/new-standards-based-curriculum-2019/)
+- [NaCCA Common Core Programme](https://nacca.gov.gh/common-core-programme-ccp/)
+- [NaCCA secondary curriculum](https://nacca.gov.gh/secondary-education-curriculum/)
+- [NCDC directorates](https://ncdc.go.ug/directorates/)
+- [NCDC resources](https://ncdc.go.ug/resource/)
+- [NCDC document library](https://ncdc.go.ug/document-library/)

@@ -125,6 +125,7 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}"],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    maxWorkers: 4,
     clearMocks: true,
     restoreMocks: true,
     coverage: {
