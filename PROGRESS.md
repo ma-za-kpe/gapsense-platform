@@ -83,6 +83,8 @@ with an explicit publication boundary and zero invented nodes.
   contents navigation, disclaimers, known blockers, acceptable-use and open-source/third-party
   rights boundaries, correction guidance, and footer/README links. Frontend validation remains
   280/280 at exact 100%; the new routes pass unit accessibility and Docker Playwright checks.
+- Added exact Vercel rewrites and a repository contract test for all three trust routes so direct
+  production requests cannot fall through to a platform 404.
 
 ## Honest Remaining Holds
 

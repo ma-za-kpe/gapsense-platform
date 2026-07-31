@@ -40,4 +40,16 @@ def test_vercel_configuration_keeps_promotion_explicit_and_routes_the_full_stack
             "source": "/about",
             "destination": "/",
         },
+        {
+            "source": "/evidence",
+            "destination": "/",
+        },
+        {
+            "source": "/privacy",
+            "destination": "/",
+        },
+        {
+            "source": "/terms",
+            "destination": "/",
+        },
     ]
