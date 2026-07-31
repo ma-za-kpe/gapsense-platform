@@ -12,9 +12,9 @@ Last updated: 2026-07-30
 `/curriculum` represent every official country, level, subject, source record, evidence state, and
 country-native tree without blank controls or invented data.
 
-**Status:** Implementation, source audit, visual audit, exhaustive browser instrumentation, and
-strict quality gates are green locally and prepared for a coherent branch commit. Nothing has been
-pushed, merged, released, or deployed.
+**Status:** The paired branches are pushed, both hosted CI gates are green, and the verified
+public-safe platform commit is live on Vercel production. Draft PR #41 remains unmerged and no
+release was created.
 
 ## Exact Local Runtime
 
@@ -85,6 +85,25 @@ with an explicit publication boundary and zero invented nodes.
   280/280 at exact 100%; the new routes pass unit accessibility and Docker Playwright checks.
 - Added exact Vercel rewrites and a repository contract test for all three trust routes so direct
   production requests cannot fall through to a platform 404.
+- Pushed platform implementation commit `50188cd86309ecc9172a4b55477ed258c8081e5d` to
+  `fix/curriculum-data-integrity`; draft PR #41 carries the implementation and this final evidence
+  ledger.
+- GitHub Actions run `30606212982` completed successfully. Its Required job passed the
+  repository-owned Docker gate in 11 minutes 3 seconds.
+- The restored local sibling-data runtime passed 26/26 non-visual Playwright journeys across
+  desktop and mobile in 9 minutes. These include exhaustive all-176-cell selection, assessment
+  creation and downloads, trust routes, accessibility, responsive behavior, and security. The six
+  pixel-baseline assertions remain deliberately bound to the deterministic public fixture; the
+  complete public-fixture suite passed 32/32 in the strict gate and hosted CI.
+- Vercel CLI 58.4.4 deployed the verified platform commit as
+  `dpl_8VC3Xo2VVGMdo1wXJGAoJkGKf4U4`. Vercel reports `Ready`; the immutable deployment is
+  `https://gapsense-c0fg0duu6-popos-projects-fb891440.vercel.app`, the prior deployment remains the
+  rollback target, and the custom domain is `https://gapsense.org`.
+- Live verification returned HTTP 200 for `/`, `/curriculum`, `/assessment`, `/about`,
+  `/evidence`, `/privacy`, `/terms`, `/robots.txt`, `/api/v1/health/ready`, and
+  `/api/v1/curriculum/coverage`. Readiness is `ready`; all six configured security headers are
+  present. The public boundary exposes the complete 176-cell authority catalogue and sanitized
+  140-record source inventory with zero projections, raw PDFs, or source text.
 
 ## Honest Remaining Holds
 
@@ -95,7 +114,7 @@ with an explicit publication boundary and zero invented nodes.
 - Rights review prevents shipping raw PDFs or substantial curriculum text in the public fixture.
 - Assessment generation still uses labelled illustrative banks; it does not yet generate from the
   unreviewed local curriculum trees.
-- Production was not refreshed and still uses the intentionally projection-empty public fixture.
+- Production is refreshed and still uses the intentionally projection-empty public fixture.
 
 ## Next Paired Slice
 
@@ -105,6 +124,5 @@ with an explicit publication boundary and zero invented nodes.
    tests.
 4. Resolve rights and publication policy before exposing any private projection publicly.
 5. Acquire and pin the six authority-only syllabuses when NCDC supplies authoritative bytes.
-6. Complete the ordered cleanup and TODO reconciliation in `TASKS.md`; only after both pushed
-   commits have green hosted CI, promote the verified public-safe platform commit with
-   `vercel --prod` and record production evidence.
+6. Keep the paired draft PRs reviewable; merge only through the protected review workflow and
+   rerun the release/deployment gate for any changed SHA.

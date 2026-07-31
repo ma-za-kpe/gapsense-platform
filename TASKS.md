@@ -83,33 +83,42 @@ and supersedes older pending counts where they differ.
 Execute these steps in order. A later step cannot compensate for a failure or unresolved item in an
 earlier step.
 
-- [ ] Reconcile the canonical list before committing: remove superseded, duplicated, and completed
+- [x] Reconcile the canonical list before committing: remove superseded, duplicated, and completed
   working-list entries only after their useful evidence is retained in `PROGRESS.md`, a release
   note, or a focused audit document. Keep unresolved product, curriculum, rights, review, security,
   accessibility, and production risks; do not preserve obsolete task text merely because it is old.
-- [ ] Complete every relevant repository TODO before committing. The current audit found no
+  Evidence: the active paired milestone is canonical, and genuine unresolved work remains explicit.
+- [x] Complete every relevant repository TODO before committing. The current audit found no
   executable-code `TODO` or `FIXME` marker in the platform. Re-audit source, tests, configuration,
   scripts, and active documentation; complete actionable debt and convert every genuine external
-  dependency into one explicit blocked task with an owner and next check.
-- [ ] Perform bounded code and project cleanup: remove dead repository-owned code, obsolete
+  dependency into one explicit blocked task with an owner and next check. Evidence: the final
+  source/config/test audit found no actionable marker; external review and authority-byte holds
+  remain above.
+- [x] Perform bounded code and project cleanup: remove dead repository-owned code, obsolete
   generated intermediates, unused dependencies and assets, stale routes, redundant documentation,
   temporary browser artifacts, stopped validation containers, and superseded images. Preserve
   migrations, reviewed visual baselines, user-owned work, database volumes, public-fixture lineage,
-  and the private-data boundary.
-- [ ] Double-audit the complete paired diff and working trees. Require no staged surprises, no
+  and the private-data boundary. Evidence: obsolete test helpers/containers were removed while the
+  local application, database volume, visual baselines, and sibling-data mount were preserved.
+- [x] Double-audit the complete paired diff and working trees. Require no staged surprises, no
   whitespace errors, no secrets, no unresolved relevant TODOs, exact 100% backend/frontend/data
   line and branch coverage, all 176 catalogue cells, all real user journeys, and both repositories'
-  strict pre-commit and pre-push gates green.
-- [ ] Create separate coherent conventional commits in data and platform, including reconciled
-  `PROGRESS.md`; push each `fix/curriculum-data-integrity` branch once without force.
-- [ ] Use `gh` to monitor both hosted GitHub Actions runs through terminal success. Record workflow
+  strict pre-commit and pre-push gates green. Evidence: data 64/64, backend 212/212, frontend
+  280/280, public-fixture browser 32/32, and full-data functional browser 26/26 all passed with
+  exact 100% executable coverage.
+- [x] Create separate coherent conventional commits in data and platform, including reconciled
+  `PROGRESS.md`; push each `fix/curriculum-data-integrity` branch without force. Evidence: data
+  implementation/merge `2676106`; deployed platform implementation `50188cd`.
+- [x] Use `gh` to monitor both hosted GitHub Actions runs through terminal success. Record workflow
   URLs, run IDs, commit SHAs, conclusions, and annotations in the paired progress ledgers; fix and
-  repeat locally before any new push if either run is not green.
-- [ ] Only after both hosted runs are green, run `vercel --prod` from the verified platform commit.
+  repeat locally before any new push if either run is not green. Evidence: data run `30605343669`
+  and platform run `30606212982` completed successfully.
+- [x] Only after both hosted runs are green, run `vercel --prod` from the verified platform commit.
   Confirm the deployment excludes private curriculum artifacts, record the deployment ID and URL,
   verify the custom domain, same-origin APIs, catalogue boundary, assessment downloads, security
   headers, accessibility, desktop/mobile user flows, runtime logs, and rollback target, then record
-  the production evidence in `PROGRESS.md`.
+  the production evidence in `PROGRESS.md`. Evidence: deployment
+  `dpl_8VC3Xo2VVGMdo1wXJGAoJkGKf4U4` is Ready and aliased to `https://gapsense.org`.
 
 ## Current Product Direction
 
