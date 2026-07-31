@@ -39,9 +39,18 @@ class ReadinessStatus(BaseModel):
     status: Literal["ready", "not_ready"] = "ready"
 
 
-def create_health_router(data_path: Path) -> APIRouter:
+def create_health_router(
+    data_path: Path,
+    *,
+    repository_available: bool | None = None,
+) -> APIRouter:
     """Build health routes against the configured curriculum repository."""
     router = APIRouter(prefix="/v1/health", tags=["health"])
+    repository_snapshot = (
+        canonical_repository_available(data_path)
+        if repository_available is None
+        else repository_available
+    )
 
     @router.get("", response_model=HealthSummary)
     async def health_summary() -> HealthSummary:
@@ -55,8 +64,8 @@ def create_health_router(data_path: Path) -> APIRouter:
 
     @router.get("/ready", response_model=ReadinessStatus)
     async def readiness(response: Response) -> ReadinessStatus:
-        """Fail closed when the required curriculum repository is unavailable."""
-        if not canonical_repository_available(data_path):
+        """Return the immutable application-start repository readiness snapshot."""
+        if not repository_snapshot:
             response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
             return ReadinessStatus(
                 checks=ReadinessChecks(curriculum_repository="missing"),

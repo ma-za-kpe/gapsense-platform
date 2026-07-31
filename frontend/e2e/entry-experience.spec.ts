@@ -2,6 +2,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 const coverageSettlingTimeoutMilliseconds = 7_500;
+const curriculumMatrixTimeoutMilliseconds = 600_000;
+const assessmentMatrixTimeoutMilliseconds = 120_000;
 const themeStorageKey = "gapsense.theme-preference.v1";
 const minimumSupportedViewportPixels = 320;
 const httpOk = 200;
@@ -9,8 +11,54 @@ const httpNotFound = 404;
 const maximumMissingArtifactResponseBytes = 256;
 const minimumTargetPixels = 44;
 const maximumMobilePageViewports = 8.5;
+const officialLevelCount = 11;
+const curriculumCellCount = 176;
 const localCoopDiagnostic =
   "The Cross-Origin-Opener-Policy header has been ignored, because the URL's origin was untrustworthy.";
+
+type CoverageIdentityPayload = {
+  readonly catalog: {
+    readonly evidence_cells: number;
+  };
+  readonly source_inventory: {
+    readonly acquired_artifacts: number;
+    readonly records: readonly {
+      readonly identifier: string;
+      readonly artifact_available: boolean;
+      readonly artifact_pages: number | null;
+    }[];
+  };
+  readonly countries: readonly {
+    readonly code: string;
+    readonly coverage_matrix: readonly {
+      readonly phase: string;
+      readonly level_identifier: string;
+      readonly subject_identifier: string;
+      readonly status: "missing" | "located" | "extracted";
+    }[];
+  }[];
+};
+
+type CurriculumDetailPayload = {
+  readonly release_id: string;
+  readonly country: string;
+  readonly phase: string;
+  readonly level: string;
+  readonly subject: string;
+  readonly extraction_status: "located" | "extracted";
+  readonly extraction_method: string;
+  readonly sections: readonly unknown[];
+  readonly nodes: readonly unknown[];
+};
+
+const downloadText = async (download: import("@playwright/test").Download): Promise<string> => {
+  const stream = await download.createReadStream();
+  let contents = "";
+  for await (const chunk of stream as AsyncIterable<Uint8Array>) {
+    contents += Buffer.from(chunk).toString("utf8");
+  }
+  return contents;
+};
 
 const chooseTheme = async (
   page: import("@playwright/test").Page,
@@ -28,7 +76,7 @@ const chooseTheme = async (
 const expectCoverageEvidence = async (page: import("@playwright/test").Page): Promise<void> => {
   await expect(
     page.getByText(
-      /unreviewed subject record|Evidence files exist, but no subject is publishable yet/,
+      /unreviewed subject record|Evidence files exist, but no subject is publishable yet|No public evidence is available yet/,
     ),
   ).toHaveCount(2, { timeout: coverageSettlingTimeoutMilliseconds });
 };
@@ -47,38 +95,194 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("never offers a blank curriculum combination", async ({ page }) => {
+  test.setTimeout(curriculumMatrixTimeoutMilliseconds);
   const response = await page.goto("/curriculum");
 
   expect(response?.ok()).toBe(true);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Inspect the public evidence boundary.",
   );
+  const coverageResponse = await page.request.get("/api/v1/curriculum/coverage");
+  expect(coverageResponse.ok()).toBe(true);
+  const coveragePayload = (await coverageResponse.json()) as CoverageIdentityPayload;
+  const country = page.getByRole("combobox", { name: "Country" });
+  const level = page.getByRole("combobox", { name: "Level" });
   const subject = page.getByRole("combobox", { name: "Subject" });
-  const emptyState = page.getByRole("heading", {
-    level: 2,
-    name: "No public subject evidence is available yet",
-  });
-  await expect(subject.or(emptyState)).toBeVisible({
+  const detailStatus = page.locator(".curriculum-explorer__status");
+  const visitedCells: string[] = [];
+  await expect(subject).toBeVisible({
     timeout: coverageSettlingTimeoutMilliseconds,
   });
-  if ((await subject.count()) === 0) {
-    await expect(emptyState).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Read how evidence is published" }),
-    ).toHaveAttribute("href", "/about#evidence");
-  } else {
-    const country = page.getByRole("combobox", { name: "Country" });
-    const countryOptions = await country.locator("option").all();
-    for (const option of countryOptions) {
-      const value = await option.getAttribute("value");
-      if (value === null) throw new Error("A curriculum country option has no value");
-      await country.selectOption(value);
-      await expect(page.getByRole("combobox", { name: "Level" }).locator("option")).not.toHaveCount(
-        0,
-      );
-      await expect(subject.locator("option")).not.toHaveCount(0);
+  const countryOptions = await country.locator("option").all();
+  expect(countryOptions).toHaveLength(coveragePayload.countries.length);
+  for (const option of countryOptions) {
+    const countryCode = await option.getAttribute("value");
+    if (countryCode === null) throw new Error("A curriculum country option has no value");
+    await country.selectOption(countryCode);
+    const expectedCountry = coveragePayload.countries.find((item) => item.code === countryCode);
+    if (expectedCountry === undefined) throw new Error("A selector country is absent from the API");
+    const expectedLevels = [
+      ...new Set(expectedCountry.coverage_matrix.map((item) => item.level_identifier)),
+    ];
+    const levelOptions = await level.locator("option").all();
+    expect(levelOptions).toHaveLength(expectedLevels.length);
+    for (const levelOption of levelOptions) {
+      const levelIdentifier = await levelOption.getAttribute("value");
+      if (levelIdentifier === null) throw new Error("A curriculum level option has no value");
+      await level.selectOption(levelIdentifier);
+      const expectedSubjects = expectedCountry.coverage_matrix
+        .filter((item) => item.level_identifier === levelIdentifier)
+        .map((item) => item.subject_identifier)
+        .sort();
+      const subjectValues = await subject
+        .locator("option")
+        .evaluateAll((options) => options.map((item) => (item as HTMLOptionElement).value).sort());
+      expect(subjectValues).toEqual(expectedSubjects);
+      for (const subjectIdentifier of expectedSubjects) {
+        const expectedEntry = expectedCountry.coverage_matrix.find(
+          (item) =>
+            item.level_identifier === levelIdentifier &&
+            item.subject_identifier === subjectIdentifier,
+        );
+        if (expectedEntry === undefined) {
+          throw new Error("A selector subject is absent from the API matrix");
+        }
+        await subject.selectOption(subjectIdentifier);
+        await expect(subject).toHaveValue(subjectIdentifier);
+        const countrySlug = countryCode === "GH" ? "ghana" : "uganda";
+        const detailPath =
+          `/api/v1/curriculum/${countrySlug}/${expectedEntry.phase}/` +
+          `${levelIdentifier}/${subjectIdentifier}`;
+        const detailResponse = await page.request.get(detailPath);
+        if (expectedEntry.status === "missing") {
+          expect(detailResponse.status(), detailPath).toBe(httpNotFound);
+          expect((await detailResponse.body()).byteLength).toBeLessThanOrEqual(
+            maximumMissingArtifactResponseBytes,
+          );
+          await expect(detailStatus).toHaveText(
+            "This official curriculum area is catalogued, but release-qualified detail is unavailable.",
+            { timeout: coverageSettlingTimeoutMilliseconds },
+          );
+          await expect(page.locator(".curriculum-tree")).toHaveCount(0);
+          visitedCells.push(
+            `${countryCode}:${expectedEntry.phase}:${levelIdentifier}:${subjectIdentifier}`,
+          );
+          continue;
+        }
+        expect(detailResponse.ok(), detailPath).toBe(true);
+        const detailPayload = (await detailResponse.json()) as CurriculumDetailPayload;
+        expect(detailPayload).toMatchObject({
+          release_id: expect.any(String),
+          country: countrySlug,
+          phase: expectedEntry.phase,
+          level: levelIdentifier,
+          subject: subjectIdentifier,
+          extraction_status: expectedEntry.status,
+          extraction_method: expect.any(String),
+        });
+        await expect(detailStatus).toContainText(
+          expectedEntry.status === "located"
+            ? "Official curriculum area confirmed"
+            : `Level evidence - extracted - ${String(detailPayload.nodes.length)} source pages`,
+          { timeout: coverageSettlingTimeoutMilliseconds },
+        );
+        if (detailPayload.extraction_status === "located") {
+          expect(detailPayload.sections).toHaveLength(0);
+          expect(detailPayload.nodes).toHaveLength(0);
+          await expect(
+            page.getByRole("heading", { level: 2, name: /is represented$/ }),
+          ).toBeVisible();
+        } else {
+          expect(detailPayload.sections.length).toBeGreaterThan(1);
+          expect(detailPayload.nodes.length).toBeGreaterThan(0);
+          await expect(page.locator(".curriculum-tree__section")).toHaveCount(
+            detailPayload.sections.length,
+          );
+          await expect(page.locator(".curriculum-tree__nodes > details")).toHaveCount(
+            detailPayload.nodes.length,
+          );
+          await expect(page.getByText(/^Text extraction:/)).toBeVisible();
+        }
+        await expect(page.locator(".curriculum-tree")).not.toContainText(
+          /None recorded|no safe extracted detail/i,
+        );
+        visitedCells.push(
+          `${countryCode}:${expectedEntry.phase}:${levelIdentifier}:${subjectIdentifier}`,
+        );
+      }
     }
-    await expect(page.getByText(/\d+ standards/).first()).toBeVisible();
+  }
+  expect(visitedCells).toHaveLength(curriculumCellCount);
+  expect(new Set(visitedCells).size).toBe(curriculumCellCount);
+  await expect(detailStatus).not.toContainText(/could not be loaded/i);
+  const catalogue = page.getByRole("region", {
+    name: "Every declared Ghana and Uganda curriculum area",
+  });
+  await expect(catalogue).toContainText("176 of 176");
+  await expect(catalogue.locator(".curriculum-catalogue__levels details")).toHaveCount(
+    officialLevelCount,
+  );
+  const curriculumCells = catalogue.locator("[data-curriculum-cell]");
+  await expect(curriculumCells).toHaveCount(curriculumCellCount);
+  await expect(catalogue.locator('a[href^="https://"]')).toHaveCount(officialLevelCount);
+  await expect(catalogue).toContainText(
+    `${String(coveragePayload.catalog.evidence_cells)} have evidence records`,
+  );
+  const expectedCellIdentities = coveragePayload.countries.flatMap((country) =>
+    country.coverage_matrix.map(
+      (entry) =>
+        `${country.code}:${entry.phase}:${entry.level_identifier}:${entry.subject_identifier}`,
+    ),
+  );
+  const renderedCellIdentities = await curriculumCells.evaluateAll((cells) =>
+    cells.map((cell) => {
+      const identity = cell.getAttribute("data-curriculum-cell");
+      if (identity === null) throw new Error("A rendered curriculum cell has no identity");
+      return identity;
+    }),
+  );
+  expect(new Set(renderedCellIdentities).size).toBe(curriculumCellCount);
+  expect([...renderedCellIdentities].sort()).toEqual([...expectedCellIdentities].sort());
+
+  const sourceInventory = page.getByRole("region", {
+    name: "Every release-qualified official source record",
+  });
+  const sourceRecordCount = coveragePayload.source_inventory.records.length;
+  await expect(sourceInventory).toContainText(
+    `${String(sourceRecordCount)} source records are accounted for`,
+  );
+  await expect(sourceInventory).toContainText(
+    `${String(coveragePayload.source_inventory.acquired_artifacts)} have byte-verified artifacts`,
+  );
+  const sourceRecords = sourceInventory.locator("[data-source-record]");
+  await expect(sourceRecords).toHaveCount(sourceRecordCount);
+  await expect(sourceInventory.locator("li code")).toHaveCount(sourceRecordCount);
+  await expect(sourceInventory.getByText(/^Retrieved /)).toHaveCount(sourceRecordCount);
+  await expect(sourceInventory.getByText(/^Review: /)).toHaveCount(sourceRecordCount);
+  await expect(sourceInventory.getByText(/^Rights: /)).toHaveCount(sourceRecordCount);
+  await expect(sourceInventory.locator('li a[href^="https://"]')).toHaveCount(sourceRecordCount);
+  await expect(sourceInventory.locator("li > p:not(.source-inventory__provenance)")).toHaveCount(
+    sourceRecordCount,
+  );
+  const renderedSourceIdentities = await sourceRecords.evaluateAll((records) =>
+    records.map((record) => {
+      const identity = record.getAttribute("data-source-record");
+      if (identity === null) throw new Error("A rendered source record has no identity");
+      return identity;
+    }),
+  );
+  expect(new Set(renderedSourceIdentities).size).toBe(sourceRecordCount);
+  expect([...renderedSourceIdentities].sort()).toEqual(
+    [...coveragePayload.source_inventory.records.map((record) => record.identifier)].sort(),
+  );
+  for (const record of coveragePayload.source_inventory.records) {
+    const renderedRecord = sourceInventory.locator(`[data-source-record="${record.identifier}"]`);
+    await expect(renderedRecord).toContainText(
+      record.artifact_pages === null
+        ? "Page count unavailable"
+        : `${String(record.artifact_pages)} official pages`,
+    );
+    expect(record.artifact_available).toBe(record.artifact_pages !== null);
   }
   await expectNoAccessibilityViolations(page);
 });
@@ -184,6 +388,68 @@ test("persists an anonymous Uganda sample and supports a clean restart", async (
 
   await expect(page).toHaveURL(/\/#planner$/);
   await expect(page.getByRole("button", { name: "Review sample choice" })).toBeDisabled();
+});
+
+test("opens every supported role and country sample-creation path", async ({ page }) => {
+  test.setTimeout(assessmentMatrixTimeoutMilliseconds);
+  const combinations = [
+    ["Teacher", "Ghana", "Ghana Basic 3 Science sample"],
+    ["Teacher", "Uganda", "Uganda Primary 2 Mathematics sample"],
+    ["Parent or caregiver", "Ghana", "Ghana Basic 3 Science sample"],
+    ["Parent or caregiver", "Uganda", "Uganda Primary 2 Mathematics sample"],
+    ["Learner", "Ghana", "Ghana Basic 3 Science sample"],
+    ["Learner", "Uganda", "Uganda Primary 2 Mathematics sample"],
+    ["Tutor", "Ghana", "Ghana Basic 3 Science sample"],
+    ["Tutor", "Uganda", "Uganda Primary 2 Mathematics sample"],
+  ] as const;
+
+  for (const [role, country, heading] of combinations) {
+    await page.goto("/#planner");
+    await page.getByRole("radio", { name: new RegExp(`^${role}`) }).check();
+    await page.getByRole("radio", { name: new RegExp(`^${country}`) }).check();
+    await page.getByRole("radio", { name: /^Practice activity/ }).check();
+    await page.getByRole("button", { name: "Review sample choice" }).click();
+    await expect(
+      page.getByRole("heading", { level: 3, name: `Your ${country} sample is ready` }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Open sample activity" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    await page.getByRole("button", { name: "Choose another sample" }).click();
+    await expect(page.getByRole("button", { name: "Review sample choice" })).toBeDisabled();
+  }
+});
+
+test("delivers separate real learner and educator downloads from a reviewed sample", async ({
+  page,
+}) => {
+  await page.goto("/#planner");
+  await page.getByRole("radio", { name: /^Teacher/ }).check();
+  await page.getByRole("radio", { name: /^Ghana/ }).check();
+  await expect(page.getByRole("radio", { name: /^Diagnostic pathway/ })).toBeDisabled();
+  await expect(page.getByRole("radio", { name: /^Assessment package/ })).toBeDisabled();
+  await page.getByRole("radio", { name: /^Practice activity/ }).check();
+  await page.getByRole("button", { name: "Review sample choice" }).click();
+  await page.getByRole("button", { name: "Open sample activity" }).click();
+
+  const learnerDownloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download learner worksheet" }).click();
+  const learnerDownload = await learnerDownloadPromise;
+  expect(learnerDownload.suggestedFilename()).toBe("gapsense-learner-worksheet.html");
+  const learnerDocument = await downloadText(learnerDownload);
+  expect(learnerDocument).toContain("Ghana Basic 3 Science sample");
+  expect(learnerDocument).toContain("Name one source of light.");
+  expect(learnerDocument).not.toContain("Answer guidance:");
+
+  const educatorDownloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download answer guide" }).click();
+  const educatorDownload = await educatorDownloadPromise;
+  expect(educatorDownload.suggestedFilename()).toBe("gapsense-answer-guide.html");
+  const educatorDocument = await downloadText(educatorDownload);
+  expect(educatorDocument).toContain("Ghana Basic 3 Science sample");
+  expect(educatorDocument).toContain("Answer guidance:");
+  expect(educatorDocument).toContain("The sun, a lamp, or another reasonable source");
+  expect(await learnerDownload.failure()).toBeNull();
+  expect(await educatorDownload.failure()).toBeNull();
 });
 
 test("preserves keyboard focus, touch sizing, and a compact responsive layout", async ({
@@ -332,7 +598,15 @@ test("keeps every public route accessible in explicit dark mode", async ({ page 
     { key: themeStorageKey },
   );
 
-  for (const path of ["/", "/curriculum", "/about", "/assessment"]) {
+  for (const path of [
+    "/",
+    "/curriculum",
+    "/about",
+    "/evidence",
+    "/privacy",
+    "/terms",
+    "/assessment",
+  ]) {
     await page.goto(path);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expectNoAccessibilityViolations(page);
@@ -374,6 +648,31 @@ test("serves distinct trust routes and recoverable deep links", async ({ page })
   await expect(page.getByRole("heading", { name: "Accessibility commitment" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Feedback and correction" })).toBeVisible();
   await expectNoAccessibilityViolations(page);
+
+  for (const trustRoute of [
+    {
+      path: "/evidence",
+      title: "Evidence and limitations \u2014 GapSense",
+      heading: "Evidence, limitations, and known blockers.",
+    },
+    {
+      path: "/privacy",
+      title: "Privacy policy \u2014 GapSense",
+      heading: "Privacy without surveillance.",
+    },
+    {
+      path: "/terms",
+      title: "Terms of use \u2014 GapSense",
+      heading: "Use GapSense with evidence and care.",
+    },
+  ]) {
+    const response = await page.goto(trustRoute.path);
+    expect(response?.ok()).toBe(true);
+    await expect(page).toHaveTitle(trustRoute.title);
+    await expect(page.getByRole("heading", { level: 1, name: trustRoute.heading })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: /contents/i })).toBeVisible();
+    await expectNoAccessibilityViolations(page);
+  }
 });
 
 test("serves a hardened same-origin surface", async ({ page }) => {

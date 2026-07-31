@@ -116,8 +116,8 @@ class Settings(BaseSettings):
 
         if not canonical_repository_available(path):
             raise ValueError(
-                "GAPSENSE_DATA_PATH missing canonical curricula/ghana and curricula/uganda "
-                f"directories: {path.absolute()}"
+                "GAPSENSE_DATA_PATH has no valid byte-pinned curriculum release manifest: "
+                f"{path.absolute()}"
             )
 
         return path

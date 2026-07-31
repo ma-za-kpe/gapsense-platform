@@ -47,6 +47,24 @@ const routeMetadata = (path: string): RouteMetadata => {
         description:
           "Read how GapSense handles evidence, review, saved choices, privacy, accessibility, and corrections.",
       };
+    case "/evidence":
+      return {
+        title: "Evidence and limitations — GapSense",
+        description:
+          "Read the GapSense evidence white paper, disclaimers, known limitations, blockers, and correction policy.",
+      };
+    case "/privacy":
+      return {
+        title: "Privacy policy — GapSense",
+        description:
+          "Read what the current GapSense public experience stores, does not collect, and how to exercise privacy choices.",
+      };
+    case "/terms":
+      return {
+        title: "Terms of use — GapSense",
+        description:
+          "Read the GapSense public-site terms, acceptable-use rules, evidence disclaimers, and open-source boundaries.",
+      };
     default:
       return {
         title: "Page not available — GapSense",
@@ -324,6 +342,214 @@ function AboutPage(): React.JSX.Element {
   );
 }
 
+function EvidencePage(): React.JSX.Element {
+  return (
+    <section className="page-shell trust-page section-shell" aria-labelledby="evidence-title">
+      <span className="eyebrow">Open evidence white paper</span>
+      <h1 id="evidence-title">Evidence, limitations, and known blockers.</h1>
+      <p className="page-lead">
+        Last reviewed 30 July 2026. This disclosure is not an endorsement by NaCCA, NCDC, a
+        ministry, an examination authority, or an educator-review body.
+      </p>
+      <nav aria-label="Evidence page contents">
+        <strong>On this page</strong>
+        <ol>
+          <li>
+            <a href="#evidence-boundary">Current evidence boundary</a>
+          </li>
+          <li>
+            <a href="#evidence-disclaimers">Disclaimers</a>
+          </li>
+          <li>
+            <a href="#evidence-blockers">Known issues and blockers</a>
+          </li>
+          <li>
+            <a href="#evidence-help">How to help</a>
+          </li>
+          <li>
+            <a href="#evidence-corrections">Corrections and releases</a>
+          </li>
+        </ol>
+      </nav>
+      <div className="trust-grid">
+        <article id="evidence-boundary">
+          <h2>Current evidence boundary</h2>
+          <p>
+            Local development represents 176 Ghana and Uganda catalogue cells. Complete official
+            bytes support page-traced machine extraction for 170 cells; six Uganda cells are
+            authority-confirmed without a complete public syllabus artifact. Production exposes the
+            catalogue and sanitized source ledger, not private PDFs or substantial extracted
+            curriculum text.
+          </p>
+        </article>
+        <article id="evidence-disclaimers">
+          <h2>Disclaimers</h2>
+          <p>
+            Machine extraction is not educator review. Catalogue representation is not pedagogical
+            validation. Source custody is not permission to redistribute. Illustrative activities
+            are not curriculum-aligned diagnostics, and GapSense is not an official authority.
+          </p>
+        </article>
+        <article id="evidence-blockers">
+          <h2>Known issues and blockers</h2>
+          <p>
+            Four Primary 4 areas and two Advanced Secondary subjects await complete official NCDC
+            bytes. Affected OCR glyphs and table order need page reconciliation. All extracted trees
+            still require scoped country, educator, cultural, and rights review.
+          </p>
+        </article>
+        <article id="evidence-help">
+          <h2>How to help</h2>
+          <p>
+            Help obtain unchanged official bytes or written authority transmissions, introduce
+            qualified Ghanaian and Ugandan reviewers, arrange rights review, or report an exact
+            source-page defect. Never attach restricted curricula or learner data to a public issue.
+          </p>
+        </article>
+        <article id="evidence-corrections">
+          <h2>Corrections and releases</h2>
+          <p>
+            Material corrections require reproducible evidence, deterministic rematerialization,
+            paired tests, updated hashes, a reviewed public/private boundary, hosted CI success, and
+            a versioned release.
+          </p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function PrivacyPage(): React.JSX.Element {
+  return (
+    <section className="page-shell trust-page section-shell" aria-labelledby="privacy-title">
+      <span className="eyebrow">Privacy policy</span>
+      <h1 id="privacy-title">Privacy without surveillance.</h1>
+      <p className="page-lead">
+        Effective 30 July 2026. This policy covers the current anonymous public experience and must
+        be revised before accounts, learner records, or new analytics are introduced.
+      </p>
+      <nav aria-label="Privacy policy contents">
+        <strong>On this page</strong>
+        <ol>
+          <li>
+            <a href="#privacy-data">Data and purpose</a>
+          </li>
+          <li>
+            <a href="#privacy-storage">Browser storage</a>
+          </li>
+          <li>
+            <a href="#privacy-sharing">Sharing and retention</a>
+          </li>
+          <li>
+            <a href="#privacy-choices">Your choices</a>
+          </li>
+        </ol>
+      </nav>
+      <div className="trust-grid">
+        <article id="privacy-data">
+          <h2>Data and purpose</h2>
+          <p>
+            The sample does not request an account, name, school, learner identity, answer, or AI
+            key. Do not enter personal or confidential information into public reports.
+          </p>
+        </article>
+        <article id="privacy-storage">
+          <h2>Browser storage</h2>
+          <p>
+            This browser may retain only your sample role, country, purpose, and theme preference.
+            Clearing the sample or site storage removes those local choices.
+          </p>
+        </article>
+        <article id="privacy-sharing">
+          <h2>Sharing and retention</h2>
+          <p>
+            There is no third-party advertising or hidden AI dependency. Bounded hosting security
+            and reliability logs must not become learner profiles or contain curriculum documents.
+          </p>
+        </article>
+        <article id="privacy-choices">
+          <h2>Your choices and corrections</h2>
+          <p>
+            You may avoid the sample, clear site data, print without retaining a download, and
+            report a concern without personal data. Material changes require a new effective date.
+          </p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function TermsPage(): React.JSX.Element {
+  return (
+    <section className="page-shell trust-page section-shell" aria-labelledby="terms-title">
+      <span className="eyebrow">Terms of use</span>
+      <h1 id="terms-title">Use GapSense with evidence and care.</h1>
+      <p className="page-lead">
+        Effective 30 July 2026. By using this public site, you accept these terms. Stop using it if
+        you do not accept them.
+      </p>
+      <nav aria-label="Terms of use contents">
+        <strong>On this page</strong>
+        <ol>
+          <li>
+            <a href="#terms-service">Current service</a>
+          </li>
+          <li>
+            <a href="#terms-use">Acceptable use</a>
+          </li>
+          <li>
+            <a href="#terms-evidence">Educational disclaimer</a>
+          </li>
+          <li>
+            <a href="#terms-ip">Open-source and curriculum rights</a>
+          </li>
+          <li>
+            <a href="#terms-liability">Availability and responsibility</a>
+          </li>
+        </ol>
+      </nav>
+      <div className="trust-grid">
+        <article id="terms-service">
+          <h2>Current service</h2>
+          <p>
+            GapSense provides an anonymous evidence catalogue and illustrative activity samples.
+            Features may change or pause while evidence, safety, and rights work continues.
+          </p>
+        </article>
+        <article id="terms-use">
+          <h2>Acceptable use</h2>
+          <p>
+            Do not misuse the service, upload restricted curricula or learner data, imply official
+            endorsement, remove provenance, or use samples for high-stakes learner decisions.
+          </p>
+        </article>
+        <article id="terms-evidence">
+          <h2>Educational disclaimer</h2>
+          <p>
+            The site is not an official curriculum, examination, diagnosis, professional judgment,
+            or guarantee. Educators remain responsible for suitability, accuracy, and learner
+            safety.
+          </p>
+        </article>
+        <article id="terms-ip">
+          <h2>Open-source and curriculum rights</h2>
+          <p>
+            Repository software follows its stated licence. Official curricula, authority names,
+            third-party materials, and trademarks retain their owners and are not relicensed.
+          </p>
+        </article>
+        <article id="terms-liability">
+          <h2>Availability and responsibility</h2>
+          <p>
+            Verify important information against the applicable authority. Report defects
+            responsibly without secrets, learner data, or restricted source content.
+          </p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
 function NotFoundPage(): React.JSX.Element {
   return (
     <section
@@ -363,7 +589,9 @@ function Footer(): React.JSX.Element {
         </div>
         <nav aria-label="Trust links">
           <a href="/about">About</a>
-          <a href="/about#privacy">Privacy</a>
+          <a href="/evidence">Evidence</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
           <a href="/about#accessibility">Accessibility</a>
           <a href="/about#feedback">Feedback</a>
         </nav>
@@ -435,6 +663,15 @@ export function App({ analytics = browserAnalytics }: AppProps): React.JSX.Eleme
       break;
     case "/about":
       page = <AboutPage />;
+      break;
+    case "/evidence":
+      page = <EvidencePage />;
+      break;
+    case "/privacy":
+      page = <PrivacyPage />;
+      break;
+    case "/terms":
+      page = <TermsPage />;
       break;
     default:
       page = <NotFoundPage />;

@@ -5,13 +5,15 @@ is being designed to help learners, caregivers, teachers, and schools find and
 close curriculum-aligned learning gaps and to make high-quality assessment
 generation freely accessible.
 
-The current repository is an early engineering foundation, not a
-curriculum-complete product. A bounded, read-only public slice is deployed from
-the existing `gapsense` Vercel project to `https://gapsense.org`; it is not a
-diagnostic service or proof of reviewed curriculum alignment. Neither Ghana nor
-Uganda has complete, reviewed coverage across all subjects and levels yet.
-WhatsApp delivery, real learner data, hosted authentication or AI, database
-writes, and any broader production capability remain explicitly on hold.
+The current repository is an early engineering foundation, not a reviewed
+curriculum or diagnostic product. Local Docker consumes a private candidate that
+represents all 176 Ghana/Uganda catalogue cells and exposes machine-extracted
+trees for the 170 cells with available official source bytes. A bounded,
+read-only public slice is deployed from the existing `gapsense` Vercel project
+to `https://gapsense.org`; its public-safe fixture intentionally contains no
+curriculum projections or official curriculum text. WhatsApp delivery, real
+learner data, hosted authentication or AI, database writes, and any broader
+production capability remain explicitly on hold.
 
 ## Current product status
 
@@ -27,9 +29,13 @@ The local web prototype currently supports an anonymous planning journey for Gha
   preference in the browser;
 - explicit Ghana KG, Basic, JHS, and SHS labels and Uganda Early Childhood, Primary, O-Level,
   and A-Level labels.
+- a complete local curriculum explorer with every official country/level/subject selector,
+  country-native hierarchy, source-page provenance, the 176-cell catalogue, and 140-source
+  inventory.
 
-The starter bank is prototype content, not an official examination. Official curriculum evidence,
-educator review, and production-grade generation remain open work in `TASKS.md`.
+The starter bank is prototype content, not an official examination. The 170 local trees are
+machine extracted and not educator reviewed. Curriculum-driven assessment generation, extraction-
+fidelity review, rights review, and production publication remain open in `TASKS.md`.
 
 ## Current Direction
 
@@ -128,7 +134,8 @@ sh .githooks/pre-commit
 The installer configures this repository to use its versioned commit-message,
 pre-commit, and pre-push hooks. The pre-push hook blocks direct integration-branch
 and local tag pushes, rejects a dirty worktree, and repeats the exact strict
-Docker gate before a feature branch can be contributed.
+Docker gate before a feature branch can be contributed. Every coherent commit must
+also reconcile the current evidence ledger in [`PROGRESS.md`](PROGRESS.md).
 
 The gate builds and runs inside Docker and includes dependency consistency,
 formatting, linting, strict typing, secret and static-security scans, fresh
@@ -160,11 +167,17 @@ repository. Synthetic test data must be unmistakably fictional.
 - [Ways of working](docs/WAYS_OF_WORKING.md)
 - [Project charter](docs/PROJECT_CHARTER.md)
 - [Curriculum coverage audit](docs/CURRICULUM_COVERAGE_AUDIT.md)
+- [Curriculum evidence and limitations white paper](docs/CURRICULUM_EVIDENCE_WHITE_PAPER.md)
+- [Adding another country](docs/ADDING_A_COUNTRY.md)
 - [Assessment-generation product brief](docs/ASSESSMENT_GENERATION_PRODUCT_BRIEF.md)
 - [Local web prototype guide](docs/LOCAL_WEB_PROTOTYPE_GUIDE.md)
 - [Market and user research](docs/MARKET_AND_USER_RESEARCH.md)
 - [Security and privacy model](docs/SECURITY_AND_PRIVACY_MODEL.md)
 - [Documentation index](docs/README.md)
+
+The public trust centre is available at `/about`, with dedicated `/evidence`, `/privacy`, and
+`/terms` pages. Accessibility and correction guidance remain linked from the footer, and release
+history remains linked to GitHub Releases.
 
 `TASKS.md` is deliberately never finished. Add discovered work before starting
 it, keep the current slice marked active, and close it only with evidence.

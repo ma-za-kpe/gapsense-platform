@@ -28,6 +28,18 @@
     {
       "source": "/about",
       "destination": "/"
+    },
+    {
+      "source": "/evidence",
+      "destination": "/"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/"
+    },
+    {
+      "source": "/terms",
+      "destination": "/"
     }
   ],
   "headers": [

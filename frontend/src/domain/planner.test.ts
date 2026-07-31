@@ -10,6 +10,9 @@ import {
 } from "./planner";
 
 describe("assessment planner domain", () => {
+  const roles = ["teacher", "caregiver", "learner", "tutor"] as const;
+  const countries = ["ghana", "uganda"] as const;
+
   it("starts anonymous and incomplete", () => {
     expect(initialPlan).toEqual({ role: null, country: null, goal: null, reviewed: false });
     expect(isPlanComplete(initialPlan)).toBe(false);
@@ -46,6 +49,47 @@ describe("assessment planner domain", () => {
       reviewed: true,
     });
     expect(isPlanComplete(reviewed)).toBe(true);
+  });
+
+  it("reviews every supported role and country combination deterministically", () => {
+    for (const role of roles) {
+      for (const country of countries) {
+        const selectedRole = plannerReducer(initialPlan, { type: "select-role", role });
+        const selectedCountry = plannerReducer(selectedRole, {
+          type: "select-country",
+          country,
+        });
+        const selectedGoal = plannerReducer(selectedCountry, {
+          type: "select-goal",
+          goal: "practice",
+        });
+        expect(plannerReducer(selectedGoal, { type: "review" })).toEqual({
+          role,
+          country,
+          goal: "practice",
+          reviewed: true,
+        });
+      }
+    }
+  });
+
+  it("invalidates review after every editable choice and ignores locked goals", () => {
+    const reviewed: PlannerState = {
+      role: "teacher",
+      country: "ghana",
+      goal: "practice",
+      reviewed: true,
+    };
+
+    expect(plannerReducer(reviewed, { type: "select-role", role: "tutor" }).reviewed).toBe(false);
+    expect(plannerReducer(reviewed, { type: "select-country", country: "uganda" }).reviewed).toBe(
+      false,
+    );
+    expect(plannerReducer(reviewed, { type: "select-goal", goal: "practice" }).reviewed).toBe(
+      false,
+    );
+    expect(plannerReducer(reviewed, { type: "select-goal", goal: "diagnostic" })).toBe(reviewed);
+    expect(plannerReducer(reviewed, { type: "select-goal", goal: "assessment" })).toBe(reviewed);
   });
 
   it("resets an in-progress plan", () => {

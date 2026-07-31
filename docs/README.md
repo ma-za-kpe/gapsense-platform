@@ -6,6 +6,9 @@
 - [Ways of Working](WAYS_OF_WORKING.md) - mandatory operating and quality model
 - [Working List](../TASKS.md) - canonical, ever-growing execution list
 - [Curriculum Coverage Audit](CURRICULUM_COVERAGE_AUDIT.md) - honest Ghana/Uganda baseline
+- [Adding a Country](ADDING_A_COUNTRY.md) - paired data, API, fixture, UI, and E2E contract
+- [Curriculum Evidence and Limitations White Paper](CURRICULUM_EVIDENCE_WHITE_PAPER.md) - public
+  disclaimers, known blockers, contribution requirements, and correction policy
 - [Market and User Research](MARKET_AND_USER_RESEARCH.md) - dated facts and hypotheses
 - [Free Assessment Generation Product Brief](ASSESSMENT_GENERATION_PRODUCT_BRIEF.md) - public
   generator goal, official assessment constraints, quality model, and commercial hypothesis

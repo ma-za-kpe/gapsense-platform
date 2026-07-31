@@ -15,4 +15,4 @@ fi
 chmod +x .githooks/commit-msg .githooks/pre-commit .githooks/pre-push
 
 echo "Strict local Git hooks are installed from .githooks."
-echo "Remote pushes remain blocked until the project hold is explicitly lifted."
+echo "Protected branches, local tag updates, dirty pushes, and unvalidated feature pushes are blocked."

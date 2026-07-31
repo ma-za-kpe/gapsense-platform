@@ -10,14 +10,17 @@ type CoveragePanelsProps = {
 };
 
 const publicationStatus = (country: CountryCoverage): string => {
-  if (country.repository_file_count === 0) {
+  if (country.availability === "missing") {
     return "No public evidence is available yet";
   }
-  const subjectCount = country.subjects === undefined ? 0 : country.subjects.length;
+  const subjectCount = country.subjects.filter(
+    (subject) => subject.availability === "present_unverified",
+  ).length;
   if (subjectCount === 0) {
-    return "Evidence files exist, but no subject is publishable yet";
+    return "No exact subject record is available yet";
   }
-  return `${String(subjectCount)} unreviewed subject ${subjectCount === 1 ? "record is" : "records are"} visible`;
+  const reviewLabel = country.review_status === "human_reviewed" ? "reviewed" : "unreviewed";
+  return `${String(subjectCount)} ${reviewLabel} subject ${subjectCount === 1 ? "record is" : "records are"} visible`;
 };
 
 const formatSnapshotDate = (timestamp: string): string =>
@@ -28,13 +31,11 @@ const formatSnapshotDate = (timestamp: string): string =>
     timeZone: "UTC",
   }).format(new Date(timestamp));
 
-const matrixSummary = (
-  entries: readonly NonNullable<CountryCoverage["coverage_matrix"]>[number][],
-): string => {
+const matrixSummary = (entries: CountryCoverage["coverage_matrix"]): string => {
   const extracted = entries.filter((entry) => entry.status === "extracted").length;
   const located = entries.filter((entry) => entry.status === "located").length;
   const missing = entries.filter((entry) => entry.status === "missing").length;
-  return `${String(extracted)} extracted · ${String(located)} located at phase scope · ${String(missing)} missing subject folders`;
+  return `${String(extracted)} extracted · ${String(located)} located · ${String(missing)} explicitly missing`;
 };
 
 const organizationExamples = {
@@ -75,6 +76,7 @@ function LoadedCountryPanel({
 }): React.JSX.Element {
   const accent = country.code === "GH" ? "gold" : "coral";
   const authorityLabel = country.code === "GH" ? "NaCCA" : "NCDC";
+  const evidenceSubjects = country.subjects.filter((subject) => subject.availability !== "missing");
 
   return (
     <article className={`country-panel country-panel--${accent}`}>
@@ -93,20 +95,23 @@ function LoadedCountryPanel({
       </ul>
       <div className="country-panel__subjects">
         <strong>Evidence subjects found</strong>
-        {country.subjects?.length ? (
-          <ul aria-label={`${country.name} subjects found in public evidence`}>
-            {country.subjects.map((subject) => (
-              <li key={`${subject.phase}:${subject.identifier}`}>
-                {subject.name} <small>({subject.phase})</small>
-              </li>
-            ))}
-          </ul>
+        {evidenceSubjects.length ? (
+          <details className="country-panel__subject-list">
+            <summary>View all {String(evidenceSubjects.length)} evidence subject records</summary>
+            <ul aria-label={`${country.name} subjects found in public evidence`}>
+              {evidenceSubjects.map((subject) => (
+                <li key={`${subject.phase}:${subject.identifier}`}>
+                  {subject.name} <small>({subject.phase})</small>
+                </li>
+              ))}
+            </ul>
+          </details>
         ) : (
           <p>No subject records are currently visible in the public evidence catalogue.</p>
         )}
         <small>Presence is not the same as extraction or educator review.</small>
       </div>
-      {country.coverage_matrix?.length ? (
+      {country.coverage_matrix.length ? (
         <details
           className="coverage-matrix"
           open={matrixOpen}
@@ -115,10 +120,10 @@ function LoadedCountryPanel({
           <summary>See level and subject evidence matrix</summary>
           <div className="coverage-matrix__body">
             <p>
-              Level-specific evidence is shown separately from phase-level folders. “Extracted”
-              means normalized curriculum nodes exist; “located” means an official subject folder
-              exists only at phase scope; “missing” means no subject record exists in the public
-              evidence catalogue. No status implies educator review.
+              Every row is one exact level and subject declaration. “Extracted” means byte-pinned
+              normalized curriculum nodes exist; “located” means the official source is known but
+              has no projection; “missing” records an explicit data gap. No status implies educator
+              review.
             </p>
             <p className="coverage-matrix__summary">{matrixSummary(country.coverage_matrix)}</p>
             <div className="coverage-matrix__table-wrap">
@@ -138,11 +143,7 @@ function LoadedCountryPanel({
                       <th scope="row">{entry.level_name}</th>
                       <td>{entry.subject_name}</td>
                       <td>{entry.status.replaceAll("_", " ")}</td>
-                      <td>
-                        {entry.evidence_scope === "phase_only"
-                          ? "phase folder only"
-                          : "level folder"}
-                      </td>
+                      <td>exact level</td>
                     </tr>
                   ))}
                 </tbody>
@@ -159,7 +160,11 @@ function LoadedCountryPanel({
         <span className="country-panel__signal" aria-hidden="true" />
         <div>
           <strong>{publicationStatus(country)}</strong>
-          <small>No educator review has been recorded.</small>
+          <small>
+            {country.review_status === "human_reviewed"
+              ? "Human review has been recorded."
+              : "No educator review has been recorded."}
+          </small>
         </div>
       </div>
       <details className="curriculum-map">
@@ -227,10 +232,14 @@ export function CoveragePanels({ state, onRetry }: CoveragePanelsProps): React.J
           </span>
           <span>
             {state.report.snapshot.source_version === null
-              ? "Official source version is not recorded"
-              : `Official source version: ${state.report.snapshot.source_version}`}
+              ? "Data release identity is not available"
+              : `Data release: ${state.report.snapshot.source_version}`}
           </span>
-          <span>No human review is recorded for this snapshot.</span>
+          <span>
+            {state.report.snapshot.review_status === "human_reviewed"
+              ? "Human review is recorded for this snapshot."
+              : "No human review is recorded for this snapshot."}
+          </span>
         </aside>
         <div className="country-showcase">
           {state.report.countries.map((country) => (

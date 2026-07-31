@@ -7,6 +7,13 @@ cd "$repository_root"
 
 export MSYS_NO_PATHCONV=1
 
+for required_file in TASKS.md PROGRESS.md docs/WAYS_OF_WORKING.md; do
+  if [ ! -f "$required_file" ]; then
+    echo "GapSense CI: required governance file is missing: $required_file" >&2
+    exit 1
+  fi
+done
+
 case "$mode" in
   full)
     sh .githooks/pre-commit
@@ -40,10 +47,19 @@ case "$mode" in
 
     echo "GapSense CI: linting non-archived Markdown"
     docker run --rm \
+      --read-only \
+      --tmpfs /tmp:rw,exec,size=64m,mode=1777 \
+      --cap-drop ALL \
+      --security-opt no-new-privileges:true \
+      -e npm_config_cache=/tmp/npm \
       -v "$repository_root:/workspace:ro" \
       -w /workspace \
-      node:22-alpine \
-      npx --yes markdownlint-cli2@0.18.1 "README.md" "TASKS.md" "docs/**/*.md"
+      node:22.23.1-alpine3.23@sha256:8516dce0483394d5708d4b2ee6cacb79fb1d617ea4e2787c2120bcca92ce372e \
+      npx --yes markdownlint-cli2@0.23.1 \
+      "README.md" \
+      "TASKS.md" \
+      "PROGRESS.md" \
+      "docs/**/*.md"
 
     echo "GapSense CI: checking patch whitespace"
     git diff --check

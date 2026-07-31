@@ -1,230 +1,191 @@
-"""Tests for truthful, read-only curriculum repository inventory."""
+"""Tests for manifest-driven, exact curriculum coverage."""
 
-import os
-from collections.abc import Iterator
+from __future__ import annotations
+
 from pathlib import Path
 
-import pytest
+from tests.curriculum_release import release_record, write_projection, write_release_manifest
 
 from gapsense.curriculum.coverage import (
     build_coverage_report,
     canonical_repository_available,
 )
+from gapsense.curriculum.release import load_release_manifest
 
 
-def _create_country_roots(data_path: Path) -> tuple[Path, Path]:
-    curricula_path = data_path / "curricula"
-    ghana_path = curricula_path / "ghana"
-    uganda_path = curricula_path / "uganda"
-    ghana_path.mkdir(parents=True)
-    uganda_path.mkdir()
-    return ghana_path, uganda_path
-
-
-def test_inventory_reports_presence_without_claiming_completion(tmp_path: Path) -> None:
-    """Files prove local availability, never completed extraction or review."""
-    ghana_path, uganda_path = _create_country_roots(tmp_path)
-    (tmp_path / "curricula" / "README.md").write_text("# Curriculum index", encoding="utf-8")
-    (ghana_path / "primary").mkdir()
-    (ghana_path / "primary" / "mathematics.json").write_text("{}", encoding="utf-8")
-    (ghana_path / "primary" / "source").mkdir()
-    (ghana_path / "primary" / "linked").symlink_to(ghana_path / "primary", target_is_directory=True)
-    (ghana_path / "secondary").mkdir()
-    (ghana_path / "secondary" / "science").mkdir()
-    (uganda_path / "primary").mkdir()
-    (uganda_path / "primary" / "mathematics.json").write_text("{}", encoding="utf-8")
+def test_coverage_represents_the_whole_catalog_and_overlays_only_exact_records(
+    tmp_path: Path,
+) -> None:
+    """A shared projection marks two exact cells and leaves all other cells missing."""
+    projection = write_projection(tmp_path)
+    lower = release_record(projection)
+    upper = release_record(
+        projection,
+        id="gh-primary-upper-primary-mathematics",
+        level="upper_primary",
+        node_code_prefixes=["B4.", "B5.", "B6."],
+    )
+    write_release_manifest(tmp_path, [lower, upper])
 
     report = build_coverage_report(tmp_path)
 
     assert report.repository_status == "available"
     assert report.complete is False
-    assert report.warnings == ()
-    assert report.snapshot.generated_at.endswith("Z")
-    assert report.snapshot.source_version is None
+    assert report.warnings == ("candidate_release",)
+    assert report.snapshot.source_version == "curriculum-2026-07-29-candidate.1"
     assert report.snapshot.review_status == "not_verified"
+    assert report.catalog is not None
+    assert report.catalog.as_of == "2026-07-29"
+    assert report.catalog.scope_status == "official_authority_inventory"
+    assert report.catalog.represented_cells == 176
+    assert report.catalog.total_cells == 176
+    assert report.catalog.evidence_cells == 2
     assert [country.code for country in report.countries] == ["GH", "UG"]
-    assert [country.repository_file_count for country in report.countries] == [1, 1]
-    assert [(subject.phase, subject.identifier) for subject in report.countries[0].subjects] == [
-        ("primary", "mathematics"),
-        ("secondary", "science"),
-    ]
-    assert report.countries[0].subjects[0].review_status == "not_verified"
-    assert report.countries[0].coverage_matrix
-    assert {entry.status for entry in report.countries[0].coverage_matrix} == {"located", "missing"}
-    assert all(
-        entry.evidence_scope == "phase_only" for entry in report.countries[0].coverage_matrix
+    ghana, uganda = report.countries
+    assert ghana.availability == "present_unverified"
+    assert ghana.repository_file_count == 2
+    lower_primary = next(level for level in ghana.levels if level.identifier == "lower_primary")
+    assert lower_primary.scope_note == "Official scope statement for Lower Primary."
+    assert len(ghana.subjects) == 44
+    mathematics = next(
+        subject
+        for subject in ghana.subjects
+        if subject.phase == "primary" and subject.identifier == "mathematics"
     )
-    assert all(country.availability == "present_unverified" for country in report.countries)
-    assert all(country.review_status == "not_verified" for country in report.countries)
-    assert report.countries[0].authority == (
-        "National Council for Curriculum and Assessment (NaCCA)"
-    )
-    assert report.countries[1].authority == "National Curriculum Development Centre (NCDC)"
-    assert [level.identifier for level in report.countries[0].levels] == [
-        "kindergarten",
-        "lower_primary",
-        "upper_primary",
-        "junior_high",
-        "senior_high",
+    assert mathematics.availability == "present_unverified"
+    exact_evidence = [
+        (entry.level_identifier, entry.subject_identifier, entry.status, entry.evidence_scope)
+        for entry in ghana.coverage_matrix
+        if entry.status != "missing"
     ]
-    assert [level.identifier for level in report.countries[1].levels] == [
-        "early_childhood",
-        "primary_1_3",
-        "primary_4",
-        "primary_5_7",
-        "lower_secondary",
-        "upper_secondary",
+    assert exact_evidence == [
+        ("lower_primary", "mathematics", "extracted", "level"),
+        ("upper_primary", "mathematics", "extracted", "level"),
     ]
+    assert len(ghana.coverage_matrix) == 67
     assert all(
-        level.review_status == "not_verified"
+        entry.source_url.startswith("https://nacca.gov.gh/") for entry in ghana.coverage_matrix
+    )
+    assert uganda.availability == "missing"
+    assert uganda.repository_file_count == 0
+    assert uganda.levels[0].name == "Early Childhood"
+    assert uganda.levels[0].scope_note == "Official scope statement for Early Childhood."
+    assert len(uganda.coverage_matrix) == 109
+    assert all(entry.status == "missing" for entry in uganda.coverage_matrix)
+
+
+def test_public_fixture_projects_every_pinned_catalog_cell_without_loss() -> None:
+    repository_root = Path(__file__).parents[3]
+    data_path = repository_root / "fixtures" / "public-data"
+    manifest = load_release_manifest(data_path)
+
+    report = build_coverage_report(data_path, manifest=manifest)
+
+    expected_cells = {
+        (cell.country, cell.phase, cell.level, cell.subject) for cell in manifest.catalog_cells
+    }
+    projected_cells = {
+        (country.code, entry.phase, entry.level_identifier, entry.subject_identifier)
+        for country in report.countries
+        for entry in country.coverage_matrix
+    }
+    expected_notes = {
+        (cell.country, cell.level, cell.scope_note) for cell in manifest.catalog_cells
+    }
+    projected_notes = {
+        (country.code, level.identifier, level.scope_note)
         for country in report.countries
         for level in country.levels
-    )
+    }
+    assert len(expected_cells) == 176
+    assert projected_cells == expected_cells
+    assert projected_notes == expected_notes
 
 
-def test_matrix_marks_only_explicit_level_evidence_as_located(tmp_path: Path) -> None:
-    """A phase folder cannot inflate a level claim, but an exact level folder can be located."""
-    ghana_path, uganda_path = _create_country_roots(tmp_path)
-    (ghana_path / "primary" / "mathematics").mkdir(parents=True)
-    (ghana_path / "primary" / "mathematics" / "evidence.json").write_text("{}", encoding="utf-8")
-    (ghana_path / "primary" / "lower_primary" / "mathematics").mkdir(parents=True)
-    (ghana_path / "primary" / "lower_primary" / "mathematics" / "evidence.json").write_text(
-        "{}", encoding="utf-8"
+def test_coverage_keeps_explicit_missing_records_visible(tmp_path: Path) -> None:
+    missing = release_record(
+        None,
+        id="ug-primary-primary-1-3-mathematics",
+        country="UG",
+        country_slug="uganda",
+        authority="National Curriculum Development Centre (NCDC)",
+        level="primary_1_3",
+        maturity="missing",
+        node_code_prefixes=["P1.", "P2.", "P3."],
     )
-    (uganda_path / "primary").mkdir()
+    write_release_manifest(tmp_path, [missing])
 
     report = build_coverage_report(tmp_path)
+    uganda = report.countries[1]
 
-    matrix = report.countries[0].coverage_matrix
-    lower_primary_math = next(
+    assert uganda.availability == "missing"
+    mathematics = next(
+        subject
+        for subject in uganda.subjects
+        if subject.phase == "primary" and subject.identifier == "mathematics"
+    )
+    assert mathematics.availability == "missing"
+    matrix_entry = next(
         entry
-        for entry in matrix
-        if entry.level_identifier == "lower_primary" and entry.subject_identifier == "mathematics"
+        for entry in uganda.coverage_matrix
+        if entry.level_identifier == "primary_1_3" and entry.subject_identifier == "mathematics"
     )
-    upper_primary_math = next(
-        entry
-        for entry in matrix
-        if entry.level_identifier == "upper_primary" and entry.subject_identifier == "mathematics"
-    )
-    assert (lower_primary_math.status, lower_primary_math.evidence_scope) == ("located", "level")
-    assert (upper_primary_math.status, upper_primary_math.evidence_scope) == (
-        "located",
-        "phase_only",
-    )
+    assert matrix_entry.status == "missing"
+    assert matrix_entry.evidence_scope == "level"
 
 
-def test_inventory_ignores_hidden_transient_and_symlinked_files(tmp_path: Path) -> None:
-    """Untrusted or tool-generated entries cannot inflate availability metadata."""
-    ghana_path, uganda_path = _create_country_roots(tmp_path)
-    evidence_path = ghana_path / "evidence.json"
-    evidence_path.write_text("{}", encoding="utf-8")
-    (ghana_path / ".hidden.json").write_text("{}", encoding="utf-8")
-    (ghana_path / ".!office-lock.json").write_text("{}", encoding="utf-8")
-    (ghana_path / "unfinished.tmp").write_text("{}", encoding="utf-8")
-    (ghana_path / "backup.json~").write_text("{}", encoding="utf-8")
-    (ghana_path / "linked.json").symlink_to(evidence_path)
-    hidden_directory = ghana_path / ".cache"
-    hidden_directory.mkdir()
-    (hidden_directory / "cached.json").write_text("{}", encoding="utf-8")
-    linked_directory = ghana_path / "linked-directory"
-    linked_directory.symlink_to(uganda_path, target_is_directory=True)
-    os.mkfifo(ghana_path / "named-pipe")
+def test_coverage_fails_closed_for_missing_and_invalid_manifests(tmp_path: Path) -> None:
+    missing = build_coverage_report(tmp_path)
+    assert missing.repository_status == "missing"
+    assert missing.warnings == ("missing_release_manifest",)
+    assert missing.snapshot.source_version is None
+    assert missing.catalog is None
+    assert all(country.subjects == () for country in missing.countries)
 
-    report = build_coverage_report(tmp_path)
-
-    assert report.countries[0].repository_file_count == 1
-    assert report.countries[1].repository_file_count == 0
-    assert report.countries[1].availability == "missing"
+    projection = write_projection(tmp_path)
+    projection["nodes_sha256"] = "0" * 64
+    write_release_manifest(tmp_path, [release_record(projection)])
+    invalid = build_coverage_report(tmp_path)
+    assert invalid.repository_status == "invalid"
+    assert invalid.warnings == ("invalid_release_manifest",)
+    assert invalid.snapshot.source_version is None
+    assert invalid.catalog is None
 
 
-def test_inventory_fails_closed_for_missing_partial_and_invalid_roots(
+def test_explicit_empty_manifest_represents_catalog_without_invented_evidence(
     tmp_path: Path,
 ) -> None:
-    """Malformed layouts stay observable without leaking an absolute private path."""
-    missing_report = build_coverage_report(tmp_path)
-
-    assert missing_report.repository_status == "missing"
-    assert missing_report.warnings == ("missing_curricula_root",)
-    assert all(country.availability == "missing" for country in missing_report.countries)
-
-    curricula_path = tmp_path / "curricula"
-    curricula_path.write_text("not a directory", encoding="utf-8")
-    invalid_report = build_coverage_report(tmp_path)
-
-    assert invalid_report.repository_status == "invalid"
-    assert invalid_report.warnings == ("invalid_curricula_root",)
-    assert str(tmp_path) not in repr(invalid_report)
-
-    curricula_path.unlink()
-    (curricula_path / "ghana").mkdir(parents=True)
-    partial_report = build_coverage_report(tmp_path)
-
-    assert partial_report.repository_status == "partial"
-    assert partial_report.warnings == ("missing_country_root:uganda",)
-
-    (curricula_path / "uganda").write_text("not a directory", encoding="utf-8")
-    malformed_country_report = build_coverage_report(tmp_path)
-
-    assert malformed_country_report.repository_status == "partial"
-    assert malformed_country_report.warnings == ("invalid_country_root:uganda",)
-
-
-def test_inventory_flags_unexpected_and_unsafe_country_entries(tmp_path: Path) -> None:
-    """Unexpected countries and symlinked expected roots are static, non-sensitive warnings."""
-    curricula_path = tmp_path / "curricula"
-    ghana_path = curricula_path / "ghana"
-    ghana_path.mkdir(parents=True)
-    (curricula_path / "unplanned-country").mkdir()
-    (curricula_path / ".hidden-country").mkdir()
-    (curricula_path / "uganda").symlink_to(ghana_path, target_is_directory=True)
+    write_release_manifest(
+        tmp_path,
+        [],
+        release_id="curriculum-public-empty-1",
+        release_status="empty",
+    )
 
     report = build_coverage_report(tmp_path)
 
-    assert report.repository_status == "partial"
-    assert report.warnings == (
-        "unsafe_country_root:uganda",
-        "unexpected_country_entries",
+    assert report.repository_status == "available"
+    assert report.warnings == ("empty_release",)
+    assert report.snapshot.source_version == "curriculum-public-empty-1"
+    assert all(country.availability == "missing" for country in report.countries)
+    assert report.catalog is not None
+    assert report.catalog.represented_cells == 176
+    assert report.catalog.evidence_cells == 0
+    assert sum(len(country.coverage_matrix) for country in report.countries) == 176
+    assert all(
+        entry.status == "missing"
+        for country in report.countries
+        for entry in country.coverage_matrix
     )
-    assert report.countries[1].availability == "missing"
+    assert canonical_repository_available(tmp_path) is True
 
 
-def test_inventory_fails_closed_when_a_country_root_cannot_be_read(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """A permissions race cannot escape as a server error or ready status."""
-    ghana_path, _uganda_path = _create_country_roots(tmp_path)
-    original_iterdir = Path.iterdir
-
-    def guarded_iterdir(path: Path) -> Iterator[Path]:
-        if path == ghana_path:
-            raise PermissionError("synthetic unreadable directory")
-        return original_iterdir(path)
-
-    monkeypatch.setattr(Path, "iterdir", guarded_iterdir)
-
+def test_readiness_requires_a_valid_byte_pinned_manifest(tmp_path: Path) -> None:
     assert canonical_repository_available(tmp_path) is False
-    report = build_coverage_report(tmp_path)
-    assert report.repository_status == "partial"
-    assert report.warnings == ("unreadable_country_root:ghana",)
-    assert report.countries[0].availability == "missing"
 
+    projection = write_projection(tmp_path)
+    write_release_manifest(tmp_path, [release_record(projection)])
+    assert canonical_repository_available(tmp_path) is True
 
-def test_inventory_fails_closed_when_subject_scan_cannot_be_read(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """A subject-directory race is reported without invalidating the whole service."""
-    ghana_path, _uganda_path = _create_country_roots(tmp_path)
-    (ghana_path / "primary").mkdir()
-    (ghana_path / "primary" / "mathematics.json").write_text("{}", encoding="utf-8")
-
-    monkeypatch.setattr(
-        "gapsense.curriculum.coverage._subject_inventory",
-        lambda _path: (_ for _ in ()).throw(PermissionError("synthetic subject failure")),
-    )
-
-    report = build_coverage_report(tmp_path)
-
-    assert report.warnings == ("unreadable_subject_inventory:ghana",)
-    assert report.countries[0].subjects == ()
+    (tmp_path / projection["nodes_path"]).write_text("{}", encoding="utf-8")
+    assert canonical_repository_available(tmp_path) is False

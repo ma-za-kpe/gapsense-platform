@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AssessmentWorkspace } from "./AssessmentWorkspace";
 import { saveSampleDraft, sampleDraftStorageKey } from "../domain/sampleDraft";
 
+const expectedWorkspaceListItemCount = 10;
+
 afterEach(() => {
   window.localStorage.clear();
   Reflect.deleteProperty(navigator, "share");
@@ -21,6 +23,30 @@ const saveTeacherGhanaDraft = () => {
 };
 
 describe("focused sample activity workspace", () => {
+  it.each([
+    ["teacher", "ghana", "Ghana Basic 3 Science sample", /classroom exploration/],
+    ["teacher", "uganda", "Uganda Primary 2 Mathematics sample", /classroom exploration/],
+    ["caregiver", "ghana", "Ghana Basic 3 Science sample", /home support/],
+    ["caregiver", "uganda", "Uganda Primary 2 Mathematics sample", /home support/],
+    ["learner", "ghana", "Ghana Basic 3 Science sample", /independent practice/],
+    ["learner", "uganda", "Uganda Primary 2 Mathematics sample", /independent practice/],
+    ["tutor", "ghana", "Ghana Basic 3 Science sample", /support session/],
+    ["tutor", "uganda", "Uganda Primary 2 Mathematics sample", /support session/],
+  ] as const)("renders the reviewed %s, %s workspace", (role, country, heading, guidance) => {
+    saveSampleDraft(window.localStorage, {
+      role,
+      country,
+      goal: "practice",
+      reviewed: true,
+    });
+
+    render(<AssessmentWorkspace onReturnHome={vi.fn()} storage={window.localStorage} />);
+
+    expect(screen.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    expect(screen.getByText(guidance)).toBeVisible();
+    expect(screen.getAllByRole("listitem")).toHaveLength(expectedWorkspaceListItemCount);
+  });
+
   it("shows a recoverable empty state when no reviewed draft exists", () => {
     render(<AssessmentWorkspace onReturnHome={vi.fn()} storage={window.localStorage} />);
 

@@ -370,6 +370,7 @@ A passing implementation is not complete until every applicable status surface a
 Review and update:
 
 - `TASKS.md`;
+- `PROGRESS.md`;
 - relevant subject and module README files;
 - curriculum metadata and country configuration;
 - coverage and validation reports;

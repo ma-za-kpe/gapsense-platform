@@ -12,6 +12,20 @@ export MSYS_NO_PATHCONV=1
 # matching hosted CI and preventing evidence-volume size from changing screenshots.
 export GAPSENSE_DATA_HOST_PATH="${GAPSENSE_DATA_HOST_PATH:-./fixtures/public-data}"
 
+for required_file in TASKS.md PROGRESS.md docs/WAYS_OF_WORKING.md; do
+  if [ ! -f "$required_file" ]; then
+    echo "GapSense: required governance file is missing: $required_file" >&2
+    exit 1
+  fi
+done
+
+staged_paths=$(git diff --cached --name-only)
+if [ -n "$staged_paths" ] && \
+   ! printf '%s\n' "$staged_paths" | grep -qx "PROGRESS.md"; then
+  echo "GapSense: every coherent commit must reconcile PROGRESS.md." >&2
+  exit 1
+fi
+
 echo "GapSense: validating GitHub Actions workflow syntax"
 docker run --rm \
   -v "$repository_root:/repo:ro" \
@@ -105,10 +119,19 @@ docker compose --profile test run --rm --no-deps browser-production-tests npm ru
 
 echo "GapSense: linting all non-archived Markdown in Docker"
 docker run --rm \
+  --read-only \
+  --tmpfs /tmp:rw,exec,size=64m,mode=1777 \
+  --cap-drop ALL \
+  --security-opt no-new-privileges:true \
+  -e npm_config_cache=/tmp/npm \
   -v "$repository_root:/workspace:ro" \
   -w /workspace \
-  node:22-alpine \
-  npx --yes markdownlint-cli2@0.18.1 "README.md" "TASKS.md" "docs/**/*.md"
+  node:22.23.1-alpine3.23@sha256:8516dce0483394d5708d4b2ee6cacb79fb1d617ea4e2787c2120bcca92ce372e \
+  npx --yes markdownlint-cli2@0.23.1 \
+  "README.md" \
+  "TASKS.md" \
+  "PROGRESS.md" \
+  "docs/**/*.md"
 
 echo "GapSense: checking patch whitespace"
 git diff --cached --check
